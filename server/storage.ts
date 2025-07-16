@@ -62,11 +62,75 @@ export class MemStorage implements IStorage {
         isCoastal: true,
       },
       {
-        name: "El Segundo Beach",
-        city: "El Segundo",
+        name: "Jacksonville Beach",
+        city: "Jacksonville",
         country: "USA",
-        latitude: "33.9192",
-        longitude: "-118.4165",
+        latitude: "30.2936",
+        longitude: "-81.3967",
+        isCoastal: true,
+      },
+      {
+        name: "Cocoa Beach",
+        city: "Cocoa Beach",
+        country: "USA",
+        latitude: "28.3200",
+        longitude: "-80.6077",
+        isCoastal: true,
+      },
+      {
+        name: "Huntington Beach",
+        city: "Huntington Beach",
+        country: "USA",
+        latitude: "33.6595",
+        longitude: "-117.9988",
+        isCoastal: true,
+      },
+      {
+        name: "Santa Monica",
+        city: "Santa Monica",
+        country: "USA",
+        latitude: "34.0195",
+        longitude: "-118.4912",
+        isCoastal: true,
+      },
+      {
+        name: "Miami Beach",
+        city: "Miami",
+        country: "USA",
+        latitude: "25.7907",
+        longitude: "-80.1300",
+        isCoastal: true,
+      },
+      {
+        name: "Virginia Beach",
+        city: "Virginia Beach",
+        country: "USA",
+        latitude: "36.8529",
+        longitude: "-75.9780",
+        isCoastal: true,
+      },
+      {
+        name: "Outer Banks",
+        city: "Nags Head",
+        country: "USA",
+        latitude: "35.9579",
+        longitude: "-75.6240",
+        isCoastal: true,
+      },
+      {
+        name: "Waikiki Beach",
+        city: "Honolulu",
+        country: "USA",
+        latitude: "21.2777",
+        longitude: "-157.8340",
+        isCoastal: true,
+      },
+      {
+        name: "Ocean City",
+        city: "Ocean City",
+        country: "USA",
+        latitude: "38.3365",
+        longitude: "-75.0849",
         isCoastal: true,
       },
     ];
@@ -118,7 +182,11 @@ export class MemStorage implements IStorage {
 
   async createLocation(insertLocation: InsertLocation): Promise<Location> {
     const id = this.currentLocationId++;
-    const location: Location = { ...insertLocation, id };
+    const location: Location = { 
+      ...insertLocation, 
+      id,
+      isCoastal: insertLocation.isCoastal ?? true
+    };
     this.locations.set(id, location);
     return location;
   }
@@ -132,8 +200,21 @@ export class MemStorage implements IStorage {
   async createSurfConditions(insertConditions: InsertSurfConditions): Promise<SurfConditions> {
     const id = this.currentConditionsId++;
     const conditions: SurfConditions = {
-      ...insertConditions,
       id,
+      locationId: insertConditions.locationId,
+      waveHeight: insertConditions.waveHeight ?? null,
+      wavePeriod: insertConditions.wavePeriod ?? null,
+      waveDirection: insertConditions.waveDirection ?? null,
+      windSpeed: insertConditions.windSpeed ?? null,
+      windDirection: insertConditions.windDirection ?? null,
+      windGusts: insertConditions.windGusts ?? null,
+      tideHeight: insertConditions.tideHeight ?? null,
+      tideStatus: insertConditions.tideStatus ?? null,
+      waterTemp: insertConditions.waterTemp ?? null,
+      visibility: insertConditions.visibility ?? null,
+      uvIndex: insertConditions.uvIndex ?? null,
+      sunrise: insertConditions.sunrise ?? null,
+      sunset: insertConditions.sunset ?? null,
       lastUpdated: new Date(),
     };
     this.surfConditions.set(id, conditions);
