@@ -133,6 +133,30 @@ export class MemStorage implements IStorage {
         longitude: "-75.0849",
         isCoastal: true,
       },
+      {
+        name: "Neptune Beach",
+        city: "Neptune Beach",
+        country: "USA",
+        latitude: "30.3119",
+        longitude: "-81.3954",
+        isCoastal: true,
+      },
+      {
+        name: "Atlantic Beach",
+        city: "Atlantic Beach",
+        country: "USA",
+        latitude: "30.3366",
+        longitude: "-81.4023",
+        isCoastal: true,
+      },
+      {
+        name: "Fernandina Beach",
+        city: "Fernandina Beach",
+        country: "USA",
+        latitude: "30.6691",
+        longitude: "-81.4618",
+        isCoastal: true,
+      },
     ];
 
     defaultLocations.forEach(location => {

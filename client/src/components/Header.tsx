@@ -17,7 +17,7 @@ export default function Header({ onLocationSelect, onGetCurrentLocation, isLoadi
   const searchRef = useRef<HTMLDivElement>(null);
 
   const { data: searchResults = [] } = useQuery({
-    queryKey: ["/api/locations/search", searchQuery],
+    queryKey: [`/api/locations/search?q=${encodeURIComponent(searchQuery)}`],
     enabled: searchQuery.length >= 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
