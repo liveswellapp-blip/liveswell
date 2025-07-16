@@ -204,13 +204,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </>
                   )}
                 </div>
-                <div className="flex items-center space-x-4 text-sm mt-2">
+                <div className="text-sm mt-2">
                   {isLoading ? (
                     <Skeleton className="h-4 w-32 bg-white/20" />
                   ) : (
                     <>
-                      <span>Direction: {conditions?.windDirection || "N/A"}</span>
-                      <span>Gusts: {conditions?.windGusts || "0"} mph</span>
+                      <div className="mb-1">
+                        <span>Direction: {conditions?.windDirection || "N/A"}</span>
+                      </div>
+                      <div>
+                        <span>Gusts: {conditions?.windGusts || "0"} mph</span>
+                      </div>
                     </>
                   )}
                 </div>
