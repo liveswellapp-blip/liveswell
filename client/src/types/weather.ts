@@ -28,12 +28,19 @@ export interface SurfConditions {
   warning?: string;
 }
 
+export interface TidePoint {
+  time: string;
+  height: number;
+  type: 'high' | 'low';
+}
+
 export interface ForecastDay {
   date: string;
   waveHeight: string;
   conditions: string;
   wind: string;
   icon: string;
+  tides: TidePoint[];
 }
 
 export interface NearbySpot extends Location {

@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wind } from "lucide-react";
 import { Location, ForecastDay } from "@/types/weather";
+import TideChart from "./TideChart";
 
 interface ForecastSectionProps {
   location: Location;
@@ -56,11 +57,16 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   <div className="text-3xl mb-2">{day.icon}</div>
                   <div className="text-lg font-semibold ocean-blue mb-1">{day.waveHeight}</div>
                   <div className="text-sm text-gray-600 mb-2">{day.conditions}</div>
-                  <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                  <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mb-2">
                     <Wind className="h-3 w-3" />
                     <span>{day.wind}</span>
                   </div>
                 </div>
+                
+                {/* Tide Chart */}
+                {day.tides && day.tides.length > 0 && (
+                  <TideChart tides={day.tides} date={day.date} />
+                )}
               </div>
             ))
           ) : (

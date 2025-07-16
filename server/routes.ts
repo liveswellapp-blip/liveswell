@@ -294,12 +294,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
             
+            // Generate realistic tide data for each day
+            const tides = [];
+            const baseTime = new Date();
+            baseTime.setDate(baseTime.getDate() + i);
+            baseTime.setHours(0, 0, 0, 0);
+            
+            // Typically 2 high tides and 2 low tides per day, roughly 6 hours apart
+            const tidePattern = [
+              { offset: 1.5, type: 'low', height: 0.5 + Math.random() * 0.8 },
+              { offset: 7.8, type: 'high', height: 3.5 + Math.random() * 1.5 },
+              { offset: 14.2, type: 'low', height: 0.3 + Math.random() * 0.9 },
+              { offset: 20.5, type: 'high', height: 3.2 + Math.random() * 1.8 }
+            ];
+            
+            tidePattern.forEach(tide => {
+              const tideTime = new Date(baseTime.getTime() + tide.offset * 60 * 60 * 1000);
+              tides.push({
+                time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                height: tide.height,
+                type: tide.type
+              });
+            });
+            
             dailyForecasts.push({
               date: i === 0 ? "Today" : i === 1 ? "Tomorrow" : days[i] || `Day ${i + 1}`,
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(Math.random() * 360)}`,
               icon: "🌊",
+              tides
             });
           }
           
@@ -323,12 +347,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
             
+            // Generate realistic tide data for each day
+            const tides = [];
+            const baseTime = new Date();
+            baseTime.setDate(baseTime.getDate() + i);
+            baseTime.setHours(0, 0, 0, 0);
+            
+            // Typically 2 high tides and 2 low tides per day, roughly 6 hours apart
+            const tidePattern = [
+              { offset: 1.5, type: 'low', height: 0.5 + Math.random() * 0.8 },
+              { offset: 7.8, type: 'high', height: 3.5 + Math.random() * 1.5 },
+              { offset: 14.2, type: 'low', height: 0.3 + Math.random() * 0.9 },
+              { offset: 20.5, type: 'high', height: 3.2 + Math.random() * 1.8 }
+            ];
+            
+            tidePattern.forEach(tide => {
+              const tideTime = new Date(baseTime.getTime() + tide.offset * 60 * 60 * 1000);
+              tides.push({
+                time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+                height: tide.height,
+                type: tide.type
+              });
+            });
+            
             dailyForecasts.push({
               date: i === 0 ? "Today" : i === 1 ? "Tomorrow" : days[i] || `Day ${i + 1}`,
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(Math.random() * 360)}`,
               icon: "🌊",
+              tides
             });
           }
           
@@ -356,6 +404,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
           const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
           
+          // Generate realistic tide data for each day
+          const tides = [];
+          const baseTime = new Date(date);
+          baseTime.setHours(0, 0, 0, 0);
+          
+          // Typically 2 high tides and 2 low tides per day, roughly 6 hours apart
+          const tidePattern = [
+            { offset: 1.5, type: 'low', height: 0.5 + Math.random() * 0.8 },
+            { offset: 7.8, type: 'high', height: 3.5 + Math.random() * 1.5 },
+            { offset: 14.2, type: 'low', height: 0.3 + Math.random() * 0.9 },
+            { offset: 20.5, type: 'high', height: 3.2 + Math.random() * 1.8 }
+          ];
+          
+          tidePattern.forEach(tide => {
+            const tideTime = new Date(baseTime.getTime() + tide.offset * 60 * 60 * 1000);
+            tides.push({
+              time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+              height: tide.height,
+              type: tide.type
+            });
+          });
+
           if (waveHeight > 5) {
             const qualityBonus = windSpeed < 8 ? "Excellent" : windSpeed < 12 ? "Good" : "Fair";
             dailyForecasts.push({
@@ -364,6 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               conditions: qualityBonus,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(item.wind.deg)}`,
               icon: "🌊",
+              tides
             });
           } else {
             dailyForecasts.push({
@@ -372,6 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(item.wind.deg)}`,
               icon: "🌊",
+              tides
             });
           }
         }
