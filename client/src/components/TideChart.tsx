@@ -6,24 +6,69 @@ interface TideChartProps {
 }
 
 export default function TideChart({ tides, date }: TideChartProps) {
-  // Generate hourly tide data for smooth curve
+  // Convert tide times to hours for interpolation
+  const parseTimeToHours = (timeStr: string) => {
+    const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!match) return 0;
+    
+    let hours = parseInt(match[1]);
+    const minutes = parseInt(match[2]);
+    const isPM = match[3].toUpperCase() === 'PM';
+    
+    if (isPM && hours !== 12) hours += 12;
+    if (!isPM && hours === 12) hours = 0;
+    
+    return hours + minutes / 60;
+  };
+
+  // Generate hourly tide data using actual tide points for interpolation
   const generateTideData = () => {
     const hours = Array.from({ length: 24 }, (_, i) => i);
+    
+    // Convert tide points to hours with their heights
+    const tidePoints = tides.map(tide => ({
+      hour: parseTimeToHours(tide.time),
+      height: tide.height,
+      type: tide.type
+    })).sort((a, b) => a.hour - b.hour);
+    
     const tideData = hours.map(hour => {
-      // Find closest tide points to interpolate between
-      const timeInHours = hour;
+      // Find the two closest tide points for interpolation
+      let beforeTide = tidePoints[tidePoints.length - 1]; // Default to last tide (wraps around)
+      let afterTide = tidePoints[0]; // Default to first tide
       
-      // Simple sine wave simulation based on tide points
-      const amplitude = 2.5; // Average tide range
-      const offset = 2; // Mean tide level
+      for (let i = 0; i < tidePoints.length; i++) {
+        if (tidePoints[i].hour <= hour) {
+          beforeTide = tidePoints[i];
+        }
+        if (tidePoints[i].hour > hour) {
+          afterTide = tidePoints[i];
+          break;
+        }
+      }
       
-      // Create realistic tide pattern (2 highs, 2 lows per day)
-      const primaryTide = Math.sin((timeInHours * Math.PI) / 6.2) * amplitude;
-      const secondaryTide = Math.sin((timeInHours * Math.PI) / 6.2 + Math.PI) * 0.3;
+      // Handle wrapping around midnight
+      let timeDiff, heightDiff, interpolationFactor;
+      if (beforeTide.hour > afterTide.hour) {
+        // Wraps around midnight
+        const totalTime = (24 - beforeTide.hour) + afterTide.hour;
+        const currentTime = hour >= beforeTide.hour ? (hour - beforeTide.hour) : (24 - beforeTide.hour + hour);
+        interpolationFactor = currentTime / totalTime;
+      } else {
+        timeDiff = afterTide.hour - beforeTide.hour;
+        interpolationFactor = timeDiff > 0 ? (hour - beforeTide.hour) / timeDiff : 0;
+      }
+      
+      // Use cubic interpolation for smoother tide curves
+      const t = Math.max(0, Math.min(1, interpolationFactor));
+      const smoothT = t * t * (3 - 2 * t); // Smooth step function
+      
+      heightDiff = afterTide.height - beforeTide.height;
+      const interpolatedHeight = beforeTide.height + heightDiff * smoothT;
       
       return {
         hour,
-        height: offset + primaryTide + secondaryTide,
+        height: interpolatedHeight,
         time: `${hour.toString().padStart(2, '0')}:00`
       };
     });
@@ -51,36 +96,13 @@ export default function TideChart({ tides, date }: TideChartProps) {
     return `M ${points.join(' L ')}`;
   };
 
-  // Get major tide events to display
-  const getMajorTides = () => {
-    const majorTides = [];
-    
-    // Find peaks and troughs
-    for (let i = 1; i < hourlyData.length - 1; i++) {
-      const prev = hourlyData[i - 1].height;
-      const current = hourlyData[i].height;
-      const next = hourlyData[i + 1].height;
-      
-      // High tide (peak)
-      if (current > prev && current > next && current > (minHeight + heightRange * 0.7)) {
-        majorTides.push({
-          ...hourlyData[i],
-          type: 'high' as const
-        });
-      }
-      // Low tide (trough)
-      else if (current < prev && current < next && current < (minHeight + heightRange * 0.3)) {
-        majorTides.push({
-          ...hourlyData[i],
-          type: 'low' as const
-        });
-      }
-    }
-    
-    return majorTides.slice(0, 4); // Limit to 4 major tides per day
-  };
-
-  const majorTides = getMajorTides();
+  // Use the actual tide data passed from the server
+  const majorTides = tides.map(tide => ({
+    hour: parseTimeToHours(tide.time),
+    height: tide.height,
+    time: tide.time,
+    type: tide.type
+  }));
 
   return (
     <div className="mt-3 p-3 bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg">
