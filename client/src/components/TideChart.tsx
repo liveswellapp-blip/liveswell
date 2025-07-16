@@ -180,20 +180,49 @@ export default function TideChart({ tides, date }: TideChartProps) {
         </div>
       </div>
       
-      {/* Major tide times */}
-      <div className="grid grid-cols-2 gap-1">
-        {majorTides.slice(0, 2).map((tide, index) => (
-          <div key={index} className="text-xs flex items-center">
-            <div 
-              className={`w-2 h-2 rounded-full mr-1 ${
-                tide.type === 'high' ? 'bg-red-500' : 'bg-green-600'
-              }`}
-            />
-            <span className="text-gray-600">
-              {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height.toFixed(1)}ft)
-            </span>
+      {/* AM and PM tide times */}
+      <div className="space-y-1">
+        {/* AM Tides */}
+        <div className="text-xs">
+          <div className="font-medium text-gray-700 mb-1">AM</div>
+          <div className="grid grid-cols-2 gap-1">
+            {majorTides
+              .filter(tide => tide.time.includes('AM'))
+              .map((tide, index) => (
+                <div key={`am-${index}`} className="flex items-center">
+                  <div 
+                    className={`w-2 h-2 rounded-full mr-1 ${
+                      tide.type === 'high' ? 'bg-red-500' : 'bg-green-600'
+                    }`}
+                  />
+                  <span className="text-gray-600">
+                    {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height.toFixed(1)}ft)
+                  </span>
+                </div>
+              ))}
           </div>
-        ))}
+        </div>
+        
+        {/* PM Tides */}
+        <div className="text-xs">
+          <div className="font-medium text-gray-700 mb-1">PM</div>
+          <div className="grid grid-cols-2 gap-1">
+            {majorTides
+              .filter(tide => tide.time.includes('PM'))
+              .map((tide, index) => (
+                <div key={`pm-${index}`} className="flex items-center">
+                  <div 
+                    className={`w-2 h-2 rounded-full mr-1 ${
+                      tide.type === 'high' ? 'bg-red-500' : 'bg-green-600'
+                    }`}
+                  />
+                  <span className="text-gray-600">
+                    {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height.toFixed(1)}ft)
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
       </div>
     </div>
   );
