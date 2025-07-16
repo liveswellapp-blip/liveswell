@@ -108,7 +108,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Tide Information */}
-          <div className="from-sea-green to-sky-blue rounded-lg p-4 text-[#000000] bg-[#efefef]">
+          <div className="from-sea-green to-sky-blue rounded-lg p-4 bg-[#efefef] text-[#004182]">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <Droplets className="h-5 w-5" />
