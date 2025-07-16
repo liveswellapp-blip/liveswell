@@ -225,7 +225,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="mb-2">
                     {nextTide ? (
                       <span>
-                        Next: {nextTide.type === 'high' ? 'High' : 'Low'} Tide at {nextTide.time}
+                        {nextTide.type === 'high' ? 'Rising' : 'Falling'}: {nextTide.type === 'high' ? 'High' : 'Low'} Tide at {nextTide.time}
                       </span>
                     ) : (
                       <span>No upcoming tides today</span>
