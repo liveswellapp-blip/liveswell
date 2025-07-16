@@ -14,6 +14,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
+  // Debug logging
+  console.log('CurrentConditions Debug:', {
+    location: location.id,
+    isLoading,
+    error: error?.message,
+    conditions,
+    waveHeight: conditions?.waveHeight,
+    tideHeight: conditions?.tideHeight,
+    windSpeed: conditions?.windSpeed
+  });
+
   const formatTimeAgo = (timestamp: string | Date) => {
     const now = new Date();
     const lastUpdated = new Date(timestamp);
