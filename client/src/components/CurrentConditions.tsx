@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, Droplets, Wind } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
-import WaveEnergyVisualization from "./WaveEnergyVisualization";
 import WindDirectionCompass from "./WindDirectionCompass";
 
 interface CurrentConditionsProps {
@@ -85,15 +84,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
         )}
         
-        {/* Wave Energy Visualization */}
-        {conditions && (
-          <div className="mb-6">
-            <WaveEnergyVisualization 
-              conditions={conditions} 
-              className="h-32 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200"
-            />
-          </div>
-        )}
+
 
         {/* Current Conditions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
