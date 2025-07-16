@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, Droplets, Wind } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
+import WaveEnergyVisualization from "./WaveEnergyVisualization";
+import WindDirectionCompass from "./WindDirectionCompass";
 
 interface CurrentConditionsProps {
   location: Location;
@@ -83,6 +85,16 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
         )}
         
+        {/* Wave Energy Visualization */}
+        {conditions && (
+          <div className="mb-6">
+            <WaveEnergyVisualization 
+              conditions={conditions} 
+              className="h-32 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200"
+            />
+          </div>
+        )}
+
         {/* Current Conditions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Wave Conditions */}
@@ -185,24 +197,40 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
               <span className="text-sm opacity-75">Live</span>
             </div>
-            <div className="flex items-end space-x-2">
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 bg-white/20" />
-              ) : (
-                <>
-                  <span className="text-3xl font-bold">{conditions?.windSpeed || "0"}</span>
-                  <span className="text-lg mb-1">mph</span>
-                </>
-              )}
-            </div>
-            <div className="flex items-center space-x-4 text-sm mt-2">
-              {isLoading ? (
-                <Skeleton className="h-4 w-32 bg-white/20" />
-              ) : (
-                <>
-                  <span>{conditions?.windDirection || "N/A"}</span>
-                  <span>Gusts: {conditions?.windGusts || "0"} mph</span>
-                </>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-end space-x-2">
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-16 bg-white/20" />
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold">{conditions?.windSpeed || "0"}</span>
+                      <span className="text-lg mb-1">mph</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center space-x-4 text-sm mt-2">
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-32 bg-white/20" />
+                  ) : (
+                    <>
+                      <span>{conditions?.windDirection || "N/A"}</span>
+                      <span>Gusts: {conditions?.windGusts || "0"} mph</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              {/* Wind Direction Compass */}
+              {conditions && !isLoading && (
+                <div className="ml-4">
+                  <WindDirectionCompass 
+                    windDirection={conditions.windDirection || "N"}
+                    windSpeed={conditions.windSpeed || "0"}
+                    className="scale-75"
+                  />
+                </div>
               )}
             </div>
           </div>
