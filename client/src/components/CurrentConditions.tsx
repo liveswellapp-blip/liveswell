@@ -106,13 +106,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </>
               )}
             </div>
-            <div className="flex items-center space-x-4 text-sm mt-2">
+            <div className="text-sm mt-2">
               {isLoading ? (
                 <Skeleton className="h-4 w-32 bg-white/20" />
               ) : (
                 <>
-                  <span>Period: {conditions?.wavePeriod || 0}s</span>
-                  <span>Direction: {conditions?.waveDirection || "N/A"}</span>
+                  <div className="mb-1">
+                    <span>Period: {conditions?.wavePeriod || 0}s</span>
+                  </div>
+                  <div>
+                    <span>Direction: {conditions?.waveDirection || "N/A"}</span>
+                  </div>
                 </>
               )}
             </div>
