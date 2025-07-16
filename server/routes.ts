@@ -38,6 +38,47 @@ function formatTime(timestamp: number): string {
   });
 }
 
+function generateRealisticTides(dayOffset: number) {
+  const tides = [];
+  const baseTime = new Date();
+  baseTime.setDate(baseTime.getDate() + dayOffset);
+  baseTime.setHours(0, 0, 0, 0);
+  
+  // Tides shift ~50 minutes later each day (lunar day = 24h 50m)
+  const tideShift = dayOffset * 50; // minutes per day
+  
+  // Base tide times (in hours) for day 0, then shift for subsequent days
+  const baseTidePattern = [
+    { offset: 1.5, type: 'low', heightRange: [0.5, 1.3] },
+    { offset: 7.8, type: 'high', heightRange: [3.5, 5.0] },
+    { offset: 14.2, type: 'low', heightRange: [0.3, 1.2] },
+    { offset: 20.5, type: 'high', heightRange: [3.2, 5.0] }
+  ];
+  
+  baseTidePattern.forEach(tide => {
+    const shiftedHours = tide.offset + (tideShift / 60);
+    let adjustedHours = shiftedHours;
+    
+    // Wrap around for times past 24 hours
+    if (adjustedHours >= 24) {
+      adjustedHours = adjustedHours - 24;
+    } else if (adjustedHours < 0) {
+      adjustedHours = adjustedHours + 24;
+    }
+    
+    const tideTime = new Date(baseTime.getTime() + adjustedHours * 60 * 60 * 1000);
+    const height = tide.heightRange[0] + Math.random() * (tide.heightRange[1] - tide.heightRange[0]);
+    
+    tides.push({
+      time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      height: parseFloat(height.toFixed(1)),
+      type: tide.type
+    });
+  });
+  
+  return tides;
+}
+
 function generateDemoWeatherData(lat: number, lon: number) {
   // Generate realistic demo data based on location
   const windSpeed = 8 + Math.random() * 10; // 8-18 mph
@@ -295,27 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
             
             // Generate realistic tide data for each day
-            const tides = [];
-            const baseTime = new Date();
-            baseTime.setDate(baseTime.getDate() + i);
-            baseTime.setHours(0, 0, 0, 0);
-            
-            // Typically 2 high tides and 2 low tides per day, roughly 6 hours apart
-            const tidePattern = [
-              { offset: 1.5, type: 'low', height: 0.5 + Math.random() * 0.8 },
-              { offset: 7.8, type: 'high', height: 3.5 + Math.random() * 1.5 },
-              { offset: 14.2, type: 'low', height: 0.3 + Math.random() * 0.9 },
-              { offset: 20.5, type: 'high', height: 3.2 + Math.random() * 1.8 }
-            ];
-            
-            tidePattern.forEach(tide => {
-              const tideTime = new Date(baseTime.getTime() + tide.offset * 60 * 60 * 1000);
-              tides.push({
-                time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                height: tide.height,
-                type: tide.type
-              });
-            });
+            const tides = generateRealisticTides(i);
             
             dailyForecasts.push({
               date: i === 0 ? "Today" : i === 1 ? "Tomorrow" : days[i] || `Day ${i + 1}`,
@@ -348,27 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
             
             // Generate realistic tide data for each day
-            const tides = [];
-            const baseTime = new Date();
-            baseTime.setDate(baseTime.getDate() + i);
-            baseTime.setHours(0, 0, 0, 0);
-            
-            // Typically 2 high tides and 2 low tides per day, roughly 6 hours apart
-            const tidePattern = [
-              { offset: 1.5, type: 'low', height: 0.5 + Math.random() * 0.8 },
-              { offset: 7.8, type: 'high', height: 3.5 + Math.random() * 1.5 },
-              { offset: 14.2, type: 'low', height: 0.3 + Math.random() * 0.9 },
-              { offset: 20.5, type: 'high', height: 3.2 + Math.random() * 1.8 }
-            ];
-            
-            tidePattern.forEach(tide => {
-              const tideTime = new Date(baseTime.getTime() + tide.offset * 60 * 60 * 1000);
-              tides.push({
-                time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                height: tide.height,
-                type: tide.type
-              });
-            });
+            const tides = generateRealisticTides(i);
             
             dailyForecasts.push({
               date: i === 0 ? "Today" : i === 1 ? "Tomorrow" : days[i] || `Day ${i + 1}`,
@@ -405,26 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
           
           // Generate realistic tide data for each day
-          const tides = [];
-          const baseTime = new Date(date);
-          baseTime.setHours(0, 0, 0, 0);
-          
-          // Typically 2 high tides and 2 low tides per day, roughly 6 hours apart
-          const tidePattern = [
-            { offset: 1.5, type: 'low', height: 0.5 + Math.random() * 0.8 },
-            { offset: 7.8, type: 'high', height: 3.5 + Math.random() * 1.5 },
-            { offset: 14.2, type: 'low', height: 0.3 + Math.random() * 0.9 },
-            { offset: 20.5, type: 'high', height: 3.2 + Math.random() * 1.8 }
-          ];
-          
-          tidePattern.forEach(tide => {
-            const tideTime = new Date(baseTime.getTime() + tide.offset * 60 * 60 * 1000);
-            tides.push({
-              time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-              height: tide.height,
-              type: tide.type
-            });
-          });
+          const tides = generateRealisticTides(dailyForecasts.length);
 
           if (waveHeight > 5) {
             const qualityBonus = windSpeed < 8 ? "Excellent" : windSpeed < 12 ? "Good" : "Fair";
