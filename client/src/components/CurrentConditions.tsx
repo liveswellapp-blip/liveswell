@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, Droplets, Wind } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
-import WindDirectionCompass from "./WindDirectionCompass";
 
 interface CurrentConditionsProps {
   location: Location;
@@ -213,16 +212,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </div>
               </div>
               
-              {/* Wind Direction Compass */}
-              {conditions && !isLoading && (
-                <div className="ml-4">
-                  <WindDirectionCompass 
-                    windDirection={conditions.windDirection || "N"}
-                    windSpeed={conditions.windSpeed || "0"}
-                    className="scale-75"
-                  />
-                </div>
-              )}
+
             </div>
           </div>
         </div>
