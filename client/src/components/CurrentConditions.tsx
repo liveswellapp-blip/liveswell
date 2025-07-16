@@ -77,7 +77,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         {/* Current Conditions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Wave Conditions */}
-          <div className="from-ocean-blue to-sky-blue rounded-lg p-4 text-[#000000] bg-[#efefef]">
+          <div className="from-ocean-blue to-sky-blue rounded-lg p-4 bg-[#efefef] text-[#4087f1]">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <Waves className="h-5 w-5" />
