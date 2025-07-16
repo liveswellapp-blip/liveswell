@@ -24,7 +24,7 @@ export interface SurfConditions {
   uvIndex: number;
   sunrise: string;
   sunset: string;
-  lastUpdated: string;
+  lastUpdated: string | Date;
   warning?: string;
 }
 

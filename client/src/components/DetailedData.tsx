@@ -10,7 +10,7 @@ interface DetailedDataProps {
 
 export default function DetailedData({ location }: DetailedDataProps) {
   const { data: conditions, isLoading } = useQuery<SurfConditions>({
-    queryKey: ["/api/locations", location.id, "conditions"],
+    queryKey: [`/api/locations/${location.id}/conditions`],
   });
 
   return (

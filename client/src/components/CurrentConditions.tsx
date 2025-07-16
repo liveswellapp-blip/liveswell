@@ -10,11 +10,11 @@ interface CurrentConditionsProps {
 
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
   const { data: conditions, isLoading, error } = useQuery<SurfConditions>({
-    queryKey: ["/api/locations", location.id, "conditions"],
+    queryKey: [`/api/locations/${location.id}/conditions`],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
-  const formatTimeAgo = (timestamp: string) => {
+  const formatTimeAgo = (timestamp: string | Date) => {
     const now = new Date();
     const lastUpdated = new Date(timestamp);
     const diffMinutes = Math.floor((now.getTime() - lastUpdated.getTime()) / (1000 * 60));

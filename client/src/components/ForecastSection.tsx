@@ -10,7 +10,7 @@ interface ForecastSectionProps {
 
 export default function ForecastSection({ location }: ForecastSectionProps) {
   const { data: forecast = [], isLoading, error } = useQuery<ForecastDay[]>({
-    queryKey: ["/api/locations", location.id, "forecast"],
+    queryKey: [`/api/locations/${location.id}/forecast`],
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
 

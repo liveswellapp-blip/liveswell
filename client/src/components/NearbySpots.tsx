@@ -10,7 +10,7 @@ interface NearbySpotsProps {
 
 export default function NearbySpots({ location }: NearbySpotsProps) {
   const { data: nearbySpots = [], isLoading, error } = useQuery<NearbySpot[]>({
-    queryKey: ["/api/locations", location.id, "nearby"],
+    queryKey: [`/api/locations/${location.id}/nearby`],
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
