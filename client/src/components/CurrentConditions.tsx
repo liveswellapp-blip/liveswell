@@ -61,6 +61,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <section className="container mx-auto px-4 py-6">
       <Card className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Live Conditions</h1>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <MapPin className="sunset-orange h-5 w-5" />
