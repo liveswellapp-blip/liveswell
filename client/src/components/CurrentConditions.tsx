@@ -23,6 +23,39 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   // Get today's tide data
   const todayTides = forecast?.[0]?.tides || [];
 
+  // Function to find the next upcoming tide
+  const getNextTide = () => {
+    if (!todayTides.length) return null;
+    
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    // Convert tide times to comparable format and find next one
+    const futureTides = todayTides.filter(tide => {
+      const tideDate = new Date();
+      const [time, period] = tide.time.split(' ');
+      const [hours, minutes] = time.split(':');
+      let hour24 = parseInt(hours);
+      
+      if (period === 'PM' && hour24 !== 12) {
+        hour24 += 12;
+      } else if (period === 'AM' && hour24 === 12) {
+        hour24 = 0;
+      }
+      
+      tideDate.setHours(hour24, parseInt(minutes), 0, 0);
+      return tideDate > now;
+    });
+    
+    return futureTides.length > 0 ? futureTides[0] : null;
+  };
+
+  const nextTide = getNextTide();
+
   // Debug logging
   console.log('CurrentConditions Debug:', {
     location: location.id,
@@ -190,7 +223,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               ) : (
                 <>
                   <div className="mb-2">
-                    <span>{conditions?.tideStatus || "Unknown"}</span>
+                    {nextTide ? (
+                      <span>
+                        Next: {nextTide.type === 'high' ? 'High' : 'Low'} Tide at {nextTide.time}
+                      </span>
+                    ) : (
+                      <span>No upcoming tides today</span>
+                    )}
                   </div>
                   
                   {/* AM Tides */}
