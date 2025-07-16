@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, Droplets, Wind } from "lucide-react";
-import { Location, SurfConditions } from "@/types/weather";
+import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 
 interface CurrentConditionsProps {
   location: Location;
@@ -13,6 +13,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     queryKey: [`/api/locations/${location.id}/conditions`],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
+
+  // Fetch forecast data to get today's tide information
+  const { data: forecast, isLoading: forecastLoading } = useQuery<ForecastDay[]>({
+    queryKey: [`/api/locations/${location.id}/forecast`],
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
+  });
+
+  // Get today's tide data
+  const todayTides = forecast?.[0]?.tides || [];
 
   // Debug logging
   console.log('CurrentConditions Debug:', {
@@ -126,13 +135,42 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </>
               )}
             </div>
-            <div className="flex items-center space-x-4 text-sm mt-2">
-              {isLoading ? (
+            <div className="text-sm mt-2">
+              {isLoading || forecastLoading ? (
                 <Skeleton className="h-4 w-32 bg-white/20" />
               ) : (
                 <>
-                  <span>{conditions?.tideStatus || "Unknown"}</span>
-                  <span>High: 3:24 PM</span>
+                  <div className="mb-2">
+                    <span>{conditions?.tideStatus || "Unknown"}</span>
+                  </div>
+                  
+                  {/* AM Tides */}
+                  <div className="mb-2">
+                    <div className="font-medium text-xs mb-1">AM</div>
+                    <div className="flex flex-wrap gap-2">
+                      {todayTides
+                        .filter(tide => tide.time.includes('AM'))
+                        .map((tide, index) => (
+                          <span key={`am-${index}`} className="text-xs">
+                            {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height}ft)
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                  
+                  {/* PM Tides */}
+                  <div>
+                    <div className="font-medium text-xs mb-1">PM</div>
+                    <div className="flex flex-wrap gap-2">
+                      {todayTides
+                        .filter(tide => tide.time.includes('PM'))
+                        .map((tide, index) => (
+                          <span key={`pm-${index}`} className="text-xs">
+                            {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height}ft)
+                          </span>
+                        ))}
+                    </div>
+                  </div>
                 </>
               )}
             </div>
