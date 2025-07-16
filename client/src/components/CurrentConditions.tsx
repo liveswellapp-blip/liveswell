@@ -205,7 +205,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <Skeleton className="h-4 w-32 bg-white/20" />
                   ) : (
                     <>
-                      <span>{conditions?.windDirection || "N/A"}</span>
+                      <span>Direction: {conditions?.windDirection || "N/A"}</span>
                       <span>Gusts: {conditions?.windGusts || "0"} mph</span>
                     </>
                   )}
