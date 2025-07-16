@@ -6,6 +6,14 @@ import { z } from "zod";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
+// Log API key status on startup
+if (API_KEY === "demo_key" || !API_KEY || API_KEY.length < 10) {
+  console.warn("⚠️  No valid OpenWeather API key configured - using demo data");
+  console.warn("   To use real weather data, set OPENWEATHER_API_KEY environment variable");
+} else {
+  console.log("✅ OpenWeather API key configured - real weather data available");
+}
+
 interface OpenWeatherMarineResponse {
   coord: { lat: number; lon: number };
   weather: Array<{ main: string; description: string }>;

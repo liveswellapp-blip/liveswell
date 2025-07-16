@@ -1,10 +1,51 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+
+// Validate required environment variables for production
+function validateEnvironment() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const missingSecrets = [];
+  
+  if (isProduction) {
+    if (!process.env.SESSION_SECRET) {
+      missingSecrets.push('SESSION_SECRET');
+    }
+    if (!process.env.OPENWEATHER_API_KEY) {
+      missingSecrets.push('OPENWEATHER_API_KEY');
+    }
+  }
+  
+  if (missingSecrets.length > 0) {
+    console.error(`Missing required environment variables: ${missingSecrets.join(', ')}`);
+    if (isProduction) {
+      console.error('Application cannot start in production without these secrets');
+      process.exit(1);
+    } else {
+      console.warn('Running in development mode with demo data due to missing secrets');
+    }
+  }
+  
+  return missingSecrets.length === 0;
+}
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Configure session middleware
+const sessionSecret = process.env.SESSION_SECRET || 'dev-secret-key-change-in-production';
+app.use(session({
+  secret: sessionSecret,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 // 24 hours
+  }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -37,7 +78,13 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    // Validate environment variables
+    validateEnvironment();
+    
+    console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode`);
+    
+    const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -67,5 +114,12 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`API Key configured: ${process.env.OPENWEATHER_API_KEY ? 'Yes' : 'No (using demo data)'}`);
   });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'Unknown error');
+    process.exit(1);
+  }
 })();
