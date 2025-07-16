@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Generate demo forecast data
           const dailyForecasts = [];
-          const days = ['Today', 'Tomorrow', 'Fri', 'Sat', 'Sun'];
+          const days = ['Today', 'Tomorrow', 'Friday', 'Saturday', 'Sunday'];
           
           for (let i = 0; i < 5; i++) {
             const windSpeed = 8 + Math.random() * 12;
@@ -369,7 +369,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Generate demo forecast data as fallback
           const dailyForecasts = [];
-          const days = ['Today', 'Tomorrow', 'Fri', 'Sat', 'Sun'];
+          const days = ['Today', 'Tomorrow', 'Friday', 'Saturday', 'Sunday'];
           
           for (let i = 0; i < 5; i++) {
             const windSpeed = 8 + Math.random() * 12;
@@ -419,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (waveHeight > 5) {
             const qualityBonus = windSpeed < 8 ? "Excellent" : windSpeed < 12 ? "Good" : "Fair";
             dailyForecasts.push({
-              date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+              date: date.toLocaleDateString('en-US', { weekday: 'long' }),
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions: qualityBonus,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(item.wind.deg)}`,
@@ -428,7 +428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           } else {
             dailyForecasts.push({
-              date: date.toLocaleDateString('en-US', { weekday: 'short' }),
+              date: date.toLocaleDateString('en-US', { weekday: 'long' }),
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(item.wind.deg)}`,
