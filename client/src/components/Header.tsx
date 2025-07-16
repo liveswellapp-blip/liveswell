@@ -51,7 +51,6 @@ export default function Header({ onLocationSelect, onGetCurrentLocation, isLoadi
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold ocean-blue">
-              <span className="mr-2">🌊</span>
               SurfCast
             </h1>
           </div>
