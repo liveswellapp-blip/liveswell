@@ -123,6 +123,48 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
           </div>
 
+          {/* Wind Conditions */}
+          <div className="from-sunset-orange to-yellow-400 rounded-lg p-4 bg-[#efefef] text-[#6853a6]">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Wind className="h-5 w-5" />
+                <span className="font-medium">Wind</span>
+              </div>
+              <span className="text-sm opacity-75">Live</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-end space-x-2">
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-16 bg-white/20" />
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold">{conditions?.windSpeed || "0"}</span>
+                      <span className="text-lg mb-1">mph</span>
+                    </>
+                  )}
+                </div>
+                <div className="text-sm mt-2">
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-32 bg-white/20" />
+                  ) : (
+                    <>
+                      <div className="mb-1">
+                        <span>Direction: {conditions?.windDirection || "N/A"}</span>
+                      </div>
+                      <div>
+                        <span>Gusts: {conditions?.windGusts || "0"} mph</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+
+            </div>
+          </div>
+
           {/* Tide Information */}
           <div className="from-sea-green to-sky-blue rounded-lg p-4 bg-[#efefef] text-[#004182]">
             <div className="flex items-center justify-between mb-2">
@@ -180,48 +222,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   </div>
                 </>
               )}
-            </div>
-          </div>
-
-          {/* Wind Conditions */}
-          <div className="from-sunset-orange to-yellow-400 rounded-lg p-4 bg-[#efefef] text-[#6853a6]">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Wind className="h-5 w-5" />
-                <span className="font-medium">Wind</span>
-              </div>
-              <span className="text-sm opacity-75">Live</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-end space-x-2">
-                  {isLoading ? (
-                    <Skeleton className="h-8 w-16 bg-white/20" />
-                  ) : (
-                    <>
-                      <span className="text-3xl font-bold">{conditions?.windSpeed || "0"}</span>
-                      <span className="text-lg mb-1">mph</span>
-                    </>
-                  )}
-                </div>
-                <div className="text-sm mt-2">
-                  {isLoading ? (
-                    <Skeleton className="h-4 w-32 bg-white/20" />
-                  ) : (
-                    <>
-                      <div className="mb-1">
-                        <span>Direction: {conditions?.windDirection || "N/A"}</span>
-                      </div>
-                      <div>
-                        <span>Gusts: {conditions?.windGusts || "0"} mph</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-              
-
             </div>
           </div>
         </div>
