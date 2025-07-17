@@ -56,7 +56,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="Search coastal cities..."
+                  placeholder="Search Location"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full px-4 py-2 pl-10 pr-4 bg-alice-blue border-sky-blue focus:ring-2 focus:ring-ocean-blue focus:border-transparent"
