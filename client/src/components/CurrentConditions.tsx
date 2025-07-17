@@ -97,7 +97,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     <section className="container mx-auto px-4 py-6">
       <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
         <h1 className="text-2xl font-bold dark:text-emerald-400 mb-4 text-[#ffffff]">Live Conditions</h1>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 text-[#ffffff]">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
               locationId={location.id} 
