@@ -216,9 +216,20 @@ export default function TideChart({ tides, date }: TideChartProps) {
                   y1={curveY}
                   x2={x}
                   y2="50"
-                  stroke={tide.type === 'high' ? "#dc2626" : "#059669"}
+                  stroke="#2563eb"
                   strokeWidth="1.5"
                   opacity="0.7"
+                  className="dark:hidden"
+                />
+                <line
+                  x1={x}
+                  y1={curveY}
+                  x2={x}
+                  y2="50"
+                  stroke="#10b981"
+                  strokeWidth="1.5"
+                  opacity="0.7"
+                  className="hidden dark:block"
                 />
               </g>
             );
