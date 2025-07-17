@@ -191,42 +191,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
             className="hidden dark:block"
           />
           
-          {/* Major tide markers */}
-          {majorTides.map((tide, index) => {
-            // Find the closest data point in our high-resolution interpolated data
-            const closestDataPoint = hourlyData.reduce((closest, point) => {
-              const currentDistance = Math.abs(point.hour - tide.hour);
-              const closestDistance = Math.abs(closest.hour - tide.hour);
-              return currentDistance < closestDistance ? point : closest;
-            });
-            
-            // Use the interpolated curve's coordinate system for perfect alignment
-            const dataPointIndex = hourlyData.indexOf(closestDataPoint);
-            const x = (dataPointIndex / (hourlyData.length - 1)) * 100;
-            const normalizedHeight = ((closestDataPoint.height - minHeight) / heightRange);
-            const y = 50 - (normalizedHeight * 50);
-            
-            return (
-              <g key={index}>
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="2.5"
-                  fill={tide.type === 'high' ? "#dc2626" : "#059669"}
-                  stroke="white"
-                  strokeWidth="1.5"
-                />
-                {/* Add a subtle glow effect */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="4"
-                  fill={tide.type === 'high' ? "#dc2626" : "#059669"}
-                  opacity="0.2"
-                />
-              </g>
-            );
-          })}
+
           
           {/* Current time indicator line - only show for today */}
           {isToday && (
@@ -252,25 +217,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
                 className="hidden dark:block"
               />
               
-              {/* Current time marker dot */}
-              <circle
-                cx={currentTimeX}
-                cy="2"
-                r="2"
-                fill="#2563eb"
-                stroke="white"
-                strokeWidth="1"
-                className="dark:hidden"
-              />
-              <circle
-                cx={currentTimeX}
-                cy="2"
-                r="2"
-                fill="#10b981"
-                stroke="white"
-                strokeWidth="1"
-                className="hidden dark:block"
-              />
+
             </>
           )}
         </svg>
@@ -295,11 +242,6 @@ export default function TideChart({ tides, date }: TideChartProps) {
           {majorTides.map((tide, index) => (
             <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-emerald-950/30 rounded-md">
               <div className="flex items-center space-x-2">
-                <div 
-                  className={`w-3 h-3 rounded-full ${
-                    tide.type === 'high' ? 'bg-red-500' : 'bg-green-600'
-                  }`}
-                />
                 <span className="text-sm font-medium text-gray-700 dark:text-emerald-300">
                   {tide.type === 'high' ? 'High' : 'Low'} Tide
                 </span>
