@@ -10,7 +10,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-[#4087f1] text-[20px] font-bold">LiveSwell</h1>
+            <h1 className="text-black dark:text-white text-[20px] font-bold">LiveSwell</h1>
           </div>
           
 
@@ -21,12 +21,12 @@ export default function Header() {
               variant="ghost" 
               size="icon" 
               onClick={toggleTheme}
-              className="text-[#4087f1] hover:text-[#87CEEB]"
+              className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300"
               title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
             >
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="text-[#4087f1] hover:text-[#87CEEB]">
+            <Button variant="ghost" size="icon" className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300">
               <Settings className="h-5 w-5" />
             </Button>
           </div>

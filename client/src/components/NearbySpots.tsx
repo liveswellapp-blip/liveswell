@@ -18,7 +18,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
     return (
       <section className="container mx-auto px-4 py-6">
         <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-          <h3 className="text-xl font-semibold mb-4 text-foreground">Nearby Surf Spots</h3>
+          <h3 className="text-xl font-semibold mb-4 text-black dark:text-white">Nearby Surf Spots</h3>
           <div className="text-center text-red-600">
             <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
           </div>
@@ -30,7 +30,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
   return (
     <section className="container mx-auto px-4 py-6">
       <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-        <h3 className="text-xl font-semibold mb-4 text-foreground">Nearby Surf Spots</h3>
+        <h3 className="text-xl font-semibold mb-4 text-black dark:text-white">Nearby Surf Spots</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {isLoading ? (
@@ -63,24 +63,24 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div>
-                    <h4 className="font-semibold text-foreground">{spot.name}</h4>
-                    <p className="text-sm text-muted-foreground">{spot.distance} miles away</p>
+                    <h4 className="font-semibold text-black dark:text-white">{spot.name}</h4>
+                    <p className="text-sm text-black dark:text-white">{spot.distance} miles away</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Waves className="text-primary h-4 w-4" />
-                    <span className="font-medium text-foreground">{spot.waveHeight}</span>
+                    <Waves className="text-black dark:text-white h-4 w-4" />
+                    <span className="font-medium text-black dark:text-white">{spot.waveHeight}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Wind className="text-[#FF6347] h-4 w-4" />
-                    <span className="text-sm text-muted-foreground">{spot.wind}</span>
+                    <Wind className="text-black dark:text-white h-4 w-4" />
+                    <span className="text-sm text-black dark:text-white">{spot.wind}</span>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center text-muted-foreground">
+            <div className="col-span-full text-center text-black dark:text-white">
               <p>No nearby surf spots found</p>
             </div>
           )}
