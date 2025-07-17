@@ -276,10 +276,6 @@ export default function TideChart({ tides, date }: TideChartProps) {
       
       {/* Tide Schedule */}
       <div className="space-y-3">
-        <div className="text-sm font-medium text-gray-700 dark:text-emerald-300 border-b border-gray-200 dark:border-emerald-700 pb-1">
-          Today's Tides
-        </div>
-        
         <div className="grid grid-cols-1 gap-2">
           {majorTides.map((tide, index) => (
             <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-emerald-950/30 rounded-md">
