@@ -21,9 +21,12 @@ export default function TideChart({ tides, date }: TideChartProps) {
     return hours + minutes / 60;
   };
 
-  // Generate hourly tide data using actual tide points for interpolation
+  // Generate high-resolution tide data for precise curve and marker alignment
   const generateTideData = () => {
-    const hours = Array.from({ length: 24 }, (_, i) => i);
+    // Create high-resolution data points (every 10 minutes = 144 points per day)
+    const resolution = 144;
+    const timeStep = 24 / resolution;
+    const times = Array.from({ length: resolution }, (_, i) => i * timeStep);
     
     // Convert tide points to hours with their heights
     const tidePoints = tides.map(tide => ({
@@ -32,16 +35,22 @@ export default function TideChart({ tides, date }: TideChartProps) {
       type: tide.type
     })).sort((a, b) => a.hour - b.hour);
     
-    const tideData = hours.map(hour => {
+    const getHeightAtTime = (time: number) => {
+      // Check if this time matches exactly with a tide point
+      const exactMatch = tidePoints.find(tide => Math.abs(tide.hour - time) < 0.01);
+      if (exactMatch) {
+        return exactMatch.height;
+      }
+      
       // Find the two closest tide points for interpolation
       let beforeTide = tidePoints[tidePoints.length - 1]; // Default to last tide (wraps around)
       let afterTide = tidePoints[0]; // Default to first tide
       
       for (let i = 0; i < tidePoints.length; i++) {
-        if (tidePoints[i].hour <= hour) {
+        if (tidePoints[i].hour <= time) {
           beforeTide = tidePoints[i];
         }
-        if (tidePoints[i].hour > hour) {
+        if (tidePoints[i].hour > time) {
           afterTide = tidePoints[i];
           break;
         }
@@ -52,26 +61,26 @@ export default function TideChart({ tides, date }: TideChartProps) {
       if (beforeTide.hour > afterTide.hour) {
         // Wraps around midnight
         const totalTime = (24 - beforeTide.hour) + afterTide.hour;
-        const currentTime = hour >= beforeTide.hour ? (hour - beforeTide.hour) : (24 - beforeTide.hour + hour);
+        const currentTime = time >= beforeTide.hour ? (time - beforeTide.hour) : (24 - beforeTide.hour + time);
         interpolationFactor = currentTime / totalTime;
       } else {
         timeDiff = afterTide.hour - beforeTide.hour;
-        interpolationFactor = timeDiff > 0 ? (hour - beforeTide.hour) / timeDiff : 0;
+        interpolationFactor = timeDiff > 0 ? (time - beforeTide.hour) / timeDiff : 0;
       }
       
-      // Use cubic interpolation for smoother tide curves
+      // Use cosine interpolation for smooth tide curves that pass through exact points
       const t = Math.max(0, Math.min(1, interpolationFactor));
-      const smoothT = t * t * (3 - 2 * t); // Smooth step function
+      const cosineT = (1 - Math.cos(t * Math.PI)) / 2;
       
       heightDiff = afterTide.height - beforeTide.height;
-      const interpolatedHeight = beforeTide.height + heightDiff * smoothT;
-      
-      return {
-        hour,
-        height: interpolatedHeight,
-        time: `${hour.toString().padStart(2, '0')}:00`
-      };
-    });
+      return beforeTide.height + heightDiff * cosineT;
+    };
+    
+    const tideData = times.map(time => ({
+      hour: time,
+      height: getHeightAtTime(time),
+      time: `${Math.floor(time).toString().padStart(2, '0')}:${Math.floor((time % 1) * 60).toString().padStart(2, '0')}`
+    }));
     
     return tideData;
   };
@@ -184,8 +193,17 @@ export default function TideChart({ tides, date }: TideChartProps) {
           
           {/* Major tide markers */}
           {majorTides.map((tide, index) => {
-            const x = (tide.hour / 24) * 100;
-            const normalizedHeight = ((tide.height - minHeight) / heightRange);
+            // Find the closest data point in our high-resolution interpolated data
+            const closestDataPoint = hourlyData.reduce((closest, point) => {
+              const currentDistance = Math.abs(point.hour - tide.hour);
+              const closestDistance = Math.abs(closest.hour - tide.hour);
+              return currentDistance < closestDistance ? point : closest;
+            });
+            
+            // Use the interpolated curve's coordinate system for perfect alignment
+            const dataPointIndex = hourlyData.indexOf(closestDataPoint);
+            const x = (dataPointIndex / (hourlyData.length - 1)) * 100;
+            const normalizedHeight = ((closestDataPoint.height - minHeight) / heightRange);
             const y = 50 - (normalizedHeight * 50);
             
             return (
@@ -193,10 +211,18 @@ export default function TideChart({ tides, date }: TideChartProps) {
                 <circle
                   cx={x}
                   cy={y}
-                  r="2"
+                  r="2.5"
                   fill={tide.type === 'high' ? "#dc2626" : "#059669"}
                   stroke="white"
-                  strokeWidth="1"
+                  strokeWidth="1.5"
+                />
+                {/* Add a subtle glow effect */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="4"
+                  fill={tide.type === 'high' ? "#dc2626" : "#059669"}
+                  opacity="0.2"
                 />
               </g>
             );
