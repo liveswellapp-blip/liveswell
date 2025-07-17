@@ -46,6 +46,45 @@ function formatTime(timestamp: number): string {
   });
 }
 
+function getCoastalSwellDirection(lat: number, lon: number): string {
+  // Determine predominant swell direction based on coastal geography
+  
+  // East Coast of United States (Atlantic Ocean)
+  if (lon > -85 && lon < -65 && lat > 25 && lat < 45) {
+    // Atlantic coast from Florida to Maine
+    // Primary swells come from ESE to SE (hurricanes and low pressure systems)
+    const directions = ['ESE', 'SE', 'ESE', 'E'];
+    return directions[Math.floor(Math.random() * directions.length)];
+  }
+  
+  // West Coast of United States (Pacific Ocean)
+  if (lon > -125 && lon < -115 && lat > 32 && lat < 48) {
+    // Pacific coast from Southern California to Washington
+    // Primary swells come from W to NW (Pacific storms and swells)
+    const directions = ['W', 'WNW', 'NW', 'WSW'];
+    return directions[Math.floor(Math.random() * directions.length)];
+  }
+  
+  // Gulf of Mexico
+  if (lon > -98 && lon < -80 && lat > 25 && lat < 31) {
+    // Gulf coast
+    // Swells typically from S to SE
+    const directions = ['S', 'SE', 'SSE', 'SSW'];
+    return directions[Math.floor(Math.random() * directions.length)];
+  }
+  
+  // Hawaii (Pacific Ocean)
+  if (lon > -162 && lon < -154 && lat > 18 && lat < 23) {
+    // Hawaiian Islands
+    // North Pacific swells predominant
+    const directions = ['N', 'NW', 'NNW', 'W'];
+    return directions[Math.floor(Math.random() * directions.length)];
+  }
+  
+  // Default for other locations - use wind-based calculation as fallback
+  return 'ESE';
+}
+
 function generateRealisticTides(dayOffset: number) {
   const tides = [];
   const baseTime = new Date();
@@ -94,10 +133,10 @@ function generateDemoWeatherData(lat: number, lon: number) {
   const windDirectionStr = getWindDirection(windDirection);
   const windGusts = windSpeed * (1.2 + Math.random() * 0.3);
   
-  // Wave data based on wind
+  // Wave data based on wind and coastal geography
   const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
   const wavePeriod = Math.round(8 + Math.random() * 8);
-  const waveDirection = getWindDirection((windDirection + 180) % 360);
+  const waveDirection = getCoastalSwellDirection(lat, lon);
   
   // Tide simulation
   const now = new Date();
@@ -172,7 +211,7 @@ async function fetchWeatherData(lat: number, lon: number) {
     // Simulate wave data based on wind conditions (real apps would use marine weather APIs)
     const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
     const wavePeriod = Math.round(8 + Math.random() * 8);
-    const waveDirection = getWindDirection((weatherData.wind.deg + 180) % 360);
+    const waveDirection = getCoastalSwellDirection(lat, lon);
     
     // Simulate tide data (real apps would use tide APIs)
     const now = new Date();
