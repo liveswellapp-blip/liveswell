@@ -104,6 +104,15 @@ export default function TideChart({ tides, date }: TideChartProps) {
     type: tide.type
   }));
 
+  // Calculate current time position for the indicator line
+  const getCurrentTimePosition = () => {
+    const now = new Date();
+    const currentHour = now.getHours() + now.getMinutes() / 60;
+    return (currentHour / 24) * 100; // Convert to percentage of 24-hour day
+  };
+
+  const currentTimeX = getCurrentTimePosition();
+
   return (
     <div className="mt-3 p-3 bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg">
       <div className="flex items-center justify-between mb-2">
@@ -168,6 +177,39 @@ export default function TideChart({ tides, date }: TideChartProps) {
               </g>
             );
           })}
+          
+          {/* Current time indicator line */}
+          <line
+            x1={currentTimeX}
+            y1="0"
+            x2={currentTimeX}
+            y2="40"
+            stroke="#ff6b35"
+            strokeWidth="1.5"
+            strokeDasharray="2,2"
+            opacity="0.8"
+          />
+          
+          {/* Current time marker dot */}
+          <circle
+            cx={currentTimeX}
+            cy="2"
+            r="2"
+            fill="#ff6b35"
+            stroke="white"
+            strokeWidth="1"
+          />
+          
+          {/* Current time label */}
+          <text
+            x={currentTimeX}
+            y="-2"
+            textAnchor="middle"
+            className="text-xs fill-orange-600 font-medium"
+            fontSize="3"
+          >
+            NOW
+          </text>
         </svg>
         
         {/* Time labels */}
