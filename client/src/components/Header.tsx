@@ -88,21 +88,8 @@ export default function Header({ onLocationSelect, onGetCurrentLocation, isLoadi
             )}
           </div>
 
-          {/* Location & Settings */}
+          {/* Settings */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onGetCurrentLocation}
-              disabled={isLoadingLocation}
-              className="ocean-blue hover:sky-blue"
-            >
-              {isLoadingLocation ? (
-                <Loader className="h-5 w-5 animate-spin" />
-              ) : (
-                <MapPin className="h-5 w-5" />
-              )}
-            </Button>
             <Button variant="ghost" size="icon" className="ocean-blue hover:sky-blue">
               <Settings className="h-5 w-5" />
             </Button>

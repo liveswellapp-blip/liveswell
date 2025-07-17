@@ -13,16 +13,7 @@ export default function Navigation() {
             <h1 className="text-xl font-bold text-gray-800">SurfCast</h1>
           </div>
           <div className="flex items-center space-x-2">
-            <Button
-              variant={location === "/" ? "default" : "ghost"}
-              size="sm"
-              asChild
-            >
-              <Link href="/">
-                <Home className="h-4 w-4 mr-2" />
-                Home
-              </Link>
-            </Button>
+            
             <Button
               variant={location === "/favorites" ? "default" : "ghost"}
               size="sm"
