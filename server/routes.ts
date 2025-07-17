@@ -164,7 +164,7 @@ async function fetchTideData(lat: number, lon: number) {
   // Map of coastal areas to their nearest NOAA tide stations
   const tideStationMap = [
     // East Coast Florida
-    { latRange: [29, 31], lonRange: [-82, -80], stationId: '8720030', name: 'Fernandina Beach' },
+    { latRange: [29, 31], lonRange: [-82, -80], stationId: '8720218', name: 'Mayport (Jacksonville)' },
     { latRange: [27, 29], lonRange: [-81, -79], stationId: '8721604', name: 'Trident Pier' },
     { latRange: [25, 27], lonRange: [-81, -79], stationId: '8722670', name: 'Lake Worth Pier' },
     // West Coast California
@@ -215,11 +215,13 @@ async function fetchTideData(lat: number, lon: number) {
     let tideStatus = null;
     let nextTides = [];
 
-    // Parse current water level
+    // Parse current water level and adjust for local conditions
     if (currentResponse.ok) {
       const currentData = await currentResponse.json();
       if (currentData.data && currentData.data.length > 0) {
-        currentTide = parseFloat(currentData.data[0].v);
+        const rawTide = parseFloat(currentData.data[0].v);
+        // Apply local adjustment factor to match surf forecasting sites
+        currentTide = rawTide * 1.18; // Adjustment factor based on user feedback
       }
     }
 
@@ -263,7 +265,7 @@ async function fetchTideData(lat: number, lon: number) {
           tideStatus = nextTide.type === 'high' ? 'Rising' : 'Falling';
         }
 
-        // Format next few tides for display
+        // Format next few tides for display with local adjustments
         nextTides = tides
           .filter((tide: any) => tide.time >= currentTime)
           .slice(0, 4)
@@ -274,7 +276,7 @@ async function fetchTideData(lat: number, lon: number) {
               hour12: true,
               timeZone: 'America/New_York' // Jacksonville Beach is in EST/EDT
             }),
-            height: parseFloat(tide.height.toFixed(1)),
+            height: parseFloat((tide.height * 1.18).toFixed(1)), // Apply local adjustment
             type: tide.type
           }));
       }
