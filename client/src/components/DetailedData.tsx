@@ -18,7 +18,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
       <div className="grid grid-cols-1 gap-6">
         {/* Marine Weather */}
         <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-emerald-400">Marine Weather</h3>
+          <h3 className="text-xl font-semibold mb-4 dark:text-emerald-400 text-[#ffffff]">Marine Weather</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
