@@ -117,10 +117,10 @@ export default function TideChart({ tides, date }: TideChartProps) {
   const isToday = date === "today" || date === "Today";
 
   return (
-    <div className="mt-3 p-3 bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg">
+    <div className="mt-3 p-3 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-gray-700">Tides</span>
-        <span className="text-xs text-gray-500">24hr</span>
+        <span className="text-xs font-medium text-gray-700 dark:text-emerald-300">Tides</span>
+        <span className="text-xs text-gray-500 dark:text-emerald-400">24hr</span>
       </div>
       
       {/* Tide Chart SVG */}
@@ -132,8 +132,12 @@ export default function TideChart({ tides, date }: TideChartProps) {
         >
           <defs>
             <linearGradient id={`tideGradient-${date}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#1e40af" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" className="dark:hidden" />
+              <stop offset="100%" stopColor="#1e40af" stopOpacity="0.1" className="dark:hidden" />
+            </linearGradient>
+            <linearGradient id={`tideGradientDark-${date}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#047857" stopOpacity="0.1" />
             </linearGradient>
           </defs>
           
@@ -148,6 +152,13 @@ export default function TideChart({ tides, date }: TideChartProps) {
           <path
             d={`${createTidePath()} L 100,40 L 0,40 Z`}
             fill={`url(#tideGradient-${date})`}
+            className="dark:hidden"
+            stroke="none"
+          />
+          <path
+            d={`${createTidePath()} L 100,40 L 0,40 Z`}
+            fill={`url(#tideGradientDark-${date})`}
+            className="hidden dark:block"
             stroke="none"
           />
           
@@ -159,6 +170,16 @@ export default function TideChart({ tides, date }: TideChartProps) {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            className="dark:hidden"
+          />
+          <path
+            d={createTidePath()}
+            fill="none"
+            stroke="#10b981"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="hidden dark:block"
           />
           
           {/* Major tide markers */}
@@ -192,6 +213,17 @@ export default function TideChart({ tides, date }: TideChartProps) {
                 stroke="#2563eb"
                 strokeWidth="1.5"
                 opacity="0.8"
+                className="dark:hidden"
+              />
+              <line
+                x1={currentTimeX}
+                y1="0"
+                x2={currentTimeX}
+                y2="40"
+                stroke="#10b981"
+                strokeWidth="1.5"
+                opacity="0.8"
+                className="hidden dark:block"
               />
               
               {/* Current time marker dot */}
@@ -202,13 +234,23 @@ export default function TideChart({ tides, date }: TideChartProps) {
                 fill="#2563eb"
                 stroke="white"
                 strokeWidth="1"
+                className="dark:hidden"
+              />
+              <circle
+                cx={currentTimeX}
+                cy="2"
+                r="2"
+                fill="#10b981"
+                stroke="white"
+                strokeWidth="1"
+                className="hidden dark:block"
               />
             </>
           )}
         </svg>
         
         {/* Time labels */}
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 dark:text-emerald-500 mt-1">
           <span>12a</span>
           <span>6a</span>
           <span>12p</span>
@@ -221,7 +263,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
       <div className="space-y-1">
         {/* AM Tides */}
         <div className="text-xs">
-          <div className="font-medium text-gray-700 mb-1">AM</div>
+          <div className="font-medium text-gray-700 dark:text-emerald-300 mb-1">AM</div>
           <div className="grid grid-cols-2 gap-1">
             {majorTides
               .filter(tide => tide.time.includes('AM'))
@@ -232,7 +274,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
                       tide.type === 'high' ? 'bg-red-500' : 'bg-green-600'
                     }`}
                   />
-                  <span className="text-gray-600">
+                  <span className="text-gray-600 dark:text-emerald-400">
                     {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height.toFixed(1)}ft)
                   </span>
                 </div>
@@ -242,7 +284,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
         
         {/* PM Tides */}
         <div className="text-xs">
-          <div className="font-medium text-gray-700 mb-1">PM</div>
+          <div className="font-medium text-gray-700 dark:text-emerald-300 mb-1">PM</div>
           <div className="grid grid-cols-2 gap-1">
             {majorTides
               .filter(tide => tide.time.includes('PM'))
@@ -253,7 +295,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
                       tide.type === 'high' ? 'bg-red-500' : 'bg-green-600'
                     }`}
                   />
-                  <span className="text-gray-600">
+                  <span className="text-gray-600 dark:text-emerald-400">
                     {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height.toFixed(1)}ft)
                   </span>
                 </div>
