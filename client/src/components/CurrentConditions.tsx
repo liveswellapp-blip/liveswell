@@ -99,13 +99,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         <h1 className="text-2xl font-bold text-gray-800 mb-4">Live Conditions</h1>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <MapPin className="sunset-orange h-5 w-5" />
-            <h2 className="text-xl font-semibold dark-slate">{location.name}</h2>
             <FavoriteButton 
               locationId={location.id} 
               locationName={location.name}
               size="sm"
             />
+            <h2 className="text-xl font-semibold dark-slate">{location.name}, {location.city}, {location.country}</h2>
           </div>
           
         </div>
