@@ -8,9 +8,8 @@ export default function Favorites() {
   const [, setLocation] = useLocation();
 
   const handleLocationSelect = (location: Location) => {
-    // Navigate to home page with this location
-    // For now, just navigate to home - in a real app we'd pass location state
-    setLocation("/");
+    // Navigate to home page with location name as URL parameter
+    setLocation(`/?location=${encodeURIComponent(location.name)}`);
   };
 
   return (

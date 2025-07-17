@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import Navigation from "@/components/Navigation";
 import Header from "@/components/Header";
 import CurrentConditions from "@/components/CurrentConditions";
@@ -12,6 +13,13 @@ import { Location } from "@/types/weather";
 export default function Home() {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [location] = useLocation();
+
+  // Get location name from URL parameters
+  const getLocationNameFromUrl = () => {
+    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    return urlParams.get('location');
+  };
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -42,9 +50,28 @@ export default function Home() {
     );
   };
 
-  // Load default location on mount
+  // Load location based on URL parameter or default
   useEffect(() => {
-    const loadDefaultLocation = async () => {
+    const loadLocation = async () => {
+      const locationName = getLocationNameFromUrl();
+      
+      if (locationName) {
+        // Load specific location by name
+        try {
+          const response = await fetch(`/api/locations/search?q=${encodeURIComponent(locationName)}`);
+          if (response.ok) {
+            const locations = await response.json();
+            if (locations.length > 0) {
+              setCurrentLocation(locations[0]);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Error loading location by name:", error);
+        }
+      }
+      
+      // Fallback to default location
       try {
         const response = await fetch("/api/locations/search?q=Malibu");
         if (response.ok) {
@@ -58,8 +85,8 @@ export default function Home() {
       }
     };
 
-    loadDefaultLocation();
-  }, []);
+    loadLocation();
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-alice-blue">

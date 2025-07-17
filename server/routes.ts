@@ -257,6 +257,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get location by ID
+  app.get("/api/locations/:id", async (req, res) => {
+    try {
+      const locationId = parseInt(req.params.id);
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+      
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      
+      res.json(location);
+    } catch (error) {
+      console.error('Get location error:', error);
+      res.status(500).json({ message: "Failed to get location" });
+    }
+  });
+
   // Get surf conditions for a location
   app.get("/api/locations/:id/conditions", async (req, res) => {
     try {
