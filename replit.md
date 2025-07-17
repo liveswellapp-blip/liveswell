@@ -109,6 +109,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ Enhanced user experience with smooth theme transitions across entire application
 - ✅ Applied ocean-themed color scheme: dark blue (text-blue-900) for light mode, emerald green (text-emerald-400) for dark mode
 - ✅ Updated all text, icons, and UI elements across Header, CurrentConditions, ForecastSection, DetailedData, NearbySpots, FavoritesList
+- ✅ Added branded logo images: blue LiveSwell logo for light mode, emerald green LiveSwell logo for dark mode
 - ✅ Consistent color application throughout entire application for enhanced visual coherence and ocean aesthetic
 
 ### 2025-07-17: Tide Chart Time Indicator Enhancement
