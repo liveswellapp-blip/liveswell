@@ -48,19 +48,18 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-4">
-          </div>
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-center h-16 w-full">
+          {/* Centered container for search and favorites */}
+          <div className="flex items-center space-x-6 w-full max-w-4xl justify-center">
             {/* Search Bar */}
-            <div className="relative" ref={searchRef}>
+            <div className="relative flex-1 max-w-lg" ref={searchRef}>
               <div className="relative">
                 <Input
                   type="text"
                   placeholder="Search coastal cities..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-64 px-4 py-2 pl-10 pr-4 bg-alice-blue border-sky-blue focus:ring-2 focus:ring-ocean-blue focus:border-transparent"
+                  className="w-full px-4 py-2 pl-10 pr-4 bg-alice-blue border-sky-blue focus:ring-2 focus:ring-ocean-blue focus:border-transparent"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 ocean-blue h-4 w-4" />
               </div>
@@ -87,10 +86,12 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               )}
             </div>
             
+            {/* Favorites Button - styled to match and complement the search bar */}
             <Button
-              variant={location === "/favorites" ? "default" : "ghost"}
-              size="sm"
+              variant={location === "/favorites" ? "default" : "outline"}
+              size="default"
               asChild
+              className="px-6 py-2 h-10 whitespace-nowrap bg-white hover:bg-alice-blue border-sky-blue text-gray-700 hover:text-ocean-blue transition-colors"
             >
               <Link href="/favorites">
                 <Heart className="h-4 w-4 mr-2" />
