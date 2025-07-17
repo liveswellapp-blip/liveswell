@@ -8,7 +8,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="font-bold ocean-blue text-[14px] text-[#4087f1]">LIVESWELL</h1>
+            <h1 className="ocean-blue text-[#4087f1] text-[20px] font-bold">LiveSwell</h1>
           </div>
           
 
