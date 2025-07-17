@@ -215,13 +215,11 @@ async function fetchTideData(lat: number, lon: number) {
     let tideStatus = null;
     let nextTides = [];
 
-    // Parse current water level and adjust for local conditions
+    // Parse current water level from NOAA data
     if (currentResponse.ok) {
       const currentData = await currentResponse.json();
       if (currentData.data && currentData.data.length > 0) {
-        const rawTide = parseFloat(currentData.data[0].v);
-        // Apply local adjustment factor to match surf forecasting sites
-        currentTide = rawTide * 1.18; // Adjustment factor based on user feedback
+        currentTide = parseFloat(currentData.data[0].v);
       }
     }
 
@@ -265,7 +263,7 @@ async function fetchTideData(lat: number, lon: number) {
           tideStatus = nextTide.type === 'high' ? 'Rising' : 'Falling';
         }
 
-        // Format next few tides for display with local adjustments
+        // Format next few tides for display
         nextTides = tides
           .filter((tide: any) => tide.time >= currentTime)
           .slice(0, 4)
@@ -276,7 +274,7 @@ async function fetchTideData(lat: number, lon: number) {
               hour12: true,
               timeZone: 'America/New_York' // Jacksonville Beach is in EST/EDT
             }),
-            height: parseFloat((tide.height * 1.18).toFixed(1)), // Apply local adjustment
+            height: parseFloat(tide.height.toFixed(1)),
             type: tide.type
           }));
       }

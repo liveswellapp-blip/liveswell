@@ -86,6 +86,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-17: Real Marine Weather Data Integration
+- ✅ Integrated authentic NOAA buoy data for accurate wave conditions (replaced simulated data)
+- ✅ Connected to NOAA National Data Buoy Center (NDBC) for real-time wave heights and periods
+- ✅ Implemented NOAA tide station data using Tides and Currents API for authentic tide information
+- ✅ Fixed wave direction calculations using geographical coastal orientation instead of wind-based estimates
+- ✅ Added comprehensive buoy mapping for East Coast Florida (Jacksonville Beach uses buoy 41112)
+- ✅ Implemented tide station mapping for accurate local tide data (Jacksonville Beach uses Mayport station 8720218)
+- ✅ Enhanced timezone handling for proper local time display in Eastern Time zone
+- ✅ Added automatic fallback to simulated data for locations without nearby monitoring stations
+- ✅ Jacksonville Beach now displays: 2.3 ft waves (6-sec period), ESE direction, accurate tide data from official NOAA sources
+
 ### 2025-07-17: Personalized Favorites Feature Implementation
 - ✅ Added personalized surf spot favorites list functionality with full CRUD operations
 - ✅ Created favorites database table with user-location relationships and timestamps
