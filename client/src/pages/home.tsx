@@ -17,7 +17,7 @@ export default function Home() {
 
   // Get location name from URL parameters
   const getLocationNameFromUrl = () => {
-    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('location');
   };
 
@@ -86,7 +86,7 @@ export default function Home() {
     };
 
     loadLocation();
-  }, [location]);
+  }, [location, window.location.search]);
 
   return (
     <div className="min-h-screen bg-alice-blue">
