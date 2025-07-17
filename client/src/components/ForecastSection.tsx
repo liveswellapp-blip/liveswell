@@ -56,7 +56,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   </div>
                   <div className="flex items-center space-x-2 font-semibold ocean-blue mb-1 text-[25px] text-[#4087f1]">
                     <Waves className="h-[25px] w-[25px]" />
-                    <span>{day.waveHeight}</span>
+                    <span className="text-[#334252]">{day.waveHeight}</span>
                   </div>
                   <div className="flex items-center space-x-2 mb-2 text-[18px] text-[#6853a5]">
                     <Wind className="h-[18px] w-[18px]" />
