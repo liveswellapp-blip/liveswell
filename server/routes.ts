@@ -160,6 +160,123 @@ async function fetchMarineData(lat: number, lon: number) {
   }
 }
 
+async function fetchTideData(lat: number, lon: number) {
+  // Map of coastal areas to their nearest NOAA tide stations
+  const tideStationMap = [
+    // East Coast Florida
+    { latRange: [29, 31], lonRange: [-82, -80], stationId: '8720030', name: 'Fernandina Beach' },
+    { latRange: [27, 29], lonRange: [-81, -79], stationId: '8721604', name: 'Trident Pier' },
+    { latRange: [25, 27], lonRange: [-81, -79], stationId: '8722670', name: 'Lake Worth Pier' },
+    // West Coast California
+    { latRange: [33, 35], lonRange: [-119, -117], stationId: '9410840', name: 'San Pedro' },
+    { latRange: [32, 34], lonRange: [-119, -116], stationId: '9410170', name: 'San Diego' },
+    // Gulf Coast
+    { latRange: [25, 31], lonRange: [-98, -80], stationId: '8724580', name: 'Key West' },
+  ];
+
+  // Find the closest tide station
+  let selectedStation = null;
+  for (const station of tideStationMap) {
+    if (lat >= station.latRange[0] && lat <= station.latRange[1] &&
+        lon >= station.lonRange[0] && lon <= station.lonRange[1]) {
+      selectedStation = station;
+      break;
+    }
+  }
+
+  if (!selectedStation) {
+    return { currentTide: null, tideStatus: null, nextTides: [] };
+  }
+
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    // Get current water level
+    const currentResponse = await fetch(
+      `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=${selectedStation.stationId}&product=water_level&datum=MLLW&time_zone=lst_ldt&units=english&format=json`,
+      { signal: controller.signal }
+    );
+
+    // Get tide predictions for today
+    const predictionsResponse = await fetch(
+      `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=${today}&station=${selectedStation.stationId}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&format=json`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    let currentTide = null;
+    let tideStatus = null;
+    let nextTides = [];
+
+    // Parse current water level
+    if (currentResponse.ok) {
+      const currentData = await currentResponse.json();
+      if (currentData.data && currentData.data.length > 0) {
+        currentTide = parseFloat(currentData.data[0].v);
+      }
+    }
+
+    // Parse tide predictions
+    if (predictionsResponse.ok) {
+      const predictionsData = await predictionsResponse.json();
+      if (predictionsData.predictions && predictionsData.predictions.length > 0) {
+        const now = new Date();
+        const currentTime = now.getTime();
+        
+        // Find previous and next tide events to determine status
+        const tides = predictionsData.predictions.map((tide: any) => ({
+          time: new Date(tide.t).getTime(),
+          height: parseFloat(tide.v),
+          type: tide.type === 'H' ? 'high' : 'low'
+        }));
+
+        // Sort by time
+        tides.sort((a: any, b: any) => a.time - b.time);
+
+        // Find current tide status
+        let previousTide = null;
+        let nextTide = null;
+        
+        for (let i = 0; i < tides.length; i++) {
+          if (tides[i].time <= currentTime) {
+            previousTide = tides[i];
+          } else if (!nextTide) {
+            nextTide = tides[i];
+            break;
+          }
+        }
+
+        if (previousTide && nextTide) {
+          tideStatus = nextTide.type === 'high' ? 'Rising' : 'Falling';
+        }
+
+        // Format next few tides for display
+        nextTides = tides
+          .filter((tide: any) => tide.time >= currentTime)
+          .slice(0, 4)
+          .map((tide: any) => ({
+            time: new Date(tide.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+            height: parseFloat(tide.height.toFixed(1)),
+            type: tide.type
+          }));
+      }
+    }
+
+    return {
+      currentTide: currentTide,
+      tideStatus: tideStatus,
+      nextTides: nextTides
+    };
+
+  } catch (error) {
+    console.warn(`Error fetching tide data for station ${selectedStation.stationId}:`, error);
+    return { currentTide: null, tideStatus: null, nextTides: [] };
+  }
+}
+
 function generateRealisticTides(dayOffset: number) {
   const tides = [];
   const baseTime = new Date();
@@ -214,10 +331,10 @@ async function generateDemoWeatherData(lat: number, lon: number) {
   const wavePeriod = marineData.wavePeriod || Math.round(8 + Math.random() * 8);
   const waveDirection = marineData.waveDirection || getCoastalSwellDirection(lat, lon);
   
-  // Tide simulation
-  const now = new Date();
-  const tideHeight = 2 + Math.sin((now.getHours() + now.getMinutes() / 60) * Math.PI / 6) * 2;
-  const tideStatus = Math.sin((now.getHours() + now.getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling";
+  // Fetch real tide data
+  const tideData = await fetchTideData(lat, lon);
+  const tideHeight = tideData.currentTide || (2 + Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) * 2);
+  const tideStatus = tideData.tideStatus || (Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling");
   
   // Temperature based on latitude (rough approximation)
   const baseTemp = 70 - Math.abs(lat - 25) * 0.8;
@@ -290,10 +407,10 @@ async function fetchWeatherData(lat: number, lon: number) {
     const wavePeriod = marineData.wavePeriod || Math.round(8 + Math.random() * 8);
     const waveDirection = marineData.waveDirection || getCoastalSwellDirection(lat, lon);
     
-    // Simulate tide data (real apps would use tide APIs)
-    const now = new Date();
-    const tideHeight = 2 + Math.sin((now.getHours() + now.getMinutes() / 60) * Math.PI / 6) * 2;
-    const tideStatus = Math.sin((now.getHours() + now.getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling";
+    // Fetch real tide data from NOAA stations
+    const tideData = await fetchTideData(lat, lon);
+    const tideHeight = tideData.currentTide || (2 + Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) * 2);
+    const tideStatus = tideData.tideStatus || (Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling");
     
     // Water temperature approximation based on air temp
     const waterTemp = weatherData.main.temp * 0.8;
