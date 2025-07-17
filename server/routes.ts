@@ -85,6 +85,81 @@ function getCoastalSwellDirection(lat: number, lon: number): string {
   return 'ESE';
 }
 
+async function fetchMarineData(lat: number, lon: number) {
+  // Map of coastal areas to their nearest NOAA buoys
+  const buoyMap = [
+    // East Coast Florida
+    { latRange: [29, 31], lonRange: [-82, -80], buoyId: '41112', name: 'Jacksonville' },
+    { latRange: [27, 29], lonRange: [-81, -79], buoyId: '41009', name: 'Canaveral' },
+    { latRange: [25, 27], lonRange: [-81, -79], buoyId: '41010', name: 'Canaveral East' },
+    // West Coast California  
+    { latRange: [33, 35], lonRange: [-119, -117], buoyId: '46025', name: 'Santa Monica Bay' },
+    { latRange: [32, 34], lonRange: [-119, -116], buoyId: '46086', name: 'San Clemente' },
+    // Add more buoys as needed
+  ];
+
+  // Find the closest buoy
+  let selectedBuoy = null;
+  for (const buoy of buoyMap) {
+    if (lat >= buoy.latRange[0] && lat <= buoy.latRange[1] &&
+        lon >= buoy.lonRange[0] && lon <= buoy.lonRange[1]) {
+      selectedBuoy = buoy;
+      break;
+    }
+  }
+
+  if (!selectedBuoy) {
+    return { waveHeight: null, wavePeriod: null, waveDirection: null };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(`https://www.ndbc.noaa.gov/data/realtime2/${selectedBuoy.buoyId}.txt`, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`Buoy ${selectedBuoy.buoyId} data unavailable`);
+      return { waveHeight: null, wavePeriod: null, waveDirection: null };
+    }
+
+    const data = await response.text();
+    const lines = data.trim().split('\n');
+    
+    if (lines.length < 3) {
+      return { waveHeight: null, wavePeriod: null, waveDirection: null };
+    }
+
+    // Parse the most recent data line (line 2, since line 0 is header, line 1 is units)
+    const dataLine = lines[2].split(/\s+/);
+    
+    // NOAA buoy format: YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD...
+    const waveHeightMeters = parseFloat(dataLine[8]); // WVHT (significant wave height in meters)
+    const dominantPeriod = parseInt(dataLine[9]); // DPD (dominant wave period in seconds)
+    const meanWaveDirection = parseInt(dataLine[11]); // MWD (mean wave direction in degrees)
+
+    // Convert meters to feet
+    const waveHeightFeet = waveHeightMeters * 3.28084;
+    
+    // Convert direction degrees to compass direction
+    const waveDirectionStr = !isNaN(meanWaveDirection) ? getWindDirection(meanWaveDirection) : null;
+
+    return {
+      waveHeight: !isNaN(waveHeightFeet) ? waveHeightFeet : null,
+      wavePeriod: !isNaN(dominantPeriod) ? dominantPeriod : null,
+      waveDirection: waveDirectionStr
+    };
+
+  } catch (error) {
+    console.warn(`Error fetching buoy data for ${selectedBuoy.buoyId}:`, error);
+    return { waveHeight: null, wavePeriod: null, waveDirection: null };
+  }
+}
+
 function generateRealisticTides(dayOffset: number) {
   const tides = [];
   const baseTime = new Date();
@@ -126,17 +201,18 @@ function generateRealisticTides(dayOffset: number) {
   return tides;
 }
 
-function generateDemoWeatherData(lat: number, lon: number) {
+async function generateDemoWeatherData(lat: number, lon: number) {
   // Generate realistic demo data based on location
   const windSpeed = 8 + Math.random() * 10; // 8-18 mph
   const windDirection = Math.random() * 360;
   const windDirectionStr = getWindDirection(windDirection);
   const windGusts = windSpeed * (1.2 + Math.random() * 0.3);
   
-  // Wave data based on wind and coastal geography
-  const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
-  const wavePeriod = Math.round(8 + Math.random() * 8);
-  const waveDirection = getCoastalSwellDirection(lat, lon);
+  // Try to fetch real marine data even in demo mode
+  const marineData = await fetchMarineData(lat, lon);
+  const waveHeight = marineData.waveHeight || Math.max(1, windSpeed * 0.3 + Math.random() * 2);
+  const wavePeriod = marineData.wavePeriod || Math.round(8 + Math.random() * 8);
+  const waveDirection = marineData.waveDirection || getCoastalSwellDirection(lat, lon);
   
   // Tide simulation
   const now = new Date();
@@ -174,7 +250,7 @@ async function fetchWeatherData(lat: number, lon: number) {
   // Check if API key is valid (not demo_key and not empty)
   if (!API_KEY || API_KEY === "demo_key" || API_KEY.length < 10) {
     console.log("Using demo data - API key not configured");
-    return generateDemoWeatherData(lat, lon);
+    return await generateDemoWeatherData(lat, lon);
   }
 
   try {
@@ -185,7 +261,7 @@ async function fetchWeatherData(lat: number, lon: number) {
     
     if (!weatherResponse.ok) {
       console.log(`Weather API error: ${weatherResponse.status}, falling back to demo data`);
-      return generateDemoWeatherData(lat, lon);
+      return await generateDemoWeatherData(lat, lon);
     }
     
     const weatherData: OpenWeatherMarineResponse = await weatherResponse.json();
@@ -208,10 +284,11 @@ async function fetchWeatherData(lat: number, lon: number) {
     const windDirection = getWindDirection(weatherData.wind.deg);
     const windGusts = weatherData.wind.gust || windSpeed * 1.2;
     
-    // Simulate wave data based on wind conditions (real apps would use marine weather APIs)
-    const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
-    const wavePeriod = Math.round(8 + Math.random() * 8);
-    const waveDirection = getCoastalSwellDirection(lat, lon);
+    // Fetch real wave data from NOAA buoys
+    const marineData = await fetchMarineData(lat, lon);
+    const waveHeight = marineData.waveHeight || Math.max(1, windSpeed * 0.3 + Math.random() * 2);
+    const wavePeriod = marineData.wavePeriod || Math.round(8 + Math.random() * 8);
+    const waveDirection = marineData.waveDirection || getCoastalSwellDirection(lat, lon);
     
     // Simulate tide data (real apps would use tide APIs)
     const now = new Date();
