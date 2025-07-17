@@ -46,7 +46,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-background border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-center h-16 w-full">
           {/* Centered container for search and favorites */}
@@ -59,24 +59,24 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                   placeholder="Search Location"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full px-4 py-2 pl-10 pr-4 bg-alice-blue border-sky-blue focus:ring-2 focus:ring-ocean-blue focus:border-transparent"
+                  className="w-full px-4 py-2 pl-10 pr-4 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 ocean-blue h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary h-4 w-4" />
               </div>
               
               {/* Search Suggestions */}
               {showSuggestions && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50 max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 bg-popover border border-border rounded-lg shadow-lg mt-1 z-50 max-h-60 overflow-y-auto">
                   {searchResults.map((loc: Location) => (
                     <button
                       key={loc.id}
                       onClick={() => handleLocationSelect(loc)}
-                      className="w-full px-4 py-3 text-left hover:bg-alice-blue flex items-center space-x-3"
+                      className="w-full px-4 py-3 text-left hover:bg-muted flex items-center space-x-3"
                     >
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <div className="font-medium dark-slate">{loc.name}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="font-medium text-foreground">{loc.name}</div>
+                        <div className="text-sm text-muted-foreground">
                           {loc.city}, {loc.country}
                         </div>
                       </div>
@@ -91,7 +91,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               variant={location === "/favorites" ? "default" : "outline"}
               size="default"
               asChild
-              className="px-6 py-2 h-10 whitespace-nowrap bg-white hover:bg-alice-blue border-sky-blue text-gray-700 hover:text-ocean-blue transition-colors"
+              className="px-6 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-foreground hover:text-primary transition-colors"
             >
               <Link href="/favorites">
                 <Heart className="h-4 w-4 mr-2" />

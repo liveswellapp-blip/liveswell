@@ -53,7 +53,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <p className="text-gray-500">Failed to load favorites</p>
+            <p className="text-destructive">Failed to load favorites</p>
           </div>
         </CardContent>
       </Card>
@@ -71,9 +71,9 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <Heart className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500 mb-2">No favorite spots yet</p>
-            <p className="text-sm text-gray-400">
+            <Heart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-2">No favorite spots yet</p>
+            <p className="text-sm text-muted-foreground">
               Click the heart icon on any surf spot to add it to your favorites
             </p>
           </div>

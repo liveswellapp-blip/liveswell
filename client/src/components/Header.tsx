@@ -1,21 +1,32 @@
-import { Settings } from "lucide-react";
+import { Settings, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/ThemeProvider";
 
 export default function Header() {
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="bg-white shadow-lg sticky top-0 z-50">
+    <header className="bg-background shadow-lg sticky top-0 z-50 border-b border-border">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="ocean-blue text-[#4087f1] text-[20px] font-bold">LiveSwell</h1>
+            <h1 className="text-[#4087f1] text-[20px] font-bold">LiveSwell</h1>
           </div>
           
 
 
-          {/* Settings */}
+          {/* Theme Toggle and Settings */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="ocean-blue hover:sky-blue">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme}
+              className="text-[#4087f1] hover:text-[#87CEEB]"
+              title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            >
+              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+            <Button variant="ghost" size="icon" className="text-[#4087f1] hover:text-[#87CEEB]">
               <Settings className="h-5 w-5" />
             </Button>
           </div>

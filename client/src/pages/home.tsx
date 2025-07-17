@@ -89,7 +89,7 @@ export default function Home() {
   }, [location, window.location.search]);
 
   return (
-    <div className="min-h-screen bg-alice-blue">
+    <div className="min-h-screen bg-background">
       <Header />
       <Navigation onLocationSelect={setCurrentLocation} />
       
@@ -103,10 +103,10 @@ export default function Home() {
       ) : (
         <div className="container mx-auto px-4 py-12">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold dark-slate mb-4">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
               Welcome to SurfCast
             </h2>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Search for a coastal location or allow location access to get started
             </p>
           </div>

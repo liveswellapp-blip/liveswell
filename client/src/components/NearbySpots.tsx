@@ -17,10 +17,10 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
   if (error) {
     return (
       <section className="container mx-auto px-4 py-6">
-        <Card className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold mb-4 dark-slate">Nearby Surf Spots</h3>
+        <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+          <h3 className="text-xl font-semibold mb-4 text-foreground">Nearby Surf Spots</h3>
           <div className="text-center text-red-600">
-            <p>Unable to load nearby spots. Please try again later.</p>
+            <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
           </div>
         </Card>
       </section>
@@ -29,14 +29,14 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
 
   return (
     <section className="container mx-auto px-4 py-6">
-      <Card className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-xl font-semibold mb-4 dark-slate">Nearby Surf Spots</h3>
+      <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+        <h3 className="text-xl font-semibold mb-4 text-foreground">Nearby Surf Spots</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {isLoading ? (
             // Loading skeletons
             Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="bg-alice-blue rounded-lg p-4">
+              <div key={index} className="bg-muted rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-3">
                   <Skeleton className="w-12 h-12 rounded-full" />
                   <div className="space-y-2">
@@ -54,7 +54,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
             nearbySpots.map((spot) => (
               <div
                 key={spot.id}
-                className="bg-alice-blue rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-muted rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-border"
               >
                 <div className="flex items-center space-x-3 mb-3">
                   <img
@@ -63,24 +63,24 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div>
-                    <h4 className="font-semibold dark-slate">{spot.name}</h4>
-                    <p className="text-sm text-gray-600">{spot.distance} miles away</p>
+                    <h4 className="font-semibold text-foreground">{spot.name}</h4>
+                    <p className="text-sm text-muted-foreground">{spot.distance} miles away</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Waves className="ocean-blue h-4 w-4" />
-                    <span className="font-medium dark-slate">{spot.waveHeight}</span>
+                    <Waves className="text-primary h-4 w-4" />
+                    <span className="font-medium text-foreground">{spot.waveHeight}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Wind className="sunset-orange h-4 w-4" />
-                    <span className="text-sm text-gray-600">{spot.wind}</span>
+                    <Wind className="text-[#FF6347] h-4 w-4" />
+                    <span className="text-sm text-muted-foreground">{spot.wind}</span>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center text-gray-500">
+            <div className="col-span-full text-center text-muted-foreground">
               <p>No nearby surf spots found</p>
             </div>
           )}

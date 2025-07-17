@@ -18,9 +18,9 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
   if (error) {
     return (
       <section className="container mx-auto px-4 py-6">
-        <Card className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
           <div className="text-center text-red-600">
-            <p>Unable to load forecast data. Please try again later.</p>
+            <p className="text-destructive">Unable to load forecast data. Please try again later.</p>
           </div>
         </Card>
       </section>
@@ -29,15 +29,15 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
 
   return (
     <section className="container mx-auto px-4 py-6">
-      <Card className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <h3 className="text-xl font-semibold mb-4 dark-slate">5-Day Surf Forecast</h3>
+      <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
+        <h3 className="text-xl font-semibold mb-4 text-foreground">5-Day Surf Forecast</h3>
         
         {/* Forecast Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {isLoading ? (
             // Loading skeletons
             (Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="bg-alice-blue rounded-lg p-4">
+              <div key={index} className="bg-muted rounded-lg p-4">
                 <div className="text-center space-y-2">
                   <Skeleton className="h-5 w-16 mx-auto" />
                   <Skeleton className="h-8 w-8 mx-auto rounded-full" />
@@ -49,7 +49,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-[#efefef]">
+              <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-muted border border-border">
                 <div className="text-left">
                   <div className="font-medium mb-2 text-[18px] text-[#334252]">
                     {index === 0 ? "Today" : day.date}
@@ -71,7 +71,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center text-gray-500">
+            <div className="col-span-full text-center text-muted-foreground">
               <p>No forecast data available</p>
             </div>
           )}

@@ -17,60 +17,60 @@ export default function DetailedData({ location }: DetailedDataProps) {
     <section className="container mx-auto px-4 py-6">
       <div className="grid grid-cols-1 gap-6">
         {/* Marine Weather */}
-        <Card className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-xl font-semibold mb-4 dark-slate">Marine Weather</h3>
+        <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+          <h3 className="text-xl font-semibold mb-4 text-foreground">Marine Weather</h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-alice-blue rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
-                <Thermometer className="sunset-orange h-5 w-5" />
-                <span className="font-medium">Water Temperature</span>
+                <Thermometer className="text-[#FF6347] h-5 w-5" />
+                <span className="font-medium text-foreground">Water Temperature</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-16" />
               ) : (
-                <span className="text-lg font-semibold ocean-blue">
+                <span className="text-lg font-semibold text-primary">
                   {conditions?.waterTemp || "0"}°F
                 </span>
               )}
             </div>
             
-            <div className="flex items-center justify-between p-4 bg-alice-blue rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
-                <Eye className="sky-blue h-5 w-5" />
-                <span className="font-medium">Visibility</span>
+                <Eye className="text-[#87CEEB] h-5 w-5" />
+                <span className="font-medium text-foreground">Visibility</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-20" />
               ) : (
-                <span className="text-lg font-semibold ocean-blue">
+                <span className="text-lg font-semibold text-primary">
                   {conditions?.visibility || "0"} miles
                 </span>
               )}
             </div>
             
-            <div className="flex items-center justify-between p-4 bg-alice-blue rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
                 <Sun className="text-yellow-500 h-5 w-5" />
-                <span className="font-medium">UV Index</span>
+                <span className="font-medium text-foreground">UV Index</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-24" />
               ) : (
-                <span className="text-lg font-semibold ocean-blue">
+                <span className="text-lg font-semibold text-primary">
                   {conditions?.uvIndex || 0} {conditions?.uvIndex && conditions.uvIndex > 7 ? "(Very High)" : conditions?.uvIndex && conditions.uvIndex > 5 ? "(High)" : conditions?.uvIndex && conditions.uvIndex > 2 ? "(Moderate)" : "(Low)"}
                 </span>
               )}
             </div>
             
-            <div className="flex items-center justify-between p-4 bg-alice-blue rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
                 <Sunrise className="text-orange-400 h-5 w-5" />
-                <span className="font-medium">Sunrise / Sunset</span>
+                <span className="font-medium text-foreground">Sunrise / Sunset</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : (
-                <span className="text-lg font-semibold ocean-blue">
+                <span className="text-lg font-semibold text-primary">
                   {conditions?.sunrise || "6:28 AM"} / {conditions?.sunset || "7:42 PM"}
                 </span>
               )}

@@ -84,9 +84,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   if (error) {
     return (
       <section className="container mx-auto px-4 py-6">
-        <Card className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
           <div className="text-center text-red-600">
-            <p>Unable to load current conditions. Please try again later.</p>
+            <p className="text-destructive">Unable to load current conditions. Please try again later.</p>
           </div>
         </Card>
       </section>
@@ -95,8 +95,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   return (
     <section className="container mx-auto px-4 py-6">
-      <Card className="bg-white rounded-xl shadow-lg p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Live Conditions</h1>
+      <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
+        <h1 className="text-2xl font-bold text-foreground mb-4">Live Conditions</h1>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
@@ -104,7 +104,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               locationName={location.name}
               size="sm"
             />
-            <h2 className="text-xl font-semibold dark-slate">{location.name}</h2>
+            <h2 className="text-xl font-semibold text-foreground">{location.name}</h2>
           </div>
           
         </div>
