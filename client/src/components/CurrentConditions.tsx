@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, Droplets, Wind } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
+import TideChart from "@/components/TideChart";
 
 interface CurrentConditionsProps {
   location: Location;
@@ -231,6 +232,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <span>No upcoming tides today</span>
                     )}
                   </div>
+                  
+                  {/* Today's Tide Chart */}
+                  {todayTides.length > 0 && (
+                    <TideChart tides={todayTides} date="today" />
+                  )}
                   
                   {/* AM Tides */}
                   <div className="mb-2">
