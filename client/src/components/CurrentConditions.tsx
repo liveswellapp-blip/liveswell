@@ -194,8 +194,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
               </div>
-              
-
             </div>
           </div>
 
@@ -237,34 +235,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   {todayTides.length > 0 && (
                     <TideChart tides={todayTides} date="today" />
                   )}
-                  
-                  {/* AM Tides */}
-                  <div className="mb-2">
-                    <div className="font-medium text-xs mb-1">AM</div>
-                    <div className="flex flex-wrap gap-2">
-                      {todayTides
-                        .filter(tide => tide.time.includes('AM'))
-                        .map((tide, index) => (
-                          <span key={`am-${index}`} className="text-xs">
-                            {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height}ft)
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                  
-                  {/* PM Tides */}
-                  <div>
-                    <div className="font-medium text-xs mb-1">PM</div>
-                    <div className="flex flex-wrap gap-2">
-                      {todayTides
-                        .filter(tide => tide.time.includes('PM'))
-                        .map((tide, index) => (
-                          <span key={`pm-${index}`} className="text-xs">
-                            {tide.type === 'high' ? 'H' : 'L'} {tide.time} ({tide.height}ft)
-                          </span>
-                        ))}
-                    </div>
-                  </div>
                 </>
               )}
             </div>
