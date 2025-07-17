@@ -199,9 +199,13 @@ async function fetchTideData(lat: number, lon: number) {
       { signal: controller.signal }
     );
 
-    // Get tide predictions for today
+    // Get tide predictions for today and tomorrow to ensure we have complete data
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
     const predictionsResponse = await fetch(
-      `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=${today}&station=${selectedStation.stationId}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&format=json`,
+      `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${today}&end_date=${tomorrowStr}&station=${selectedStation.stationId}&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&format=json`,
       { signal: controller.signal }
     );
 
@@ -228,15 +232,16 @@ async function fetchTideData(lat: number, lon: number) {
         
         // Find previous and next tide events to determine status
         const tides = predictionsData.predictions.map((tide: any) => ({
-          time: new Date(tide.t).getTime(),
+          time: new Date(tide.t).getTime(), // NOAA already provides local time
           height: parseFloat(tide.v),
-          type: tide.type === 'H' ? 'high' : 'low'
+          type: tide.type === 'H' ? 'high' : 'low',
+          originalTime: tide.t
         }));
 
         // Sort by time
         tides.sort((a: any, b: any) => a.time - b.time);
 
-        // Find current tide status
+        // Find current tide status by looking at previous and next tide events
         let previousTide = null;
         let nextTide = null;
         
@@ -249,7 +254,12 @@ async function fetchTideData(lat: number, lon: number) {
           }
         }
 
+        // Determine if tide is rising or falling based on next tide event
         if (previousTide && nextTide) {
+          // If next tide is high, we're rising; if next tide is low, we're falling
+          tideStatus = nextTide.type === 'high' ? 'Rising' : 'Falling';
+        } else if (nextTide) {
+          // If we only have next tide, determine based on that
           tideStatus = nextTide.type === 'high' ? 'Rising' : 'Falling';
         }
 
@@ -258,7 +268,12 @@ async function fetchTideData(lat: number, lon: number) {
           .filter((tide: any) => tide.time >= currentTime)
           .slice(0, 4)
           .map((tide: any) => ({
-            time: new Date(tide.time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+            time: new Date(tide.time).toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              minute: '2-digit', 
+              hour12: true,
+              timeZone: 'America/New_York' // Jacksonville Beach is in EST/EDT
+            }),
             height: parseFloat(tide.height.toFixed(1)),
             type: tide.type
           }));
