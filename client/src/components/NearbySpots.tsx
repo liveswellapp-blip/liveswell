@@ -57,11 +57,9 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                 className="bg-muted rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-border"
               >
                 <div className="flex items-center space-x-3 mb-3">
-                  <img
-                    src={`https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100&q=80`}
-                    alt={spot.name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
+                    <Waves className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                   <div>
                     <h4 className="font-semibold text-blue-900 dark:text-emerald-400">{spot.name}</h4>
                     <p className="text-sm text-blue-900 dark:text-emerald-400">{spot.distance} miles away</p>
