@@ -86,6 +86,25 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-17: Personalized Favorites Feature Implementation
+- ✅ Added personalized surf spot favorites list functionality with full CRUD operations
+- ✅ Created favorites database table with user-location relationships and timestamps
+- ✅ Implemented storage interface methods for favorites management (add, remove, list, check)
+- ✅ Added comprehensive API endpoints for favorites operations with proper validation
+- ✅ Created FavoriteButton component with heart icon for adding/removing favorites
+- ✅ Built FavoritesList component with card-based layout showing user's saved spots
+- ✅ Added navigation system with Home and Favorites pages using wouter routing
+- ✅ Integrated favorites button into CurrentConditions header for easy access
+- ✅ Added favorites page at /favorites route with clean list interface
+- ✅ Implemented real-time updates using React Query for favorites status
+
+### 2025-07-17: Tide Chart Time Indicator Enhancement
+- ✅ Added current time indicator line to tide charts showing live position in 24-hour cycle
+- ✅ Implemented blue straight line with marker dot matching tide curve color scheme
+- ✅ Added conditional logic to show time indicator only on today's charts (current conditions and today's forecast)
+- ✅ Hidden time indicator from future forecast charts for cleaner appearance
+- ✅ Enhanced tide chart functionality with real-time position awareness
+
 ### 2025-07-16: Live Conditions UI Improvements
 - ✅ Removed interactive wave energy visualization canvas component for cleaner interface
 - ✅ Removed interactive wind direction compass gauge for simpler data display

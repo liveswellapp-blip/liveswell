@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Navigation from "@/components/Navigation";
 import Header from "@/components/Header";
 import CurrentConditions from "@/components/CurrentConditions";
 import ForecastSection from "@/components/ForecastSection";
@@ -62,6 +63,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-alice-blue">
+      <Navigation />
       <Header 
         onLocationSelect={setCurrentLocation}
         onGetCurrentLocation={getCurrentLocation}

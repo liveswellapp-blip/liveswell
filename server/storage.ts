@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, type User, type InsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions } from "@shared/schema";
+import { users, locations, surfConditions, favorites, type User, type InsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -13,23 +13,32 @@ export interface IStorage {
   getSurfConditions(locationId: number): Promise<SurfConditions | undefined>;
   createSurfConditions(conditions: InsertSurfConditions): Promise<SurfConditions>;
   updateSurfConditions(locationId: number, conditions: Partial<InsertSurfConditions>): Promise<SurfConditions | undefined>;
+  
+  getUserFavorites(userId: number): Promise<Location[]>;
+  addFavorite(favorite: InsertFavorite): Promise<Favorite>;
+  removeFavorite(userId: number, locationId: number): Promise<boolean>;
+  isFavorite(userId: number, locationId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private locations: Map<number, Location>;
   private surfConditions: Map<number, SurfConditions>;
+  private favorites: Map<number, Favorite>;
   private currentUserId: number;
   private currentLocationId: number;
   private currentConditionsId: number;
+  private currentFavoriteId: number;
 
   constructor() {
     this.users = new Map();
     this.locations = new Map();
     this.surfConditions = new Map();
+    this.favorites = new Map();
     this.currentUserId = 1;
     this.currentLocationId = 1;
     this.currentConditionsId = 1;
+    this.currentFavoriteId = 1;
     
     // Add some default coastal locations
     this.seedDefaultLocations();
@@ -257,6 +266,53 @@ export class MemStorage implements IStorage {
     
     this.surfConditions.set(existing.id, updated);
     return updated;
+  }
+
+  async getUserFavorites(userId: number): Promise<Location[]> {
+    const userFavorites = Array.from(this.favorites.values()).filter(
+      favorite => favorite.userId === userId
+    );
+    
+    const locations: Location[] = [];
+    for (const favorite of userFavorites) {
+      const location = this.locations.get(favorite.locationId);
+      if (location) {
+        locations.push(location);
+      }
+    }
+    
+    return locations;
+  }
+
+  async addFavorite(insertFavorite: InsertFavorite): Promise<Favorite> {
+    const id = this.currentFavoriteId++;
+    const favorite: Favorite = {
+      id,
+      userId: insertFavorite.userId,
+      locationId: insertFavorite.locationId,
+      addedAt: new Date(),
+    };
+    this.favorites.set(id, favorite);
+    return favorite;
+  }
+
+  async removeFavorite(userId: number, locationId: number): Promise<boolean> {
+    const favorite = Array.from(this.favorites.values()).find(
+      f => f.userId === userId && f.locationId === locationId
+    );
+    
+    if (favorite) {
+      this.favorites.delete(favorite.id);
+      return true;
+    }
+    
+    return false;
+  }
+
+  async isFavorite(userId: number, locationId: number): Promise<boolean> {
+    return Array.from(this.favorites.values()).some(
+      favorite => favorite.userId === userId && favorite.locationId === locationId
+    );
   }
 }
 

@@ -37,6 +37,13 @@ export const surfConditions = pgTable("surf_conditions", {
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
+export const favorites = pgTable("favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  locationId: integer("location_id").references(() => locations.id).notNull(),
+  addedAt: timestamp("added_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -51,9 +58,16 @@ export const insertSurfConditionsSchema = createInsertSchema(surfConditions).omi
   lastUpdated: true,
 });
 
+export const insertFavoriteSchema = createInsertSchema(favorites).omit({
+  id: true,
+  addedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Location = typeof locations.$inferSelect;
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
 export type SurfConditions = typeof surfConditions.$inferSelect;
 export type InsertSurfConditions = z.infer<typeof insertSurfConditionsSchema>;
+export type Favorite = typeof favorites.$inferSelect;
+export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;

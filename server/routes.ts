@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLocationSchema, insertSurfConditionsSchema } from "@shared/schema";
+import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema } from "@shared/schema";
 import { z } from "zod";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
@@ -509,6 +509,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Nearby spots error:', error);
       res.status(500).json({ message: "Failed to get nearby spots" });
+    }
+  });
+
+  // Get user's favorite locations
+  app.get("/api/favorites", async (req, res) => {
+    try {
+      // For now, use a default user ID (we'll add proper auth later)
+      const userId = 1;
+      const favorites = await storage.getUserFavorites(userId);
+      res.json(favorites);
+    } catch (error) {
+      console.error('Get favorites error:', error);
+      res.status(500).json({ message: "Failed to get favorites" });
+    }
+  });
+
+  // Add a location to favorites
+  app.post("/api/favorites", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const { locationId } = req.body;
+      
+      if (!locationId) {
+        return res.status(400).json({ message: "Location ID is required" });
+      }
+
+      // Check if location exists
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      // Check if already favorited
+      const isFav = await storage.isFavorite(userId, locationId);
+      if (isFav) {
+        return res.status(409).json({ message: "Location already in favorites" });
+      }
+
+      const favorite = await storage.addFavorite({ userId, locationId });
+      res.status(201).json(favorite);
+    } catch (error) {
+      console.error('Add favorite error:', error);
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  // Remove a location from favorites
+  app.delete("/api/favorites/:locationId", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const locationId = parseInt(req.params.locationId);
+      
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+
+      const success = await storage.removeFavorite(userId, locationId);
+      if (!success) {
+        return res.status(404).json({ message: "Favorite not found" });
+      }
+
+      res.json({ message: "Favorite removed successfully" });
+    } catch (error) {
+      console.error('Remove favorite error:', error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // Check if a location is favorited
+  app.get("/api/favorites/:locationId", async (req, res) => {
+    try {
+      const userId = 1; // Default user ID
+      const locationId = parseInt(req.params.locationId);
+      
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+
+      const isFav = await storage.isFavorite(userId, locationId);
+      res.json({ isFavorite: isFav });
+    } catch (error) {
+      console.error('Check favorite error:', error);
+      res.status(500).json({ message: "Failed to check favorite status" });
     }
   });
 

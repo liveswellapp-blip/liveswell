@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, Droplets, Wind } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 import TideChart from "@/components/TideChart";
+import FavoriteButton from "@/components/FavoriteButton";
 
 interface CurrentConditionsProps {
   location: Location;
@@ -100,6 +101,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <div className="flex items-center space-x-3">
             <MapPin className="sunset-orange h-5 w-5" />
             <h2 className="text-xl font-semibold dark-slate">{location.name}</h2>
+            <FavoriteButton 
+              locationId={location.id} 
+              locationName={location.name}
+              size="sm"
+            />
           </div>
           <div className="text-sm text-gray-500">
             {isLoading ? (
