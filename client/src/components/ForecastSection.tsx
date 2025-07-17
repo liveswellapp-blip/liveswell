@@ -30,7 +30,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
   return (
     <section className="container mx-auto px-4 py-6">
       <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
-        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-emerald-400">5-Day Surf Forecast</h3>
+        <h3 className="text-xl font-semibold mb-4 dark:text-emerald-400 text-[#ffffff]">5-Day Surf Forecast</h3>
         
         {/* Forecast Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
