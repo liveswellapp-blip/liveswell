@@ -102,15 +102,15 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
       size="icon"
       className={`${sizeClasses[size]} ${
         isFavorite 
-          ? "bg-red-50 border-red-200 hover:bg-red-100" 
-          : "bg-white border-gray-200 hover:bg-gray-50"
+          ? "bg-red-50 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30" 
+          : "bg-white border-gray-200 hover:bg-gray-50 dark:bg-emerald-900/10 dark:border-emerald-800 dark:hover:bg-emerald-900/20"
       }`}
       onClick={handleToggleFavorite}
       disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
     >
       <Heart
         className={`${iconSizes[size]} ${
-          isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
+          isFavorite ? "fill-red-500 text-red-500" : "text-gray-400 dark:text-emerald-400"
         }`}
       />
     </Button>
