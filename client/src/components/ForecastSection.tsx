@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wind } from "lucide-react";
+import { Navigation } from "lucide-react";
 import { Location, ForecastDay } from "@/types/weather";
 import TideChart from "./TideChart";
 
@@ -56,7 +56,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   </div>
                   <div className="font-semibold ocean-blue mb-1 text-[25px]">{day.waveHeight}</div>
                   <div className="flex items-center space-x-2 text-gray-500 mb-2 text-[18px]">
-                    <Wind className="h-3 w-3" />
+                    <Navigation className="h-[18px] w-[18px]" />
                     <span>{day.wind}</span>
                   </div>
                 </div>
