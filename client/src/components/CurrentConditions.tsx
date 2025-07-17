@@ -104,7 +104,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               locationName={location.name}
               size="sm"
             />
-            <h2 className="text-xl font-semibold text-blue-900 dark:text-emerald-400">{location.name}</h2>
+            <h2 className="text-xl font-semibold dark:text-emerald-400 text-[#ffffff]">{location.name}</h2>
           </div>
           
         </div>
