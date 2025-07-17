@@ -195,7 +195,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Tide Information */}
-          <div className="from-sea-green to-sky-blue rounded-lg p-4 bg-[#efefef] text-[#004182]">
+          <div className="from-sea-green to-sky-blue rounded-lg p-4 text-[#004182] bg-[#292929]">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5" />
