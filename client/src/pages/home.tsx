@@ -90,12 +90,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-alice-blue">
-      <Navigation />
       <Header 
         onLocationSelect={setCurrentLocation}
         onGetCurrentLocation={getCurrentLocation}
         isLoadingLocation={isLoadingLocation}
       />
+      <Navigation />
       
       {currentLocation ? (
         <>
