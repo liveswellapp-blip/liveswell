@@ -18,7 +18,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
     return (
       <section className="container mx-auto px-4 py-6">
         <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-cyan-400">Nearby Surf Spots</h3>
+          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-emerald-400">Nearby Surf Spots</h3>
           <div className="text-center text-red-600">
             <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
           </div>
@@ -63,24 +63,24 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div>
-                    <h4 className="font-semibold text-blue-900 dark:text-cyan-400">{spot.name}</h4>
-                    <p className="text-sm text-blue-900 dark:text-cyan-400">{spot.distance} miles away</p>
+                    <h4 className="font-semibold text-blue-900 dark:text-emerald-400">{spot.name}</h4>
+                    <p className="text-sm text-blue-900 dark:text-emerald-400">{spot.distance} miles away</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Waves className="text-blue-900 dark:text-cyan-400 h-4 w-4" />
-                    <span className="font-medium text-blue-900 dark:text-cyan-400">{spot.waveHeight}</span>
+                    <Waves className="text-blue-900 dark:text-emerald-400 h-4 w-4" />
+                    <span className="font-medium text-blue-900 dark:text-emerald-400">{spot.waveHeight}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Wind className="text-blue-900 dark:text-cyan-400 h-4 w-4" />
-                    <span className="text-sm text-blue-900 dark:text-cyan-400">{spot.wind}</span>
+                    <Wind className="text-blue-900 dark:text-emerald-400 h-4 w-4" />
+                    <span className="text-sm text-blue-900 dark:text-emerald-400">{spot.wind}</span>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center text-blue-900 dark:text-cyan-400">
+            <div className="col-span-full text-center text-blue-900 dark:text-emerald-400">
               <p>No nearby surf spots found</p>
             </div>
           )}

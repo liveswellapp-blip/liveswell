@@ -30,7 +30,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
   return (
     <section className="container mx-auto px-4 py-6">
       <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
-        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-cyan-400">5-Day Surf Forecast</h3>
+        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-emerald-400">5-Day Surf Forecast</h3>
         
         {/* Forecast Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -51,15 +51,15 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             forecast.map((day, index) => (
               <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-muted border border-border">
                 <div className="text-left">
-                  <div className="font-medium mb-2 text-[18px] text-blue-900 dark:text-cyan-400">
+                  <div className="font-medium mb-2 text-[18px] text-blue-900 dark:text-emerald-400">
                     {index === 0 ? "Today" : day.date}
                   </div>
-                  <div className="flex items-center space-x-2 font-semibold mb-1 text-[25px] text-blue-900 dark:text-cyan-400">
-                    <Waves className="h-[25px] w-[25px] text-blue-900 dark:text-cyan-400" />
+                  <div className="flex items-center space-x-2 font-semibold mb-1 text-[25px] text-blue-900 dark:text-emerald-400">
+                    <Waves className="h-[25px] w-[25px] text-blue-900 dark:text-emerald-400" />
                     <span>{day.waveHeight}</span>
                   </div>
-                  <div className="flex items-center space-x-2 mb-2 text-[18px] text-blue-900 dark:text-cyan-400">
-                    <Wind className="h-[18px] w-[18px] text-blue-900 dark:text-cyan-400" />
+                  <div className="flex items-center space-x-2 mb-2 text-[18px] text-blue-900 dark:text-emerald-400">
+                    <Wind className="h-[18px] w-[18px] text-blue-900 dark:text-emerald-400" />
                     <span>{day.wind}</span>
                   </div>
                 </div>

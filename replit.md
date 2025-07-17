@@ -107,7 +107,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ Added proper light/dark mode persistence using localStorage
 - ✅ Configured automatic theme detection based on system preferences
 - ✅ Enhanced user experience with smooth theme transitions across entire application
-- ✅ Applied ocean-themed color scheme: dark blue (text-blue-900) for light mode, light aqua/cyan (text-cyan-400) for dark mode
+- ✅ Applied ocean-themed color scheme: dark blue (text-blue-900) for light mode, emerald green (text-emerald-400) for dark mode
 - ✅ Updated all text, icons, and UI elements across Header, CurrentConditions, ForecastSection, DetailedData, NearbySpots, FavoritesList
 - ✅ Consistent color application throughout entire application for enhanced visual coherence and ocean aesthetic
 
