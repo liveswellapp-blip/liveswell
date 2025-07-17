@@ -156,7 +156,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
           {/* Wind Conditions */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-emerald-400 border border-border">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 text-[#ffffff]">
               <div className="flex items-center space-x-2">
                 <Navigation className="h-5 w-5" />
                 <span className="font-medium">Wind</span>
