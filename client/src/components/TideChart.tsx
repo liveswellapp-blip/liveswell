@@ -191,8 +191,47 @@ export default function TideChart({ tides, date }: TideChartProps) {
             className="hidden dark:block"
           />
           
+          {/* High and Low tide vertical lines */}
+          {majorTides.map((tide, index) => {
+            // Find the closest data point in our high-resolution interpolated data
+            const closestDataPoint = hourlyData.reduce((closest, point) => {
+              const currentDistance = Math.abs(point.hour - tide.hour);
+              const closestDistance = Math.abs(closest.hour - tide.hour);
+              return currentDistance < closestDistance ? point : closest;
+            });
+            
+            // Use the interpolated curve's coordinate system
+            const dataPointIndex = hourlyData.indexOf(closestDataPoint);
+            const x = (dataPointIndex / (hourlyData.length - 1)) * 100;
+            
+            return (
+              <g key={`tide-line-${index}`}>
+                {/* Vertical line from bottom to top of chart */}
+                <line
+                  x1={x}
+                  y1="0"
+                  x2={x}
+                  y2="50"
+                  stroke={tide.type === 'high' ? "#dc2626" : "#059669"}
+                  strokeWidth="1"
+                  opacity="0.6"
+                  strokeDasharray="2,2"
+                />
+                {/* Label at the top */}
+                <text
+                  x={x}
+                  y="-2"
+                  textAnchor="middle"
+                  fontSize="8"
+                  fill={tide.type === 'high' ? "#dc2626" : "#059669"}
+                  className="font-medium"
+                >
+                  {tide.type === 'high' ? 'H' : 'L'}
+                </text>
+              </g>
+            );
+          })}
 
-          
           {/* Current time indicator line - only show for today */}
           {isToday && (
             <>
