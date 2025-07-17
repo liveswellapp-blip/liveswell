@@ -199,17 +199,6 @@ export default function TideChart({ tides, date }: TideChartProps) {
             stroke="white"
             strokeWidth="1"
           />
-          
-          {/* Current time label */}
-          <text
-            x={currentTimeX}
-            y="-2"
-            textAnchor="middle"
-            className="text-xs fill-orange-600 font-medium"
-            fontSize="3"
-          >
-            NOW
-          </text>
         </svg>
         
         {/* Time labels */}
