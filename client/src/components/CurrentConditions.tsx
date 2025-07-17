@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, Droplets, Wind, Zap } from "lucide-react";
+import { MapPin, Waves, BarChart3, Navigation } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -123,7 +123,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <div className="from-ocean-blue to-sky-blue rounded-lg p-4 bg-[#efefef] text-[#4087f1]">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <Zap className="h-5 w-5" />
+                <Waves className="h-5 w-5" />
                 <span className="font-medium">Wave Height</span>
               </div>
               <span className="text-sm opacity-75">Live</span>
@@ -158,7 +158,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <div className="from-sunset-orange to-yellow-400 rounded-lg p-4 bg-[#efefef] text-[#6853a6]">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <Wind className="h-5 w-5" />
+                <Navigation className="h-5 w-5" />
                 <span className="font-medium">Wind</span>
               </div>
               <span className="text-sm opacity-75">Live</span>
@@ -198,7 +198,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <div className="from-sea-green to-sky-blue rounded-lg p-4 bg-[#efefef] text-[#004182]">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <Droplets className="h-5 w-5" />
+                <BarChart3 className="h-5 w-5" />
                 <span className="font-medium">Tide</span>
               </div>
               <span className="text-sm opacity-75">Current</span>
