@@ -50,13 +50,13 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
               <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-[#efefef]">
-                <div className="text-center">
+                <div className="text-left">
                   <div className="font-medium dark-slate mb-2">
                     {index === 0 ? "Today" : day.date}
                   </div>
                   <div className="text-lg font-semibold ocean-blue mb-1">{day.waveHeight}</div>
                   <div className="text-sm text-gray-600 mb-2">{day.conditions}</div>
-                  <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mb-2">
+                  <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2">
                     <Wind className="h-3 w-3" />
                     <span>{day.wind}</span>
                   </div>
