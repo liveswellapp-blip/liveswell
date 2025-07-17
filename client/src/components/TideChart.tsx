@@ -217,7 +217,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
                   x2={x}
                   y2="50"
                   stroke="#2563eb"
-                  strokeWidth="1.5"
+                  strokeWidth="1"
                   opacity="0.7"
                   className="dark:hidden"
                 />
@@ -227,7 +227,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
                   x2={x}
                   y2="50"
                   stroke="#10b981"
-                  strokeWidth="1.5"
+                  strokeWidth="1"
                   opacity="0.7"
                   className="hidden dark:block"
                 />
