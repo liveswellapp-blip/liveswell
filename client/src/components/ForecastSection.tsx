@@ -54,7 +54,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   <div className="font-medium dark-slate mb-2 text-[20px]">
                     {index === 0 ? "Today" : day.date}
                   </div>
-                  <div className="text-lg font-semibold ocean-blue mb-1">{day.waveHeight}</div>
+                  <div className="font-semibold ocean-blue mb-1 text-[20px]">{day.waveHeight}</div>
                   <div className="text-sm text-gray-600 mb-2">{day.conditions}</div>
                   <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2">
                     <Wind className="h-3 w-3" />
