@@ -184,9 +184,8 @@ export default function TideChart({ tides, date }: TideChartProps) {
             y1="0"
             x2={currentTimeX}
             y2="40"
-            stroke="#ff6b35"
+            stroke="#2563eb"
             strokeWidth="1.5"
-            strokeDasharray="2,2"
             opacity="0.8"
           />
           
@@ -195,7 +194,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
             cx={currentTimeX}
             cy="2"
             r="2"
-            fill="#ff6b35"
+            fill="#2563eb"
             stroke="white"
             strokeWidth="1"
           />
