@@ -36,7 +36,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {isLoading ? (
             // Loading skeletons
-            Array.from({ length: 5 }).map((_, index) => (
+            (Array.from({ length: 5 }).map((_, index) => (
               <div key={index} className="bg-alice-blue rounded-lg p-4">
                 <div className="text-center space-y-2">
                   <Skeleton className="h-5 w-16 mx-auto" />
@@ -46,10 +46,10 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   <Skeleton className="h-4 w-20 mx-auto" />
                 </div>
               </div>
-            ))
+            )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="bg-alice-blue rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-[#efefef]">
                 <div className="text-center">
                   <div className="font-medium dark-slate mb-2">
                     {index === 0 ? "Today" : day.date}
