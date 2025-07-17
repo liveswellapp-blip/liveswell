@@ -107,15 +107,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               size="sm"
             />
           </div>
-          <div className="text-sm text-gray-500">
-            {isLoading ? (
-              <Skeleton className="h-4 w-24" />
-            ) : conditions ? (
-              <>Updated {formatTimeAgo(conditions.lastUpdated)}</>
-            ) : (
-              "Loading..."
-            )}
-          </div>
+          
         </div>
         
         {conditions?.warning && (
