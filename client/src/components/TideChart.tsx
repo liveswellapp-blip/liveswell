@@ -104,7 +104,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
     type: tide.type
   }));
 
-  // Calculate current time position for the indicator line
+  // Calculate current time position for the indicator line (only for today)
   const getCurrentTimePosition = () => {
     const now = new Date();
     const currentHour = now.getHours() + now.getMinutes() / 60;
@@ -112,6 +112,9 @@ export default function TideChart({ tides, date }: TideChartProps) {
   };
 
   const currentTimeX = getCurrentTimePosition();
+  
+  // Only show time indicator for today's chart
+  const isToday = date === "today" || date === "Today";
 
   return (
     <div className="mt-3 p-3 bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg">
@@ -178,26 +181,30 @@ export default function TideChart({ tides, date }: TideChartProps) {
             );
           })}
           
-          {/* Current time indicator line */}
-          <line
-            x1={currentTimeX}
-            y1="0"
-            x2={currentTimeX}
-            y2="40"
-            stroke="#2563eb"
-            strokeWidth="1.5"
-            opacity="0.8"
-          />
-          
-          {/* Current time marker dot */}
-          <circle
-            cx={currentTimeX}
-            cy="2"
-            r="2"
-            fill="#2563eb"
-            stroke="white"
-            strokeWidth="1"
-          />
+          {/* Current time indicator line - only show for today */}
+          {isToday && (
+            <>
+              <line
+                x1={currentTimeX}
+                y1="0"
+                x2={currentTimeX}
+                y2="40"
+                stroke="#2563eb"
+                strokeWidth="1.5"
+                opacity="0.8"
+              />
+              
+              {/* Current time marker dot */}
+              <circle
+                cx={currentTimeX}
+                cy="2"
+                r="2"
+                fill="#2563eb"
+                stroke="white"
+                strokeWidth="1"
+              />
+            </>
+          )}
         </svg>
         
         {/* Time labels */}
