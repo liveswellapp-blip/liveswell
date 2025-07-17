@@ -96,7 +96,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <section className="container mx-auto px-4 py-6">
       <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
-        <h1 className="text-2xl font-bold text-black dark:text-white mb-4">Live Conditions</h1>
+        <h1 className="text-2xl font-bold text-blue-900 dark:text-cyan-400 mb-4">Live Conditions</h1>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
@@ -104,7 +104,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               locationName={location.name}
               size="sm"
             />
-            <h2 className="text-xl font-semibold text-black dark:text-white">{location.name}</h2>
+            <h2 className="text-xl font-semibold text-blue-900 dark:text-cyan-400">{location.name}</h2>
           </div>
           
         </div>
@@ -120,7 +120,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         {/* Current Conditions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Wave Conditions */}
-          <div className="rounded-lg p-4 bg-muted text-foreground border border-border">
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-cyan-400 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <Waves className="h-5 w-5" />
@@ -155,7 +155,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Wind Conditions */}
-          <div className="rounded-lg p-4 bg-muted text-foreground border border-border">
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-cyan-400 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <Navigation className="h-5 w-5" />
@@ -195,7 +195,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Tide Information */}
-          <div className="rounded-lg p-4 bg-muted text-foreground border border-border">
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-cyan-400 border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5" />
