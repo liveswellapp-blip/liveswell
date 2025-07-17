@@ -204,30 +204,22 @@ export default function TideChart({ tides, date }: TideChartProps) {
             const dataPointIndex = hourlyData.indexOf(closestDataPoint);
             const x = (dataPointIndex / (hourlyData.length - 1)) * 100;
             
+            // Calculate where the line intersects the curve
+            const normalizedHeight = ((closestDataPoint.height - minHeight) / heightRange);
+            const curveY = 50 - (normalizedHeight * 50);
+            
             return (
               <g key={`tide-line-${index}`}>
-                {/* Vertical line from bottom to top of chart */}
+                {/* Vertical line from bottom to curve */}
                 <line
                   x1={x}
-                  y1="0"
+                  y1={curveY}
                   x2={x}
                   y2="50"
                   stroke={tide.type === 'high' ? "#dc2626" : "#059669"}
-                  strokeWidth="1"
-                  opacity="0.6"
-                  strokeDasharray="2,2"
+                  strokeWidth="1.5"
+                  opacity="0.7"
                 />
-                {/* Label at the top */}
-                <text
-                  x={x}
-                  y="-2"
-                  textAnchor="middle"
-                  fontSize="8"
-                  fill={tide.type === 'high' ? "#dc2626" : "#059669"}
-                  className="font-medium"
-                >
-                  {tide.type === 'high' ? 'H' : 'L'}
-                </text>
               </g>
             );
           })}
