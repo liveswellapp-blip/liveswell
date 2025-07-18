@@ -29,6 +29,10 @@
   --alice-blue: hsl(208, 100%, 97%);
   --dark-slate: hsl(180, 25%, 25%);
   --sea-green: hsl(177, 70%, 41%);
+  --coral-accent: hsl(8, 85%, 65%);
+  --warm-gold: hsl(39, 100%, 57%);
+  --soft-purple: hsl(258, 90%, 66%);
+  --salmon-pink: hsl(352, 85%, 65%);
 }
 
 .dark {
@@ -52,6 +56,10 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
+  --coral-accent: hsl(8, 75%, 55%);
+  --warm-gold: hsl(39, 85%, 47%);
+  --soft-purple: hsl(258, 75%, 56%);
+  --salmon-pink: hsl(352, 75%, 55%);
 }
 
 @layer base {
@@ -112,5 +120,37 @@
   
   .bg-sea-green {
     background-color: hsl(var(--sea-green));
+  }
+  
+  .coral-accent {
+    color: hsl(var(--coral-accent));
+  }
+  
+  .bg-coral-accent {
+    background-color: hsl(var(--coral-accent));
+  }
+  
+  .warm-gold {
+    color: hsl(var(--warm-gold));
+  }
+  
+  .bg-warm-gold {
+    background-color: hsl(var(--warm-gold));
+  }
+  
+  .soft-purple {
+    color: hsl(var(--soft-purple));
+  }
+  
+  .bg-soft-purple {
+    background-color: hsl(var(--soft-purple));
+  }
+  
+  .salmon-pink {
+    color: hsl(var(--salmon-pink));
+  }
+  
+  .bg-salmon-pink {
+    background-color: hsl(var(--salmon-pink));
   }
 }
