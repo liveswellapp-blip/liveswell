@@ -102,7 +102,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
                 <MapPin className="h-6 w-6 text-blue-900 dark:text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-blue-900 dark:text-emerald-400 truncate">{location.name}</h3>
+                <h3 className="font-medium text-blue-900 dark:text-white truncate">{location.name}</h3>
                 <p className="text-sm text-blue-900 dark:text-emerald-400 truncate">
                   {location.city}, {location.country}
                 </p>
