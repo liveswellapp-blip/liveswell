@@ -56,10 +56,10 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
-  --coral-accent: hsl(8, 75%, 55%);
-  --warm-gold: hsl(39, 85%, 47%);
-  --soft-purple: hsl(258, 75%, 56%);
-  --salmon-pink: hsl(352, 75%, 55%);
+  --coral-accent: hsl(8, 85%, 70%);
+  --warm-gold: hsl(39, 90%, 65%);
+  --soft-purple: hsl(258, 85%, 75%);
+  --salmon-pink: hsl(352, 85%, 70%);
 }
 
 @layer base {
