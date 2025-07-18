@@ -89,19 +89,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       .filter(tide => tide.dateTime > nowInLocationTz)
       .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
     
-    // Debug logging
-    console.log('Next Tide Debug:', {
-      todayTides: todayTides,
-      currentTimeInLocation: nowInLocationTz.toString(),
-      tidesWithDates: tidesWithDates.map(t => ({
-        time: t.time,
-        type: t.type,
-        dateTime: t.dateTime.toString(),
-        isFuture: t.dateTime > nowInLocationTz
-      })),
-      futureTides: futureTides.map(t => ({ time: t.time, type: t.type })),
-      nextTide: futureTides[0] ? { time: futureTides[0].time, type: futureTides[0].type } : null
-    });
+
     
     return futureTides.length > 0 ? futureTides[0] : null;
   };

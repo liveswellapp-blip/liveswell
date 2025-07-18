@@ -86,6 +86,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-18: Timezone and Next Tide Calculation Fixes
+- ✅ Fixed timezone detection for accurate local time display across all US time zones
+- ✅ Corrected sunrise/sunset times to display in location's timezone (Pacific Time for Malibu)
+- ✅ Fixed tide chart time indicator line to use location's timezone instead of browser timezone
+- ✅ Enhanced next tide calculation logic with proper timezone-aware date comparison
+- ✅ Updated tide time display throughout forecast components to use correct local time
+- ✅ Added comprehensive timezone mapping function for US coastal locations
+- ✅ Verified next tide display shows correct upcoming tide (1:30 PM high tide for Malibu)
+
 ### 2025-07-17: Real Marine Weather Data Integration
 - ✅ Integrated authentic NOAA buoy data for accurate wave conditions (replaced simulated data)
 - ✅ Connected to NOAA National Data Buoy Center (NDBC) for real-time wave heights and periods
