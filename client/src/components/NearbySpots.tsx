@@ -67,11 +67,11 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Waves className="text-blue-900 dark:text-emerald-400 h-4 w-4" />
+                    <Waves className="text-blue-900 dark:text-white h-4 w-4" />
                     <span className="font-medium text-blue-900 dark:text-emerald-400">{spot.waveHeight}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Wind className="text-blue-900 dark:text-emerald-400 h-4 w-4" />
+                    <Wind className="text-blue-900 dark:text-white h-4 w-4" />
                     <span className="text-sm text-blue-900 dark:text-emerald-400">{spot.wind}</span>
                   </div>
                 </div>
