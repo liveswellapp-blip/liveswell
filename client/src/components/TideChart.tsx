@@ -228,24 +228,52 @@ export default function TideChart({ tides, date }: TideChartProps) {
                   className="hidden dark:block"
                 />
                 
+                {/* Background rectangle for better text readability */}
+                <rect
+                  x={x - 6}
+                  y={curveY - 8}
+                  width="12"
+                  height="6"
+                  rx="1"
+                  fill="#ffffff"
+                  fillOpacity="0.9"
+                  stroke="#2563eb"
+                  strokeWidth="0.3"
+                  className="dark:hidden"
+                />
+                <rect
+                  x={x - 6}
+                  y={curveY - 8}
+                  width="12"
+                  height="6"
+                  rx="1"
+                  fill="#0f172a"
+                  fillOpacity="0.9"
+                  stroke="#10b981"
+                  strokeWidth="0.3"
+                  className="hidden dark:block"
+                />
+                
                 {/* Tide time label above the curve */}
                 <text
                   x={x}
-                  y={curveY - 3}
+                  y={curveY - 3.5}
                   textAnchor="middle"
-                  fontSize="3"
+                  fontSize="2.5"
                   fill="#2563eb"
-                  className="dark:hidden font-medium"
+                  className="dark:hidden font-bold"
+                  fontFamily="system-ui, -apple-system, sans-serif"
                 >
                   {tide.time}
                 </text>
                 <text
                   x={x}
-                  y={curveY - 3}
+                  y={curveY - 3.5}
                   textAnchor="middle"
-                  fontSize="3"
+                  fontSize="2.5"
                   fill="#10b981"
-                  className="hidden dark:block font-medium"
+                  className="hidden dark:block font-bold"
+                  fontFamily="system-ui, -apple-system, sans-serif"
                 >
                   {tide.time}
                 </text>
