@@ -103,7 +103,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-blue-900 dark:text-white truncate">{location.name}</h3>
-                <p className="text-sm text-blue-900 dark:text-emerald-400 truncate">
+                <p className="text-sm text-blue-900 dark:text-white truncate">
                   {location.city}, {location.country}
                 </p>
               </div>
