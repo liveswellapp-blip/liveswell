@@ -201,7 +201,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <BarChart3 className="h-5 w-5" />
                 <span className="font-medium">Tide</span>
               </div>
-              <span className="text-sm opacity-75">Current</span>
+              <span className="text-sm opacity-75">Live</span>
             </div>
             <div className="flex items-end space-x-2">
               {isLoading ? (
