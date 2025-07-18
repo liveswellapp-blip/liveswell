@@ -133,7 +133,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Skeleton className="h-8 w-16 bg-white/20" />
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-coral-accent">{conditions?.waveHeight || "0"}</span>
+                  <span className="text-3xl font-bold text-blue-900 dark:text-orange-400">{conditions?.waveHeight || "0"}</span>
                   <span className="text-lg mb-1">ft</span>
                 </>
               )}
@@ -171,7 +171,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <Skeleton className="h-8 w-16 bg-white/20" />
                   ) : (
                     <>
-                      <span className="text-3xl font-bold text-blue-900 dark:text-soft-purple">{conditions?.windSpeed || "0"}</span>
+                      <span className="text-3xl font-bold text-blue-900 dark:text-purple-400">{conditions?.windSpeed || "0"}</span>
                       <span className="text-lg mb-1">mph</span>
                     </>
                   )}
@@ -208,7 +208,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Skeleton className="h-8 w-16 bg-white/20" />
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-warm-gold">{conditions?.tideHeight || "0"}</span>
+                  <span className="text-3xl font-bold text-blue-900 dark:text-yellow-400">{conditions?.tideHeight || "0"}</span>
                   <span className="text-lg mb-1">ft</span>
                 </>
               )}
