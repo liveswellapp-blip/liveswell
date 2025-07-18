@@ -89,7 +89,7 @@ export default function Home() {
   }, [location, window.location.search]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-black dark:to-emerald-900">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-900 dark:from-black dark:to-emerald-900">
       <Header />
       <Navigation onLocationSelect={setCurrentLocation} />
       
