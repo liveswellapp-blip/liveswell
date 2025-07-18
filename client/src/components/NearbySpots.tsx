@@ -61,7 +61,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                     <Waves className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-blue-900 dark:text-emerald-400">{spot.name}</h4>
+                    <h4 className="font-semibold text-blue-900 dark:text-white">{spot.name}</h4>
                     <p className="text-sm text-blue-900 dark:text-emerald-400">{spot.distance} miles away</p>
                   </div>
                 </div>
