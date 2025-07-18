@@ -7,6 +7,7 @@ import CurrentConditions from "@/components/CurrentConditions";
 import ForecastSection from "@/components/ForecastSection";
 import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
+import SurfSpotStats from "@/components/SurfSpotStats";
 import Footer from "@/components/Footer";
 import { Location } from "@/types/weather";
 
@@ -101,15 +102,16 @@ export default function Home() {
           <NearbySpots location={currentLocation} />
         </>
       ) : (
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 py-12 space-y-8">
           <div className="text-center">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
+            <h2 className="text-2xl font-semibold text-blue-900 dark:text-white mb-4">
               Welcome to SurfCast
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-blue-900 dark:text-emerald-400 mb-8">
               Search for a coastal location or allow location access to get started
             </p>
           </div>
+          <SurfSpotStats />
         </div>
       )}
       

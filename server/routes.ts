@@ -948,6 +948,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get surf spot statistics
+  app.get("/api/spots/stats", async (req, res) => {
+    try {
+      const allLocations = await storage.searchLocations("");
+      const totalSpots = allLocations.length;
+      
+      // Group by country
+      const countryStats = allLocations.reduce((acc, location) => {
+        acc[location.country] = (acc[location.country] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Group by region (for US spots)
+      const usSpots = allLocations.filter(loc => loc.country === "USA");
+      const regionStats = usSpots.reduce((acc, location) => {
+        // Extract region from city or use a simple mapping
+        const region = getRegionFromLocation(location);
+        acc[region] = (acc[region] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      res.json({
+        totalSpots,
+        countries: Object.keys(countryStats).length,
+        countryBreakdown: countryStats,
+        regionBreakdown: regionStats,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Surf spot stats error:', error);
+      res.status(500).json({ message: "Failed to get surf spot statistics" });
+    }
+  });
+
+  // Trigger manual import of additional surf spots
+  app.post("/api/spots/import", async (req, res) => {
+    try {
+      const { importSurfSpots } = await import('./spot-imports.js');
+      await importSurfSpots();
+      
+      const allLocations = await storage.searchLocations("");
+      res.json({
+        message: "Surf spots imported successfully",
+        totalSpots: allLocations.length,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Import error:', error);
+      res.status(500).json({ message: "Failed to import surf spots" });
+    }
+  });
+
+  // Helper function to determine region from location
+  function getRegionFromLocation(location: any): string {
+    if (location.country !== "USA") return location.country;
+    
+    const lat = parseFloat(location.latitude);
+    const lng = parseFloat(location.longitude);
+    
+    // California
+    if (lat >= 32.5 && lat <= 42 && lng >= -124.5 && lng <= -114) {
+      return lat >= 35.5 ? "Northern California" : "Southern California";
+    }
+    // Florida
+    if (lat >= 24.5 && lat <= 31 && lng >= -87.5 && lng <= -80) {
+      return "Florida";
+    }
+    // Hawaii
+    if (lat >= 18.5 && lat <= 22.5 && lng >= -161 && lng <= -154) {
+      return "Hawaii";
+    }
+    // East Coast
+    if (lng >= -81 && lng <= -66) {
+      if (lat >= 40) return "Northeast";
+      if (lat >= 32) return "Southeast"; 
+      return "Mid-Atlantic";
+    }
+    // Pacific Northwest
+    if (lat >= 42 && lng <= -120) {
+      return "Pacific Northwest";
+    }
+    
+    return "Other";
+  }
+
   const httpServer = createServer(app);
   return httpServer;
 }

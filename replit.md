@@ -86,6 +86,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-18: Global Surf Spot Database Expansion
+- ✅ Expanded surf spot database from 15 to 52+ locations across 12 countries worldwide
+- ✅ Added comprehensive global surf spot data including Pipeline, Nazaré, Mundaka, Mavericks, Bondi Beach
+- ✅ Implemented surf spot metadata: break types, difficulty levels, optimal conditions, NOAA station IDs
+- ✅ Created spot-imports.ts system for managing global surf spot database with 60+ premium locations
+- ✅ Added API endpoints for surf spot statistics (/api/spots/stats) and manual imports (/api/spots/import)
+- ✅ Built SurfSpotStats component displaying total spots, country breakdowns, and regional statistics
+- ✅ Integrated statistics dashboard into home page for users without selected location
+- ✅ Added automatic import system that loads global database on server startup
+- ✅ Coverage includes USA (29 spots), Australia (4), Portugal (3), France (2), Spain (2), Indonesia (2), plus Costa Rica, South Africa, Chile, Brazil, Mexico, Fiji
+- ✅ Prepared infrastructure for future API integrations (Stormglass.io, NOAA, Surfline) to expand to thousands more spots
+
 ### 2025-07-18: User Settings Page Implementation
 - ✅ Created comprehensive settings page with modern card-based layout
 - ✅ Added settings navigation via cog icon in header with wouter routing
