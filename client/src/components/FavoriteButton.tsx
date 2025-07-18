@@ -110,7 +110,7 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     >
       <Heart
         className={`${iconSizes[size]} ${
-          isFavorite ? "fill-red-500 text-red-500 dark:fill-pink-400 dark:text-pink-400" : "text-gray-400 dark:text-emerald-400 hover:text-red-400 dark:hover:text-pink-400"
+          isFavorite ? "fill-red-500 text-red-500 dark:fill-emerald-400 dark:text-emerald-400" : "text-gray-400 dark:text-emerald-400 hover:text-red-400 dark:hover:text-emerald-400"
         }`}
       />
     </Button>
