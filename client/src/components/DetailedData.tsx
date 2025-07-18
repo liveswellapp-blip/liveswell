@@ -22,13 +22,13 @@ export default function DetailedData({ location }: DetailedDataProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
-                <Thermometer className="text-blue-900 dark:text-emerald-400 h-5 w-5" />
-                <span className="font-medium text-blue-900 dark:text-emerald-400">Water Temperature</span>
+                <Thermometer className="text-blue-900 dark:text-white h-5 w-5" />
+                <span className="font-medium text-blue-900 dark:text-white">Water Temperature</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-16" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-white">
+                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
                   {conditions?.waterTemp || "0"}°F
                 </span>
               )}
@@ -36,13 +36,13 @@ export default function DetailedData({ location }: DetailedDataProps) {
             
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
-                <Eye className="text-blue-900 dark:text-emerald-400 h-5 w-5" />
-                <span className="font-medium text-blue-900 dark:text-emerald-400">Visibility</span>
+                <Eye className="text-blue-900 dark:text-white h-5 w-5" />
+                <span className="font-medium text-blue-900 dark:text-white">Visibility</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-20" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-white">
+                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
                   {conditions?.visibility || "0"} miles
                 </span>
               )}
@@ -50,13 +50,13 @@ export default function DetailedData({ location }: DetailedDataProps) {
             
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
-                <Sun className="text-blue-900 dark:text-emerald-400 h-5 w-5" />
-                <span className="font-medium text-blue-900 dark:text-emerald-400">UV Index</span>
+                <Sun className="text-blue-900 dark:text-white h-5 w-5" />
+                <span className="font-medium text-blue-900 dark:text-white">UV Index</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-24" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-white">
+                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
                   {conditions?.uvIndex || 0} {conditions?.uvIndex && conditions.uvIndex > 7 ? "(Very High)" : conditions?.uvIndex && conditions.uvIndex > 5 ? "(High)" : conditions?.uvIndex && conditions.uvIndex > 2 ? "(Moderate)" : "(Low)"}
                 </span>
               )}
@@ -64,13 +64,13 @@ export default function DetailedData({ location }: DetailedDataProps) {
             
             <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
               <div className="flex items-center space-x-3">
-                <Sunrise className="text-blue-900 dark:text-emerald-400 h-5 w-5" />
-                <span className="font-medium text-blue-900 dark:text-emerald-400">Sunrise / Sunset</span>
+                <Sunrise className="text-blue-900 dark:text-white h-5 w-5" />
+                <span className="font-medium text-blue-900 dark:text-white">Sunrise / Sunset</span>
               </div>
               {isLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-white">
+                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
                   {conditions?.sunrise || "6:28 AM"} / {conditions?.sunset || "7:42 PM"}
                 </span>
               )}
