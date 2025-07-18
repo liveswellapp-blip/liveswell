@@ -134,7 +134,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               ) : (
                 <>
                   <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight || "0"}</span>
-                  <span className="text-lg mb-1">ft</span>
+                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
                 </>
               )}
             </div>
@@ -172,7 +172,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   ) : (
                     <>
                       <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed || "0"}</span>
-                      <span className="text-lg mb-1">mph</span>
+                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
                     </>
                   )}
                 </div>
@@ -209,7 +209,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               ) : (
                 <>
                   <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.tideHeight || "0"}</span>
-                  <span className="text-lg mb-1">ft</span>
+                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
                 </>
               )}
             </div>
