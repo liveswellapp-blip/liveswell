@@ -233,6 +233,34 @@ export default function TideChart({ tides, date }: TideChartProps) {
             );
           })}
 
+          {/* Hour tick marks on bottom x-axis */}
+          {Array.from({ length: 25 }, (_, i) => (
+            <line
+              key={`hour-tick-${i}`}
+              x1={i * (100/24)}
+              y1="48"
+              x2={i * (100/24)}
+              y2="50"
+              stroke="#2563eb"
+              strokeWidth="0.3"
+              opacity="0.6"
+              className="dark:hidden"
+            />
+          ))}
+          {Array.from({ length: 25 }, (_, i) => (
+            <line
+              key={`hour-tick-dark-${i}`}
+              x1={i * (100/24)}
+              y1="48"
+              x2={i * (100/24)}
+              y2="50"
+              stroke="#10b981"
+              strokeWidth="0.3"
+              opacity="0.6"
+              className="hidden dark:block"
+            />
+          ))}
+
           {/* Current time indicator line - only show for today */}
           {isToday && (
             <>
