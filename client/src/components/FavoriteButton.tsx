@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Waves } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -102,15 +102,15 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
       size="icon"
       className={`${sizeClasses[size]} ${
         isFavorite 
-          ? "bg-blue-50 border-blue-200 hover:bg-blue-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:hover:bg-emerald-900/30" 
+          ? "bg-red-50 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30" 
           : "bg-white border-gray-200 hover:bg-gray-50 dark:bg-emerald-900/10 dark:border-emerald-800 dark:hover:bg-emerald-900/20"
       }`}
       onClick={handleToggleFavorite}
       disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
     >
-      <Waves
+      <Heart
         className={`${iconSizes[size]} ${
-          isFavorite ? "fill-blue-500 text-blue-500 dark:fill-emerald-400 dark:text-emerald-400" : "text-gray-400 dark:text-emerald-400 hover:text-blue-400 dark:hover:text-emerald-400"
+          isFavorite ? "fill-red-500 text-red-500 dark:fill-red-400 dark:text-red-400" : "text-gray-400 dark:text-emerald-400 hover:text-red-400 dark:hover:text-red-300"
         }`}
       />
     </Button>
