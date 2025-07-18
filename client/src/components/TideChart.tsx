@@ -127,10 +127,6 @@ export default function TideChart({ tides, date }: TideChartProps) {
 
   return (
     <div className="mt-4 p-4 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-gray-700 dark:text-emerald-300">Tide Chart</span>
-        <span className="text-xs text-gray-500 dark:text-emerald-400">24 hours</span>
-      </div>
       
       {/* Tide Chart SVG */}
       <div className="relative mb-4">
