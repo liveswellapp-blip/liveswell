@@ -172,7 +172,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
             d={createTidePath()}
             fill="none"
             stroke="#2563eb"
-            strokeWidth="2"
+            strokeWidth="1"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="dark:hidden"
@@ -181,7 +181,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
             d={createTidePath()}
             fill="none"
             stroke="#10b981"
-            strokeWidth="2"
+            strokeWidth="1"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="hidden dark:block"
