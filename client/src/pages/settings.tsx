@@ -22,7 +22,7 @@ export default function Settings() {
   const [defaultLocation, setDefaultLocation] = useState("");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-black dark:to-emerald-900">
       <Header />
       
       <div className="container mx-auto px-4 py-8">
