@@ -302,13 +302,13 @@ export default function TideChart({ tides, date }: TideChartProps) {
           )}
         </svg>
         
-        {/* Time labels */}
-        <div className="flex justify-between text-xs text-gray-400 dark:text-emerald-500 mt-1">
-          <span>12a</span>
-          <span>6a</span>
-          <span>12p</span>
-          <span>6p</span>
-          <span>12a</span>
+        {/* Time labels positioned to align with longer tick marks */}
+        <div className="relative text-xs text-gray-400 dark:text-emerald-500 mt-1">
+          <span className="absolute" style={{ left: '0%', transform: 'translateX(-50%)' }}>12a</span>
+          <span className="absolute" style={{ left: '25%', transform: 'translateX(-50%)' }}>6a</span>
+          <span className="absolute" style={{ left: '50%', transform: 'translateX(-50%)' }}>12p</span>
+          <span className="absolute" style={{ left: '75%', transform: 'translateX(-50%)' }}>6p</span>
+          <span className="absolute" style={{ left: '100%', transform: 'translateX(-50%)' }}>12a</span>
         </div>
       </div>
       
