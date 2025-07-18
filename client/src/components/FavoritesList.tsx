@@ -21,7 +21,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-            <span>Surf Spots</span>
+            <span>Saved</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -48,7 +48,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-            <span>Surf Spots</span>
+            <span>Saved</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -66,15 +66,15 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-            <span>Surf Spots</span>
+            <span>Saved</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <Waves className="h-12 w-12 mx-auto text-blue-900 dark:text-emerald-400 mb-4" />
-            <p className="text-blue-900 dark:text-emerald-400 mb-2">No surf spots saved yet</p>
+            <p className="text-blue-900 dark:text-emerald-400 mb-2">No locations saved yet</p>
             <p className="text-sm text-blue-900 dark:text-emerald-400">
-              Click the wave icon on any surf spot to save it to your list
+              Click the wave icon on any location to save it to your list
             </p>
           </div>
         </CardContent>
@@ -87,7 +87,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
           <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-          <span>Surf Spots</span>
+          <span>Saved</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
