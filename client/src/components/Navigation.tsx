@@ -52,7 +52,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
           {/* Centered container for search and favorites */}
           <div className="flex items-center space-x-6 w-full max-w-4xl justify-center">
             {/* Search Bar */}
-            <div className="relative flex-1 max-w-lg" ref={searchRef}>
+            <div className={`relative flex-1 ${location === "/favorites" ? "max-w-none" : "max-w-lg"}`} ref={searchRef}>
               <div className="relative">
                 <Input
                   type="text"
@@ -86,18 +86,20 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               )}
             </div>
             
-            {/* Favorites Button - styled to match and complement the search bar */}
-            <Button
-              variant={location === "/favorites" ? "default" : "outline"}
-              size="default"
-              asChild
-              className="px-6 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
-            >
-              <Link href="/favorites">
-                <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
-                Surf Spots
-              </Link>
-            </Button>
+            {/* Favorites Button - only show when not on the favorites page */}
+            {location !== "/favorites" && (
+              <Button
+                variant={location === "/favorites" ? "default" : "outline"}
+                size="default"
+                asChild
+                className="px-6 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <Link href="/favorites">
+                  <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
+                  Surf Spots
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>
