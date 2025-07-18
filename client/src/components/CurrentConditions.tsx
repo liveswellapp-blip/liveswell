@@ -29,16 +29,33 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   const getNextTide = () => {
     if (!todayTides.length) return null;
     
+    // Get timezone for location
+    const getLocationTimezone = (lat: number, lon: number): string => {
+      // Pacific Time Zone (West Coast)
+      if (lon >= -125 && lon <= -114 && lat >= 32 && lat <= 49) {
+        return 'America/Los_Angeles';
+      }
+      // Mountain Time Zone
+      if (lon >= -115 && lon <= -102 && lat >= 31 && lat <= 49) {
+        return 'America/Denver';
+      }
+      // Central Time Zone
+      if (lon >= -104 && lon <= -87 && lat >= 25 && lat <= 49) {
+        return 'America/Chicago';
+      }
+      // Eastern Time Zone (East Coast and Gulf)
+      if (lon >= -88 && lon <= -66 && lat >= 25 && lat <= 47) {
+        return 'America/New_York';
+      }
+      return 'UTC';
+    };
+    
+    const timezone = getLocationTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
     const now = new Date();
-    const currentTime = now.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
     
     // Convert tide times to comparable format and find next one
     const futureTides = todayTides.filter(tide => {
-      const tideDate = new Date();
+      const today = new Date();
       const [time, period] = tide.time.split(' ');
       const [hours, minutes] = time.split(':');
       let hour24 = parseInt(hours);
@@ -49,8 +66,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         hour24 = 0;
       }
       
-      tideDate.setHours(hour24, parseInt(minutes), 0, 0);
-      return tideDate > now;
+      // Create date in location's timezone
+      const tideDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, parseInt(minutes));
+      
+      // Convert current time to location timezone for comparison
+      const nowInLocationTz = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+      const nowTodayInLocationTz = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+        nowInLocationTz.getHours(), nowInLocationTz.getMinutes());
+      
+      return tideDate > nowTodayInLocationTz;
     });
     
     return futureTides.length > 0 ? futureTides[0] : null;
@@ -82,11 +106,34 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   };
 
   const getCurrentLocalTime = () => {
+    // Get timezone for location
+    const getLocationTimezone = (lat: number, lon: number): string => {
+      // Pacific Time Zone (West Coast)
+      if (lon >= -125 && lon <= -114 && lat >= 32 && lat <= 49) {
+        return 'America/Los_Angeles';
+      }
+      // Mountain Time Zone
+      if (lon >= -115 && lon <= -102 && lat >= 31 && lat <= 49) {
+        return 'America/Denver';
+      }
+      // Central Time Zone
+      if (lon >= -104 && lon <= -87 && lat >= 25 && lat <= 49) {
+        return 'America/Chicago';
+      }
+      // Eastern Time Zone (East Coast and Gulf)
+      if (lon >= -88 && lon <= -66 && lat >= 25 && lat <= 47) {
+        return 'America/New_York';
+      }
+      return 'UTC';
+    };
+    
+    const timezone = getLocationTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
     const now = new Date();
     return now.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
       minute: '2-digit',
-      hour12: true 
+      hour12: true,
+      timeZone: timezone
     });
   };
 

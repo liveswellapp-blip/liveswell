@@ -38,12 +38,40 @@ function getWindDirection(degrees: number): string {
   return directions[index];
 }
 
-function formatTime(timestamp: number): string {
+function formatTime(timestamp: number, timezone: string = 'UTC'): string {
   return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
+    timeZone: timezone
   });
+}
+
+function getTimezone(lat: number, lon: number): string {
+  // US timezone mapping based on coordinates
+  
+  // Pacific Time Zone (West Coast)
+  if (lon >= -125 && lon <= -114 && lat >= 32 && lat <= 49) {
+    return 'America/Los_Angeles';
+  }
+  
+  // Mountain Time Zone
+  if (lon >= -115 && lon <= -102 && lat >= 31 && lat <= 49) {
+    return 'America/Denver';
+  }
+  
+  // Central Time Zone
+  if (lon >= -104 && lon <= -87 && lat >= 25 && lat <= 49) {
+    return 'America/Chicago';
+  }
+  
+  // Eastern Time Zone (East Coast and Gulf)
+  if (lon >= -88 && lon <= -66 && lat >= 25 && lat <= 47) {
+    return 'America/New_York';
+  }
+  
+  // Default to UTC for international locations
+  return 'UTC';
 }
 
 function getCoastalSwellDirection(lat: number, lon: number): string {
@@ -263,6 +291,9 @@ async function fetchTideData(lat: number, lon: number) {
           tideStatus = nextTide.type === 'high' ? 'Rising' : 'Falling';
         }
 
+        // Get the correct timezone for this location
+        const timezone = getTimezone(lat, lon);
+        
         // Format next few tides for display
         nextTides = tides
           .filter((tide: any) => tide.time >= currentTime)
@@ -272,7 +303,7 @@ async function fetchTideData(lat: number, lon: number) {
               hour: 'numeric', 
               minute: '2-digit', 
               hour12: true,
-              timeZone: 'America/New_York' // Jacksonville Beach is in EST/EDT
+              timeZone: timezone
             }),
             height: parseFloat(tide.height.toFixed(1)),
             type: tide.type
@@ -292,7 +323,7 @@ async function fetchTideData(lat: number, lon: number) {
   }
 }
 
-function generateRealisticTides(dayOffset: number, timezone: string = 'America/New_York') {
+function generateRealisticTides(dayOffset: number, timezone: string = 'UTC') {
   const tides = [];
   const baseTime = new Date();
   baseTime.setDate(baseTime.getDate() + dayOffset);
@@ -360,6 +391,9 @@ async function generateDemoWeatherData(lat: number, lon: number) {
   const baseTemp = 70 - Math.abs(lat - 25) * 0.8;
   const waterTemp = baseTemp * 0.85;
   
+  // Get timezone for location
+  const timezone = getTimezone(lat, lon);
+  const now = new Date();
   const currentHour = now.getHours();
   const sunrise = new Date(now);
   sunrise.setHours(6, 30, 0);
@@ -378,8 +412,18 @@ async function generateDemoWeatherData(lat: number, lon: number) {
     waterTemp: waterTemp.toFixed(1),
     visibility: (10 + Math.random() * 15).toFixed(1),
     uvIndex: Math.round(Math.random() * 10),
-    sunrise: sunrise.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-    sunset: sunset.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+    sunrise: sunrise.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true,
+      timeZone: timezone 
+    }),
+    sunset: sunset.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true,
+      timeZone: timezone 
+    }),
   };
 }
 
@@ -435,6 +479,9 @@ async function fetchWeatherData(lat: number, lon: number) {
     // Water temperature approximation based on air temp
     const waterTemp = weatherData.main.temp * 0.8;
     
+    // Get timezone for location
+    const timezone = getTimezone(lat, lon);
+    
     return {
       waveHeight: waveHeight.toFixed(1),
       wavePeriod,
@@ -447,8 +494,8 @@ async function fetchWeatherData(lat: number, lon: number) {
       waterTemp: waterTemp.toFixed(1),
       visibility: (weatherData.visibility / 1609.34).toFixed(1), // Convert meters to miles
       uvIndex: uvData?.value ? Math.round(uvData.value) : Math.round(Math.random() * 10),
-      sunrise: formatTime(weatherData.sys.sunrise),
-      sunset: formatTime(weatherData.sys.sunset),
+      sunrise: formatTime(weatherData.sys.sunrise, timezone),
+      sunset: formatTime(weatherData.sys.sunset, timezone),
     };
   } catch (error) {
     console.error('Error fetching weather data:', error);
@@ -605,18 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine timezone based on location coordinates
       const lat = parseFloat(location.latitude);
       const lon = parseFloat(location.longitude);
-      let timezone = 'America/New_York'; // Default to Eastern
-      
-      // US timezone mapping based on longitude
-      if (lon > -75) {
-        timezone = 'America/New_York'; // Eastern Time
-      } else if (lon > -90) {
-        timezone = 'America/Chicago'; // Central Time
-      } else if (lon > -105) {
-        timezone = 'America/Denver'; // Mountain Time
-      } else {
-        timezone = 'America/Los_Angeles'; // Pacific Time
-      }
+      const timezone = getTimezone(lat, lon);
       
       // Function to get day name in location's timezone
       const getDayName = (dayOffset: number) => {
