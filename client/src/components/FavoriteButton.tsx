@@ -37,8 +37,8 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     },
     onSuccess: () => {
       toast({
-        title: "Saved",
-        description: `${locationName} has been saved to your list.`,
+        title: "Added to surf spots",
+        description: `${locationName} has been added to your surf spots.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites", locationId] });
@@ -46,7 +46,7 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to save location",
+        description: error.message || "Failed to add to surf spots",
         variant: "destructive",
       });
     },
@@ -61,8 +61,8 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     },
     onSuccess: () => {
       toast({
-        title: "Removed",
-        description: `${locationName} has been removed from your saved list.`,
+        title: "Removed from surf spots",
+        description: `${locationName} has been removed from your surf spots.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites", locationId] });
@@ -70,7 +70,7 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to remove from saved list",
+        description: error.message || "Failed to remove from surf spots",
         variant: "destructive",
       });
     },

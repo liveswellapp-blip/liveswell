@@ -95,7 +95,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
             >
               <Link href="/favorites">
                 <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
-                Saved
+                Surf Spots
               </Link>
             </Button>
           </div>
