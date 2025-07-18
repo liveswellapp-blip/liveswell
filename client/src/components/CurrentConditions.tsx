@@ -53,9 +53,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     const timezone = getLocationTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
     const now = new Date();
     
+    // Get current time in location's timezone
+    const nowInLocationTz = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    
     // Convert tide times to comparable format and find next one
-    const futureTides = todayTides.filter(tide => {
-      const today = new Date();
+    const tidesWithDates = todayTides.map(tide => {
       const [time, period] = tide.time.split(' ');
       const [hours, minutes] = time.split(':');
       let hour24 = parseInt(hours);
@@ -66,15 +68,39 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         hour24 = 0;
       }
       
-      // Create date in location's timezone
-      const tideDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, parseInt(minutes));
+      // Create date in location's timezone (use today's date)
+      const tideDate = new Date(nowInLocationTz.getFullYear(), nowInLocationTz.getMonth(), nowInLocationTz.getDate(), hour24, parseInt(minutes));
       
-      // Convert current time to location timezone for comparison
-      const nowInLocationTz = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
-      const nowTodayInLocationTz = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
-        nowInLocationTz.getHours(), nowInLocationTz.getMinutes());
-      
-      return tideDate > nowTodayInLocationTz;
+      return {
+        ...tide,
+        dateTime: tideDate,
+        debugInfo: {
+          originalTime: tide.time,
+          hour24: hour24,
+          minutes: parseInt(minutes),
+          tideDateTime: tideDate.toString(),
+          currentTime: nowInLocationTz.toString()
+        }
+      };
+    });
+    
+    // Sort by time and find the next upcoming tide
+    const futureTides = tidesWithDates
+      .filter(tide => tide.dateTime > nowInLocationTz)
+      .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
+    
+    // Debug logging
+    console.log('Next Tide Debug:', {
+      todayTides: todayTides,
+      currentTimeInLocation: nowInLocationTz.toString(),
+      tidesWithDates: tidesWithDates.map(t => ({
+        time: t.time,
+        type: t.type,
+        dateTime: t.dateTime.toString(),
+        isFuture: t.dateTime > nowInLocationTz
+      })),
+      futureTides: futureTides.map(t => ({ time: t.time, type: t.type })),
+      nextTide: futureTides[0] ? { time: futureTides[0].time, type: futureTides[0].type } : null
     });
     
     return futureTides.length > 0 ? futureTides[0] : null;
