@@ -132,7 +132,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
       <div className="relative mb-4">
         <svg 
           viewBox="0 0 100 50" 
-          className="w-full h-16 overflow-visible"
+          className="w-full h-24 overflow-visible"
           preserveAspectRatio="none"
         >
           <defs>
@@ -230,36 +230,36 @@ export default function TideChart({ tides, date }: TideChartProps) {
                 
                 {/* Background rectangle for better text readability */}
                 <rect
-                  x={x - 6}
-                  y={curveY - 8}
-                  width="12"
-                  height="6"
-                  rx="1"
+                  x={x - 8}
+                  y={curveY - 10}
+                  width="16"
+                  height="8"
+                  rx="1.5"
                   fill="#ffffff"
-                  fillOpacity="0.9"
+                  fillOpacity="0.95"
                   stroke="#2563eb"
-                  strokeWidth="0.3"
+                  strokeWidth="0.4"
                   className="dark:hidden"
                 />
                 <rect
-                  x={x - 6}
-                  y={curveY - 8}
-                  width="12"
-                  height="6"
-                  rx="1"
+                  x={x - 8}
+                  y={curveY - 10}
+                  width="16"
+                  height="8"
+                  rx="1.5"
                   fill="#0f172a"
-                  fillOpacity="0.9"
+                  fillOpacity="0.95"
                   stroke="#10b981"
-                  strokeWidth="0.3"
+                  strokeWidth="0.4"
                   className="hidden dark:block"
                 />
                 
                 {/* Tide time label above the curve */}
                 <text
                   x={x}
-                  y={curveY - 3.5}
+                  y={curveY - 4}
                   textAnchor="middle"
-                  fontSize="2.5"
+                  fontSize="3.5"
                   fill="#2563eb"
                   className="dark:hidden font-bold"
                   fontFamily="system-ui, -apple-system, sans-serif"
@@ -268,9 +268,9 @@ export default function TideChart({ tides, date }: TideChartProps) {
                 </text>
                 <text
                   x={x}
-                  y={curveY - 3.5}
+                  y={curveY - 4}
                   textAnchor="middle"
-                  fontSize="2.5"
+                  fontSize="3.5"
                   fill="#10b981"
                   className="hidden dark:block font-bold"
                   fontFamily="system-ui, -apple-system, sans-serif"
