@@ -94,6 +94,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ Updated tide time display throughout forecast components to use correct local time
 - ✅ Added comprehensive timezone mapping function for US coastal locations
 - ✅ Verified next tide display shows correct upcoming tide (1:30 PM high tide for Malibu)
+- ✅ Rearranged tide cards under curve chart to display upcoming tides first in chronological order
 
 ### 2025-07-17: Real Marine Weather Data Integration
 - ✅ Integrated authentic NOAA buoy data for accurate wave conditions (replaced simulated data)

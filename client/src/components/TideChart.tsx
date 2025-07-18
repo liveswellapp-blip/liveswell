@@ -422,39 +422,18 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
             return sortedTides.map((tide, index) => (
               <div 
                 key={index} 
-                className={`flex items-center justify-between p-2 rounded-md ${
-                  tide.isUpcoming 
-                    ? 'bg-blue-50 dark:bg-emerald-900/40 border border-blue-200 dark:border-emerald-700' 
-                    : 'bg-white/50 dark:bg-emerald-950/30'
-                }`}
+                className="flex items-center justify-between p-2 bg-white/50 dark:bg-emerald-950/30 rounded-md"
               >
                 <div className="flex items-center space-x-2">
-                  <span className={`text-sm font-medium ${
-                    tide.isUpcoming 
-                      ? 'text-blue-800 dark:text-emerald-200' 
-                      : 'text-gray-700 dark:text-white'
-                  }`}>
+                  <span className="text-sm font-medium text-gray-700 dark:text-white">
                     {tide.type === 'high' ? 'High' : 'Low'} Tide
-                    {tide.isUpcoming && (
-                      <span className="ml-1 text-xs bg-blue-100 dark:bg-emerald-800 text-blue-600 dark:text-emerald-200 px-1.5 py-0.5 rounded">
-                        Upcoming
-                      </span>
-                    )}
                   </span>
                 </div>
                 <div className="text-right">
-                  <div className={`text-sm font-semibold ${
-                    tide.isUpcoming 
-                      ? 'text-blue-900 dark:text-emerald-100' 
-                      : 'text-gray-900 dark:text-emerald-200'
-                  }`}>
+                  <div className="text-sm font-semibold text-gray-900 dark:text-emerald-200">
                     {tide.time}
                   </div>
-                  <div className={`text-xs ${
-                    tide.isUpcoming 
-                      ? 'text-blue-600 dark:text-emerald-300' 
-                      : 'text-gray-500 dark:text-emerald-400'
-                  }`}>
+                  <div className="text-xs text-gray-500 dark:text-emerald-400">
                     {tide.height.toFixed(1)} ft
                   </div>
                 </div>
