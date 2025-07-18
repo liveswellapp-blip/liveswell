@@ -1,6 +1,7 @@
 import { Settings, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
+import { Link } from "wouter";
 import logoImageDark from "@assets/LiveSwell logo_1752785462142.png";
 import logoImageLight from "@assets/LiveSwell logo (1)_1752785617515.png";
 
@@ -39,9 +40,11 @@ export default function Header() {
             >
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="text-blue-900 dark:text-emerald-400 hover:text-blue-700 dark:hover:text-emerald-300">
-              <Settings className="h-5 w-5" />
-            </Button>
+            <Link href="/settings">
+              <Button variant="ghost" size="icon" className="text-blue-900 dark:text-emerald-400 hover:text-blue-700 dark:hover:text-emerald-300">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
