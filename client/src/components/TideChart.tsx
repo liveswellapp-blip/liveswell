@@ -313,7 +313,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
       </div>
       
       {/* Tide Schedule */}
-      <div className="space-y-3">
+      <div className="space-y-3 mt-6">
         <div className="grid grid-cols-1 gap-2">
           {majorTides.map((tide, index) => (
             <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-emerald-950/30 rounded-md">
