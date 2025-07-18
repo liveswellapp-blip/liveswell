@@ -1,11 +1,12 @@
-import { TidePoint } from "@/types/weather";
+import { TidePoint, Location } from "@/types/weather";
 
 interface TideChartProps {
   tides: TidePoint[];
   date: string;
+  location?: Location;
 }
 
-export default function TideChart({ tides, date }: TideChartProps) {
+export default function TideChart({ tides, date, location }: TideChartProps) {
   // Convert tide times to hours for interpolation
   const parseTimeToHours = (timeStr: string) => {
     const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -115,8 +116,41 @@ export default function TideChart({ tides, date }: TideChartProps) {
 
   // Calculate current time position for the indicator line (only for today)
   const getCurrentTimePosition = () => {
+    if (!location) {
+      // Fallback to browser time if no location provided
+      const now = new Date();
+      const currentHour = now.getHours() + now.getMinutes() / 60;
+      return (currentHour / 24) * 100;
+    }
+    
+    // Get timezone for location
+    const getLocationTimezone = (lat: number, lon: number): string => {
+      // Pacific Time Zone (West Coast)
+      if (lon >= -125 && lon <= -114 && lat >= 32 && lat <= 49) {
+        return 'America/Los_Angeles';
+      }
+      // Mountain Time Zone
+      if (lon >= -115 && lon <= -102 && lat >= 31 && lat <= 49) {
+        return 'America/Denver';
+      }
+      // Central Time Zone
+      if (lon >= -104 && lon <= -87 && lat >= 25 && lat <= 49) {
+        return 'America/Chicago';
+      }
+      // Eastern Time Zone (East Coast and Gulf)
+      if (lon >= -88 && lon <= -66 && lat >= 25 && lat <= 47) {
+        return 'America/New_York';
+      }
+      return 'UTC';
+    };
+    
+    const timezone = getLocationTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
     const now = new Date();
-    const currentHour = now.getHours() + now.getMinutes() / 60;
+    
+    // Get current time in the location's timezone
+    const timeInLocation = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    const currentHour = timeInLocation.getHours() + timeInLocation.getMinutes() / 60;
+    
     return (currentHour / 24) * 100; // Convert to percentage of 24-hour day
   };
 

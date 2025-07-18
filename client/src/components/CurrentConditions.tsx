@@ -293,7 +293,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   
                   {/* Today's Tide Chart */}
                   {todayTides.length > 0 && (
-                    <TideChart tides={todayTides} date="today" />
+                    <TideChart tides={todayTides} date="today" location={location} />
                   )}
                 </>
               )}

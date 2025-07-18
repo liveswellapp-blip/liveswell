@@ -66,7 +66,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                 
                 {/* Tide Chart */}
                 {day.tides && day.tides.length > 0 && (
-                  <TideChart tides={day.tides} date={day.date} />
+                  <TideChart tides={day.tides} date={day.date} location={location} />
                 )}
               </div>
             ))
