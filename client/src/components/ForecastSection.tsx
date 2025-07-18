@@ -51,15 +51,15 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             forecast.map((day, index) => (
               <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-muted border border-border">
                 <div className="text-left">
-                  <div className="font-medium mb-2 text-[18px] text-blue-900 dark:warm-gold">
+                  <div className="font-medium mb-2 text-[18px] text-blue-900 dark:text-warm-gold">
                     {index === 0 ? "Today" : day.date}
                   </div>
-                  <div className="flex items-center space-x-2 font-semibold mb-1 text-[25px] text-blue-900 dark:coral-accent">
-                    <Waves className="h-[25px] w-[25px] text-blue-900 dark:coral-accent" />
+                  <div className="flex items-center space-x-2 font-semibold mb-1 text-[25px] text-blue-900 dark:text-coral-accent">
+                    <Waves className="h-[25px] w-[25px] text-blue-900 dark:text-coral-accent" />
                     <span>{day.waveHeight}</span>
                   </div>
-                  <div className="flex items-center space-x-2 mb-2 text-[18px] text-blue-900 dark:soft-purple">
-                    <Wind className="h-[18px] w-[18px] text-blue-900 dark:soft-purple" />
+                  <div className="flex items-center space-x-2 mb-2 text-[18px] text-blue-900 dark:text-soft-purple">
+                    <Wind className="h-[18px] w-[18px] text-blue-900 dark:text-soft-purple" />
                     <span>{day.wind}</span>
                   </div>
                 </div>

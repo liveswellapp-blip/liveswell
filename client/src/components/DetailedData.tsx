@@ -28,7 +28,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-16" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:coral-accent">
+                <span className="text-lg font-semibold text-blue-900 dark:text-coral-accent">
                   {conditions?.waterTemp || "0"}°F
                 </span>
               )}
@@ -42,7 +42,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-20" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:soft-purple">
+                <span className="text-lg font-semibold text-blue-900 dark:text-soft-purple">
                   {conditions?.visibility || "0"} miles
                 </span>
               )}
@@ -56,7 +56,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-24" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:warm-gold">
+                <span className="text-lg font-semibold text-blue-900 dark:text-warm-gold">
                   {conditions?.uvIndex || 0} {conditions?.uvIndex && conditions.uvIndex > 7 ? "(Very High)" : conditions?.uvIndex && conditions.uvIndex > 5 ? "(High)" : conditions?.uvIndex && conditions.uvIndex > 2 ? "(Moderate)" : "(Low)"}
                 </span>
               )}
@@ -70,7 +70,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:salmon-pink">
+                <span className="text-lg font-semibold text-blue-900 dark:text-salmon-pink">
                   {conditions?.sunrise || "6:28 AM"} / {conditions?.sunset || "7:42 PM"}
                 </span>
               )}
