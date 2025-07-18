@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import FavoritesList from "@/components/FavoritesList";
 import Navigation from "@/components/Navigation";
+import Header from "@/components/Header";
 import { Location } from "@/types/weather";
 
 export default function Favorites() {
@@ -14,6 +15,7 @@ export default function Favorites() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <Navigation onLocationSelect={handleLocationSelect} />
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-2xl mx-auto">
