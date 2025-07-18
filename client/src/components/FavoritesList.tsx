@@ -19,7 +19,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-emerald-400">
+          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Heart className="h-5 w-5 text-red-500" />
             <span>Favorite Surf Spots</span>
           </CardTitle>
@@ -46,7 +46,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-emerald-400">
+          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Heart className="h-5 w-5 text-red-500" />
             <span>Favorite Surf Spots</span>
           </CardTitle>
@@ -64,7 +64,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-emerald-400">
+          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Heart className="h-5 w-5 text-red-500" />
             <span>Favorite Surf Spots</span>
           </CardTitle>
@@ -85,7 +85,7 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-emerald-400">
+        <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
           <Heart className="h-5 w-5 text-red-500" />
           <span>Favorite Surf Spots</span>
         </CardTitle>

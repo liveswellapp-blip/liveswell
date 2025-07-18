@@ -18,7 +18,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
     return (
       <section className="container mx-auto px-4 py-6">
         <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-emerald-400">Nearby Surf Spots</h3>
+          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
           <div className="text-center text-red-600">
             <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
           </div>
