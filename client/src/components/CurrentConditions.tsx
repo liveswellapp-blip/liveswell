@@ -81,6 +81,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     return `${Math.floor(diffHours / 24)} days ago`;
   };
 
+  const getCurrentLocalTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
   if (error) {
     return (
       <section className="container mx-auto px-4 py-6">
@@ -213,7 +222,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </>
               )}
             </div>
-            <div className="text-sm mt-2">
+            
+            {/* Local Time */}
+            <div className="text-sm mt-2 mb-2">
+              <span className="text-blue-900 dark:text-white">Local Time: <span className="text-blue-900 dark:text-emerald-400">{getCurrentLocalTime()}</span></span>
+            </div>
+            
+            <div className="text-sm">
               {isLoading || forecastLoading ? (
                 <Skeleton className="h-4 w-32 bg-white/20" />
               ) : (
