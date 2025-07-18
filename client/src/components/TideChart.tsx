@@ -234,32 +234,44 @@ export default function TideChart({ tides, date }: TideChartProps) {
           })}
 
           {/* Hour tick marks on bottom x-axis */}
-          {Array.from({ length: 25 }, (_, i) => (
-            <line
-              key={`hour-tick-${i}`}
-              x1={i * (100/24)}
-              y1="48"
-              x2={i * (100/24)}
-              y2="50"
-              stroke="#2563eb"
-              strokeWidth="0.3"
-              opacity="0.6"
-              className="dark:hidden"
-            />
-          ))}
-          {Array.from({ length: 25 }, (_, i) => (
-            <line
-              key={`hour-tick-dark-${i}`}
-              x1={i * (100/24)}
-              y1="48"
-              x2={i * (100/24)}
-              y2="50"
-              stroke="#10b981"
-              strokeWidth="0.3"
-              opacity="0.6"
-              className="hidden dark:block"
-            />
-          ))}
+          {Array.from({ length: 25 }, (_, i) => {
+            // Make 12am (0), 6am (6), 12pm (12), 6pm (18) longer
+            const isMainHour = i === 0 || i === 6 || i === 12 || i === 18;
+            const startY = isMainHour ? "46" : "48";
+            
+            return (
+              <line
+                key={`hour-tick-${i}`}
+                x1={i * (100/24)}
+                y1={startY}
+                x2={i * (100/24)}
+                y2="50"
+                stroke="#2563eb"
+                strokeWidth="0.3"
+                opacity="0.6"
+                className="dark:hidden"
+              />
+            );
+          })}
+          {Array.from({ length: 25 }, (_, i) => {
+            // Make 12am (0), 6am (6), 12pm (12), 6pm (18) longer
+            const isMainHour = i === 0 || i === 6 || i === 12 || i === 18;
+            const startY = isMainHour ? "46" : "48";
+            
+            return (
+              <line
+                key={`hour-tick-dark-${i}`}
+                x1={i * (100/24)}
+                y1={startY}
+                x2={i * (100/24)}
+                y2="50"
+                stroke="#10b981"
+                strokeWidth="0.3"
+                opacity="0.6"
+                className="hidden dark:block"
+              />
+            );
+          })}
 
           {/* Current time indicator line - only show for today */}
           {isToday && (
