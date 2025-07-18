@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart } from "lucide-react";
+import { Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -37,8 +37,8 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     },
     onSuccess: () => {
       toast({
-        title: "Added to favorites",
-        description: `${locationName} has been added to your favorites.`,
+        title: "Added to surf spots",
+        description: `${locationName} has been added to your surf spots.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites", locationId] });
@@ -46,7 +46,7 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to add to favorites",
+        description: error.message || "Failed to add to surf spots",
         variant: "destructive",
       });
     },
@@ -61,8 +61,8 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     },
     onSuccess: () => {
       toast({
-        title: "Removed from favorites",
-        description: `${locationName} has been removed from your favorites.`,
+        title: "Removed from surf spots",
+        description: `${locationName} has been removed from your surf spots.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
       queryClient.invalidateQueries({ queryKey: ["/api/favorites", locationId] });
@@ -70,7 +70,7 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to remove from favorites",
+        description: error.message || "Failed to remove from surf spots",
         variant: "destructive",
       });
     },
@@ -102,15 +102,15 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
       size="icon"
       className={`${sizeClasses[size]} ${
         isFavorite 
-          ? "bg-red-50 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30" 
+          ? "bg-blue-50 border-blue-200 hover:bg-blue-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:hover:bg-emerald-900/30" 
           : "bg-white border-gray-200 hover:bg-gray-50 dark:bg-emerald-900/10 dark:border-emerald-800 dark:hover:bg-emerald-900/20"
       }`}
       onClick={handleToggleFavorite}
       disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
     >
-      <Heart
+      <Waves
         className={`${iconSizes[size]} ${
-          isFavorite ? "fill-red-500 text-red-500 dark:fill-emerald-400 dark:text-emerald-400" : "text-gray-400 dark:text-emerald-400 hover:text-red-400 dark:hover:text-emerald-400"
+          isFavorite ? "fill-blue-500 text-blue-500 dark:fill-emerald-400 dark:text-emerald-400" : "text-gray-400 dark:text-emerald-400 hover:text-blue-400 dark:hover:text-emerald-400"
         }`}
       />
     </Button>

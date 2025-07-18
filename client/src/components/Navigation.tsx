@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, Home, Search, MapPin } from "lucide-react";
+import { Waves, Home, Search, MapPin } from "lucide-react";
 import { Location } from "@/types/weather";
 
 interface NavigationProps {
@@ -94,8 +94,8 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               className="px-6 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
             >
               <Link href="/favorites">
-                <Heart className="h-4 w-4 mr-2 text-blue-900 dark:salmon-pink" />
-                Favorites
+                <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
+                Surf Spots
               </Link>
             </Button>
           </div>
