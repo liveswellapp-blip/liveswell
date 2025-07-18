@@ -292,7 +292,7 @@ async function fetchTideData(lat: number, lon: number) {
   }
 }
 
-function generateRealisticTides(dayOffset: number) {
+function generateRealisticTides(dayOffset: number, timezone: string = 'America/New_York') {
   const tides = [];
   const baseTime = new Date();
   baseTime.setDate(baseTime.getDate() + dayOffset);
@@ -324,7 +324,12 @@ function generateRealisticTides(dayOffset: number) {
     const height = tide.heightRange[0] + Math.random() * (tide.heightRange[1] - tide.heightRange[0]);
     
     tides.push({
-      time: tideTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      time: tideTime.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true,
+        timeZone: timezone 
+      }),
       height: parseFloat(height.toFixed(1)),
       type: tide.type
     });
@@ -597,14 +602,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Location not found" });
       }
       
+      // Determine timezone based on location coordinates
+      const lat = parseFloat(location.latitude);
+      const lon = parseFloat(location.longitude);
+      let timezone = 'America/New_York'; // Default to Eastern
+      
+      // US timezone mapping based on longitude
+      if (lon > -75) {
+        timezone = 'America/New_York'; // Eastern Time
+      } else if (lon > -90) {
+        timezone = 'America/Chicago'; // Central Time
+      } else if (lon > -105) {
+        timezone = 'America/Denver'; // Mountain Time
+      } else {
+        timezone = 'America/Los_Angeles'; // Pacific Time
+      }
+      
+      // Function to get day name in location's timezone
+      const getDayName = (dayOffset: number) => {
+        const date = new Date();
+        date.setDate(date.getDate() + dayOffset);
+        
+        if (dayOffset === 0) return "Today";
+        if (dayOffset === 1) return "Tomorrow";
+        
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'long',
+          timeZone: timezone
+        });
+      };
+      
       try {
         // Check if API key is valid, use demo data if not
         if (!API_KEY || API_KEY === "demo_key" || API_KEY.length < 10) {
           console.log("Using demo forecast data - API key not configured");
           
-          // Generate demo forecast data
+          // Generate demo forecast data with proper timezone
           const dailyForecasts = [];
-          const days = ['Today', 'Tomorrow', 'Friday', 'Saturday', 'Sunday'];
           
           for (let i = 0; i < 5; i++) {
             const windSpeed = 8 + Math.random() * 12;
@@ -612,10 +646,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
             
             // Generate realistic tide data for each day
-            const tides = generateRealisticTides(i);
+            const tides = generateRealisticTides(i, timezone);
             
             dailyForecasts.push({
-              date: i === 0 ? "Today" : i === 1 ? "Tomorrow" : days[i] || `Day ${i + 1}`,
+              date: getDayName(i),
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(Math.random() * 360)}`,
@@ -635,9 +669,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!forecastResponse.ok) {
           console.log(`Forecast API error: ${forecastResponse.status}, using demo data`);
           
-          // Generate demo forecast data as fallback
+          // Generate demo forecast data as fallback with proper timezone
           const dailyForecasts = [];
-          const days = ['Today', 'Tomorrow', 'Friday', 'Saturday', 'Sunday'];
           
           for (let i = 0; i < 5; i++) {
             const windSpeed = 8 + Math.random() * 12;
@@ -645,10 +678,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
             
             // Generate realistic tide data for each day
-            const tides = generateRealisticTides(i);
+            const tides = generateRealisticTides(i, timezone);
             
             dailyForecasts.push({
-              date: i === 0 ? "Today" : i === 1 ? "Tomorrow" : days[i] || `Day ${i + 1}`,
+              date: getDayName(i),
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(Math.random() * 360)}`,
@@ -665,45 +698,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Process forecast data into daily summaries
         const dailyForecasts = [];
-        const processedDays = new Set();
+        
+        // Group forecast data by day in location's timezone
+        const forecastsByDay = new Map();
         
         for (const item of forecastData.list) {
           const date = new Date(item.dt * 1000);
-          const dayKey = date.toDateString();
           
-          if (processedDays.has(dayKey) || dailyForecasts.length >= 5) {
-            continue;
+          // Get the date in the location's timezone
+          const localDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+          const dayKey = localDate.toDateString();
+          
+          if (!forecastsByDay.has(dayKey)) {
+            forecastsByDay.set(dayKey, []);
           }
+          forecastsByDay.get(dayKey).push(item);
+        }
+        
+        // Process up to 5 days
+        const sortedDays = Array.from(forecastsByDay.keys()).sort();
+        let dayOffset = 0;
+        
+        for (const dayKey of sortedDays.slice(0, 5)) {
+          const dayItems = forecastsByDay.get(dayKey);
           
-          processedDays.add(dayKey);
-          
-          const windSpeed = item.wind.speed;
+          // Use the first item of the day for conditions (could be improved by averaging)
+          const representativeItem = dayItems[0];
+          const windSpeed = representativeItem.wind.speed;
           const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
           const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
           
           // Generate realistic tide data for each day
-          const tides = generateRealisticTides(dailyForecasts.length);
+          const tides = generateRealisticTides(dayOffset, timezone);
 
           if (waveHeight > 5) {
             const qualityBonus = windSpeed < 8 ? "Excellent" : windSpeed < 12 ? "Good" : "Fair";
             dailyForecasts.push({
-              date: date.toLocaleDateString('en-US', { weekday: 'long' }),
+              date: getDayName(dayOffset),
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions: qualityBonus,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(item.wind.deg)}`,
+              wind: `${Math.round(windSpeed)} mph ${getWindDirection(representativeItem.wind.deg)}`,
               icon: "🌊",
               tides
             });
           } else {
             dailyForecasts.push({
-              date: date.toLocaleDateString('en-US', { weekday: 'long' }),
+              date: getDayName(dayOffset),
               waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
               conditions,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(item.wind.deg)}`,
+              wind: `${Math.round(windSpeed)} mph ${getWindDirection(representativeItem.wind.deg)}`,
               icon: "🌊",
               tides
             });
           }
+          
+          dayOffset++;
         }
         
         res.json(dailyForecasts);
