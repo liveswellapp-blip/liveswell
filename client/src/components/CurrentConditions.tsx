@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, BarChart3, Navigation } from "lucide-react";
+import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -155,9 +155,36 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     return (
       <section className="container mx-auto px-4 py-6">
         <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
-          <div className="text-center text-red-600">
-            <p className="text-destructive">Unable to load current conditions. Please try again later.</p>
-          </div>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-blue-900 dark:text-white">
+              <div className="flex items-center space-x-2">
+                <CloudSun className="h-6 w-6 text-blue-900 dark:text-emerald-400" />
+                <span>Current Conditions</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <FavoriteButton location={location} />
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
+              <div className="flex items-center justify-center space-x-2 mb-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                <h3 className="font-semibold text-yellow-800 dark:text-yellow-200">Weather Data Temporarily Unavailable</h3>
+              </div>
+              <p className="text-yellow-700 dark:text-yellow-300 mb-3">
+                External weather service is experiencing connectivity issues
+              </p>
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-blue-800 dark:text-blue-200 font-medium">
+                  ✅ Real-time NOAA wave monitoring data is still available below
+                </p>
+                <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
+                  Check the NOAA Buoy Data section for live wave conditions and marine weather
+                </p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </section>
     );
