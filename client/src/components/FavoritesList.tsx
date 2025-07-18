@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Waves, MapPin } from "lucide-react";
+import { Waves, MapPin, Heart } from "lucide-react";
 import { Location } from "@/types/weather";
 import FavoriteButton from "./FavoriteButton";
 
@@ -20,8 +20,8 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
-            <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-            <span>Surf Spots</span>
+            <Heart className="h-5 w-5 text-red-500" />
+            <span>Saved</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -47,8 +47,8 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
-            <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-            <span>Surf Spots</span>
+            <Heart className="h-5 w-5 text-red-500" />
+            <span>Saved</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -65,13 +65,13 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
-            <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-            <span>Surf Spots</span>
+            <Heart className="h-5 w-5 text-red-500" />
+            <span>Saved</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <Waves className="h-12 w-12 mx-auto text-blue-900 dark:text-emerald-400 mb-4" />
+            <Heart className="h-12 w-12 mx-auto text-red-500 mb-4" />
             <p className="text-blue-900 dark:text-emerald-400 mb-2">No surf spots saved yet</p>
             <p className="text-sm text-blue-900 dark:text-emerald-400">
               Click the wave icon on any surf spot to save it to your list
@@ -86,8 +86,8 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
-          <Waves className="h-5 w-5 text-blue-500 dark:text-emerald-400" />
-          <span>Surf Spots</span>
+          <Heart className="h-5 w-5 text-red-500" />
+          <span>Saved</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
