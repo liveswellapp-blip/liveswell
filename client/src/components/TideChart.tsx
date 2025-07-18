@@ -126,65 +126,53 @@ export default function TideChart({ tides, date }: TideChartProps) {
   const isToday = date === "today" || date === "Today";
 
   return (
-    <div className="mt-4 p-4 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg">
+    <div className="mt-4 p-4 bg-gray-800 dark:bg-gray-900 rounded-lg">
+      {/* Tide header */}
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="text-white font-medium text-sm">Tide (ft)</h3>
+          <p className="text-gray-400 text-xs">{location.name}, {location.state || location.country}</p>
+        </div>
+        <button className="px-3 py-1 bg-gray-700 text-white text-xs rounded border border-gray-600">
+          Tide Calendar
+        </button>
+      </div>
       
       {/* Tide Chart SVG */}
       <div className="relative mb-4">
         <svg 
           viewBox="0 0 100 50" 
-          className="w-full h-24 overflow-visible"
+          className="w-full h-32 overflow-visible"
           preserveAspectRatio="none"
         >
-          <defs>
-            <linearGradient id={`tideGradient-${date}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" className="dark:hidden" />
-              <stop offset="100%" stopColor="#1e40af" stopOpacity="0.1" className="dark:hidden" />
-            </linearGradient>
-            <linearGradient id={`tideGradientDark-${date}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#047857" stopOpacity="0.1" />
-            </linearGradient>
-          </defs>
+          {/* Chart background */}
+          <rect width="100" height="50" fill="#374151" />
           
-          {/* Grid lines */}
-          <g stroke="#e5e7eb" strokeWidth="0.3" opacity="0.4" className="dark:stroke-emerald-700">
-            <line x1="0" y1="12.5" x2="100" y2="12.5" />
-            <line x1="0" y1="25" x2="100" y2="25" />
-            <line x1="0" y1="37.5" x2="100" y2="37.5" />
-          </g>
+          {/* Vertical grid lines for hours */}
+          {Array.from({ length: 13 }, (_, i) => (
+            <line
+              key={i}
+              x1={i * (100/12)}
+              y1="0"
+              x2={i * (100/12)}
+              y2="50"
+              stroke="#4B5563"
+              strokeWidth="0.2"
+              opacity="0.5"
+            />
+          ))}
           
-          {/* Tide curve area */}
-          <path
-            d={`${createTidePath()} L 100,50 L 0,50 Z`}
-            fill={`url(#tideGradient-${date})`}
-            className="dark:hidden"
-            stroke="none"
-          />
-          <path
-            d={`${createTidePath()} L 100,50 L 0,50 Z`}
-            fill={`url(#tideGradientDark-${date})`}
-            className="hidden dark:block"
-            stroke="none"
-          />
+          {/* Horizontal reference lines */}
+          <line x1="0" y1="25" x2="100" y2="25" stroke="#4B5563" strokeWidth="0.2" opacity="0.5" />
           
-          {/* Tide curve line */}
+          {/* Tide curve */}
           <path
             d={createTidePath()}
             fill="none"
-            stroke="#2563eb"
+            stroke="#60A5FA"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="dark:hidden"
-          />
-          <path
-            d={createTidePath()}
-            fill="none"
-            stroke="#10b981"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="hidden dark:block"
           />
           
           {/* High and Low tide vertical lines */}
@@ -206,140 +194,96 @@ export default function TideChart({ tides, date }: TideChartProps) {
             
             return (
               <g key={`tide-line-${index}`}>
-                {/* Vertical line from bottom to curve */}
-                <line
-                  x1={x}
-                  y1={curveY}
-                  x2={x}
-                  y2="50"
-                  stroke="#2563eb"
-                  strokeWidth="1"
-                  opacity="0.7"
-                  className="dark:hidden"
-                />
-                <line
-                  x1={x}
-                  y1={curveY}
-                  x2={x}
-                  y2="50"
-                  stroke="#10b981"
-                  strokeWidth="1"
-                  opacity="0.7"
-                  className="hidden dark:block"
-                />
-                
-                {/* Background rectangle for better text readability */}
-                <rect
-                  x={x - 8}
-                  y={curveY - 10}
-                  width="16"
-                  height="8"
-                  rx="1.5"
-                  fill="#ffffff"
-                  fillOpacity="0.95"
-                  stroke="#2563eb"
-                  strokeWidth="0.4"
-                  className="dark:hidden"
-                />
-                <rect
-                  x={x - 8}
-                  y={curveY - 10}
-                  width="16"
-                  height="8"
-                  rx="1.5"
-                  fill="#0f172a"
-                  fillOpacity="0.95"
-                  stroke="#10b981"
-                  strokeWidth="0.4"
-                  className="hidden dark:block"
-                />
-                
-                {/* Tide time label above the curve */}
+                {/* Tide time and height labels above the curve */}
                 <text
                   x={x}
-                  y={curveY - 4}
+                  y={curveY - 6}
                   textAnchor="middle"
-                  fontSize="3.5"
-                  fill="#2563eb"
-                  className="dark:hidden font-bold"
+                  fontSize="3"
+                  fill="#ffffff"
                   fontFamily="system-ui, -apple-system, sans-serif"
+                  fontWeight="500"
                 >
                   {tide.time}
                 </text>
                 <text
                   x={x}
-                  y={curveY - 4}
+                  y={curveY - 2}
                   textAnchor="middle"
-                  fontSize="3.5"
-                  fill="#10b981"
-                  className="hidden dark:block font-bold"
+                  fontSize="2.5"
+                  fill="#60A5FA"
                   fontFamily="system-ui, -apple-system, sans-serif"
+                  fontWeight="600"
                 >
-                  {tide.time}
+                  {tide.height.toFixed(1)}ft
                 </text>
               </g>
             );
           })}
 
+          {/* Bottom hour labels */}
+          {Array.from({ length: 13 }, (_, i) => {
+            const hour = i;
+            const hourLabel = hour === 0 ? '12' : hour > 12 ? (hour - 12).toString() : hour.toString();
+            return (
+              <text
+                key={i}
+                x={i * (100/12)}
+                y="48"
+                textAnchor="middle"
+                fontSize="2.5"
+                fill="#9CA3AF"
+                fontFamily="system-ui, -apple-system, sans-serif"
+              >
+                {hourLabel}
+              </text>
+            );
+          })}
+
           {/* Current time indicator line - only show for today */}
           {isToday && (
-            <>
-              <line
-                x1={currentTimeX}
-                y1="0"
-                x2={currentTimeX}
-                y2="50"
-                stroke="#2563eb"
-                strokeWidth="1.5"
-                opacity="0.8"
-                className="dark:hidden"
-              />
-              <line
-                x1={currentTimeX}
-                y1="0"
-                x2={currentTimeX}
-                y2="50"
-                stroke="#10b981"
-                strokeWidth="1.5"
-                opacity="0.8"
-                className="hidden dark:block"
-              />
-              
-
-            </>
+            <line
+              x1={currentTimeX}
+              y1="0"
+              x2={currentTimeX}
+              y2="50"
+              stroke="#ffffff"
+              strokeWidth="1"
+              opacity="0.8"
+            />
           )}
         </svg>
-        
-        {/* Time labels */}
-        <div className="flex justify-between text-xs text-gray-400 dark:text-emerald-500 mt-1">
-          <span>12a</span>
-          <span>6a</span>
-          <span>12p</span>
-          <span>6p</span>
-          <span>12a</span>
-        </div>
       </div>
       
-      {/* Tide Schedule */}
-      <div className="space-y-3">
-        <div className="grid grid-cols-1 gap-2">
-          {majorTides.map((tide, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-emerald-950/30 rounded-md">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-emerald-300">
-                  {tide.type === 'high' ? 'High' : 'Low'} Tide
-                </span>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-semibold text-gray-900 dark:text-emerald-200">
-                  {tide.time}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-emerald-400">
-                  {tide.height.toFixed(1)} ft
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* Sunrise and sunset info (like Surfline) */}
+      <div className="grid grid-cols-4 gap-4 text-xs text-gray-400 mt-4">
+        <div className="flex items-center space-x-1">
+          <span>🌅</span>
+          <div>
+            <div className="text-white text-xs">First Light</div>
+            <div>6:09am</div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-1">
+          <span>🌞</span>
+          <div>
+            <div className="text-white text-xs">Sunrise</div>
+            <div>6:36am</div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-1">
+          <span>🌅</span>
+          <div>
+            <div className="text-white text-xs">Sunset</div>
+            <div>8:29pm</div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-1">
+          <span>🌙</span>
+          <div>
+            <div className="text-white text-xs">Last Light</div>
+            <div>8:56pm</div>
+          </div>
         </div>
       </div>
     </div>
