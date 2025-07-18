@@ -413,11 +413,8 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
               };
             });
 
-            // Sort tides: upcoming tides first (chronologically), then past tides
-            const sortedTides = [
-              ...tidesWithDates.filter(t => t.isUpcoming).sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime()),
-              ...tidesWithDates.filter(t => !t.isUpcoming).sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
-            ];
+            // Sort tides chronologically from the beginning of the day
+            const sortedTides = tidesWithDates.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
 
             return sortedTides.map((tide, index) => (
               <div 
