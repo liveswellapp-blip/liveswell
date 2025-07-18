@@ -318,7 +318,7 @@ export default function TideChart({ tides, date }: TideChartProps) {
           {majorTides.map((tide, index) => (
             <div key={index} className="flex items-center justify-between p-2 bg-white/50 dark:bg-emerald-950/30 rounded-md">
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-emerald-300">
+                <span className="text-sm font-medium text-gray-700 dark:text-white">
                   {tide.type === 'high' ? 'High' : 'Low'} Tide
                 </span>
               </div>
