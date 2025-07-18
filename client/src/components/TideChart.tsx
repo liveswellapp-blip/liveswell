@@ -227,6 +227,28 @@ export default function TideChart({ tides, date }: TideChartProps) {
                   opacity="0.7"
                   className="hidden dark:block"
                 />
+                
+                {/* Tide time label above the curve */}
+                <text
+                  x={x}
+                  y={curveY - 3}
+                  textAnchor="middle"
+                  fontSize="3"
+                  fill="#2563eb"
+                  className="dark:hidden font-medium"
+                >
+                  {tide.time}
+                </text>
+                <text
+                  x={x}
+                  y={curveY - 3}
+                  textAnchor="middle"
+                  fontSize="3"
+                  fill="#10b981"
+                  className="hidden dark:block font-medium"
+                >
+                  {tide.time}
+                </text>
               </g>
             );
           })}
