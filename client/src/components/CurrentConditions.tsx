@@ -144,10 +144,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               ) : (
                 <>
                   <div className="mb-1">
-                    <span>Period: {conditions?.wavePeriod || 0}s</span>
+                    <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
                   </div>
                   <div>
-                    <span>Direction: {conditions?.waveDirection || "N/A"}</span>
+                    <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
                   </div>
                 </>
               )}
@@ -182,10 +182,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   ) : (
                     <>
                       <div className="mb-1">
-                        <span>Direction: {conditions?.windDirection || "N/A"}</span>
+                        <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
                       </div>
                       <div>
-                        <span>Gusts: {conditions?.windGusts || "0"} mph</span>
+                        <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
                       </div>
                     </>
                   )}
@@ -221,7 +221,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="mb-2">
                     {nextTide ? (
                       <span>
-                        {nextTide.type === 'high' ? 'Rising' : 'Falling'}: {nextTide.type === 'high' ? 'High' : 'Low'} Tide at {nextTide.time}
+                        <span className="text-blue-900 dark:text-emerald-400">{nextTide.type === 'high' ? 'Rising' : 'Falling'}</span>: <span className="text-blue-900 dark:text-emerald-400">{nextTide.type === 'high' ? 'High' : 'Low'} Tide at {nextTide.time}</span>
                       </span>
                     ) : (
                       <span>No upcoming tides today</span>
