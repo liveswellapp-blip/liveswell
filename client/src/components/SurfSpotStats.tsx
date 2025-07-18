@@ -47,6 +47,29 @@ export default function SurfSpotStats() {
     },
   });
 
+  const importNOAAMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/spots/import-noaa", {
+        method: "POST",
+      });
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "NOAA Import Successful",
+        description: `${data.imported} NOAA buoy stations added. Total: ${data.totalSpots} spots.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/spots/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/locations/search"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "NOAA Import Failed",
+        description: error.message || "Failed to import NOAA buoy stations",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (error) {
     return (
       <Card className="bg-card rounded-xl shadow-lg border border-border">
@@ -104,20 +127,36 @@ export default function SurfSpotStats() {
             <Globe className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
             <span>Global Surf Spot Database</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => importMutation.mutate()}
-            disabled={importMutation.isPending}
-            className="text-blue-900 dark:text-emerald-400 border-blue-900 dark:border-emerald-400"
-          >
-            {importMutation.isPending ? (
-              <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            {importMutation.isPending ? "Importing..." : "Update Database"}
-          </Button>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => importMutation.mutate()}
+              disabled={importMutation.isPending || importNOAAMutation.isPending}
+              className="text-blue-900 dark:text-emerald-400 border-blue-900 dark:border-emerald-400"
+            >
+              {importMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {importMutation.isPending ? "Importing..." : "Import Spots"}
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => importNOAAMutation.mutate()}
+              disabled={importMutation.isPending || importNOAAMutation.isPending}
+              className="bg-blue-900 dark:bg-emerald-600 hover:bg-blue-800 dark:hover:bg-emerald-700"
+            >
+              {importNOAAMutation.isPending ? (
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <MapPin className="h-4 w-4 mr-2" />
+              )}
+              {importNOAAMutation.isPending ? "Adding NOAA..." : "Add NOAA Buoys"}
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">

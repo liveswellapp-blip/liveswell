@@ -1000,6 +1000,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import NOAA buoy stations
+  app.post("/api/spots/import-noaa", async (req, res) => {
+    try {
+      const { importNOAABuoyStations } = await import('./noaa-integration.js');
+      const result = await importNOAABuoyStations();
+      
+      const allLocations = await storage.searchLocations("");
+      res.json({
+        message: "NOAA buoy stations imported successfully",
+        totalSpots: allLocations.length,
+        imported: result.imported,
+        skipped: result.skipped,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('NOAA import error:', error);
+      res.status(500).json({ message: "Failed to import NOAA buoy stations" });
+    }
+  });
+
+  // Get real NOAA buoy data for a location
+  app.get("/api/buoy/:stationId", async (req, res) => {
+    try {
+      const { stationId } = req.params;
+      const { fetchNOAABuoyData } = await import('./noaa-integration.js');
+      
+      const buoyData = await fetchNOAABuoyData(stationId);
+      
+      if (!buoyData) {
+        return res.status(404).json({ message: "Buoy data not available" });
+      }
+      
+      res.json(buoyData);
+    } catch (error) {
+      console.error('Buoy data error:', error);
+      res.status(500).json({ message: "Failed to fetch buoy data" });
+    }
+  });
+
+  // Get nearby NOAA buoys for a location
+  app.get("/api/buoys/nearby", async (req, res) => {
+    try {
+      const lat = parseFloat(req.query.lat as string);
+      const lng = parseFloat(req.query.lng as string);
+      const radius = parseInt(req.query.radius as string) || 100;
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ message: "Valid latitude and longitude required" });
+      }
+      
+      const { getNearbyNOAABuoys } = await import('./noaa-integration.js');
+      const buoys = await getNearbyNOAABuoys(lat, lng, radius);
+      
+      res.json(buoys);
+    } catch (error) {
+      console.error('Nearby buoys error:', error);
+      res.status(500).json({ message: "Failed to get nearby buoys" });
+    }
+  });
+
   // Helper function to determine region from location
   function getRegionFromLocation(location: any): string {
     if (location.country !== "USA") return location.country;
