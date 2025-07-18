@@ -16,13 +16,13 @@ export default function Header() {
             <img 
               src={logoImageLight} 
               alt="LiveSwell" 
-              className="h-8 dark:hidden"
+              className="h-8 dark:hidden object-contain object-left"
             />
             {/* Green logo for dark mode */}
             <img 
               src={logoImageDark} 
               alt="LiveSwell" 
-              className="h-8 hidden dark:block"
+              className="h-8 hidden dark:block object-contain object-left"
             />
           </div>
           
