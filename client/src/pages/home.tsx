@@ -8,50 +8,11 @@ import ForecastSection from "@/components/ForecastSection";
 import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
 import SurfSpotStats from "@/components/SurfSpotStats";
-import NOAABuoyData from "@/components/NOAABuoyData";
+
 import Footer from "@/components/Footer";
 import { Location } from "@/types/weather";
 
-// Mapping of surf spots to nearby NOAA buoy stations
-const BUOY_MAPPING: Record<string, { id: string; name: string }> = {
-  "Malibu": { id: "46025", name: "Santa Monica Bay" },
-  "Manhattan Beach": { id: "46025", name: "Santa Monica Bay" },
-  "Huntington Beach": { id: "46025", name: "Santa Monica Bay" },
-  "Newport Beach": { id: "46025", name: "Santa Monica Bay" },
-  "La Jolla": { id: "46086", name: "San Clemente Island" },
-  "Ocean Beach": { id: "46086", name: "San Clemente Island" },
-  "Jacksonville Beach": { id: "41112", name: "Fernandina Beach" },
-  "Cocoa Beach": { id: "41009", name: "Canaveral East" },
-  "Daytona Beach": { id: "41012", name: "St. Augustine" },
-  "Virginia Beach": { id: "44014", name: "Virginia Beach" },
-  "Outer Banks": { id: "44014", name: "Virginia Beach" },
-  "Montauk": { id: "44017", name: "Montauk Point" },
-  "Rockaway Beach": { id: "44025", name: "Long Island" },
-  "Ocean City": { id: "44009", name: "Delaware Bay" },
-  "Myrtle Beach": { id: "41004", name: "Edisto" },
-  "Half Moon Bay": { id: "46012", name: "Half Moon Bay" },
-  "Santa Cruz": { id: "46042", name: "Monterey Bay" },
-  "Carmel": { id: "46042", name: "Monterey Bay" },
-  "Pismo Beach": { id: "46011", name: "Santa Maria" },
-  "Rincon": { id: "46054", name: "Santa Barbara" },
-  "Trestles": { id: "46086", name: "San Clemente Island" },
-  "Pipeline": { id: "51001", name: "Northwest Hawaii" },
-  "Waikiki": { id: "51001", name: "Northwest Hawaii" },
-  "Sunset Beach": { id: "51001", name: "Northwest Hawaii" },
-  "Maverick": { id: "46012", name: "Half Moon Bay" },
-};
 
-function getNearbyBuoyStation(location: Location | null): { id: string; name: string } | null {
-  if (!location) return null;
-  
-  // Check by location name
-  const locationKey = Object.keys(BUOY_MAPPING).find(key => 
-    location.name.toLowerCase().includes(key.toLowerCase()) ||
-    location.city?.toLowerCase().includes(key.toLowerCase())
-  );
-  
-  return locationKey ? BUOY_MAPPING[locationKey] : null;
-}
 
 export default function Home() {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
@@ -141,12 +102,7 @@ export default function Home() {
           <CurrentConditions location={currentLocation} />
           <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
-          {getNearbyBuoyStation(currentLocation) && (
-            <NOAABuoyData 
-              stationId={getNearbyBuoyStation(currentLocation)!.id} 
-              stationName={getNearbyBuoyStation(currentLocation)!.name}
-            />
-          )}
+
           <NearbySpots location={currentLocation} />
         </>
       ) : (
