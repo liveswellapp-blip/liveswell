@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 hour12: true,
                 timeZone: timezone
               }),
-              windSpeed: parseFloat(windSpeed.toFixed(1)),
+              windSpeed: Math.round(windSpeed),
               windDirection,
               timestamp: time.toISOString()
             });
@@ -671,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 hour12: true,
                 timeZone: timezone
               }),
-              windSpeed: parseFloat(windSpeed.toFixed(1)),
+              windSpeed: Math.round(windSpeed),
               windDirection,
               timestamp: time.toISOString()
             });
@@ -729,7 +729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               hour12: true,
               timeZone: timezone
             }),
-            windSpeed: parseFloat(windSpeed.toFixed(1)),
+            windSpeed: Math.round(windSpeed),
             windDirection,
             timestamp: targetTime.toISOString()
           });
