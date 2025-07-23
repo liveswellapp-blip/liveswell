@@ -279,7 +279,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             {/* Expandable Historical Data */}
             {isHistoryExpanded && (
               <div className="mt-4 pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-3 text-blue-800 dark:text-emerald-300">Past 12 Hours</h4>
+                <h4 className="text-sm font-medium mb-3 text-white">Past 12 Hours</h4>
                 {historyLoading ? (
                   <div className="space-y-2">
                     {Array.from({ length: 4 }).map((_, i) => (
