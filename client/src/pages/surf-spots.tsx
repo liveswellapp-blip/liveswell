@@ -511,9 +511,9 @@ export default function SurfSpots() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="w-full mt-3 text-blue-900 dark:text-white border-blue-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-800"
+                        className="w-full mt-3 text-blue-900 dark:text-emerald-400 border-blue-200 dark:border-emerald-600 hover:bg-blue-50 dark:hover:bg-emerald-900/20"
                       >
-                        <Star className="h-4 w-4 mr-2" />
+                        <Waves className="h-4 w-4 mr-2" />
                         View Conditions
                       </Button>
                     </CardContent>
