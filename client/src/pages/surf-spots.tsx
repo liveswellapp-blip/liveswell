@@ -5,10 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, Wind, Navigation, Star } from "lucide-react";
+import { MapPin, Waves, Wind, Navigation, Star, Heart } from "lucide-react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FavoriteButton from "@/components/FavoriteButton";
+import { Location } from "@/types/weather";
 
 interface SurfSpot {
   id: number;
@@ -23,6 +25,8 @@ interface SurfSpot {
   optimal_swell?: string;
   optimal_wind?: string;
 }
+
+
 
 interface GroupedSpots {
   [continent: string]: {
@@ -109,6 +113,123 @@ const DIFFICULTY_COLORS = {
   "Advanced": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
   "Expert": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
 };
+
+
+
+function SavedSpotsCard() {
+  const [, setLocation] = useLocation();
+  const { data: favorites, isLoading } = useQuery<Location[]>({
+    queryKey: ["/api/favorites"],
+    refetchInterval: 30000,
+  });
+
+  const handleLocationSelect = (location: Location) => {
+    setLocation(`/?location=${location.id}`);
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
+            <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
+            <span>Saved Spots</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {Array.from({ length: 2 }).map((_, index) => (
+              <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-32 mb-1" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!favorites || favorites.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
+            <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
+            <span>Saved Spots</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6">
+            <Heart className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground mb-1">No saved spots yet</p>
+            <p className="text-xs text-muted-foreground">
+              Save spots to quickly access their wave conditions
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show up to 3 favorites with a "View All" option
+  const displayFavorites = favorites.slice(0, 3);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between text-blue-900 dark:text-white">
+          <div className="flex items-center space-x-2">
+            <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
+            <span>Saved Spots</span>
+          </div>
+          {favorites.length > 3 && (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => window.location.href = '/favorites'}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              View All ({favorites.length})
+            </Button>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {displayFavorites.map((location) => (
+            <div
+              key={location.id}
+              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
+              onClick={() => handleLocationSelect(location)}
+            >
+              <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                <Waves className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-blue-900 dark:text-white truncate text-sm">{location.name}</h3>
+                <p className="text-xs text-muted-foreground truncate">
+                  {location.city}, {location.country}
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <FavoriteButton
+                  locationId={location.id}
+                  locationName={location.name}
+                  size="sm"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function SurfSpots() {
   const [, setLocation] = useLocation();
@@ -283,29 +404,7 @@ export default function SurfSpots() {
             </div>
 
             {/* Saved Spots Card */}
-            <Card className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-950/50 dark:to-emerald-950/50 border-blue-200 dark:border-blue-800">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                      <Star className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-blue-900 dark:text-white">Saved Spots</h3>
-                      <p className="text-sm text-muted-foreground">Quick access to your favorite surf locations</p>
-                    </div>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setLocation('/favorites')}
-                    className="text-blue-900 dark:text-white border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900"
-                  >
-                    View All
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <SavedSpotsCard />
 
             {/* Results Counter */}
             <div className="text-sm text-muted-foreground">
