@@ -57,21 +57,40 @@ export default function Home() {
   // Load location based on URL parameter or default
   useEffect(() => {
     const loadLocation = async () => {
-      const locationName = getLocationNameFromUrl();
+      const locationParam = getLocationNameFromUrl();
       
-      if (locationName) {
-        // Load specific location by name
-        try {
-          const response = await fetch(`/api/locations/search?q=${encodeURIComponent(locationName)}`);
-          if (response.ok) {
-            const locations = await response.json();
-            if (locations.length > 0) {
-              setCurrentLocation(locations[0]);
-              return;
+      if (locationParam) {
+        // Check if it's a numeric ID
+        const locationId = parseInt(locationParam);
+        if (!isNaN(locationId)) {
+          // Load specific location by ID
+          try {
+            const response = await fetch(`/api/locations/all`);
+            if (response.ok) {
+              const locations = await response.json();
+              const location = locations.find((loc: Location) => loc.id === locationId);
+              if (location) {
+                setCurrentLocation(location);
+                return;
+              }
             }
+          } catch (error) {
+            console.error("Error loading location by ID:", error);
           }
-        } catch (error) {
-          console.error("Error loading location by name:", error);
+        } else {
+          // Load specific location by name (fallback for old URLs)
+          try {
+            const response = await fetch(`/api/locations/search?q=${encodeURIComponent(locationParam)}`);
+            if (response.ok) {
+              const locations = await response.json();
+              if (locations.length > 0) {
+                setCurrentLocation(locations[0]);
+                return;
+              }
+            }
+          } catch (error) {
+            console.error("Error loading location by name:", error);
+          }
         }
       }
       
