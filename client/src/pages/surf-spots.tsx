@@ -430,9 +430,6 @@ export default function SurfSpots() {
               </div>
             </div>
 
-            {/* Saved Spots Card */}
-            <SavedSpotsCard />
-
             {/* Results Counter - only show when filters are active */}
             {(searchQuery.trim() || selectedContinent || selectedCountry || selectedState) && (
               <div className="text-sm text-muted-foreground">
@@ -440,7 +437,6 @@ export default function SurfSpots() {
                 {selectedContinent || selectedCountry || selectedState ? (
                   <span>
                     {selectedContinent && ` in ${selectedContinent}`}
-                    {selectedCountry && ` • ${selectedCountry}`}
                     {selectedState && ` • ${selectedState}`}
                   </span>
                 ) : (
@@ -539,6 +535,9 @@ export default function SurfSpots() {
               </div>
             )
           )}
+
+          {/* Saved Spots Card */}
+          <SavedSpotsCard />
         </div>
       </main>
       <Footer />
