@@ -27,9 +27,7 @@ interface SurfSpot {
 interface GroupedSpots {
   [continent: string]: {
     [country: string]: {
-      [state: string]: {
-        [region: string]: SurfSpot[];
-      };
+      [state: string]: SurfSpot[];
     };
   };
 }
@@ -117,7 +115,6 @@ export default function SurfSpots() {
   const [selectedContinent, setSelectedContinent] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedState, setSelectedState] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("");
 
   const { data: spots, isLoading } = useQuery<SurfSpot[]>({
     queryKey: ["/api/locations/search", "all"],
@@ -136,14 +133,12 @@ export default function SurfSpots() {
       const country = spot.country;
       // For USA spots, use city-to-state mapping; for others, use region or "General"
       const state = country === "USA" ? (USA_CITY_TO_STATE[spot.city] || "Other") : (spot.region || "General");
-      const region = spot.city; // City becomes the final grouping level
       
       if (!acc[continent]) acc[continent] = {};
       if (!acc[continent][country]) acc[continent][country] = {};
-      if (!acc[continent][country][state]) acc[continent][country][state] = {};
-      if (!acc[continent][country][state][region]) acc[continent][country][state][region] = [];
+      if (!acc[continent][country][state]) acc[continent][country][state] = [];
       
-      acc[continent][country][state][region].push(spot);
+      acc[continent][country][state].push(spot);
       return acc;
     }, {} as GroupedSpots);
   }, [spots]);
@@ -158,19 +153,15 @@ export default function SurfSpots() {
       const matchesContinent = !selectedContinent || continent === selectedContinent;
       const matchesCountry = !selectedCountry || spot.country === selectedCountry;
       const matchesState = !selectedState || state === selectedState;
-      const matchesRegion = !selectedRegion || spot.city === selectedRegion;
       
-      return matchesContinent && matchesCountry && matchesState && matchesRegion;
+      return matchesContinent && matchesCountry && matchesState;
     });
-  }, [spots, selectedContinent, selectedCountry, selectedState, selectedRegion]);
+  }, [spots, selectedContinent, selectedCountry, selectedState]);
 
   const continents = Object.keys(groupedSpots).sort();
   const countries = selectedContinent ? Object.keys(groupedSpots[selectedContinent] || {}).sort() : [];
   const states = selectedContinent && selectedCountry 
     ? Object.keys(groupedSpots[selectedContinent]?.[selectedCountry] || {}).sort()
-    : [];
-  const regions = selectedContinent && selectedCountry && selectedState
-    ? Object.keys(groupedSpots[selectedContinent]?.[selectedCountry]?.[selectedState] || {}).sort()
     : [];
 
   const handleSpotSelect = (spotId: number) => {
@@ -181,7 +172,6 @@ export default function SurfSpots() {
     setSelectedContinent("");
     setSelectedCountry("");
     setSelectedState("");
-    setSelectedRegion("");
   };
 
   if (isLoading) {
@@ -226,7 +216,7 @@ export default function SurfSpots() {
                   Discover {spots?.length || 0} surf spots across {continents.length} continents with real-time conditions
                 </p>
               </div>
-              {(selectedContinent || selectedCountry || selectedState || selectedRegion) && (
+              {(selectedContinent || selectedCountry || selectedState) && (
                 <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
                 </Button>
@@ -239,7 +229,6 @@ export default function SurfSpots() {
                 setSelectedContinent(value);
                 setSelectedCountry("");
                 setSelectedState("");
-                setSelectedRegion("");
               }}>
                 <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Select continent" />
@@ -257,7 +246,6 @@ export default function SurfSpots() {
                 <Select value={selectedCountry} onValueChange={(value) => {
                   setSelectedCountry(value);
                   setSelectedState("");
-                  setSelectedRegion("");
                 }}>
                   <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="Select country" />
@@ -273,10 +261,7 @@ export default function SurfSpots() {
               )}
 
               {selectedCountry === "USA" && states.length > 1 && (
-                <Select value={selectedState} onValueChange={(value) => {
-                  setSelectedState(value);
-                  setSelectedRegion("");
-                }}>
+                <Select value={selectedState} onValueChange={setSelectedState}>
                   <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
@@ -289,32 +274,16 @@ export default function SurfSpots() {
                   </SelectContent>
                 </Select>
               )}
-
-              {selectedState && regions.length > 1 && (
-                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Select city" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {regions.map(region => (
-                      <SelectItem key={region} value={region}>
-                        {region}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
 
             {/* Results Counter */}
             <div className="text-sm text-muted-foreground">
               Showing {filteredSpots.length} surf spot{filteredSpots.length !== 1 ? 's' : ''}
-              {selectedContinent || selectedCountry || selectedState || selectedRegion ? (
+              {selectedContinent || selectedCountry || selectedState ? (
                 <span>
                   {selectedContinent && ` in ${selectedContinent}`}
                   {selectedCountry && ` • ${selectedCountry}`}
                   {selectedState && ` • ${selectedState}`}
-                  {selectedRegion && ` • ${selectedRegion}`}
                 </span>
               ) : (
                 " worldwide"
