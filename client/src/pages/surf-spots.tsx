@@ -282,6 +282,31 @@ export default function SurfSpots() {
               )}
             </div>
 
+            {/* Saved Spots Card */}
+            <Card className="bg-gradient-to-r from-blue-50 to-emerald-50 dark:from-blue-950/50 dark:to-emerald-950/50 border-blue-200 dark:border-blue-800">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                      <Star className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-900 dark:text-white">Saved Spots</h3>
+                      <p className="text-sm text-muted-foreground">Quick access to your favorite surf locations</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setLocation('/favorites')}
+                    className="text-blue-900 dark:text-white border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900"
+                  >
+                    View All
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Results Counter */}
             <div className="text-sm text-muted-foreground">
               Showing {filteredSpots.length} surf spot{filteredSpots.length !== 1 ? 's' : ''}
@@ -369,18 +394,6 @@ export default function SurfSpots() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          ) : !selectedContinent && !selectedCountry && !selectedState ? (
-            <div className="text-center py-12">
-              <div className="max-w-md mx-auto">
-                <Waves className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-blue-900 dark:text-white mb-2">
-                  Choose Your Destination
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Select a continent, country, or state above to discover surf spots with real-time conditions
-                </p>
-              </div>
             </div>
           ) : (
             <div className="text-center py-12">
