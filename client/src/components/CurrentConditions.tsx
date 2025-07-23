@@ -396,7 +396,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         return (
                           <div key={index}>
                             {showDateHeader && !isToday && (
-                              <div className="pt-3 pb-1 first:pt-0">
+                              <div className="pt-6 pb-1 first:pt-0">
                                 <h5 className="text-xs font-medium text-white opacity-90 uppercase tracking-wide">
                                   {currentDate.toLocaleDateString('en-US', { 
                                     weekday: 'long', 
