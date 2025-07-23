@@ -364,9 +364,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsWindForecastExpanded(!isWindForecastExpanded)}
-                className="flex items-center space-x-1 text-blue-800 dark:text-emerald-300 hover:bg-white/10 p-1 h-auto"
+                className="flex items-center space-x-1 hover:bg-white/10 p-1 h-auto"
               >
-                <span className="text-xs">Future</span>
+                <span className="text-sm opacity-75">Future</span>
                 {isWindForecastExpanded ? (
                   <ChevronUp className="h-3 w-3 text-emerald-400" />
                 ) : (
