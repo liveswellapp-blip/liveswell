@@ -356,23 +356,23 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
               </div>
-              
-              {/* Future Wind Forecast Toggle */}
-              <div className="flex flex-col items-end">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsWindForecastExpanded(!isWindForecastExpanded)}
-                  className="flex items-center space-x-1 text-white hover:bg-white/10 p-1 h-auto"
-                >
-                  <span className="text-xs">Future</span>
-                  {isWindForecastExpanded ? (
-                    <ChevronUp className="h-3 w-3" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3" />
-                  )}
-                </Button>
-              </div>
+            </div>
+            
+            {/* Future Wind Forecast Toggle - Bottom Right */}
+            <div className="flex justify-end mt-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsWindForecastExpanded(!isWindForecastExpanded)}
+                className="flex items-center space-x-1 text-blue-800 dark:text-emerald-300 hover:bg-white/10 p-1 h-auto"
+              >
+                <span className="text-xs">Future</span>
+                {isWindForecastExpanded ? (
+                  <ChevronUp className="h-3 w-3 text-emerald-400" />
+                ) : (
+                  <ChevronDown className="h-3 w-3 text-emerald-400" />
+                )}
+              </Button>
             </div>
             
             {/* Expandable Future Wind Data */}
