@@ -520,16 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all locations endpoint
-  app.get("/api/locations", async (req, res) => {
-    try {
-      const locations = await storage.getAllLocations();
-      res.json(locations);
-    } catch (error) {
-      console.error('Get all locations error:', error);
-      res.status(500).json({ message: "Failed to get locations" });
-    }
-  });
+
 
   // Get location by coordinates (for geolocation)
   app.get("/api/locations/nearby", async (req, res) => {

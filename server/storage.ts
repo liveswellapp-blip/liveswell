@@ -7,7 +7,6 @@ export interface IStorage {
   
   getLocation(id: number): Promise<Location | undefined>;
   getLocationByCoords(lat: number, lng: number): Promise<Location | undefined>;
-  getAllLocations(): Promise<Location[]>;
   searchLocations(query: string): Promise<Location[]>;
   createLocation(location: InsertLocation): Promise<Location>;
   
@@ -108,10 +107,6 @@ export class MemStorage implements IStorage {
       const lngDiff = Math.abs(parseFloat(location.longitude) - lng);
       return latDiff <= tolerance && lngDiff <= tolerance;
     });
-  }
-
-  async getAllLocations(): Promise<Location[]> {
-    return Array.from(this.locations.values());
   }
 
   async searchLocations(query: string): Promise<Location[]> {

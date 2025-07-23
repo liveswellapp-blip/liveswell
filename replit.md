@@ -97,6 +97,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ Covers major metros: San Francisco, Oakland, San Diego, New York, Jacksonville, Galveston, plus premium coastal destinations
 - ✅ Each new city validated to have real NOAA buoy data within reasonable distance for authentic conditions
 - ✅ Smart filtering skips cities without nearby monitoring stations to maintain data integrity
+- ❌ Removed interactive map page - did not meet user requirements for surf spot discovery
 
 ### 2025-07-18: Real-Time NOAA Wave Monitoring Integration  
 - ✅ Successfully integrated NOAA National Data Buoy Center (NDBC) API for authentic real-time wave data

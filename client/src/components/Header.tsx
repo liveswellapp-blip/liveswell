@@ -1,4 +1,4 @@
-import { Settings, Sun, Moon, Map } from "lucide-react";
+import { Settings, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { Link } from "wouter";
@@ -29,18 +29,8 @@ export default function Header() {
           
 
 
-          {/* Navigation, Theme Toggle and Settings */}
+          {/* Theme Toggle and Settings */}
           <div className="flex items-center space-x-4">
-            <Link href="/map">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-blue-900 dark:text-emerald-400 hover:text-blue-700 dark:hover:text-emerald-300"
-                title="Interactive Surf Spot Map"
-              >
-                <Map className="h-5 w-5" />
-              </Button>
-            </Link>
             <Button 
               variant="ghost" 
               size="icon" 
