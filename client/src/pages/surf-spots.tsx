@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, Wind, Navigation, Star, Heart } from "lucide-react";
+import { MapPin, Waves, Wind, Navigation, Star, Heart, Search } from "lucide-react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -233,6 +234,7 @@ function SavedSpotsCard() {
 
 export default function SurfSpots() {
   const [, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedContinent, setSelectedContinent] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedState, setSelectedState] = useState("");
@@ -267,8 +269,8 @@ export default function SurfSpots() {
   const filteredSpots = useMemo(() => {
     if (!spots) return [];
     
-    // Don't show any spots until filters are applied
-    if (!selectedContinent && !selectedCountry && !selectedState) {
+    // Don't show any spots until filters are applied or search is used
+    if (!selectedContinent && !selectedCountry && !selectedState && !searchQuery.trim()) {
       return [];
     }
     
@@ -276,13 +278,22 @@ export default function SurfSpots() {
       const continent = CONTINENT_MAP[spot.country] || "Other";
       // For USA spots, use city-to-state mapping; for others, use region or "General"
       const state = spot.country === "USA" ? (USA_CITY_TO_STATE[spot.city] || "Other") : (spot.region || "General");
+      
+      // Search query filter
+      const matchesSearch = !searchQuery.trim() || 
+        spot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        spot.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        spot.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (spot.region && spot.region.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      // Hierarchical filters
       const matchesContinent = !selectedContinent || continent === selectedContinent;
       const matchesCountry = !selectedCountry || spot.country === selectedCountry;
       const matchesState = !selectedState || state === selectedState;
       
-      return matchesContinent && matchesCountry && matchesState;
+      return matchesSearch && matchesContinent && matchesCountry && matchesState;
     });
-  }, [spots, selectedContinent, selectedCountry, selectedState]);
+  }, [spots, searchQuery, selectedContinent, selectedCountry, selectedState]);
 
   const continents = Object.keys(groupedSpots).sort();
   const countries = selectedContinent ? Object.keys(groupedSpots[selectedContinent] || {}).sort() : [];
@@ -295,6 +306,7 @@ export default function SurfSpots() {
   };
 
   const clearFilters = () => {
+    setSearchQuery("");
     setSelectedContinent("");
     setSelectedCountry("");
     setSelectedState("");
@@ -342,10 +354,22 @@ export default function SurfSpots() {
               </p>
             </div>
 
-            {(selectedContinent || selectedCountry || selectedState) && (
+            {/* Universal Search Bar */}
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search surf spots, cities, or countries..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            {(searchQuery.trim() || selectedContinent || selectedCountry || selectedState) && (
               <div>
                 <Button variant="outline" onClick={clearFilters}>
-                  Clear Filters
+                  Clear All Filters
                 </Button>
               </div>
             )}
