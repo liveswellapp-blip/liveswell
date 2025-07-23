@@ -288,17 +288,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   </div>
                 ) : historicalData && historicalData.length > 0 ? (
                   <div className="max-h-48 overflow-y-auto pr-2">
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                       {[...historicalData].reverse().map((data, index) => (
                         <div key={index}>
-                          <div className="flex justify-between items-center text-sm py-2">
+                          <div className="flex justify-between items-center text-sm py-1">
                             <span className="opacity-75">{data.time}</span>
                             <span className="font-medium text-blue-900 dark:text-emerald-400">
                               {data.waveHeight} ft
                             </span>
                           </div>
                           {index < historicalData.length - 1 && (
-                            <div className="border-b border-border opacity-30"></div>
+                            <div className="border-b border-gray-300 dark:border-gray-600"></div>
                           )}
                         </div>
                       ))}
