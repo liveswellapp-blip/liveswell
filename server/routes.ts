@@ -520,7 +520,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
+  // Get all surf spots for the spots page
+  app.get("/api/locations/all", async (req, res) => {
+    try {
+      const locations = await storage.getAllLocations();
+      res.json(locations);
+    } catch (error) {
+      console.error('Get all locations error:', error);
+      res.status(500).json({ message: "Failed to get all locations" });
+    }
+  });
 
   // Get location by coordinates (for geolocation)
   app.get("/api/locations/nearby", async (req, res) => {
@@ -559,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get location by ID
+  // Get location by ID - MUST come after all specific /api/locations/* routes
   app.get("/api/locations/:id", async (req, res) => {
     try {
       const locationId = parseInt(req.params.id);

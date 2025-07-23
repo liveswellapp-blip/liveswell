@@ -16,7 +16,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<Location[]>({
     queryKey: [`/api/locations/search?q=${encodeURIComponent(searchQuery)}`],
     enabled: searchQuery.length >= 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -86,20 +86,34 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               )}
             </div>
             
-            {/* Favorites Button - only show when not on the favorites page */}
-            {location !== "/favorites" && (
+            {/* Navigation Buttons */}
+            <div className="flex items-center space-x-2">
               <Button
-                variant={location === "/favorites" ? "default" : "outline"}
+                variant={location === "/surf-spots" ? "default" : "outline"}
                 size="default"
                 asChild
-                className="px-6 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
+                className="px-4 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
               >
-                <Link href="/favorites">
+                <Link href="/surf-spots">
                   <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
                   Surf Spots
                 </Link>
               </Button>
-            )}
+              
+              {location !== "/favorites" && (
+                <Button
+                  variant={location === "/favorites" ? "default" : "outline"}
+                  size="default"
+                  asChild
+                  className="px-4 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  <Link href="/favorites">
+                    <Home className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
+                    Favorites
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
