@@ -234,21 +234,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="font-medium">Wave Height</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm opacity-75">Live</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
-                  className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-gray-700"
-                >
-                  {isHistoryExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-blue-600 dark:text-emerald-400" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-blue-600 dark:text-emerald-400" />
-                  )}
-                </Button>
-              </div>
+              <span className="text-sm opacity-75">Live</span>
             </div>
             <div className="flex items-end space-x-2">
               {isLoading ? (
@@ -268,8 +254,23 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="mb-1">
                     <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
                   </div>
-                  <div>
+                  <div className="flex items-center justify-between">
                     <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs opacity-75">Historical</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+                        className="h-5 w-5 p-0 hover:bg-blue-100 dark:hover:bg-gray-700"
+                      >
+                        {isHistoryExpanded ? (
+                          <ChevronUp className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </>
               )}
@@ -287,7 +288,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   </div>
                 ) : historicalData && historicalData.length > 0 ? (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {historicalData.map((data, index) => (
+                    {[...historicalData].reverse().map((data, index) => (
                       <div key={index} className="flex justify-between items-center text-xs">
                         <span className="opacity-75">{data.time}</span>
                         <span className="font-medium text-blue-900 dark:text-emerald-400">

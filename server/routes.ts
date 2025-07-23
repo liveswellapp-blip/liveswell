@@ -596,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const historicalData = [];
       const now = new Date();
       
-      for (let i = 11; i >= 0; i--) {
+      for (let i = 0; i < 12; i++) {
         const time = new Date(now.getTime() - (i * 60 * 60 * 1000)); // Go back i hours
         const hour = time.getHours();
         
