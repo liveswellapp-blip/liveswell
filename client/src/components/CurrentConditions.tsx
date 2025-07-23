@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
+import FavoriteButton from "@/components/FavoriteButton";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -213,6 +214,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         <h1 className="text-2xl font-bold text-blue-900 dark:text-white mb-4">Live Conditions</h1>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
+            <FavoriteButton 
+              locationId={location.id} 
+              locationName={location.name}
+              size="sm"
+            />
             <h2 className="text-xl font-semibold text-blue-900 dark:text-white">{location.name}</h2>
           </div>
           
