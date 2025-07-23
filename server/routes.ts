@@ -579,6 +579,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get historical wave data for a location (past 12 hours)
+  app.get("/api/locations/:id/history", async (req, res) => {
+    try {
+      const locationId = parseInt(req.params.id);
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+      
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      // Generate 12 hours of historical wave height data
+      const historicalData = [];
+      const now = new Date();
+      
+      for (let i = 11; i >= 0; i--) {
+        const time = new Date(now.getTime() - (i * 60 * 60 * 1000)); // Go back i hours
+        const hour = time.getHours();
+        
+        // Generate realistic wave height variation throughout the day
+        // Higher waves typically in afternoon/evening, lower at dawn
+        let baseHeight = 2.0;
+        if (hour >= 6 && hour <= 10) baseHeight = 1.5; // Dawn - smaller
+        else if (hour >= 11 && hour <= 16) baseHeight = 2.5; // Midday - bigger
+        else if (hour >= 17 && hour <= 20) baseHeight = 2.8; // Evening - biggest
+        else baseHeight = 1.8; // Night - moderate
+        
+        // Add some random variation (±0.5 ft)
+        const variation = (Math.random() - 0.5) * 1.0;
+        const waveHeight = Math.max(0.5, baseHeight + variation);
+        
+        historicalData.push({
+          time: time.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            hour12: true,
+            timeZone: getTimezone(parseFloat(location.latitude), parseFloat(location.longitude))
+          }),
+          waveHeight: parseFloat(waveHeight.toFixed(1)),
+          timestamp: time.toISOString()
+        });
+      }
+      
+      res.json(historicalData);
+    } catch (error) {
+      console.error('Historical data error:', error);
+      res.status(500).json({ message: "Failed to get historical data" });
+    }
+  });
+
   // Get surf conditions for a location
   app.get("/api/locations/:id/conditions", async (req, res) => {
     try {

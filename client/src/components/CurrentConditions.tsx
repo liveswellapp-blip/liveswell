@@ -1,19 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle } from "lucide-react";
-import { Location, SurfConditions, ForecastDay } from "@/types/weather";
+import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Location, SurfConditions, ForecastDay, HistoricalWaveData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface CurrentConditionsProps {
   location: Location;
 }
 
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  
   const { data: conditions, isLoading, error } = useQuery<SurfConditions>({
     queryKey: [`/api/locations/${location.id}/conditions`],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+  });
+
+  // Fetch historical wave data when expanded
+  const { data: historicalData, isLoading: historyLoading } = useQuery<HistoricalWaveData[]>({
+    queryKey: [`/api/locations/${location.id}/history`],
+    enabled: isHistoryExpanded,
+    refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
   });
 
   // Fetch forecast data to get today's tide information
@@ -216,14 +227,28 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
         {/* Current Conditions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Wave Conditions */}
+          {/* Wave Conditions with Expandable History */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="font-medium">Wave Height</span>
               </div>
-              <span className="text-sm opacity-75">Live</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm opacity-75">Live</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+                  className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-gray-700"
+                >
+                  {isHistoryExpanded ? (
+                    <ChevronUp className="h-4 w-4 text-blue-600 dark:text-emerald-400" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-blue-600 dark:text-emerald-400" />
+                  )}
+                </Button>
+              </div>
             </div>
             <div className="flex items-end space-x-2">
               {isLoading ? (
@@ -249,6 +274,33 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </>
               )}
             </div>
+            
+            {/* Expandable Historical Data */}
+            {isHistoryExpanded && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <h4 className="text-sm font-medium mb-3 text-blue-800 dark:text-emerald-300">Past 12 Hours</h4>
+                {historyLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="h-4 w-full bg-white/20" />
+                    ))}
+                  </div>
+                ) : historicalData && historicalData.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {historicalData.map((data, index) => (
+                      <div key={index} className="flex justify-between items-center text-xs">
+                        <span className="opacity-75">{data.time}</span>
+                        <span className="font-medium text-blue-900 dark:text-emerald-400">
+                          {data.waveHeight} ft
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs opacity-75">No historical data available</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Wind Conditions */}

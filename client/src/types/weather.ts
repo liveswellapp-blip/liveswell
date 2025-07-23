@@ -48,3 +48,9 @@ export interface NearbySpot extends Location {
   waveHeight: string;
   wind: string;
 }
+
+export interface HistoricalWaveData {
+  time: string;
+  waveHeight: number;
+  timestamp: string;
+}
