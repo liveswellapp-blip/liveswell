@@ -304,6 +304,7 @@ export default function SurfSpots() {
     : [];
 
   const handleSpotSelect = (spotId: number) => {
+    console.log('Navigating to spot ID:', spotId);
     setLocation(`/?location=${spotId}`);
     // Scroll to top when navigating to the detail page
     window.scrollTo({ top: 0, behavior: 'smooth' });
