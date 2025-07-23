@@ -54,3 +54,10 @@ export interface HistoricalWaveData {
   waveHeight: number;
   timestamp: string;
 }
+
+export interface FutureWindData {
+  time: string;
+  windSpeed: number;
+  windDirection: string;
+  timestamp: string;
+}

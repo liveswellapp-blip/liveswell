@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { Location, SurfConditions, ForecastDay, HistoricalWaveData } from "@/types/weather";
+import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
 import { useState } from "react";
@@ -14,6 +14,7 @@ interface CurrentConditionsProps {
 
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const [isWindForecastExpanded, setIsWindForecastExpanded] = useState(false);
   
   const { data: conditions, isLoading, error } = useQuery<SurfConditions>({
     queryKey: [`/api/locations/${location.id}/conditions`],
@@ -25,6 +26,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     queryKey: [`/api/locations/${location.id}/history`],
     enabled: isHistoryExpanded,
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
+  });
+
+  // Fetch future wind data when expanded
+  const { data: windForecastData, isLoading: windForecastLoading } = useQuery<FutureWindData[]>({
+    queryKey: [`/api/locations/${location.id}/wind-forecast`],
+    enabled: isWindForecastExpanded,
+    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
   });
 
   // Fetch forecast data to get today's tide information
@@ -348,7 +356,63 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
               </div>
+              
+              {/* Future Wind Forecast Toggle */}
+              <div className="flex flex-col items-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsWindForecastExpanded(!isWindForecastExpanded)}
+                  className="flex items-center space-x-1 text-white hover:bg-white/10 p-1 h-auto"
+                >
+                  <span className="text-xs">Future</span>
+                  {isWindForecastExpanded ? (
+                    <ChevronUp className="h-3 w-3" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
             </div>
+            
+            {/* Expandable Future Wind Data */}
+            {isWindForecastExpanded && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <h4 className="text-sm font-medium mb-3 text-white">Next 24 Hours</h4>
+                {windForecastLoading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="h-4 w-full bg-white/20" />
+                    ))}
+                  </div>
+                ) : windForecastData && windForecastData.length > 0 ? (
+                  <div className="max-h-48 overflow-y-auto pr-2">
+                    <div className="space-y-1">
+                      {windForecastData.map((data, index) => (
+                        <div key={index}>
+                          <div className="flex justify-between items-center text-sm py-1">
+                            <span className="opacity-75">{data.time}</span>
+                            <div className="flex items-center space-x-3">
+                              <span className="font-medium text-blue-900 dark:text-emerald-400">
+                                {data.windSpeed} mph
+                              </span>
+                              <span className="text-xs text-blue-900 dark:text-emerald-400">
+                                {data.windDirection}
+                              </span>
+                            </div>
+                          </div>
+                          {index < windForecastData.length - 1 && (
+                            <div className="border-b border-gray-300 dark:border-gray-600"></div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs opacity-75">No forecast data available</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Tide Information */}
