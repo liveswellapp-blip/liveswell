@@ -146,6 +146,11 @@ export default function SurfSpots() {
   const filteredSpots = useMemo(() => {
     if (!spots) return [];
     
+    // Don't show any spots until filters are applied
+    if (!selectedContinent && !selectedCountry && !selectedState) {
+      return [];
+    }
+    
     return spots.filter(spot => {
       const continent = CONTINENT_MAP[spot.country] || "Other";
       // For USA spots, use city-to-state mapping; for others, use region or "General"
@@ -292,89 +297,100 @@ export default function SurfSpots() {
             </div>
           </div>
 
-          {/* Surf Spots Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredSpots.map((spot) => (
-              <Card 
-                key={spot.id} 
-                className="cursor-pointer hover:shadow-lg transition-shadow border-border"
-                onClick={() => handleSpotSelect(spot.id)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg text-blue-900 dark:text-white">
-                        {spot.name}
-                      </CardTitle>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {spot.city}, {spot.country}
-                      </div>
-                      {spot.region && (
-                        <div className="text-xs text-muted-foreground">
-                          {spot.region}
+          {/* Results */}
+          {filteredSpots.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredSpots.map((spot) => (
+                <Card 
+                  key={spot.id} 
+                  className="cursor-pointer hover:shadow-lg transition-shadow border-border"
+                  onClick={() => handleSpotSelect(spot.id)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg text-blue-900 dark:text-white">
+                          {spot.name}
+                        </CardTitle>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {spot.city}, {spot.country}
                         </div>
+                        {spot.region && (
+                          <div className="text-xs text-muted-foreground">
+                            {spot.region}
+                          </div>
+                        )}
+                      </div>
+                      {spot.difficulty && (
+                        <Badge 
+                          variant="secondary" 
+                          className={DIFFICULTY_COLORS[spot.difficulty as keyof typeof DIFFICULTY_COLORS]}
+                        >
+                          {spot.difficulty}
+                        </Badge>
                       )}
                     </div>
-                    {spot.difficulty && (
-                      <Badge 
-                        variant="secondary" 
-                        className={DIFFICULTY_COLORS[spot.difficulty as keyof typeof DIFFICULTY_COLORS]}
-                      >
-                        {spot.difficulty}
-                      </Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {spot.break_type && (
+                      <div className="flex items-center text-sm">
+                        <Waves className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
+                        <span className="text-muted-foreground">{spot.break_type}</span>
+                      </div>
                     )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {spot.break_type && (
-                    <div className="flex items-center text-sm">
-                      <Waves className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
-                      <span className="text-muted-foreground">{spot.break_type}</span>
-                    </div>
-                  )}
-                  
-                  {spot.optimal_swell && (
-                    <div className="flex items-center text-sm">
-                      <Navigation className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
-                      <span className="text-muted-foreground">
-                        Best swell: {spot.optimal_swell}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {spot.optimal_wind && (
-                    <div className="flex items-center text-sm">
-                      <Wind className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
-                      <span className="text-muted-foreground">
-                        Best wind: {spot.optimal_wind}
-                      </span>
-                    </div>
-                  )}
+                    
+                    {spot.optimal_swell && (
+                      <div className="flex items-center text-sm">
+                        <Navigation className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-muted-foreground">
+                          Best swell: {spot.optimal_swell}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {spot.optimal_wind && (
+                      <div className="flex items-center text-sm">
+                        <Wind className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
+                        <span className="text-muted-foreground">
+                          Best wind: {spot.optimal_wind}
+                        </span>
+                      </div>
+                    )}
 
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full mt-3 text-blue-900 dark:text-white border-blue-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-800"
-                  >
-                    <Star className="h-4 w-4 mr-2" />
-                    View Conditions
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Empty State */}
-          {filteredSpots.length === 0 && !isLoading && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full mt-3 text-blue-900 dark:text-white border-blue-200 dark:border-gray-600 hover:bg-blue-50 dark:hover:bg-gray-800"
+                    >
+                      <Star className="h-4 w-4 mr-2" />
+                      View Conditions
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : !selectedContinent && !selectedCountry && !selectedState ? (
             <div className="text-center py-12">
               <div className="max-w-md mx-auto">
-                <Waves className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <Waves className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-blue-900 dark:text-white mb-2">
-                  No surf spots found
+                  Choose Your Destination
                 </h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your filters to discover surf spots in other locations.
+                <p className="text-sm text-muted-foreground">
+                  Select a continent, country, or state above to discover surf spots with real-time conditions
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-white mb-2">
+                  No Surf Spots Found
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Try adjusting your filters or selecting a different location
                 </p>
                 <Button onClick={clearFilters}>Clear All Filters</Button>
               </div>
