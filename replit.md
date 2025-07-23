@@ -86,6 +86,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-23: Enhanced Surf Spots Page with Hierarchical State-Level Navigation
+- ✅ Created comprehensive Surf Spots page with hierarchical dropdown navigation system
+- ✅ Added 4-level navigation: North America → USA → Florida → Jacksonville Beach  
+- ✅ Implemented State filter specifically for USA locations to improve discoverability
+- ✅ All 119 surf spots organized by continent, country, state/region, and city
+- ✅ Added API endpoint /api/locations/all to serve complete surf spot database
+- ✅ Updated navigation bar with Surf Spots link for easy access
+- ✅ Enhanced spot cards with difficulty levels, break types, optimal conditions, and View Conditions buttons
+- ✅ Implemented cascading filter reset and clear filters functionality
+
 ### 2025-07-23: Major Coastal Cities Expansion Using NOAA Buoy Data
 - ✅ Added 64 major US coastal cities that can leverage nearby NOAA buoy data for authentic surf conditions
 - ✅ Created intelligent coastal-cities-expansion.ts system that maps cities to nearest buoys within specified distance ranges
