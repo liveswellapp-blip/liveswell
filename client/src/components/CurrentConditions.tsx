@@ -257,7 +257,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="flex items-center justify-between">
                     <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs opacity-75">Past</span>
+                      <span className="text-sm opacity-75">Past</span>
                       <Button
                         variant="ghost"
                         size="sm"
