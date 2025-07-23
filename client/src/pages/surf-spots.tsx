@@ -49,6 +49,62 @@ const CONTINENT_MAP: { [key: string]: string } = {
   "Fiji": "Oceania"
 };
 
+// Map USA cities to their states based on geographic location
+const USA_CITY_TO_STATE: { [key: string]: string } = {
+  // California
+  "Half Moon Bay": "California",
+  "Santa Cruz": "California", 
+  "Carpinteria": "California",
+  "San Clemente": "California",
+  "Malibu": "California",
+  "Manhattan Beach": "California",
+  "Huntington Beach": "California",
+  "Encinitas": "California",
+  "La Jolla": "California",
+  "San Francisco": "California",
+  "Oakland": "California",
+  "Monterey": "California",
+  "Big Sur": "California",
+  "Laguna Beach": "California",
+  "San Diego": "California",
+  "Carlsbad": "California",
+  
+  // Hawaii
+  "Haleiwa": "Hawaii",
+  "Honolulu": "Hawaii",
+  
+  // Florida
+  "Cocoa Beach": "Florida",
+  "New Smyrna Beach": "Florida",
+  "Jacksonville": "Florida",
+  "Sebastian": "Florida",
+  "Miami": "Florida",
+  "Vero Beach": "Florida",
+  
+  // East Coast
+  "Montauk": "New York",
+  "Manasquan": "New Jersey",
+  "Asbury Park": "New Jersey",
+  "Buxton": "North Carolina",
+  "Virginia Beach": "Virginia",
+  "Rehoboth Beach": "Delaware",
+  "Savannah": "Georgia",
+  
+  // Oregon
+  "Cannon Beach": "Oregon",
+  "Manzanita": "Oregon",
+  "Seaside": "Oregon",
+  
+  // Washington
+  "La Push": "Washington",
+  
+  // Texas
+  "Galveston": "Texas",
+  
+  // Massachusetts  
+  "Nantucket": "Massachusetts"
+};
+
 const DIFFICULTY_COLORS = {
   "Beginner": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
   "Intermediate": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
@@ -78,7 +134,8 @@ export default function SurfSpots() {
     return spots.reduce((acc, spot) => {
       const continent = CONTINENT_MAP[spot.country] || "Other";
       const country = spot.country;
-      const state = spot.region || "General"; // For USA, region represents state
+      // For USA spots, use city-to-state mapping; for others, use region or "General"
+      const state = country === "USA" ? (USA_CITY_TO_STATE[spot.city] || "Other") : (spot.region || "General");
       const region = spot.city; // City becomes the final grouping level
       
       if (!acc[continent]) acc[continent] = {};
@@ -96,7 +153,8 @@ export default function SurfSpots() {
     
     return spots.filter(spot => {
       const continent = CONTINENT_MAP[spot.country] || "Other";
-      const state = spot.region || "General";
+      // For USA spots, use city-to-state mapping; for others, use region or "General"
+      const state = spot.country === "USA" ? (USA_CITY_TO_STATE[spot.city] || "Other") : (spot.region || "General");
       const matchesContinent = !selectedContinent || continent === selectedContinent;
       const matchesCountry = !selectedCountry || spot.country === selectedCountry;
       const matchesState = !selectedState || state === selectedState;
