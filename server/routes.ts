@@ -606,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const nextHour = new Date(now);
           nextHour.setHours(now.getHours() + 1, 0, 0, 0);
           
-          for (let i = 0; i < 12; i++) {
+          for (let i = 0; i < 48; i++) {
             const time = new Date(nextHour.getTime() + (i * 60 * 60 * 1000)); // Every hour
             const hour = time.getHours();
             
@@ -652,7 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const nextHour = new Date(now);
           nextHour.setHours(now.getHours() + 1, 0, 0, 0);
           
-          for (let i = 0; i < 12; i++) {
+          for (let i = 0; i < 48; i++) {
             const time = new Date(nextHour.getTime() + (i * 60 * 60 * 1000));
             const hour = time.getHours();
             
@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const nextHour = new Date(now);
         nextHour.setHours(now.getHours() + 1, 0, 0, 0);
         
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 48; i++) {
           const targetTime = new Date(nextHour.getTime() + (i * 60 * 60 * 1000));
           
           // Create more realistic hourly interpolation using time patterns
