@@ -287,15 +287,22 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     ))}
                   </div>
                 ) : historicalData && historicalData.length > 0 ? (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {[...historicalData].reverse().map((data, index) => (
-                      <div key={index} className="flex justify-between items-center text-xs">
-                        <span className="opacity-75">{data.time}</span>
-                        <span className="font-medium text-blue-900 dark:text-emerald-400">
-                          {data.waveHeight} ft
-                        </span>
-                      </div>
-                    ))}
+                  <div className="max-h-48 overflow-y-auto pr-2">
+                    <div className="space-y-3">
+                      {[...historicalData].reverse().map((data, index) => (
+                        <div key={index}>
+                          <div className="flex justify-between items-center text-sm py-2">
+                            <span className="opacity-75">{data.time}</span>
+                            <span className="font-medium text-blue-900 dark:text-emerald-400">
+                              {data.waveHeight} ft
+                            </span>
+                          </div>
+                          {index < historicalData.length - 1 && (
+                            <div className="border-b border-border opacity-30"></div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <p className="text-xs opacity-75">No historical data available</p>
