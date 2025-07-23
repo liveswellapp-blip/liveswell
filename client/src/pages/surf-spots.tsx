@@ -375,7 +375,9 @@ export default function SurfSpots() {
             )}
 
             {/* Hierarchical Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-blue-900 dark:text-white">Filter by Location</h3>
+              <div className="flex flex-col sm:flex-row gap-4">
               <Select value={selectedContinent} onValueChange={(value) => {
                 setSelectedContinent(value);
                 setSelectedCountry("");
@@ -425,6 +427,7 @@ export default function SurfSpots() {
                   </SelectContent>
                 </Select>
               )}
+              </div>
             </div>
 
             {/* Saved Spots Card */}
