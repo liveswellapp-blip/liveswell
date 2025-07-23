@@ -127,33 +127,68 @@ export default function Map({}: MapProps) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Interactive Map Placeholder */}
+          {/* Interactive Surf Spots Grid */}
           <div className="lg:col-span-2">
-            <Card className="h-[600px]">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Interactive Surf Spot Map
+                  Surf Spots by Region ({filteredLocations.length})
                 </CardTitle>
               </CardHeader>
-              <CardContent className="h-full">
-                <div className="w-full h-full bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-gray-700 dark:to-gray-600 rounded-lg flex items-center justify-center border-2 border-dashed border-blue-300 dark:border-gray-500">
-                  <div className="text-center">
-                    <MapPin className="h-16 w-16 text-blue-400 dark:text-emerald-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                      Interactive Map Component
-                    </h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-4">
-                      Select a location from the list to view it on the map
-                    </p>
-                    {userLocation && (
-                      <Badge variant="secondary" className="mb-2">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        Your location detected
-                      </Badge>
-                    )}
-                  </div>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto">
+                  {filteredLocations.map((location: Location) => {
+                    const distance = userLocation 
+                      ? calculateDistance(
+                          userLocation.lat, userLocation.lng,
+                          parseFloat(location.latitude), parseFloat(location.longitude)
+                        )
+                      : null;
+                    
+                    return (
+                      <Button
+                        key={location.id}
+                        variant={selectedLocation?.id === location.id ? "default" : "outline"}
+                        className="h-auto p-4 justify-start text-left"
+                        onClick={() => handleLocationSelect(location)}
+                      >
+                        <div className="flex items-start gap-3 w-full">
+                          <MapPin className={`h-4 w-4 mt-1 flex-shrink-0 ${
+                            selectedLocation?.id === location.id 
+                              ? 'text-white' 
+                              : 'text-blue-600 dark:text-emerald-400'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{location.name}</div>
+                            <div className="text-sm opacity-70 truncate">
+                              {location.city}, {location.country}
+                            </div>
+                            {distance && (
+                              <div className="text-xs opacity-60 mt-1">
+                                {distance.toFixed(1)} miles away
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Button>
+                    );
+                  })}
                 </div>
+                
+                {locationsLoading && (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                    <p className="text-gray-500">Loading surf spots...</p>
+                  </div>
+                )}
+                
+                {!locationsLoading && filteredLocations.length === 0 && (
+                  <div className="text-center py-8">
+                    <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500">No surf spots found matching your search</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -213,57 +248,47 @@ export default function Map({}: MapProps) {
               </Card>
             )}
 
-            {/* Location List */}
-            <Card className="max-h-[500px] overflow-y-auto">
+            {/* Quick Stats and Info */}
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">
-                  Surf Spots ({filteredLocations.length})
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Waves className="h-5 w-5 text-blue-600 dark:text-emerald-400" />
+                  Global Coverage
                 </CardTitle>
-                {userLocation && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Sorted by distance from your location
-                  </p>
-                )}
               </CardHeader>
               <CardContent>
-                {locationsLoading ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                    <p className="text-gray-500 mt-2">Loading surf spots...</p>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">119</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Surf Spots</div>
+                    </div>
+                    <div className="text-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">12</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Countries</div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredLocations.map((location: Location) => {
-                      const distance = userLocation 
-                        ? calculateDistance(
-                            userLocation.lat, userLocation.lng,
-                            parseFloat(location.latitude), parseFloat(location.longitude)
-                          )
-                        : null;
-                      
-                      return (
-                        <Button
-                          key={location.id}
-                          variant={selectedLocation?.id === location.id ? "default" : "outline"}
-                          className="w-full justify-start h-auto p-3"
-                          onClick={() => handleLocationSelect(location)}
-                        >
-                          <div className="text-left">
-                            <div className="font-medium">{location.name}</div>
-                            <div className="text-sm opacity-70">
-                              {location.city}, {location.country}
-                            </div>
-                            {distance && (
-                              <div className="text-xs opacity-60 mt-1">
-                                {distance.toFixed(1)} miles away
-                              </div>
-                            )}
-                          </div>
-                        </Button>
-                      );
-                    })}
+                  
+                  <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg">
+                    <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">
+                      Real-Time NOAA Data
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-300">
+                      Authentic wave conditions from 55+ government monitoring buoy stations
+                    </div>
                   </div>
-                )}
+                  
+                  {userLocation && (
+                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                      <div className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                        📍 Location Detected
+                      </div>
+                      <div className="text-xs text-yellow-600 dark:text-yellow-300">
+                        Spots are sorted by distance from you
+                      </div>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
