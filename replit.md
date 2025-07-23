@@ -86,6 +86,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-23: Two-Page Architecture Clarification and Empty State Enhancement
+- ✅ Confirmed and refined two-page architecture: `/surf-spots` for search/discovery, `/?location={id}` for detailed conditions
+- ✅ Removed "Choose Your Destination" empty state from surf spots search page  
+- ✅ Added prominent Saved Spots card under search filters with ocean-themed gradient design
+- ✅ Implemented true empty state behavior - no surf spots shown until filters are applied
+- ✅ Enhanced user flow: search/discover spots → view detailed conditions → save favorites
+- ✅ Navigation properly configured to support browsing (Surf Spots page) and detailed viewing (Home with location)
+
 ### 2025-07-23: Enhanced Surf Spots Page with Hierarchical State-Level Navigation
 - ✅ Created comprehensive Surf Spots page with hierarchical dropdown navigation system
 - ✅ Added 4-level navigation: North America → USA → Florida → Jacksonville Beach  
