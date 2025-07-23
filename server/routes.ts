@@ -1020,6 +1020,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Expand coverage with coastal cities using nearby buoy data
+  app.post("/api/spots/expand-coastal-cities", async (req, res) => {
+    try {
+      const { expandCoastalCitiesWithBuoyData } = await import('./coastal-cities-expansion.js');
+      const result = await expandCoastalCitiesWithBuoyData();
+      
+      const allLocations = await storage.searchLocations("");
+      res.json({ 
+        message: "Coastal cities expansion completed successfully",
+        totalSpots: allLocations.length,
+        citiesAdded: result.added,
+        citiesSkipped: result.skipped,
+        totalProcessed: result.total,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Failed to expand coastal cities:', error);
+      res.status(500).json({ message: "Failed to expand coastal cities coverage" });
+    }
+  });
+
+  // Get buoy mapping for a specific city/location
+  app.get("/api/locations/:id/buoy-mapping", async (req, res) => {
+    try {
+      const locationId = parseInt(req.params.id);
+      const allLocations = await storage.searchLocations("");
+      const location = allLocations.find(loc => loc.id === locationId);
+      
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      const { getCityBuoyMapping } = await import('./coastal-cities-expansion.js');
+      const mapping = await getCityBuoyMapping(
+        parseFloat(location.latitude), 
+        parseFloat(location.longitude)
+      );
+      
+      res.json({
+        location: location.name,
+        city: location.city,
+        coordinates: { 
+          latitude: parseFloat(location.latitude), 
+          longitude: parseFloat(location.longitude)
+        },
+        ...mapping
+      });
+    } catch (error) {
+      console.error('Failed to get buoy mapping:', error);
+      res.status(500).json({ message: "Failed to get buoy mapping" });
+    }
+  });
+
   // Get real NOAA buoy data for a location
   app.get("/api/buoy/:stationId", async (req, res) => {
     try {

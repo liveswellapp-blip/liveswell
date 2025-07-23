@@ -86,16 +86,28 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### 2025-07-18: Real-Time NOAA Wave Monitoring Integration
+### 2025-07-23: Major Coastal Cities Expansion Using NOAA Buoy Data
+- ✅ Added 64 major US coastal cities that can leverage nearby NOAA buoy data for authentic surf conditions
+- ✅ Created intelligent coastal-cities-expansion.ts system that maps cities to nearest buoys within specified distance ranges
+- ✅ Successfully added 16 new cities: San Francisco Bay Area, Oakland, Monterey, San Diego, New York Harbor, Jersey Shore, and more
+- ✅ Implemented distance-based buoy selection (25-100 miles max range depending on location priority)  
+- ✅ Added API endpoints: /api/spots/expand-coastal-cities for manual expansion, /api/locations/:id/buoy-mapping for buoy relationships
+- ✅ Enhanced startup process to automatically expand coverage using nearby buoy data on server launch
+- ✅ **Total coverage now: 119 surf spots** (original 103 + 16 coastal cities expansion)
+- ✅ Covers major metros: San Francisco, Oakland, San Diego, New York, Jacksonville, Galveston, plus premium coastal destinations
+- ✅ Each new city validated to have real NOAA buoy data within reasonable distance for authentic conditions
+- ✅ Smart filtering skips cities without nearby monitoring stations to maintain data integrity
+
+### 2025-07-18: Real-Time NOAA Wave Monitoring Integration  
 - ✅ Successfully integrated NOAA National Data Buoy Center (NDBC) API for authentic real-time wave data
-- ✅ Added 51 NOAA buoy stations across US coastal waters providing live wave conditions
+- ✅ Added 55 NOAA buoy stations across US coastal waters providing live wave conditions
 - ✅ Created comprehensive NOAA integration system (server/noaa-integration.ts) with automatic data parsing
 - ✅ Built NOAABuoyData component displaying real-time wave height, wind, temperature, and pressure
 - ✅ Mapped famous surf spots to nearest NOAA monitoring stations for authentic local conditions
 - ✅ Added API endpoints for buoy data access (/api/buoy/:stationId, /api/buoys/nearby, /api/spots/import-noaa)
 - ✅ Enhanced statistics dashboard with NOAA import capabilities and real-time data indicators
 - ✅ Automatic NOAA station import during server startup for comprehensive coverage
-- ✅ Total monitoring network now includes 103 surf spots + 51 real-time NOAA buoy stations = 154 total locations
+- ✅ **Total monitoring network: 119 surf spots + 55 real-time NOAA buoy stations = 174 total locations**
 - ✅ Live data available for major surf destinations: Malibu (Santa Monica Bay), Pipeline (Northwest Hawaii), Half Moon Bay (Mavericks)
 
 ### 2025-07-18: Global Surf Spot Database Expansion
