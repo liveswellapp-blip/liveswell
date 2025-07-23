@@ -597,12 +597,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!API_KEY || API_KEY === "demo_key" || API_KEY.length < 10) {
           console.log("Using demo wind forecast data - API key not configured");
           
-          // Generate 8 data points (next 24 hours, every 3 hours)
+          // Generate hourly data starting from next hour
           const windForecastData = [];
           const now = new Date();
+          const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
           
-          for (let i = 1; i <= 8; i++) {
-            const time = new Date(now.getTime() + (i * 3 * 60 * 60 * 1000)); // Every 3 hours
+          // Start from the next hour
+          const nextHour = new Date(now);
+          nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+          
+          for (let i = 0; i < 12; i++) {
+            const time = new Date(nextHour.getTime() + (i * 60 * 60 * 1000)); // Every hour
             const hour = time.getHours();
             
             // Generate realistic wind patterns - typically stronger in afternoon
@@ -619,7 +624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               time: time.toLocaleTimeString('en-US', { 
                 hour: 'numeric', 
                 hour12: true,
-                timeZone: getTimezone(parseFloat(location.latitude), parseFloat(location.longitude))
+                timeZone: timezone
               }),
               windSpeed: parseFloat(windSpeed.toFixed(1)),
               windDirection,
@@ -641,9 +646,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Fall back to demo data (same as above)
           const windForecastData = [];
           const now = new Date();
+          const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
           
-          for (let i = 1; i <= 8; i++) {
-            const time = new Date(now.getTime() + (i * 3 * 60 * 60 * 1000));
+          // Start from the next hour
+          const nextHour = new Date(now);
+          nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+          
+          for (let i = 0; i < 12; i++) {
+            const time = new Date(nextHour.getTime() + (i * 60 * 60 * 1000));
             const hour = time.getHours();
             
             let baseSpeed = 8;
@@ -659,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               time: time.toLocaleTimeString('en-US', { 
                 hour: 'numeric', 
                 hour12: true,
-                timeZone: getTimezone(parseFloat(location.latitude), parseFloat(location.longitude))
+                timeZone: timezone
               }),
               windSpeed: parseFloat(windSpeed.toFixed(1)),
               windDirection,
@@ -673,21 +683,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const forecastData = await forecastResponse.json();
         const windForecastData = [];
+        const now = new Date();
+        const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
         
-        // Take the next 8 forecast points (24 hours of 3-hour intervals)
-        for (let i = 0; i < Math.min(8, forecastData.list.length); i++) {
-          const item = forecastData.list[i];
-          const time = new Date(item.dt * 1000);
+        // Create hourly data by interpolating between 3-hour OpenWeatherMap forecasts
+        const nextHour = new Date(now);
+        nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+        
+        for (let i = 0; i < 12; i++) {
+          const targetTime = new Date(nextHour.getTime() + (i * 60 * 60 * 1000));
+          
+          // Find closest forecast data points for interpolation
+          let closestBefore = null;
+          let closestAfter = null;
+          
+          for (const item of forecastData.list) {
+            const forecastTime = new Date(item.dt * 1000);
+            
+            if (forecastTime <= targetTime) {
+              if (!closestBefore || forecastTime > new Date(closestBefore.dt * 1000)) {
+                closestBefore = item;
+              }
+            } else {
+              if (!closestAfter || forecastTime < new Date(closestAfter.dt * 1000)) {
+                closestAfter = item;
+              }
+            }
+          }
+          
+          // Use interpolation or closest data point
+          let windSpeed, windDirection;
+          if (closestBefore && closestAfter) {
+            // Simple interpolation between two points
+            const beforeTime = new Date(closestBefore.dt * 1000);
+            const afterTime = new Date(closestAfter.dt * 1000);
+            const totalDiff = afterTime.getTime() - beforeTime.getTime();
+            const targetDiff = targetTime.getTime() - beforeTime.getTime();
+            const ratio = targetDiff / totalDiff;
+            
+            windSpeed = closestBefore.wind.speed + (closestAfter.wind.speed - closestBefore.wind.speed) * ratio;
+            windDirection = getWindDirection(closestBefore.wind.deg); // Use before direction for simplicity
+          } else if (closestBefore) {
+            windSpeed = closestBefore.wind.speed;
+            windDirection = getWindDirection(closestBefore.wind.deg);
+          } else if (closestAfter) {
+            windSpeed = closestAfter.wind.speed;
+            windDirection = getWindDirection(closestAfter.wind.deg);
+          } else {
+            // Fallback
+            windSpeed = 8;
+            windDirection = 'E';
+          }
           
           windForecastData.push({
-            time: time.toLocaleTimeString('en-US', { 
+            time: targetTime.toLocaleTimeString('en-US', { 
               hour: 'numeric', 
               hour12: true,
-              timeZone: getTimezone(parseFloat(location.latitude), parseFloat(location.longitude))
+              timeZone: timezone
             }),
-            windSpeed: parseFloat(item.wind.speed.toFixed(1)),
-            windDirection: getWindDirection(item.wind.deg),
-            timestamp: time.toISOString()
+            windSpeed: parseFloat(windSpeed.toFixed(1)),
+            windDirection,
+            timestamp: targetTime.toISOString()
           });
         }
         
