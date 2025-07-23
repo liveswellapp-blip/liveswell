@@ -207,21 +207,22 @@ export default function SurfSpots() {
         <div className="space-y-6">
           {/* Header */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-blue-900 dark:text-white">
+                Global Surf Spots
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Discover {spots?.length || 0} surf spots across {continents.length} continents with real-time conditions
+              </p>
+            </div>
+
+            {(selectedContinent || selectedCountry || selectedState) && (
               <div>
-                <h1 className="text-3xl font-bold text-blue-900 dark:text-white">
-                  Global Surf Spots
-                </h1>
-                <p className="text-muted-foreground mt-2">
-                  Discover {spots?.length || 0} surf spots across {continents.length} continents with real-time conditions
-                </p>
-              </div>
-              {(selectedContinent || selectedCountry || selectedState) && (
                 <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Hierarchical Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
