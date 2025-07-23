@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Favorites from "@/pages/favorites";
 import Settings from "@/pages/settings";
+import Map from "@/pages/map";
 
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/favorites" component={Favorites} />
       <Route path="/settings" component={Settings} />
+      <Route path="/map" component={Map} />
       <Route component={NotFound} />
     </Switch>
   );
