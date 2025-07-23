@@ -341,38 +341,36 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </>
                   )}
                 </div>
-                <div className="text-sm mt-2">
+                <div className="text-sm mt-2 flex justify-between items-end">
                   {isLoading ? (
                     <Skeleton className="h-4 w-32 bg-white/20" />
                   ) : (
-                    <>
+                    <div>
                       <div className="mb-1">
                         <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
                       </div>
                       <div>
                         <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
                       </div>
-                    </>
+                    </div>
                   )}
+                  
+                  {/* Future Wind Forecast Toggle - Aligned with Gust data */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsWindForecastExpanded(!isWindForecastExpanded)}
+                    className="flex items-center space-x-1 hover:bg-white/10 p-1 h-auto"
+                  >
+                    <span className="text-sm opacity-75">Future</span>
+                    {isWindForecastExpanded ? (
+                      <ChevronUp className="h-3 w-3 text-emerald-400" />
+                    ) : (
+                      <ChevronDown className="h-3 w-3 text-emerald-400" />
+                    )}
+                  </Button>
                 </div>
               </div>
-            </div>
-            
-            {/* Future Wind Forecast Toggle - Bottom Right */}
-            <div className="flex justify-end mt-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsWindForecastExpanded(!isWindForecastExpanded)}
-                className="flex items-center space-x-1 hover:bg-white/10 p-1 h-auto"
-              >
-                <span className="text-sm opacity-75">Future</span>
-                {isWindForecastExpanded ? (
-                  <ChevronUp className="h-3 w-3 text-emerald-400" />
-                ) : (
-                  <ChevronDown className="h-3 w-3 text-emerald-400" />
-                )}
-              </Button>
             </div>
             
             {/* Expandable Future Wind Data */}
