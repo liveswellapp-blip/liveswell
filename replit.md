@@ -87,8 +87,9 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes
 
 ### 2025-07-24: Solid Color Background Theme Update
-- ✅ Replaced gradient backgrounds with solid colors: light blue (bg-blue-50) for light mode, emerald-950 for dark mode
+- ✅ Replaced gradient backgrounds with solid colors: light blue (bg-blue-50) for light mode, darker custom emerald for dark mode
 - ✅ Updated all pages (Home, Surf Spots, Settings, Favorites, 404) with consistent solid color backgrounds
+- ✅ Applied custom darker emerald background `hsl(155,50%,8%)` for enhanced dark mode depth and contrast
 - ✅ Maintained original emerald-400 accent colors throughout the application for consistency
 - ✅ Preserved ocean-themed branding with clean, modern solid color approach
 
