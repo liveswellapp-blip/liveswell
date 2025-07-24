@@ -99,6 +99,7 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Cambria": "California",
   "Fort Bragg": "California",
   "Mendocino": "California",
+  "Shelter Cove": "California",
   
   // Hawaii
   "Haleiwa": "Hawaii",
@@ -222,6 +223,7 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   
   // Connecticut
   "Westport Beach": "Connecticut",
+  "Westport": "Connecticut",
   "Fairfield": "Connecticut",
   
   // Louisiana
@@ -266,7 +268,6 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   // Additional Comprehensive State Coverage
   "Georgetown": "South Carolina",
   "Tampa": "Florida",
-  "Westport": "Connecticut",
   "Pago Pago": "American Samoa",
   "Phippsburg": "Maine",
   "Old Orchard Beach": "Maine",
