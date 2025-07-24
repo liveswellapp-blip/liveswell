@@ -239,9 +239,9 @@ async function fetchTideData(lat: number, lon: number) {
 
     clearTimeout(timeoutId);
 
-    let currentTide = null;
-    let tideStatus = null;
-    let nextTides = [];
+    let currentTide: number | null = null;
+    let tideStatus: string | null = null;
+    let nextTides: Array<{ time: string; height: number; type: string }> = [];
 
     // Parse current water level from NOAA data
     if (currentResponse.ok) {
@@ -295,10 +295,10 @@ async function fetchTideData(lat: number, lon: number) {
         const timezone = getTimezone(lat, lon);
         
         // Format next few tides for display
-        nextTides = tides
-          .filter((tide: any) => tide.time >= currentTime)
+        nextTides = (tides as Array<{ time: number; height: number; type: string }>)
+          .filter((tide) => tide.time >= currentTime)
           .slice(0, 4)
-          .map((tide: any) => ({
+          .map((tide) => ({
             time: new Date(tide.time).toLocaleTimeString('en-US', { 
               hour: 'numeric', 
               minute: '2-digit', 
@@ -324,7 +324,11 @@ async function fetchTideData(lat: number, lon: number) {
 }
 
 function generateRealisticTides(dayOffset: number, timezone: string = 'UTC') {
-  const tides = [];
+  const tides: Array<{
+    time: string;
+    height: number;
+    type: 'high' | 'low';
+  }> = [];
   const baseTime = new Date();
   baseTime.setDate(baseTime.getDate() + dayOffset);
   baseTime.setHours(0, 0, 0, 0);
@@ -333,7 +337,7 @@ function generateRealisticTides(dayOffset: number, timezone: string = 'UTC') {
   const tideShift = dayOffset * 50; // minutes per day
   
   // Base tide times (in hours) for day 0, then shift for subsequent days
-  const baseTidePattern = [
+  const baseTidePattern: Array<{ offset: number; type: 'high' | 'low'; heightRange: [number, number] }> = [
     { offset: 1.5, type: 'low', heightRange: [0.5, 1.3] },
     { offset: 7.8, type: 'high', heightRange: [3.5, 5.0] },
     { offset: 14.2, type: 'low', heightRange: [0.3, 1.2] },
