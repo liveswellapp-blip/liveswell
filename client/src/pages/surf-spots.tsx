@@ -87,6 +87,13 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Dana Point": "California",
   "Newport Beach": "California",
   "Seal Beach": "California",
+  "Pescadero": "California",
+  "Davenport": "California",
+  "Aptos": "California",
+  "Moss Landing": "California",
+  "Pacific Grove": "California",
+  "Crescent City": "California",
+  "Eureka": "California",
   
   // Hawaii
   "Haleiwa": "Hawaii",
@@ -102,6 +109,14 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Pensacola": "Florida",
   "Destin": "Florida",
   "Panama City Beach": "Florida",
+  "St. Augustine": "Florida",
+  "Flagler Beach": "Florida",
+  "Ormond Beach": "Florida",
+  "Daytona Beach": "Florida",
+  "Ponce Inlet": "Florida",
+  "Melbourne Beach": "Florida",
+  "Indialantic": "Florida",
+  "Satellite Beach": "Florida",
   
   // Oregon - Pacific Northwest
   "Cannon Beach": "Oregon",
@@ -159,11 +174,35 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Erie": "Pennsylvania",
   "Bay Village": "Ohio",
   
-  // Texas
+  // Texas - Gulf Coast Expansion
   "Galveston": "Texas",
+  "Surfside Beach": "Texas",
+  "Freeport": "Texas",
+  "South Padre Island": "Texas",
   
   // Massachusetts  
-  "Nantucket": "Massachusetts"
+  "Nantucket": "Massachusetts",
+  "Oak Bluffs": "Massachusetts",
+  "Orleans": "Massachusetts",
+  
+  // Connecticut
+  "Westport Beach": "Connecticut",
+  "Fairfield": "Connecticut",
+  
+  // Louisiana
+  "Grand Isle": "Louisiana",
+  
+  // Oregon - Additional
+  "Bandon": "Oregon",
+  "Gold Beach": "Oregon",
+  
+  // Georgia
+  "Tybee Island": "Georgia",
+  "Jekyll Island": "Georgia",
+  
+  // South Carolina
+  "Myrtle Beach": "South Carolina",
+  "Folly Beach": "South Carolina"
 };
 
 // Map Canadian cities to their provinces

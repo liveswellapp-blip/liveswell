@@ -121,6 +121,47 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
   { name: "Todos Santos", city: "Todos Santos", country: "Mexico", state: "Baja California Sur", latitude: "23.4449", longitude: "-110.2252", isCoastal: true, breakType: "Point Break", difficulty: "Advanced", optimalConditions: "W-NW swells" },
   { name: "Scorpion Bay", city: "San Juanico", country: "Mexico", state: "Baja California Sur", latitude: "26.2544", longitude: "-112.4692", isCoastal: true, breakType: "Point Break", difficulty: "Advanced", optimalConditions: "W-NW swells" },
   { name: "Puerto Vallarta - La Lancha", city: "Puerto Vallarta", country: "Mexico", state: "Jalisco", latitude: "20.6534", longitude: "-105.2253", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "S-SW swells" },
+
+  // ADDITIONAL EAST COAST EXPANSION - More Florida & Southeast
+  { name: "St. Augustine Beach", city: "St. Augustine", country: "USA", state: "Florida", latitude: "29.8580", longitude: "-81.3009", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "NE storms" },
+  { name: "Flagler Beach", city: "Flagler Beach", country: "USA", state: "Florida", latitude: "29.4733", longitude: "-81.1312", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E swells" },
+  { name: "Ormond Beach", city: "Ormond Beach", country: "USA", state: "Florida", latitude: "29.2858", longitude: "-81.0556", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "E swells" },
+  { name: "Daytona Beach", city: "Daytona Beach", country: "USA", state: "Florida", latitude: "29.2108", longitude: "-81.0228", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-NE swells" },
+  { name: "Ponce Inlet", city: "Ponce Inlet", country: "USA", state: "Florida", latitude: "29.0783", longitude: "-80.9314", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "E swells" },
+  { name: "Melbourne Beach", city: "Melbourne Beach", country: "USA", state: "Florida", latitude: "28.0728", longitude: "-80.5603", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-SE swells" },
+  { name: "Indialantic", city: "Indialantic", country: "USA", state: "Florida", latitude: "28.0839", longitude: "-80.5642", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E swells" },
+  { name: "Satellite Beach", city: "Satellite Beach", country: "USA", state: "Florida", latitude: "28.1761", longitude: "-80.5903", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "E swells" },
+
+  // WEST COAST EXPANSION - More Northern California & Oregon
+  { name: "Ano Nuevo", city: "Pescadero", country: "USA", state: "California", latitude: "37.1225", longitude: "-122.3369", isCoastal: true, breakType: "Point Break", difficulty: "Advanced", optimalConditions: "NW swells" },
+  { name: "Davenport", city: "Davenport", country: "USA", state: "California", latitude: "37.0086", longitude: "-122.1889", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" },
+  { name: "Pleasure Point", city: "Aptos", country: "USA", state: "California", latitude: "36.9697", longitude: "-121.9058", isCoastal: true, breakType: "Point Break", difficulty: "Intermediate", optimalConditions: "NW-W swells" },
+  { name: "Moss Landing", city: "Moss Landing", country: "USA", state: "California", latitude: "36.8044", longitude: "-121.7894", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW swells" },
+  { name: "Asilomar", city: "Pacific Grove", country: "USA", state: "California", latitude: "36.6219", longitude: "-121.9308", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW swells" },
+
+  // GULF COAST EXPANSION - Texas & Louisiana
+  { name: "Surfside Beach", city: "Surfside Beach", country: "USA", state: "Texas", latitude: "28.9447", longitude: "-95.2888", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S-SE swells" },
+  { name: "Freeport", city: "Freeport", country: "USA", state: "Texas", latitude: "28.9544", longitude: "-95.3596", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+  { name: "South Padre Island", city: "South Padre Island", country: "USA", state: "Texas", latitude: "26.1118", longitude: "-97.1739", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "S-SE swells" },
+  { name: "Grand Isle", city: "Grand Isle", country: "USA", state: "Louisiana", latitude: "29.2377", longitude: "-89.9573", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+
+  // ADDITIONAL NORTHEAST - Connecticut, Massachusetts  
+  { name: "Westport Beach", city: "Westport", country: "USA", state: "Connecticut", latitude: "41.1415", longitude: "-73.3579", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Hurricane swells" },
+  { name: "Fairfield Beach", city: "Fairfield", country: "USA", state: "Connecticut", latitude: "41.1626", longitude: "-73.2626", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+  { name: "Martha's Vineyard", city: "Oak Bluffs", country: "USA", state: "Massachusetts", latitude: "41.4558", longitude: "-70.5564", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Hurricane swells" },
+  { name: "Cape Cod - Nauset Beach", city: "Orleans", country: "USA", state: "Massachusetts", latitude: "41.8459", longitude: "-69.9450", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NE storms" },
+
+  // ADDITIONAL PACIFIC NORTHWEST
+  { name: "Bandon Beach", city: "Bandon", country: "USA", state: "Oregon", latitude: "43.1193", longitude: "-124.4084", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Large NW swells" },
+  { name: "Gold Beach", city: "Gold Beach", country: "USA", state: "Oregon", latitude: "42.4079", longitude: "-124.4229", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "W-NW swells" },
+  { name: "Crescent City", city: "Crescent City", country: "USA", state: "California", latitude: "41.7558", longitude: "-124.2026", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW swells" },
+  { name: "Eureka", city: "Eureka", country: "USA", state: "California", latitude: "40.8021", longitude: "-124.1637", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" },
+
+  // MORE SOUTHEAST - Georgia & South Carolina  
+  { name: "Tybee Island", city: "Tybee Island", country: "USA", state: "Georgia", latitude: "32.0002", longitude: "-80.8468", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
+  { name: "Jekyll Island", city: "Jekyll Island", country: "USA", state: "Georgia", latitude: "31.0736", longitude: "-81.4085", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "E swells" },
+  { name: "Myrtle Beach", city: "Myrtle Beach", country: "USA", state: "South Carolina", latitude: "33.6891", longitude: "-78.8867", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
+  { name: "Folly Beach", city: "Folly Beach", country: "USA", state: "South Carolina", latitude: "32.6552", longitude: "-79.9402", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-SE swells" }
 ];
 
 /**
