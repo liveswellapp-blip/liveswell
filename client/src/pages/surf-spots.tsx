@@ -39,6 +39,7 @@ interface GroupedSpots {
 
 const CONTINENT_MAP: { [key: string]: string } = {
   "USA": "North America",
+  "Canada": "North America",
   "Mexico": "North America",
   "Costa Rica": "North America",
   "Australia": "Oceania",
@@ -54,7 +55,7 @@ const CONTINENT_MAP: { [key: string]: string } = {
 
 // Map USA cities to their states based on geographic location
 const USA_CITY_TO_STATE: { [key: string]: string } = {
-  // California
+  // California - Comprehensive Coverage
   "Half Moon Bay": "California",
   "Santa Cruz": "California", 
   "Carpinteria": "California",
@@ -71,41 +72,115 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Laguna Beach": "California",
   "San Diego": "California",
   "Carlsbad": "California",
+  "Pacifica": "California",
+  "Capitola": "California",
+  "Carmel": "California",
+  "Pismo Beach": "California",
+  "Lompoc": "California",
+  "Goleta": "California",
+  "Ventura": "California",
+  "Los Angeles": "California",
+  "El Segundo": "California",
+  "Hermosa Beach": "California",
+  "Redondo Beach": "California",
+  "Palos Verdes": "California",
+  "Dana Point": "California",
+  "Newport Beach": "California",
+  "Seal Beach": "California",
   
   // Hawaii
   "Haleiwa": "Hawaii",
   "Honolulu": "Hawaii",
   
-  // Florida
+  // Florida - Enhanced Coverage
   "Cocoa Beach": "Florida",
   "New Smyrna Beach": "Florida",
   "Jacksonville": "Florida",
   "Sebastian": "Florida",
   "Miami": "Florida",
   "Vero Beach": "Florida",
+  "Pensacola": "Florida",
+  "Destin": "Florida",
+  "Panama City Beach": "Florida",
   
-  // East Coast
-  "Montauk": "New York",
-  "Manasquan": "New Jersey",
-  "Asbury Park": "New Jersey",
-  "Buxton": "North Carolina",
-  "Virginia Beach": "Virginia",
-  "Rehoboth Beach": "Delaware",
-  "Savannah": "Georgia",
-  
-  // Oregon
+  // Oregon - Pacific Northwest
   "Cannon Beach": "Oregon",
   "Manzanita": "Oregon",
   "Seaside": "Oregon",
+  "Oswald West": "Oregon",
+  "Lincoln City": "Oregon",
+  "Pacific City": "Oregon",
+  "Otter Rock": "Oregon",
   
-  // Washington
+  // Washington - Pacific Northwest
   "La Push": "Washington",
+  "Westport": "Washington",
+  "Neah Bay": "Washington",
+  
+  // New England - Maine & New Hampshire
+  "Hampton": "New Hampshire",
+  "Rye": "New Hampshire",
+  "York": "Maine",
+  "Wells": "Maine",
+  "Kennebunkport": "Maine",
+  
+  // Mid-Atlantic - New York, New Jersey, Rhode Island
+  "Montauk": "New York",
+  "New York City": "New York",
+  "Babylon": "New York",
+  "Long Beach": "New York",
+  "Manasquan": "New Jersey",
+  "Asbury Park": "New Jersey",
+  "Spring Lake": "New Jersey",
+  "Belmar": "New Jersey",
+  "Narragansett": "Rhode Island",
+  "Newport": "Rhode Island",
+  "Block Island": "Rhode Island",
+  
+  // Southeast - Virginia through Georgia
+  "Virginia Beach": "Virginia",
+  "Cape Hatteras": "North Carolina",
+  "Kill Devil Hills": "North Carolina",
+  "Nags Head": "North Carolina",
+  "Wrightsville Beach": "North Carolina",
+  "Buxton": "North Carolina",
+  "Rehoboth Beach": "Delaware",
+  "Charleston": "South Carolina",
+  "Savannah": "Georgia",
+  
+  // Gulf Coast - Alabama
+  "Gulf Shores": "Alabama",
+  "Orange Beach": "Alabama",
+  
+  // Great Lakes - Wisconsin, Michigan, Pennsylvania, Ohio
+  "Sheboygan": "Wisconsin",
+  "Grand Haven": "Michigan",
+  "Empire": "Michigan",
+  "Erie": "Pennsylvania",
+  "Bay Village": "Ohio",
   
   // Texas
   "Galveston": "Texas",
   
   // Massachusetts  
   "Nantucket": "Massachusetts"
+};
+
+// Map Canadian cities to their provinces
+const CANADA_CITY_TO_STATE: { [key: string]: string } = {
+  "Tofino": "British Columbia",
+  "Ucluelet": "British Columbia", 
+  "Halifax": "Nova Scotia",
+  "Ingonish": "Nova Scotia"
+};
+
+// Map Mexican cities to their states
+const MEXICO_CITY_TO_STATE: { [key: string]: string } = {
+  "Ensenada": "Baja California",
+  "Rosarito": "Baja California",
+  "Todos Santos": "Baja California Sur",
+  "San Juanico": "Baja California Sur",
+  "Puerto Vallarta": "Jalisco"
 };
 
 const DIFFICULTY_COLORS = {
@@ -256,8 +331,18 @@ export default function SurfSpots() {
     return spots.reduce((acc, spot) => {
       const continent = CONTINENT_MAP[spot.country] || "Other";
       const country = spot.country;
-      // For USA spots, use city-to-state mapping; for others, use region or "General"
-      const state = country === "USA" ? (USA_CITY_TO_STATE[spot.city] || "Other") : (spot.region || "General");
+      
+      // Use appropriate state/province mapping based on country
+      let state: string;
+      if (country === "USA") {
+        state = USA_CITY_TO_STATE[spot.city] || "Other";
+      } else if (country === "Canada") {
+        state = CANADA_CITY_TO_STATE[spot.city] || "General";
+      } else if (country === "Mexico") {
+        state = MEXICO_CITY_TO_STATE[spot.city] || "General";
+      } else {
+        state = spot.region || "General";
+      }
       
       if (!acc[continent]) acc[continent] = {};
       if (!acc[continent][country]) acc[continent][country] = {};
@@ -278,15 +363,26 @@ export default function SurfSpots() {
     
     return spots.filter(spot => {
       const continent = CONTINENT_MAP[spot.country] || "Other";
-      // For USA spots, use city-to-state mapping; for others, use region or "General"
-      const state = spot.country === "USA" ? (USA_CITY_TO_STATE[spot.city] || "Other") : (spot.region || "General");
+      
+      // Use appropriate state/province mapping based on country
+      let state: string;
+      if (spot.country === "USA") {
+        state = USA_CITY_TO_STATE[spot.city] || "Other";
+      } else if (spot.country === "Canada") {
+        state = CANADA_CITY_TO_STATE[spot.city] || "General";
+      } else if (spot.country === "Mexico") {
+        state = MEXICO_CITY_TO_STATE[spot.city] || "General";
+      } else {
+        state = spot.region || "General";
+      }
       
       // Search query filter
       const matchesSearch = !searchQuery.trim() || 
         spot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         spot.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
         spot.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (spot.region && spot.region.toLowerCase().includes(searchQuery.toLowerCase()));
+        (spot.region && spot.region.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        state.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Hierarchical filters
       const matchesContinent = !selectedContinent || continent === selectedContinent;

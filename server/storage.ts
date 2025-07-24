@@ -56,9 +56,9 @@ export class MemStorage implements IStorage {
       const noaaStations = await fetchAllNOAAStations();
       console.log(`🌊 Connected to ${noaaStations.length} NOAA monitoring stations`);
       
-      // Expand coverage with coastal cities using nearby buoy data
-      const { expandCoastalCitiesWithBuoyData } = await import('./coastal-cities-expansion.js');
-      await expandCoastalCitiesWithBuoyData();
+      // Expand coverage with comprehensive surf spots using NOAA network
+      const { importComprehensiveSurfSpots } = await import('./comprehensive-spot-expansion');
+      await importComprehensiveSurfSpots(this);
       
     } catch (error) {
       console.error('Failed to import global surf spots and NOAA data:', error);
