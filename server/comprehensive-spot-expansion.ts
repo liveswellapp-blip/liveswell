@@ -211,7 +211,63 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
 
   // ADDITIONAL WASHINGTON - PUGET SOUND ACCESS
   { name: "Westport", city: "Westport", country: "USA", state: "Washington", latitude: "46.9042", longitude: "-124.1051", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW storms" },
-  { name: "Ocean Shores", city: "Ocean Shores", country: "USA", state: "Washington", latitude: "46.9739", longitude: "-124.1568", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" }
+  { name: "Ocean Shores", city: "Ocean Shores", country: "USA", state: "Washington", latitude: "46.9739", longitude: "-124.1568", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" },
+
+  // US TERRITORIES - REMOTE ISLAND SURFING
+  
+  // PUERTO RICO - WORLD-CLASS CARIBBEAN SURF
+  { name: "Rincon", city: "Rincon", country: "USA", state: "Puerto Rico", latitude: "18.3369", longitude: "-67.2497", isCoastal: true, breakType: "Point Break", difficulty: "Advanced", optimalConditions: "Winter N swells" },
+  { name: "Tres Palmas", city: "Rincon", country: "USA", state: "Puerto Rico", latitude: "18.3544", longitude: "-67.2669", isCoastal: true, breakType: "Reef Break", difficulty: "Expert", optimalConditions: "Large winter swells" },
+  { name: "Domes", city: "Rincon", country: "USA", state: "Puerto Rico", latitude: "18.3408", longitude: "-67.2558", isCoastal: true, breakType: "Reef Break", difficulty: "Intermediate", optimalConditions: "Winter swells" },
+  { name: "Wilderness", city: "Aguadilla", country: "USA", state: "Puerto Rico", latitude: "18.4650", longitude: "-67.1541", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "N-NW swells" },
+  { name: "Gas Chambers", city: "Aguadilla", country: "USA", state: "Puerto Rico", latitude: "18.4675", longitude: "-67.1567", isCoastal: true, breakType: "Reef Break", difficulty: "Expert", optimalConditions: "Large N swells" },
+  { name: "Jobos", city: "Isabela", country: "USA", state: "Puerto Rico", latitude: "18.5089", longitude: "-67.1142", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Winter swells" },
+  { name: "Middles", city: "Isabela", country: "USA", state: "Puerto Rico", latitude: "18.5078", longitude: "-67.1156", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "N swells" },
+  { name: "Pine Trees", city: "Dorado", country: "USA", state: "Puerto Rico", latitude: "18.4681", longitude: "-66.2778", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "N-NE swells" },
+
+  // US VIRGIN ISLANDS - PRISTINE CARIBBEAN BREAKS
+  { name: "Hull Bay", city: "Charlotte Amalie", country: "USA", state: "US Virgin Islands", latitude: "18.3711", longitude: "-64.9669", isCoastal: true, breakType: "Reef Break", difficulty: "Intermediate", optimalConditions: "Winter N swells" },
+  { name: "Sapphire Beach", city: "Red Hook", country: "USA", state: "US Virgin Islands", latitude: "18.3244", longitude: "-64.8681", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Trade wind swells" },
+  { name: "Cane Bay", city: "Frederiksted", country: "USA", state: "US Virgin Islands", latitude: "17.7764", longitude: "-64.9108", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "Winter N swells" },
+
+  // GUAM - REMOTE PACIFIC SURFING
+  { name: "Talofofo Bay", city: "Talofofo", country: "USA", state: "Guam", latitude: "13.3481", longitude: "144.7364", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "Trade wind swells" },
+  { name: "Ritidian Beach", city: "Dededo", country: "USA", state: "Guam", latitude: "13.6500", longitude: "144.8583", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NE trade winds" },
+
+  // AMERICAN SAMOA - REMOTE POLYNESIAN SURF
+  { name: "Coconut Point", city: "Pago Pago", country: "USA", state: "American Samoa", latitude: "-14.2781", longitude: "-170.7025", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "S swells" },
+
+  // REMOTE MAINLAND COASTAL AREAS
+  
+  // MAINE - RUGGED NORTH ATLANTIC COAST
+  { name: "Popham Beach", city: "Phippsburg", country: "USA", state: "Maine", latitude: "43.7342", longitude: "-69.7956", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Winter storms" },
+  { name: "Fortunes Rocks", city: "Biddeford", country: "USA", state: "Maine", latitude: "43.4181", longitude: "-70.3353", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NE storms" },
+  { name: "Old Orchard Beach", city: "Old Orchard Beach", country: "USA", state: "Maine", latitude: "43.5151", longitude: "-70.3772", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
+  { name: "Reid State Park", city: "Georgetown", country: "USA", state: "Maine", latitude: "43.7550", longitude: "-69.7186", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Winter storms" },
+
+  // REMOTE CALIFORNIA - NORTHERN COAST
+  { name: "Shelter Cove", city: "Shelter Cove", country: "USA", state: "California", latitude: "40.0289", longitude: "-124.0711", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Large NW swells" },
+  { name: "Mendocino", city: "Mendocino", country: "USA", state: "California", latitude: "39.3077", longitude: "-123.8014", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW swells" },
+  { name: "Fort Bragg", city: "Fort Bragg", country: "USA", state: "California", latitude: "39.4459", longitude: "-123.8053", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" },
+
+  // REMOTE FLORIDA KEYS
+  { name: "Key Largo", city: "Key Largo", country: "USA", state: "Florida", latitude: "25.0865", longitude: "-80.4473", isCoastal: true, breakType: "Reef Break", difficulty: "Intermediate", optimalConditions: "E swells" },
+  { name: "Islamorada", city: "Islamorada", country: "USA", state: "Florida", latitude: "24.9242", longitude: "-80.6278", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "E-SE swells" },
+  { name: "Marathon", city: "Marathon", country: "USA", state: "Florida", latitude: "24.7136", longitude: "-81.0906", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "E swells" },
+  { name: "Key West", city: "Key West", country: "USA", state: "Florida", latitude: "24.5551", longitude: "-81.7800", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "SE swells" },
+
+  // REMOTE MICHIGAN - GREAT LAKES SURFING
+  { name: "Ludington", city: "Ludington", country: "USA", state: "Michigan", latitude: "43.9553", longitude: "-86.4526", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "W storms on Lake Michigan" },
+  { name: "Grand Marais", city: "Grand Marais", country: "USA", state: "Michigan", latitude: "46.6705", longitude: "-85.9853", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NE storms on Lake Superior" },
+  { name: "Marquette", city: "Marquette", country: "USA", state: "Michigan", latitude: "46.5436", longitude: "-87.3954", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "NW storms on Lake Superior" },
+
+  // REMOTE TEXAS - ISOLATED GULF COAST
+  { name: "Port Aransas", city: "Port Aransas", country: "USA", state: "Texas", latitude: "27.8339", longitude: "-97.0739", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "S-SE swells" },
+  { name: "Matagorda", city: "Matagorda", country: "USA", state: "Texas", latitude: "28.6928", longitude: "-95.9688", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+
+  // REMOTE PACIFIC NORTHWEST - EXTREME CONDITIONS
+  { name: "Bandon State Park", city: "Bandon", country: "USA", state: "Oregon", latitude: "43.1043", longitude: "-124.4223", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Massive winter storms" },
+  { name: "Brookings", city: "Brookings", country: "USA", state: "Oregon", latitude: "42.0526", longitude: "-124.2837", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Large W-NW swells" }
 ];
 
 /**

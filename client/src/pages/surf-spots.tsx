@@ -247,6 +247,56 @@ const CANADA_CITY_TO_STATE: { [key: string]: string } = {
   "Ingonish": "Nova Scotia"
 };
 
+// Map US Territory cities to their territories
+const US_TERRITORY_CITY_TO_STATE: { [key: string]: string } = {
+  // Puerto Rico - Caribbean Surf Capital
+  "Rincon": "Puerto Rico",
+  "Aguadilla": "Puerto Rico", 
+  "Isabela": "Puerto Rico",
+  "Dorado": "Puerto Rico",
+  
+  // US Virgin Islands - Pristine Caribbean
+  "Charlotte Amalie": "US Virgin Islands",
+  "Red Hook": "US Virgin Islands",
+  "Frederiksted": "US Virgin Islands",
+  
+  // Guam - Remote Pacific
+  "Talofofo": "Guam",
+  "Dededo": "Guam",
+  
+  // American Samoa - Polynesian Surf
+  "Pago Pago": "American Samoa",
+  
+  // Remote Maine - Additional
+  "Phippsburg": "Maine",
+  "Biddeford": "Maine",
+  "Old Orchard Beach": "Maine",
+  "Georgetown": "Maine",
+  
+  // Remote California - Northern Coast
+  "Shelter Cove": "California",
+  "Mendocino": "California",
+  "Fort Bragg": "California",
+  
+  // Florida Keys - Remote Islands
+  "Key Largo": "Florida",
+  "Islamorada": "Florida",
+  "Marathon": "Florida",
+  "Key West": "Florida",
+  
+  // Michigan - Great Lakes Remote
+  "Ludington": "Michigan",
+  "Grand Marais": "Michigan",
+  "Marquette": "Michigan",
+  
+  // Texas - Remote Gulf Coast
+  "Port Aransas": "Texas",
+  "Matagorda": "Texas",
+  
+  // Oregon - Remote Pacific Northwest
+  "Brookings": "Oregon"
+};
+
 // Map Mexican cities to their states
 const MEXICO_CITY_TO_STATE: { [key: string]: string } = {
   "Ensenada": "Baja California",
