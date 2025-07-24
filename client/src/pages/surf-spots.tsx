@@ -161,6 +161,12 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Buxton": "North Carolina",
   "Rehoboth Beach": "Delaware",
   "Charleston": "South Carolina",
+  "Hilton Head": "South Carolina",
+  "Kiawah Island": "South Carolina",
+  "Isle of Palms": "South Carolina",
+  "Sullivan's Island": "South Carolina",
+  "Edisto Beach": "South Carolina",
+  "Beaufort": "South Carolina",
   "Savannah": "Georgia",
   
   // Gulf Coast - Alabama
@@ -179,6 +185,10 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Surfside Beach": "Texas",
   "Freeport": "Texas",
   "South Padre Island": "Texas",
+  "Corpus Christi": "Texas",
+  "Port Aransas": "Texas",
+  "Brownsville": "Texas",
+  "Port Mansfield": "Texas",
   
   // Massachusetts  
   "Nantucket": "Massachusetts",
