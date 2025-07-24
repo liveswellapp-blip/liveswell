@@ -318,7 +318,7 @@ export default function SurfSpots() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-white to-blue-900 dark:from-black dark:to-emerald-900">
+      <div className="min-h-screen bg-blue-50 dark:bg-emerald-900">
         <Header />
         <main className="container mx-auto px-4 py-8 max-w-6xl">
           <div className="space-y-6">
@@ -343,7 +343,7 @@ export default function SurfSpots() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-900 dark:from-black dark:to-emerald-900">
+    <div className="min-h-screen bg-blue-50 dark:bg-emerald-900">
       <Header />
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="space-y-6">

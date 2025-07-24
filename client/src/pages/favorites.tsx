@@ -14,7 +14,7 @@ export default function Favorites() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-900 dark:from-black dark:to-emerald-900">
+    <div className="min-h-screen bg-blue-50 dark:bg-emerald-900">
       <Header />
       <Navigation onLocationSelect={handleLocationSelect} />
       <div className="container mx-auto px-4 py-6">
