@@ -89,12 +89,12 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
             {/* Navigation Buttons */}
             <div className="flex items-center space-x-2">
               <Button
-                variant={location === "/surf-spots" ? "default" : "outline"}
+                variant={location === "/" ? "default" : "outline"}
                 size="default"
                 asChild
                 className="px-4 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
               >
-                <Link href="/surf-spots">
+                <Link href="/">
                   <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
                   Surf Spots
                 </Link>
