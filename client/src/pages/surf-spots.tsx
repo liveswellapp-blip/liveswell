@@ -457,7 +457,7 @@ export default function SurfSpots() {
                 {filteredSpots.map((spot) => (
                   <Card 
                     key={spot.id} 
-                    className="cursor-pointer hover:shadow-lg transition-shadow border-border dark:bg-gray-800"
+                    className="cursor-pointer hover:shadow-lg transition-shadow border-border dark:bg-muted"
                     onClick={() => handleSpotSelect(spot.id)}
                   >
                     <CardHeader className="pb-3">
