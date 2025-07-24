@@ -114,7 +114,7 @@ const GLOBAL_SURF_SPOTS: SurfSpotData[] = [
   { name: "Neptune Beach", city: "Neptune Beach", country: "USA", latitude: "30.3119", longitude: "-81.3954", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W" },
   { name: "Atlantic Beach", city: "Atlantic Beach", country: "USA", latitude: "30.3366", longitude: "-81.4023", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W" },
   { name: "Fernandina Beach", city: "Fernandina Beach", country: "USA", latitude: "30.6691", longitude: "-81.4618", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W" },
-  { name: "Outer Banks", city: "Nags Head", country: "USA", latitude: "35.9579", longitude: "-75.6240", region: "North Carolina", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W-SW" }
+
 ];
 
 export async function importSurfSpots(): Promise<{ imported: number; skipped: number; total: number }> {

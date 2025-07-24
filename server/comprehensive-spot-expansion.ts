@@ -87,7 +87,7 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
 
   // ATLANTIC COAST - SOUTHEAST
   { name: "Virginia Beach", city: "Virginia Beach", country: "USA", state: "Virginia", latitude: "36.8529", longitude: "-75.9780", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "SE-S swells" },
-  { name: "Outer Banks - Cape Hatteras", city: "Cape Hatteras", country: "USA", state: "North Carolina", latitude: "35.2269", longitude: "-75.6114", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "SE-S swells" },
+
   { name: "Kill Devil Hills", city: "Kill Devil Hills", country: "USA", state: "North Carolina", latitude: "36.0293", longitude: "-75.6738", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-SE swells" },
   { name: "Nags Head", city: "Nags Head", country: "USA", state: "North Carolina", latitude: "35.9573", longitude: "-75.6239", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-SE swells" },
   { name: "Wrightsville Beach", city: "Wrightsville Beach", country: "USA", state: "North Carolina", latitude: "34.2085", longitude: "-77.7964", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "SE-S swells" },
