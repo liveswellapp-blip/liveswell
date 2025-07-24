@@ -1165,23 +1165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Trigger manual import of additional surf spots
-  app.post("/api/spots/import", async (req, res) => {
-    try {
-      const { importSurfSpots } = await import('./spot-imports.js');
-      await importSurfSpots();
-      
-      const allLocations = await storage.searchLocations("");
-      res.json({
-        message: "Surf spots imported successfully",
-        totalSpots: allLocations.length,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Import error:', error);
-      res.status(500).json({ message: "Failed to import surf spots" });
-    }
-  });
+
 
   // Legacy NOAA import endpoint - now shows comprehensive network status
   app.post("/api/spots/import-noaa", async (req, res) => {
@@ -1394,6 +1378,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     return "Other";
   }
+
+  // Comprehensive surf spot expansion using NOAA network
+  app.post("/api/spots/import-comprehensive", async (req, res) => {
+    try {
+      const { importComprehensiveSurfSpots } = await import('./comprehensive-spot-expansion');
+      const result = await importComprehensiveSurfSpots(storage);
+      
+      const allLocations = await storage.searchLocations("");
+      res.json({
+        message: `Successfully imported ${result.added} new surf spots with NOAA coverage verification`,
+        totalSpots: allLocations.length,
+        added: result.added,
+        skipped: result.skipped,
+        noaaVerified: result.noaaVerified,
+        coveragePercentage: `${((result.noaaVerified / result.added) * 100).toFixed(1)}%`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Comprehensive import error:', error);
+      res.status(500).json({ message: "Failed to import comprehensive surf spots" });
+    }
+  });
+
+  // Get regional surf spot statistics  
+  app.get("/api/spots/regional-stats", async (req, res) => {
+    try {
+      const { getRegionalSurfStats } = await import('./comprehensive-spot-expansion');
+      const stats = getRegionalSurfStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Regional stats error:', error);
+      res.status(500).json({ message: "Failed to get regional surf statistics" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
