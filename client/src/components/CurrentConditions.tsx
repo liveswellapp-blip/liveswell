@@ -466,10 +466,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="mb-2">
                     {nextTide ? (
                       <span>
-                        <span className="text-white">Upcoming: </span><span className="text-emerald-400">{nextTide.type === 'high' ? 'High' : 'Low'} Tide</span><span className="text-white"> </span><span className="text-blue-900 dark:text-emerald-400">{nextTide.time}</span>
+                        <span className="text-blue-900 dark:text-white">Upcoming: </span><span className="text-blue-900 dark:text-emerald-400">{nextTide.type === 'high' ? 'High' : 'Low'} Tide</span><span className="text-blue-900 dark:text-white"> </span><span className="text-blue-900 dark:text-emerald-400">{nextTide.time}</span>
                       </span>
                     ) : (
-                      <span>No upcoming tides today</span>
+                      <span className="text-blue-900 dark:text-white">No upcoming tides today</span>
                     )}
                   </div>
                   
