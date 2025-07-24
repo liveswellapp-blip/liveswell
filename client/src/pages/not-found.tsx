@@ -5,7 +5,7 @@ import { Link } from "wouter";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-blue-50 dark:bg-ultra-dark-emerald">
+    <div className="min-h-screen w-full flex items-center justify-center bg-blue-50 dark:bg-emerald-950">
       <Card className="w-full max-w-md mx-4">
         <CardContent className="pt-6">
           <div className="text-center">
