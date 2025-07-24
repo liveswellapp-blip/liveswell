@@ -112,7 +112,7 @@ export default function Home() {
   }, [location, window.location.search]);
 
   return (
-    <div className="min-h-screen bg-blue-50 dark:bg-emerald-950">
+    <div className="min-h-screen bg-blue-50 dark:bg-ultra-dark-emerald">
       <Header />
       <Navigation onLocationSelect={setCurrentLocation} />
       

@@ -22,7 +22,7 @@ export default function Settings() {
   const [defaultLocation, setDefaultLocation] = useState("");
 
   return (
-    <div className="min-h-screen bg-blue-50 dark:bg-emerald-950">
+    <div className="min-h-screen bg-blue-50 dark:bg-ultra-dark-emerald">
       <Header />
       
       <div className="container mx-auto px-4 py-8">

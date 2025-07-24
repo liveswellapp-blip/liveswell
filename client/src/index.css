@@ -33,6 +33,7 @@
   --warm-gold: hsl(39, 100%, 57%);
   --soft-purple: hsl(258, 90%, 66%);
   --salmon-pink: hsl(352, 85%, 65%);
+  --ultra-dark-emerald: hsl(155, 100%, 3%);
 }
 
 .dark {
@@ -60,6 +61,7 @@
   --warm-gold: hsl(39, 90%, 65%);
   --soft-purple: hsl(258, 85%, 75%);
   --salmon-pink: hsl(352, 85%, 70%);
+  --ultra-dark-emerald: hsl(155, 100%, 2%);
 }
 
 @layer base {
@@ -152,5 +154,13 @@
   
   .bg-salmon-pink {
     background-color: hsl(var(--salmon-pink));
+  }
+  
+  .ultra-dark-emerald {
+    color: hsl(var(--ultra-dark-emerald));
+  }
+  
+  .bg-ultra-dark-emerald {
+    background-color: hsl(var(--ultra-dark-emerald));
   }
 }
