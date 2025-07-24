@@ -158,10 +158,8 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
   { name: "Eureka", city: "Eureka", country: "USA", state: "California", latitude: "40.8021", longitude: "-124.1637", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" },
 
   // MORE SOUTHEAST - Georgia & South Carolina  
-  { name: "Tybee Island", city: "Tybee Island", country: "USA", state: "Georgia", latitude: "32.0002", longitude: "-80.8468", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
   { name: "Jekyll Island", city: "Jekyll Island", country: "USA", state: "Georgia", latitude: "31.0736", longitude: "-81.4085", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "E swells" },
   { name: "Myrtle Beach", city: "Myrtle Beach", country: "USA", state: "South Carolina", latitude: "33.6891", longitude: "-78.8867", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
-  { name: "Folly Beach", city: "Folly Beach", country: "USA", state: "South Carolina", latitude: "32.6552", longitude: "-79.9402", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-SE swells" },
 
   // VIRGINIA - MAJOR EAST COAST EXPANSION
   { name: "Virginia Beach", city: "Virginia Beach", country: "USA", state: "Virginia", latitude: "36.8529", longitude: "-75.9780", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Hurricane swells" },
@@ -193,11 +191,9 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
   { name: "Ocean Springs", city: "Ocean Springs", country: "USA", state: "Mississippi", latitude: "30.4113", longitude: "-88.8278", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
   { name: "Biloxi", city: "Biloxi", country: "USA", state: "Mississippi", latitude: "30.3960", longitude: "-88.8853", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
 
-  // HAWAII - ADDITIONAL ISLANDS
-  { name: "Pipeline", city: "Haleiwa", country: "USA", state: "Hawaii", latitude: "21.6690", longitude: "-158.0456", isCoastal: true, breakType: "Reef Break", difficulty: "Expert", optimalConditions: "Large NW swells" },
+  // HAWAII - ADDITIONAL ISLANDS (Pipeline and Waikiki Beach already exist in global spots)
   { name: "Waimea Bay", city: "Haleiwa", country: "USA", state: "Hawaii", latitude: "21.6415", longitude: "-158.0696", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Massive NW swells" },
   { name: "Sunset Beach", city: "Haleiwa", country: "USA", state: "Hawaii", latitude: "21.6748", longitude: "-158.0422", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "NW swells" },
-  { name: "Waikiki", city: "Honolulu", country: "USA", state: "Hawaii", latitude: "21.2793", longitude: "-157.8311", isCoastal: true, breakType: "Reef Break", difficulty: "Beginner", optimalConditions: "S swells" },
 
   // ALASKA - REMOTE SURF SPOTS
   { name: "Yakutat", city: "Yakutat", country: "USA", state: "Alaska", latitude: "59.5469", longitude: "-139.7271", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Gulf of Alaska storms" },
@@ -265,8 +261,7 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
   { name: "Port Aransas", city: "Port Aransas", country: "USA", state: "Texas", latitude: "27.8339", longitude: "-97.0739", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "S-SE swells" },
   { name: "Matagorda", city: "Matagorda", country: "USA", state: "Texas", latitude: "28.6928", longitude: "-95.9688", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
 
-  // REMOTE PACIFIC NORTHWEST - EXTREME CONDITIONS
-  { name: "Bandon State Park", city: "Bandon", country: "USA", state: "Oregon", latitude: "43.1043", longitude: "-124.4223", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Massive winter storms" },
+  // REMOTE PACIFIC NORTHWEST - EXTREME CONDITIONS  
   { name: "Brookings", city: "Brookings", country: "USA", state: "Oregon", latitude: "42.0526", longitude: "-124.2837", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Large W-NW swells" }
 ];
 

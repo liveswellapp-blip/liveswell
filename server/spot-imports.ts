@@ -110,7 +110,7 @@ const GLOBAL_SURF_SPOTS: SurfSpotData[] = [
   { name: "Zuma Beach", city: "Malibu", country: "USA", latitude: "34.0158", longitude: "-118.8228", region: "Southern California", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "S-SW", optimal_wind: "N-NE" },
   { name: "Santa Monica", city: "Santa Monica", country: "USA", latitude: "34.0195", longitude: "-118.4912", region: "Southern California", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "S-SW", optimal_wind: "N-NE" },
   { name: "Miami Beach", city: "Miami", country: "USA", latitude: "25.7907", longitude: "-80.1300", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W" },
-  { name: "Ocean City", city: "Ocean City", country: "USA", latitude: "38.3365", longitude: "-75.0849", region: "Maryland", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W", noaa_tide_station: "8570283" },
+
   { name: "Neptune Beach", city: "Neptune Beach", country: "USA", latitude: "30.3119", longitude: "-81.3954", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W" },
   { name: "Atlantic Beach", city: "Atlantic Beach", country: "USA", latitude: "30.3366", longitude: "-81.4023", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W" },
   { name: "Fernandina Beach", city: "Fernandina Beach", country: "USA", latitude: "30.6691", longitude: "-81.4618", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W" },

@@ -86,9 +86,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### 2025-07-24: Remote Coastal Areas Expansion - 151 New Surf Spots Added
-- ✅ **Massive Remote Expansion**: Added 151 comprehensive surf spots (52 → 203 total locations)
+### 2025-07-24: Remote Coastal Areas Expansion & Duplicate Cleanup - 147 New Surf Spots Added
+- ✅ **Massive Remote Expansion**: Added 147 comprehensive surf spots (52 → 199 total locations)
 - ✅ **NOAA Coverage Verification**: 98.0% of spots have verified NOAA monitoring within 100 miles
+- ✅ **Duplicate Cleanup**: Identified and removed 4 duplicate surf spots (Pipeline, Waikiki, Bandon State Park, Ocean City duplicates)
 - ✅ **US Territories - Caribbean & Pacific**: Puerto Rico (Rincon, Tres Palmas, Gas Chambers, Wilderness), US Virgin Islands (Hull Bay, Cane Bay), Guam (Talofofo Bay, Ritidian Beach), American Samoa (Coconut Point)
 - ✅ **Remote Mainland Coastal Areas**: Maine rugged Atlantic coast (Popham Beach, Reid State Park), Northern California (Shelter Cove, Mendocino), Florida Keys (Key Largo, Key West), Michigan Great Lakes (Grand Marais, Marquette)
 - ✅ **Isolated Expert Breaks**: Alaska remote surfing (Yakutat, Sitka), Pacific Northwest extreme conditions (Bandon State Park, Brookings), Remote Gulf Coast Texas (Port Aransas, Matagorda)
