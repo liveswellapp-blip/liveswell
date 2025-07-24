@@ -28,7 +28,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-16" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
+                <span className="text-lg font-semibold text-blue-900 dark:text-forest-green">
                   {conditions?.waterTemp || "0"}°F
                 </span>
               )}
@@ -42,7 +42,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-20" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
+                <span className="text-lg font-semibold text-blue-900 dark:text-slate-purple">
                   {conditions?.visibility || "0"} miles
                 </span>
               )}
@@ -56,7 +56,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-24" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
+                <span className="text-lg font-semibold text-blue-900 dark:text-warm-orange">
                   {conditions?.uvIndex || 0} {conditions?.uvIndex && conditions.uvIndex > 7 ? "(Very High)" : conditions?.uvIndex && conditions.uvIndex > 5 ? "(High)" : conditions?.uvIndex && conditions.uvIndex > 2 ? "(Moderate)" : "(Low)"}
                 </span>
               )}
@@ -70,7 +70,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
               {isLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
+                <span className="text-lg font-semibold text-blue-900 dark:text-muted-gold">
                   {conditions?.sunrise || "6:28 AM"} / {conditions?.sunset || "7:42 PM"}
                 </span>
               )}

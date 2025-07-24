@@ -248,8 +248,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Skeleton className="h-8 w-16 bg-white/20" />
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight || "0"}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                  <span className="text-3xl font-bold text-blue-900 dark:text-deep-coral">{conditions?.waveHeight || "0"}</span>
+                  <span className="text-lg mb-1 text-blue-900 dark:text-deep-coral">ft</span>
                 </>
               )}
             </div>
@@ -259,10 +259,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               ) : (
                 <>
                   <div className="mb-1">
-                    <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
+                    <span>Period: <span className="text-blue-900 dark:text-deep-coral">{conditions?.wavePeriod || 0}s</span></span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
+                    <span>Direction: <span className="text-blue-900 dark:text-deep-coral">{conditions?.waveDirection || "N/A"}</span></span>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm opacity-75">Past</span>
                       <Button
@@ -300,7 +300,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <div key={index}>
                           <div className="flex justify-between items-center text-sm py-1">
                             <span className="opacity-75">{data.time}</span>
-                            <span className="font-medium text-blue-900 dark:text-emerald-400">
+                            <span className="font-medium text-blue-900 dark:text-deep-coral">
                               {data.waveHeight} ft
                             </span>
                           </div>
@@ -335,8 +335,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <Skeleton className="h-8 w-16 bg-white/20" />
                   ) : (
                     <>
-                      <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed || "0"}</span>
-                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
+                      <span className="text-3xl font-bold text-blue-900 dark:text-midnight-blue">{conditions?.windSpeed || "0"}</span>
+                      <span className="text-lg mb-1 text-blue-900 dark:text-midnight-blue">mph</span>
                     </>
                   )}
                 </div>
@@ -346,10 +346,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   ) : (
                     <div>
                       <div className="mb-1">
-                        <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
+                        <span>Direction: <span className="text-blue-900 dark:text-midnight-blue">{conditions?.windDirection || "N/A"}</span></span>
                       </div>
                       <div>
-                        <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
+                        <span>Gusts: <span className="text-blue-900 dark:text-midnight-blue">{conditions?.windGusts || "0"} mph</span></span>
                       </div>
                     </div>
                   )}
@@ -446,15 +446,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Skeleton className="h-8 w-16 bg-white/20" />
               ) : (
                 <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.tideHeight || "0"}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                  <span className="text-3xl font-bold text-blue-900 dark:text-muted-gold">{conditions?.tideHeight || "0"}</span>
+                  <span className="text-lg mb-1 text-blue-900 dark:text-muted-gold">ft</span>
                 </>
               )}
             </div>
             
             {/* Local Time */}
             <div className="text-sm mt-2 mb-2">
-              <span className="text-blue-900 dark:text-white">Local Time: <span className="text-blue-900 dark:text-emerald-400">{getCurrentLocalTime()}</span></span>
+              <span className="text-blue-900 dark:text-white">Local Time: <span className="text-blue-900 dark:text-muted-gold">{getCurrentLocalTime()}</span></span>
             </div>
             
             <div className="text-sm">
@@ -466,7 +466,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="mb-2">
                     {nextTide ? (
                       <span>
-                        <span className="text-blue-900 dark:text-white">Upcoming: </span><span className="text-blue-900 dark:text-emerald-400">{nextTide.type === 'high' ? 'High' : 'Low'} Tide</span><span className="text-blue-900 dark:text-white"> </span><span className="text-blue-900 dark:text-emerald-400">{nextTide.time}</span>
+                        <span className="text-blue-900 dark:text-white">Upcoming: </span><span className="text-blue-900 dark:text-muted-gold">{nextTide.type === 'high' ? 'High' : 'Low'} Tide</span><span className="text-blue-900 dark:text-white"> </span><span className="text-blue-900 dark:text-muted-gold">{nextTide.time}</span>
                       </span>
                     ) : (
                       <span className="text-blue-900 dark:text-white">No upcoming tides today</span>
