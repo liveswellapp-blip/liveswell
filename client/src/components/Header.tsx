@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { Link } from "wouter";
 import logoImageDark from "@assets/LiveSwell logo (4)_1753367615325.png";
-import logoImageLight from "@assets/LiveSwell logo (1)_1752785617515.png";
+import logoImageLight from "@assets/LiveSwell logo (5)_1753367759720.png";
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -17,7 +17,7 @@ export default function Header() {
             <img 
               src={logoImageLight} 
               alt="LiveSwell" 
-              className="h-8 dark:hidden object-contain object-left"
+              className="h-12 dark:hidden object-contain object-left"
               style={{ imageRendering: 'auto' }}
             />
             {/* Green logo for dark mode */}
