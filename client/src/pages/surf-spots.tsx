@@ -132,7 +132,7 @@ function SavedSpotsCard() {
 
   if (isLoading) {
     return (
-      <Card className="bg-muted">
+      <Card className="bg-muted dark:bg-black">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
@@ -159,7 +159,7 @@ function SavedSpotsCard() {
 
   if (!favorites || favorites.length === 0) {
     return (
-      <Card className="bg-muted">
+      <Card className="bg-muted dark:bg-black">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
@@ -183,7 +183,7 @@ function SavedSpotsCard() {
   const displayFavorites = favorites.slice(0, 3);
 
   return (
-    <Card className="bg-muted">
+    <Card className="bg-muted dark:bg-black">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-blue-900 dark:text-white">
           <div className="flex items-center space-x-2">
@@ -207,7 +207,7 @@ function SavedSpotsCard() {
           {displayFavorites.map((location) => (
             <div
               key={location.id}
-              className="flex items-center space-x-3 p-3 rounded-lg border bg-gray-100 dark:bg-black hover:bg-gray-200 dark:hover:bg-gray-900 transition-colors cursor-pointer"
+              className="flex items-center space-x-3 p-3 rounded-lg border bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
               onClick={() => handleLocationSelect(location)}
             >
               <div className="flex-shrink-0 w-10 h-10 bg-gray-300 dark:bg-gray-800 rounded-full flex items-center justify-center">
@@ -457,7 +457,7 @@ export default function SurfSpots() {
                 {filteredSpots.map((spot) => (
                   <Card 
                     key={spot.id} 
-                    className="cursor-pointer hover:shadow-lg transition-shadow border-border"
+                    className="cursor-pointer hover:shadow-lg transition-shadow border-border dark:bg-gray-800"
                     onClick={() => handleSpotSelect(spot.id)}
                   >
                     <CardHeader className="pb-3">
