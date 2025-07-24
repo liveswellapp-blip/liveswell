@@ -202,7 +202,41 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   
   // South Carolina
   "Myrtle Beach": "South Carolina",
-  "Folly Beach": "South Carolina"
+  "Folly Beach": "South Carolina",
+  
+  // NEW STATES - Major Coastal Expansion
+  
+  // Virginia - Major East Coast
+  "Chincoteague": "Virginia",
+  
+  // Maryland - Mid-Atlantic
+  "Ocean City": "Maryland",
+  "Berlin": "Maryland",
+  
+  // Delaware - Small State Big Surf
+  "Bethany Beach": "Delaware",
+  
+  // North Carolina - Additional Outer Banks
+  "Duck": "North Carolina",
+  
+  // Alabama - Gulf Coast
+  "Dauphin Island": "Alabama",
+  
+  // Mississippi - Gulf Coast
+  "Ocean Springs": "Mississippi",
+  "Biloxi": "Mississippi",
+  
+  // Alaska - Remote Surfing
+  "Yakutat": "Alaska",
+  "Sitka": "Alaska",
+  
+  // California - Additional Central Coast
+  "Cayucos": "California",
+  "Avila Beach": "California",
+  "Cambria": "California",
+  
+  // Washington - Additional Pacific Coast
+  "Ocean Shores": "Washington"
 };
 
 // Map Canadian cities to their provinces

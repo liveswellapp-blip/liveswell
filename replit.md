@@ -86,9 +86,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### 2025-07-24: Massive Surf Spot Expansion - 100 New Locations Added
-- ✅ **Major Database Expansion**: Added 100 comprehensive surf spots (55 → 152 total locations) 
-- ✅ **NOAA Coverage Verification**: 97.0% of new spots have verified NOAA monitoring within 100 miles
+### 2025-07-24: Massive Surf Spot Expansion - 119 New Locations Added  
+- ✅ **Major Database Expansion**: Added 119 comprehensive surf spots (52 → 171 total locations)
+- ✅ **NOAA Coverage Verification**: 97.5% of new spots have verified NOAA monitoring within 100 miles
 - ✅ **Complete US Coastal Coverage**: Pacific Coast (CA, OR, WA), Atlantic Coast (ME to GA), Gulf Coast (TX, LA, AL, FL), Great Lakes (WI, MI, PA, OH)
 - ✅ **International Expansion**: Added Canada (British Columbia, Nova Scotia) and Mexico (Baja California, Jalisco)
 - ✅ **Enhanced State Coverage**: Added Connecticut, Louisiana, South Carolina, Georgia with comprehensive city mappings

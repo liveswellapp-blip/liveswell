@@ -161,7 +161,57 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
   { name: "Tybee Island", city: "Tybee Island", country: "USA", state: "Georgia", latitude: "32.0002", longitude: "-80.8468", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
   { name: "Jekyll Island", city: "Jekyll Island", country: "USA", state: "Georgia", latitude: "31.0736", longitude: "-81.4085", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "E swells" },
   { name: "Myrtle Beach", city: "Myrtle Beach", country: "USA", state: "South Carolina", latitude: "33.6891", longitude: "-78.8867", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
-  { name: "Folly Beach", city: "Folly Beach", country: "USA", state: "South Carolina", latitude: "32.6552", longitude: "-79.9402", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-SE swells" }
+  { name: "Folly Beach", city: "Folly Beach", country: "USA", state: "South Carolina", latitude: "32.6552", longitude: "-79.9402", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E-SE swells" },
+
+  // VIRGINIA - MAJOR EAST COAST EXPANSION
+  { name: "Virginia Beach", city: "Virginia Beach", country: "USA", state: "Virginia", latitude: "36.8529", longitude: "-75.9780", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Hurricane swells" },
+  { name: "Sandbridge Beach", city: "Virginia Beach", country: "USA", state: "Virginia", latitude: "36.7313", longitude: "-75.9395", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NE storms" },
+  { name: "Chincoteague", city: "Chincoteague", country: "USA", state: "Virginia", latitude: "37.9332", longitude: "-75.3774", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Atlantic storms" },
+
+  // MARYLAND - MID-ATLANTIC EXPANSION
+  { name: "Ocean City", city: "Ocean City", country: "USA", state: "Maryland", latitude: "38.3365", longitude: "-75.0849", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Hurricane swells" },
+  { name: "Assateague Island", city: "Berlin", country: "USA", state: "Maryland", latitude: "38.0581", longitude: "-75.1468", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Atlantic storms" },
+
+  // DELAWARE - SMALL STATE BIG SURF
+  { name: "Rehoboth Beach", city: "Rehoboth Beach", country: "USA", state: "Delaware", latitude: "38.7198", longitude: "-75.0757", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Hurricane swells" },
+  { name: "Bethany Beach", city: "Bethany Beach", country: "USA", state: "Delaware", latitude: "38.5390", longitude: "-75.0635", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "E swells" },
+  { name: "Indian River Inlet", city: "Bethany Beach", country: "USA", state: "Delaware", latitude: "38.6103", longitude: "-75.0703", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Hurricane swells" },
+
+  // NORTH CAROLINA - OUTER BANKS EXPANSION
+  { name: "Kill Devil Hills", city: "Kill Devil Hills", country: "USA", state: "North Carolina", latitude: "36.0293", longitude: "-75.6724", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NE storms" },
+  { name: "Duck", city: "Duck", country: "USA", state: "North Carolina", latitude: "36.1829", longitude: "-75.7462", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "Hurricane swells" },
+  { name: "Nags Head", city: "Nags Head", country: "USA", state: "North Carolina", latitude: "35.9579", longitude: "-75.6240", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Hurricane swells" },
+  { name: "Wrightsville Beach", city: "Wrightsville Beach", country: "USA", state: "North Carolina", latitude: "34.2085", longitude: "-77.7964", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Hurricane swells" },
+  { name: "Cape Hatteras", city: "Buxton", country: "USA", state: "North Carolina", latitude: "35.2267", longitude: "-75.5300", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Large Atlantic storms" },
+
+  // ALABAMA - GULF COAST
+  { name: "Orange Beach", city: "Orange Beach", country: "USA", state: "Alabama", latitude: "30.2941", longitude: "-87.5741", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+  { name: "Gulf Shores", city: "Gulf Shores", country: "USA", state: "Alabama", latitude: "30.2460", longitude: "-87.7008", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+  { name: "Dauphin Island", city: "Dauphin Island", country: "USA", state: "Alabama", latitude: "30.2541", longitude: "-88.0778", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "S-SW swells" },
+
+  // MISSISSIPPI - GULF COAST
+  { name: "Ocean Springs", city: "Ocean Springs", country: "USA", state: "Mississippi", latitude: "30.4113", longitude: "-88.8278", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+  { name: "Biloxi", city: "Biloxi", country: "USA", state: "Mississippi", latitude: "30.3960", longitude: "-88.8853", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "S swells" },
+
+  // HAWAII - ADDITIONAL ISLANDS
+  { name: "Pipeline", city: "Haleiwa", country: "USA", state: "Hawaii", latitude: "21.6690", longitude: "-158.0456", isCoastal: true, breakType: "Reef Break", difficulty: "Expert", optimalConditions: "Large NW swells" },
+  { name: "Waimea Bay", city: "Haleiwa", country: "USA", state: "Hawaii", latitude: "21.6415", longitude: "-158.0696", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Massive NW swells" },
+  { name: "Sunset Beach", city: "Haleiwa", country: "USA", state: "Hawaii", latitude: "21.6748", longitude: "-158.0422", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "NW swells" },
+  { name: "Waikiki", city: "Honolulu", country: "USA", state: "Hawaii", latitude: "21.2793", longitude: "-157.8311", isCoastal: true, breakType: "Reef Break", difficulty: "Beginner", optimalConditions: "S swells" },
+
+  // ALASKA - REMOTE SURF SPOTS
+  { name: "Yakutat", city: "Yakutat", country: "USA", state: "Alaska", latitude: "59.5469", longitude: "-139.7271", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Gulf of Alaska storms" },
+  { name: "Sitka", city: "Sitka", country: "USA", state: "Alaska", latitude: "57.0531", longitude: "-135.3300", isCoastal: true, breakType: "Beach Break", difficulty: "Expert", optimalConditions: "Pacific storms" },
+
+  // ADDITIONAL CALIFORNIA - CENTRAL COAST
+  { name: "Cayucos", city: "Cayucos", country: "USA", state: "California", latitude: "35.4419", longitude: "-120.8918", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" },
+  { name: "Pismo Beach", city: "Pismo Beach", country: "USA", state: "California", latitude: "35.1428", longitude: "-120.6413", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "W-NW swells" },
+  { name: "Avila Beach", city: "Avila Beach", country: "USA", state: "California", latitude: "35.1811", longitude: "-120.7312", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "W swells" },
+  { name: "Cambria", city: "Cambria", country: "USA", state: "California", latitude: "35.5641", longitude: "-121.0810", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW swells" },
+
+  // ADDITIONAL WASHINGTON - PUGET SOUND ACCESS
+  { name: "Westport", city: "Westport", country: "USA", state: "Washington", latitude: "46.9042", longitude: "-124.1051", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW storms" },
+  { name: "Ocean Shores", city: "Ocean Shores", country: "USA", state: "Washington", latitude: "46.9739", longitude: "-124.1568", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" }
 ];
 
 /**
