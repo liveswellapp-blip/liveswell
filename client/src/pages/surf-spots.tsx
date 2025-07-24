@@ -207,10 +207,10 @@ function SavedSpotsCard() {
           {displayFavorites.map((location) => (
             <div
               key={location.id}
-              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
+              className="flex items-center space-x-3 p-3 rounded-lg border bg-black hover:bg-gray-900 transition-colors cursor-pointer"
               onClick={() => handleLocationSelect(location)}
             >
-              <div className="flex-shrink-0 w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+              <div className="flex-shrink-0 w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center">
                 <Waves className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
