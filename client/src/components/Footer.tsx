@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h4 className="font-semibold text-[#1e3a8a] dark:sky-blue mb-4">SurfCast</h4>
+            <h4 className="font-semibold text-[#1e3a8a] dark:sky-blue mb-4">LiveSwell</h4>
             <p className="text-[#1e3a8a] dark:text-gray-300 text-sm">
               Real-time surf conditions and forecasts for coastal cities worldwide.
             </p>
@@ -46,7 +46,7 @@ export default function Footer() {
         </div>
         <div className="border-t border-gray-300 dark:border-gray-600 mt-8 pt-8 text-center text-[#1e3a8a] dark:text-gray-400 text-sm">
           <p>
-            &copy; 2024 SurfCast. All rights reserved. Data provided by OpenWeatherMap and marine weather services.
+            &copy; 2024 LiveSwell. All rights reserved. Data provided by OpenWeatherMap and marine weather services.
           </p>
         </div>
       </div>
