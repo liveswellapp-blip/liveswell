@@ -363,9 +363,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   >
                     <span className="text-sm opacity-75">Future</span>
                     {isWindForecastExpanded ? (
-                      <ChevronUp className="h-3 w-3 text-emerald-400" />
+                      <ChevronUp className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
                     ) : (
-                      <ChevronDown className="h-3 w-3 text-emerald-400" />
+                      <ChevronDown className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
                     )}
                   </Button>
                 </div>
