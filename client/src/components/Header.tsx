@@ -2,7 +2,7 @@ import { Settings, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { Link } from "wouter";
-import logoImageDark from "@assets/LiveSwell logo_1752785462142.png";
+import logoImageDark from "@assets/LiveSwell logo (2)_1753367361430.png";
 import logoImageLight from "@assets/LiveSwell logo (1)_1752785617515.png";
 
 export default function Header() {
