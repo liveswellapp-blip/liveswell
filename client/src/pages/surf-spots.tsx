@@ -457,12 +457,11 @@ export default function SurfSpots() {
                 {filteredSpots.map((spot) => (
                   <Card 
                     key={spot.id} 
-                    className="cursor-pointer hover:shadow-lg transition-shadow border-border dark:bg-muted"
-                    onClick={() => handleSpotSelect(spot.id)}
+                    className="hover:shadow-lg transition-shadow border-border dark:bg-muted"
                   >
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start">
-                        <div className="space-y-1">
+                        <div className="space-y-1 flex-1 cursor-pointer" onClick={() => handleSpotSelect(spot.id)}>
                           <CardTitle className="text-lg text-blue-900 dark:text-white">
                             {spot.name}
                           </CardTitle>
@@ -476,17 +475,24 @@ export default function SurfSpots() {
                             </div>
                           )}
                         </div>
-                        {spot.difficulty && (
-                          <Badge 
-                            variant="secondary" 
-                            className={DIFFICULTY_COLORS[spot.difficulty as keyof typeof DIFFICULTY_COLORS]}
-                          >
-                            {spot.difficulty}
-                          </Badge>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {spot.difficulty && (
+                            <Badge 
+                              variant="secondary" 
+                              className={DIFFICULTY_COLORS[spot.difficulty as keyof typeof DIFFICULTY_COLORS]}
+                            >
+                              {spot.difficulty}
+                            </Badge>
+                          )}
+                          <FavoriteButton 
+                            locationId={spot.id} 
+                            locationName={spot.name}
+                            size="sm"
+                          />
+                        </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-3" onClick={() => handleSpotSelect(spot.id)}>
                       {spot.break_type && (
                         <div className="flex items-center text-sm">
                           <Waves className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
@@ -515,7 +521,7 @@ export default function SurfSpots() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="w-full mt-3 text-blue-900 dark:text-emerald-400 border-blue-200 dark:border-emerald-600 hover:bg-blue-50 dark:hover:bg-emerald-900/20"
+                        className="w-full mt-3 text-blue-900 dark:text-emerald-400 border-blue-200 dark:border-emerald-600 hover:bg-blue-50 dark:hover:bg-emerald-900/20 cursor-pointer"
                       >
                         <Waves className="h-4 w-4 mr-2" />
                         View Conditions
