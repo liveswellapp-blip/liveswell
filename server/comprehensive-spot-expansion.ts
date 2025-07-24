@@ -246,6 +246,18 @@ const comprehensiveSurfSpots: NewSurfSpot[] = [
   { name: "Mendocino", city: "Mendocino", country: "USA", state: "California", latitude: "39.3077", longitude: "-123.8014", isCoastal: true, breakType: "Beach Break", difficulty: "Advanced", optimalConditions: "NW swells" },
   { name: "Fort Bragg", city: "Fort Bragg", country: "USA", state: "California", latitude: "39.4459", longitude: "-123.8053", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "NW swells" },
 
+  // FLORIDA GULF COAST - MAJOR WEST COAST CITIES
+  { name: "Naples Pier", city: "Naples", country: "USA", state: "Florida", latitude: "26.1420", longitude: "-81.7948", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Cold fronts, tropical storms" },
+  { name: "Siesta Key", city: "Sarasota", country: "USA", state: "Florida", latitude: "27.2518", longitude: "-82.5448", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Gulf storms, winter fronts" },
+  { name: "Lido Beach", city: "Sarasota", country: "USA", state: "Florida", latitude: "27.3167", longitude: "-82.5526", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "NW-N swells" },
+  { name: "Venice Jetty", city: "Venice", country: "USA", state: "Florida", latitude: "27.0767", longitude: "-82.4542", isCoastal: true, breakType: "Jetty Break", difficulty: "Intermediate", optimalConditions: "Gulf storms" },
+  { name: "St. Pete Beach", city: "St. Petersburg", country: "USA", state: "Florida", latitude: "27.7253", longitude: "-82.7412", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Cold fronts" },
+  { name: "Clearwater Beach", city: "Clearwater", country: "USA", state: "Florida", latitude: "27.9659", longitude: "-82.8001", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Winter storms" },
+  { name: "Treasure Island", city: "Treasure Island", country: "USA", state: "Florida", latitude: "27.7681", longitude: "-82.7726", isCoastal: true, breakType: "Beach Break", difficulty: "Intermediate", optimalConditions: "Gulf storms" },
+  { name: "Fort Myers Beach", city: "Fort Myers", country: "USA", state: "Florida", latitude: "26.4451", longitude: "-81.9262", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Cold fronts, tropical systems" },
+  { name: "Anna Maria Island", city: "Bradenton", country: "USA", state: "Florida", latitude: "27.5261", longitude: "-82.7326", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "Winter fronts" },
+  { name: "Redington Beach", city: "Redington Beach", country: "USA", state: "Florida", latitude: "27.8181", longitude: "-82.8176", isCoastal: true, breakType: "Beach Break", difficulty: "Beginner", optimalConditions: "NW storms" },
+
   // REMOTE FLORIDA KEYS
   { name: "Key Largo", city: "Key Largo", country: "USA", state: "Florida", latitude: "25.0865", longitude: "-80.4473", isCoastal: true, breakType: "Reef Break", difficulty: "Intermediate", optimalConditions: "E swells" },
   { name: "Islamorada", city: "Islamorada", country: "USA", state: "Florida", latitude: "24.9242", longitude: "-80.6278", isCoastal: true, breakType: "Reef Break", difficulty: "Advanced", optimalConditions: "E-SE swells" },
