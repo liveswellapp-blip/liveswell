@@ -94,6 +94,11 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Pacific Grove": "California",
   "Crescent City": "California",
   "Eureka": "California",
+  "Cayucos": "California",
+  "Avila Beach": "California",
+  "Cambria": "California",
+  "Fort Bragg": "California",
+  "Mendocino": "California",
   
   // Hawaii
   "Haleiwa": "Hawaii",
@@ -117,6 +122,15 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Melbourne Beach": "Florida",
   "Indialantic": "Florida",
   "Satellite Beach": "Florida",
+  "Fernandina Beach": "Florida",
+  "Fort Myers": "Florida",
+  "Naples": "Florida",
+  "Clearwater": "Florida",
+  "Bradenton": "Florida",
+  "Key Largo": "Florida",
+  "Key West": "Florida",
+  "Marathon": "Florida",
+  "Islamorada": "Florida",
   
   // Oregon - Pacific Northwest
   "Cannon Beach": "Oregon",
@@ -126,11 +140,15 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Lincoln City": "Oregon",
   "Pacific City": "Oregon",
   "Otter Rock": "Oregon",
+  "Bandon": "Oregon",
+  "Gold Beach": "Oregon",
+  "Brookings": "Oregon",
   
   // Washington - Pacific Northwest
   "La Push": "Washington",
   "Westport": "Washington",
   "Neah Bay": "Washington",
+  "Ocean Shores": "Washington",
   
   // New England - Maine & New Hampshire
   "Hampton": "New Hampshire",
@@ -138,6 +156,9 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "York": "Maine",
   "Wells": "Maine",
   "Kennebunkport": "Maine",
+  "Biddeford": "Maine",
+  "Popham Beach": "Maine",
+  "Reid State Park": "Maine",
   
   // Mid-Atlantic - New York, New Jersey, Rhode Island
   "Montauk": "New York",
@@ -177,6 +198,9 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Sheboygan": "Wisconsin",
   "Grand Haven": "Michigan",
   "Empire": "Michigan",
+  "Ludington": "Michigan",
+  "Grand Marais": "Michigan",
+  "Marquette": "Michigan",
   "Erie": "Pennsylvania",
   "Bay Village": "Ohio",
   
@@ -189,6 +213,7 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   "Port Aransas": "Texas",
   "Brownsville": "Texas",
   "Port Mansfield": "Texas",
+  "Matagorda": "Texas",
   
   // Massachusetts  
   "Nantucket": "Massachusetts",
@@ -202,9 +227,7 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   // Louisiana
   "Grand Isle": "Louisiana",
   
-  // Oregon - Additional
-  "Bandon": "Oregon",
-  "Gold Beach": "Oregon",
+
   
   // Georgia
   "Tybee Island": "Georgia",
@@ -239,14 +262,18 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   // Alaska - Remote Surfing
   "Yakutat": "Alaska",
   "Sitka": "Alaska",
+
+  // Additional Comprehensive State Coverage
+  "Georgetown": "South Carolina",
+  "Tampa": "Florida",
+  "Westport": "Connecticut",
+  "Pago Pago": "American Samoa",
+  "Phippsburg": "Maine",
+  "Old Orchard Beach": "Maine",
   
-  // California - Additional Central Coast
-  "Cayucos": "California",
-  "Avila Beach": "California",
-  "Cambria": "California",
+
   
-  // Washington - Additional Pacific Coast
-  "Ocean Shores": "Washington"
+
 };
 
 // Map Canadian cities to their provinces
@@ -277,11 +304,7 @@ const US_TERRITORY_CITY_TO_STATE: { [key: string]: string } = {
   // American Samoa - Polynesian Surf
   "Pago Pago": "American Samoa",
   
-  // Remote Maine - Additional
-  "Phippsburg": "Maine",
-  "Biddeford": "Maine",
-  "Old Orchard Beach": "Maine",
-  "Georgetown": "Maine",
+
   
   // Remote California - Northern Coast
   "Shelter Cove": "California",
