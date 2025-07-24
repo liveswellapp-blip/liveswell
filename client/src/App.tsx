@@ -14,9 +14,9 @@ import SurfSpots from "@/pages/surf-spots";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={SurfSpots} />
+      <Route path="/conditions" component={Home} />
       <Route path="/favorites" component={Favorites} />
-      <Route path="/surf-spots" component={SurfSpots} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

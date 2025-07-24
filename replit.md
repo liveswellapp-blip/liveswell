@@ -86,6 +86,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-24: Global Surf Spots Made Home Page with Route Restructuring
+- ✅ Made Global Surf Spots the home page: "/" route now displays surf spots search/discovery page
+- ✅ Moved detailed conditions view to "/conditions" route with location parameter support
+- ✅ Updated all navigation links: "View Conditions" buttons and saved spots links now point to /conditions?location={id}
+- ✅ Fixed routing consistency across the application for improved user flow
+- ✅ Enhanced user experience: home page focuses on discovery, conditions page focuses on detailed data
+- ✅ Maintained backward compatibility with location parameter handling
+
 ### 2025-07-23: Two-Page Architecture Clarification and Empty State Enhancement
 - ✅ Confirmed and refined two-page architecture: `/surf-spots` for search/discovery, `/?location={id}` for detailed conditions
 - ✅ Removed "Choose Your Destination" empty state from surf spots search page  

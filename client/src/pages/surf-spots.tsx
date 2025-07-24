@@ -125,7 +125,7 @@ function SavedSpotsCard() {
   });
 
   const handleLocationSelect = (location: Location) => {
-    setLocation(`/?location=${location.id}`);
+    setLocation(`/conditions?location=${location.id}`);
     // Scroll to top when navigating to the detail page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -304,7 +304,7 @@ export default function SurfSpots() {
     : [];
 
   const handleSpotSelect = (spotId: number) => {
-    setLocation(`/?location=${spotId}`);
+    setLocation(`/conditions?location=${spotId}`);
     // Scroll to top when navigating to the detail page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
