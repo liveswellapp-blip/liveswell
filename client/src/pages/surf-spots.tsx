@@ -354,7 +354,7 @@ export default function SurfSpots() {
                 Global Surf Spots
               </h1>
               <p className="text-muted-foreground mt-2">
-                Discover {spots?.length || 0} surf spots across {continents.length} continents with real-time conditions
+                Discover global surf spots across 6 continents with real-time conditions
               </p>
             </div>
 
