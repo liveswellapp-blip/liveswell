@@ -13,20 +13,22 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Blue logo for light mode */}
-            <img 
-              src={logoImageLight} 
-              alt="LiveSwell" 
-              className="h-12 dark:hidden object-contain object-left"
-              style={{ imageRendering: 'auto' }}
-            />
-            {/* Green logo for dark mode */}
-            <img 
-              src={logoImageDark} 
-              alt="LiveSwell" 
-              className="h-12 hidden dark:block object-contain object-left"
-              style={{ imageRendering: 'auto' }}
-            />
+            <div className="relative w-48 h-12">
+              {/* Blue logo for light mode */}
+              <img 
+                src={logoImageLight} 
+                alt="LiveSwell" 
+                className="absolute top-0 left-0 h-12 dark:hidden object-contain object-left"
+                style={{ imageRendering: 'auto' }}
+              />
+              {/* Green logo for dark mode */}
+              <img 
+                src={logoImageDark} 
+                alt="LiveSwell" 
+                className="absolute top-0 left-0 h-12 hidden dark:block object-contain object-left"
+                style={{ imageRendering: 'auto' }}
+              />
+            </div>
           </div>
           
 
