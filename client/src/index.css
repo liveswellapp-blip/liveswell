@@ -62,6 +62,13 @@
   --soft-purple: hsl(258, 85%, 75%);
   --salmon-pink: hsl(352, 85%, 70%);
   --ultra-dark-emerald: hsl(155, 100%, 2%);
+  --deep-coral: hsl(14, 80%, 45%);
+  --midnight-blue: hsl(220, 45%, 25%);
+  --dark-teal: hsl(180, 35%, 30%);
+  --muted-gold: hsl(45, 60%, 55%);
+  --slate-purple: hsl(270, 25%, 40%);
+  --warm-orange: hsl(25, 70%, 50%);
+  --forest-green: hsl(140, 40%, 35%);
 }
 
 @layer base {
@@ -162,5 +169,61 @@
   
   .bg-ultra-dark-emerald {
     background-color: hsl(var(--ultra-dark-emerald));
+  }
+  
+  .deep-coral {
+    color: hsl(var(--deep-coral));
+  }
+  
+  .bg-deep-coral {
+    background-color: hsl(var(--deep-coral));
+  }
+  
+  .midnight-blue {
+    color: hsl(var(--midnight-blue));
+  }
+  
+  .bg-midnight-blue {
+    background-color: hsl(var(--midnight-blue));
+  }
+  
+  .dark-teal {
+    color: hsl(var(--dark-teal));
+  }
+  
+  .bg-dark-teal {
+    background-color: hsl(var(--dark-teal));
+  }
+  
+  .muted-gold {
+    color: hsl(var(--muted-gold));
+  }
+  
+  .bg-muted-gold {
+    background-color: hsl(var(--muted-gold));
+  }
+  
+  .slate-purple {
+    color: hsl(var(--slate-purple));
+  }
+  
+  .bg-slate-purple {
+    background-color: hsl(var(--slate-purple));
+  }
+  
+  .warm-orange {
+    color: hsl(var(--warm-orange));
+  }
+  
+  .bg-warm-orange {
+    background-color: hsl(var(--warm-orange));
+  }
+  
+  .forest-green {
+    color: hsl(var(--forest-green));
+  }
+  
+  .bg-forest-green {
+    background-color: hsl(var(--forest-green));
   }
 }
