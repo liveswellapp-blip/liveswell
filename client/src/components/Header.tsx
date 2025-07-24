@@ -17,13 +17,15 @@ export default function Header() {
             <img 
               src={logoImageLight} 
               alt="LiveSwell" 
-              className="h-8 dark:hidden object-contain object-left"
+              className="h-10 dark:hidden object-contain object-left image-render-crisp"
+              style={{ imageRendering: 'crisp-edges' }}
             />
             {/* Green logo for dark mode */}
             <img 
               src={logoImageDark} 
               alt="LiveSwell" 
-              className="h-8 hidden dark:block object-contain object-left"
+              className="h-10 hidden dark:block object-contain object-left image-render-crisp"
+              style={{ imageRendering: 'crisp-edges' }}
             />
           </div>
           
