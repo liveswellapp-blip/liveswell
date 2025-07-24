@@ -132,7 +132,7 @@ function SavedSpotsCard() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="bg-muted">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
@@ -159,7 +159,7 @@ function SavedSpotsCard() {
 
   if (!favorites || favorites.length === 0) {
     return (
-      <Card>
+      <Card className="bg-muted">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
             <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
@@ -183,7 +183,7 @@ function SavedSpotsCard() {
   const displayFavorites = favorites.slice(0, 3);
 
   return (
-    <Card>
+    <Card className="bg-muted">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-blue-900 dark:text-white">
           <div className="flex items-center space-x-2">
