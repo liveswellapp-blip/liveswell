@@ -51,9 +51,10 @@ export class MemStorage implements IStorage {
       const { importSurfSpots } = await import('./spot-imports.js');
       await importSurfSpots();
       
-      // Also import NOAA buoy stations for real-time data
-      const { importNOAABuoyStations } = await import('./noaa-integration.js');
-      await importNOAABuoyStations();
+      // Initialize comprehensive NOAA network
+      const { fetchAllNOAAStations } = await import('./noaa-integration.js');
+      const noaaStations = await fetchAllNOAAStations();
+      console.log(`🌊 Connected to ${noaaStations.length} NOAA monitoring stations`);
       
       // Expand coverage with coastal cities using nearby buoy data
       const { expandCoastalCitiesWithBuoyData } = await import('./coastal-cities-expansion.js');

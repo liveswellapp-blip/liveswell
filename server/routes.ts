@@ -114,76 +114,26 @@ function getCoastalSwellDirection(lat: number, lon: number): string {
 }
 
 async function fetchMarineData(lat: number, lon: number) {
-  // Map of coastal areas to their nearest NOAA buoys
-  const buoyMap = [
-    // East Coast Florida
-    { latRange: [29, 31], lonRange: [-82, -80], buoyId: '41112', name: 'Jacksonville' },
-    { latRange: [27, 29], lonRange: [-81, -79], buoyId: '41009', name: 'Canaveral' },
-    { latRange: [25, 27], lonRange: [-81, -79], buoyId: '41010', name: 'Canaveral East' },
-    // West Coast California  
-    { latRange: [33, 35], lonRange: [-119, -117], buoyId: '46025', name: 'Santa Monica Bay' },
-    { latRange: [32, 34], lonRange: [-119, -116], buoyId: '46086', name: 'San Clemente' },
-    // Add more buoys as needed
-  ];
-
-  // Find the closest buoy
-  let selectedBuoy = null;
-  for (const buoy of buoyMap) {
-    if (lat >= buoy.latRange[0] && lat <= buoy.latRange[1] &&
-        lon >= buoy.lonRange[0] && lon <= buoy.lonRange[1]) {
-      selectedBuoy = buoy;
-      break;
-    }
-  }
-
-  if (!selectedBuoy) {
-    return { waveHeight: null, wavePeriod: null, waveDirection: null };
-  }
-
+  // Import the comprehensive NOAA integration
+  const { getComprehensiveMarineData, getRegionalConfig } = await import('./noaa-integration');
+  
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const regionalConfig = getRegionalConfig(lat, lon);
+    const marineData = await getComprehensiveMarineData(lat, lon);
     
-    const response = await fetch(`https://www.ndbc.noaa.gov/data/realtime2/${selectedBuoy.buoyId}.txt`, {
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      console.warn(`Buoy ${selectedBuoy.buoyId} data unavailable`);
-      return { waveHeight: null, wavePeriod: null, waveDirection: null };
+    if (marineData.primary) {
+      return {
+        waveHeight: marineData.primary.waveHeight,
+        wavePeriod: marineData.primary.wavePeriod,
+        waveDirection: marineData.primary.waveDirection
+      };
     }
-
-    const data = await response.text();
-    const lines = data.trim().split('\n');
     
-    if (lines.length < 3) {
-      return { waveHeight: null, wavePeriod: null, waveDirection: null };
-    }
-
-    // Parse the most recent data line (line 2, since line 0 is header, line 1 is units)
-    const dataLine = lines[2].split(/\s+/);
+    // No nearby stations found
+    return { waveHeight: null, wavePeriod: null, waveDirection: null };
     
-    // NOAA buoy format: YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD...
-    const waveHeightMeters = parseFloat(dataLine[8]); // WVHT (significant wave height in meters)
-    const dominantPeriod = parseInt(dataLine[9]); // DPD (dominant wave period in seconds)
-    const meanWaveDirection = parseInt(dataLine[11]); // MWD (mean wave direction in degrees)
-
-    // Convert meters to feet
-    const waveHeightFeet = waveHeightMeters * 3.28084;
-    
-    // Convert direction degrees to compass direction
-    const waveDirectionStr = !isNaN(meanWaveDirection) ? getWindDirection(meanWaveDirection) : null;
-
-    return {
-      waveHeight: !isNaN(waveHeightFeet) ? waveHeightFeet : null,
-      wavePeriod: !isNaN(dominantPeriod) ? dominantPeriod : null,
-      waveDirection: waveDirectionStr
-    };
-
   } catch (error) {
-    console.warn(`Error fetching buoy data for ${selectedBuoy.buoyId}:`, error);
+    console.warn('Error fetching comprehensive marine data:', error);
     return { waveHeight: null, wavePeriod: null, waveDirection: null };
   }
 }
@@ -1233,23 +1183,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Import NOAA buoy stations
+  // Legacy NOAA import endpoint - now shows comprehensive network status
   app.post("/api/spots/import-noaa", async (req, res) => {
     try {
-      const { importNOAABuoyStations } = await import('./noaa-integration.js');
-      const result = await importNOAABuoyStations();
+      const { fetchAllNOAAStations } = await import('./noaa-integration');
+      const allStations = await fetchAllNOAAStations();
       
-      const allLocations = await storage.searchLocations("");
-      res.json({
-        message: "NOAA buoy stations imported successfully",
-        totalSpots: allLocations.length,
-        imported: result.imported,
-        skipped: result.skipped,
-        timestamp: new Date().toISOString()
+      res.json({ 
+        success: true, 
+        totalStations: allStations.length,
+        stationTypes: {
+          buoys: allStations.filter(s => s.type === 'buoy').length,
+          cman: allStations.filter(s => s.type === 'c-man').length,
+          fixed: allStations.filter(s => s.type === 'fixed').length,
+          withWaveData: allStations.filter(s => s.hasWaveData).length
+        },
+        message: `Connected to ${allStations.length} NOAA monitoring stations (up from 5 legacy buoys)` 
       });
     } catch (error) {
-      console.error('NOAA import error:', error);
-      res.status(500).json({ message: "Failed to import NOAA buoy stations" });
+      console.error('NOAA network error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        message: "Failed to connect to NOAA network" 
+      });
     }
   });
 
@@ -1271,6 +1228,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Failed to expand coastal cities:', error);
       res.status(500).json({ message: "Failed to expand coastal cities coverage" });
+    }
+  });
+
+  // Get comprehensive NOAA station information
+  app.get("/api/noaa/stations", async (req, res) => {
+    try {
+      const { fetchAllNOAAStations, findNearbyStations } = await import('./noaa-integration');
+      const { lat, lon, maxDistance = 100 } = req.query;
+      
+      if (lat && lon) {
+        const nearbyStations = await findNearbyStations(
+          parseFloat(lat as string),
+          parseFloat(lon as string),
+          parseInt(maxDistance as string)
+        );
+        res.json(nearbyStations);
+      } else {
+        const allStations = await fetchAllNOAAStations();
+        res.json({
+          totalStations: allStations.length,
+          stationTypes: {
+            buoys: allStations.filter(s => s.type === 'buoy').length,
+            cman: allStations.filter(s => s.type === 'c-man').length,
+            fixed: allStations.filter(s => s.type === 'fixed').length,
+            withWaveData: allStations.filter(s => s.hasWaveData).length
+          },
+          coverage: 'Complete US coastal waters, Great Lakes, and international partners'
+        });
+      }
+    } catch (error) {
+      console.error('NOAA stations error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        message: "Failed to get NOAA station data" 
+      });
+    }
+  });
+
+  // Enhanced comprehensive marine data endpoint  
+  app.get("/api/noaa/comprehensive/:lat/:lon", async (req, res) => {
+    try {
+      const { getComprehensiveMarineData } = await import('./noaa-integration');
+      const lat = parseFloat(req.params.lat);
+      const lon = parseFloat(req.params.lon);
+      
+      if (isNaN(lat) || isNaN(lon)) {
+        return res.status(400).json({ message: "Invalid coordinates" });
+      }
+      
+      const data = await getComprehensiveMarineData(lat, lon);
+      res.json(data);
+    } catch (error) {
+      console.error('Comprehensive marine data error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        message: "Failed to get comprehensive marine data" 
+      });
     }
   });
 
