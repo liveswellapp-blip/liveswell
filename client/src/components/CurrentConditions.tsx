@@ -241,7 +241,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="text-base font-medium">Swell</span>
               </div>
-              <span className="text-sm opacity-75">Live</span>
             </div>
             <div className="flex items-end space-x-2">
               {isLoading ? (
@@ -325,7 +324,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Navigation className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="text-base font-medium">Wind</span>
               </div>
-              <span className="text-sm opacity-75">Live</span>
             </div>
             
             <div className="flex items-center justify-between">
@@ -439,7 +437,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="text-base font-medium">Tide</span>
               </div>
-              <span className="text-sm opacity-75">Live</span>
             </div>
             
             <div className="text-sm">
@@ -510,7 +507,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="text-base font-medium">Sun</span>
               </div>
-              <span className="text-sm opacity-75">Today</span>
             </div>
             
             <div className="space-y-3">
