@@ -520,40 +520,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
               </div>
-              
-              {/* Day Length Calculation */}
-              {!isLoading && conditions?.sunrise && conditions?.sunset && (
-                <div className="pt-4 border-t border-border">
-                  <div className="text-xs opacity-75 mb-2">Daylight Hours</div>
-                  <div className="text-sm text-blue-900 dark:text-emerald-400 font-medium">
-                    {(() => {
-                      try {
-                        // Parse times assuming they're in format "6:39 AM" or "8:24 PM"
-                        const today = new Date();
-                        const parseTime = (timeStr: string) => {
-                          const [time, period] = timeStr.split(' ');
-                          const [hours, minutes] = time.split(':').map(Number);
-                          const adjustedHours = period === 'PM' && hours !== 12 ? hours + 12 : 
-                                              period === 'AM' && hours === 12 ? 0 : hours;
-                          const date = new Date(today);
-                          date.setHours(adjustedHours, minutes, 0, 0);
-                          return date;
-                        };
-                        
-                        const sunriseTime = parseTime(conditions.sunrise);
-                        const sunsetTime = parseTime(conditions.sunset);
-                        const diffMs = sunsetTime.getTime() - sunriseTime.getTime();
-                        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-                        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                        
-                        return `${hours}h ${minutes}m`;
-                      } catch {
-                        return "N/A";
-                      }
-                    })()}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
