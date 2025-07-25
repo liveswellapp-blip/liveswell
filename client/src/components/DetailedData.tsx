@@ -9,33 +9,6 @@ interface DetailedDataProps {
 }
 
 export default function DetailedData({ location }: DetailedDataProps) {
-  const { data: conditions, isLoading } = useQuery<SurfConditions>({
-    queryKey: [`/api/locations/${location.id}/conditions`],
-  });
-
-  return (
-    <section className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 gap-6">
-        {/* Visibility Card */}
-        <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Additional Weather</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Eye className="text-blue-900 dark:text-white h-5 w-5" />
-                <span className="font-medium text-blue-900 dark:text-white">Visibility</span>
-              </div>
-              {isLoading ? (
-                <Skeleton className="h-6 w-20" />
-              ) : (
-                <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
-                  {conditions?.visibility || "0"} miles
-                </span>
-              )}
-            </div>
-          </div>
-        </Card>
-      </div>
-    </section>
-  );
+  // This component is now empty as all weather data has been moved to Live Conditions
+  return null;
 }
