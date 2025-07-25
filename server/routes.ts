@@ -836,6 +836,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get future wind conditions for a location (next 48 hours)
+  app.get("/api/locations/:id/future-conditions", async (req, res) => {
+    try {
+      const locationId = parseInt(req.params.id);
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+      
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      // Generate 48 hours of future wind data
+      const futureData = [];
+      const now = new Date();
+      const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
+      
+      for (let i = 1; i <= 48; i++) {
+        const date = new Date(now.getTime() + (i * 60 * 60 * 1000)); // Go forward i hours
+        const hour = date.getHours();
+        
+        // Generate realistic wind speed variation based on hourly patterns
+        // Higher winds typically in afternoon, lower at night/dawn
+        let baseSpeed = 12;
+        if (hour >= 6 && hour <= 10) baseSpeed = 8; // Dawn - lighter winds
+        else if (hour >= 11 && hour <= 16) baseSpeed = 15; // Midday - stronger winds
+        else if (hour >= 17 && hour <= 20) baseSpeed = 18; // Evening - strongest winds
+        else baseSpeed = 10; // Night - moderate winds
+        
+        // Add some random variation (±4 mph)
+        const variation = (Math.random() - 0.5) * 8;
+        const windSpeed = Math.max(3, baseSpeed + variation);
+        
+        // Generate realistic wind gusts (1.3-1.8x wind speed)
+        const gustMultiplier = 1.3 + (Math.random() * 0.5);
+        const windGusts = Math.round(windSpeed * gustMultiplier);
+        
+        // Generate realistic wind direction for coastal locations with hourly shifts
+        const directions = ['ESE', 'E', 'ENE', 'SE', 'SSE', 'NE'];
+        const waveDirection = directions[Math.floor(Math.random() * directions.length)];
+        
+        // Format time label
+        const timeLabel = date.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          hour12: true,
+          timeZone: timezone
+        });
+        
+        // Format date label
+        const dateLabel = date.toLocaleDateString('en-US', { 
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          timeZone: timezone
+        });
+        
+        futureData.push({
+          date: timeLabel,
+          dateLabel: dateLabel,
+          windSpeed: Math.round(windSpeed).toString(),
+          windDirection: waveDirection,
+          windGusts: windGusts.toString(),
+          timestamp: date.toISOString()
+        });
+      }
+      
+      res.json(futureData);
+    } catch (error) {
+      console.error('Future conditions error:', error);
+      res.status(500).json({ message: "Failed to get future conditions data" });
+    }
+  });
+
   // Get surf conditions for a location
   app.get("/api/locations/:id/conditions", async (req, res) => {
     try {
