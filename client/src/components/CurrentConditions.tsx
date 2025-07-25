@@ -260,61 +260,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="mb-1">
                     <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div>
                     <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm opacity-75">Past</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
-                        className="h-5 w-5 p-0 hover:bg-blue-100 dark:hover:bg-gray-700"
-                      >
-                        {isHistoryExpanded ? (
-                          <ChevronUp className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
-                        )}
-                      </Button>
-                    </div>
                   </div>
                 </>
               )}
             </div>
-            
-            {/* Expandable Historical Data */}
-            {isHistoryExpanded && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-3 text-white">Past 12 Hours</h4>
-                {historyLoading ? (
-                  <div className="space-y-2">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <Skeleton key={i} className="h-4 w-full bg-white/20" />
-                    ))}
-                  </div>
-                ) : historicalData && historicalData.length > 0 ? (
-                  <div className="max-h-48 overflow-y-auto pr-2">
-                    <div className="space-y-1">
-                      {historicalData.map((data, index) => (
-                        <div key={index}>
-                          <div className="flex justify-between items-center text-sm py-1">
-                            <span className="opacity-75">{data.time}</span>
-                            <span className="font-medium text-blue-900 dark:text-emerald-400">
-                              {data.waveHeight} ft
-                            </span>
-                          </div>
-                          {index < historicalData.length - 1 && (
-                            <div className="border-b border-gray-300 dark:border-gray-600"></div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs opacity-75">No historical data available</p>
-                )}
-              </div>
-            )}
+
           </div>
 
           {/* Wind Conditions */}
