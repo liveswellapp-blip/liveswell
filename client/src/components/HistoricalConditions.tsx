@@ -10,6 +10,7 @@ interface HistoricalConditionsProps {
 
 interface HistoricalSwellData {
   date: string;
+  dateLabel: string;
   waveHeight: string;
   wavePeriod: number;
   waveDirection: string;
@@ -64,29 +65,49 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
                   </div>
                 ))
               ) : historicalData ? (
-                historicalData.map((data, index) => (
-                <div key={index} className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white font-medium">
-                      {data.date}
-                    </span>
-                    <div className="flex items-center space-x-4 text-sm">
-                      {/* Wave Height */}
-                      <span className="text-emerald-400 font-semibold">
-                        {data.waveHeight} ft
-                      </span>
-                      {/* Wave Period */}
-                      <span className="text-emerald-400 font-semibold">
-                        {data.wavePeriod}s
-                      </span>
-                      {/* Wave Direction */}
-                      <span className="text-emerald-400 font-semibold">
-                        {data.waveDirection}
-                      </span>
+                historicalData.map((data, index) => {
+                  // Check if we need to show a date separator
+                  const showDateSeparator = index === 0 || 
+                    (index > 0 && data.dateLabel !== historicalData[index - 1].dateLabel);
+                  
+                  return (
+                    <div key={index}>
+                      {/* Date Separator */}
+                      {showDateSeparator && (
+                        <div className="flex items-center justify-center mb-3 mt-2">
+                          <div className="border-t border-emerald-800/50 flex-1"></div>
+                          <span className="px-3 text-xs text-emerald-400 font-medium bg-emerald-900/20 rounded-full py-1">
+                            {data.dateLabel}
+                          </span>
+                          <div className="border-t border-emerald-800/50 flex-1"></div>
+                        </div>
+                      )}
+                      
+                      {/* Data Row */}
+                      <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-white font-medium">
+                            {data.date}
+                          </span>
+                          <div className="flex items-center space-x-4 text-sm">
+                            {/* Wave Height */}
+                            <span className="text-emerald-400 font-semibold">
+                              {data.waveHeight} ft
+                            </span>
+                            {/* Wave Period */}
+                            <span className="text-emerald-400 font-semibold">
+                              {data.wavePeriod}s
+                            </span>
+                            {/* Wave Direction */}
+                            <span className="text-emerald-400 font-semibold">
+                              {data.waveDirection}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50 text-center">
                   <span className="text-white">No historical data available</span>

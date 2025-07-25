@@ -811,8 +811,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timeZone: timezone
         });
         
+        // Format date label
+        const dateLabel = date.toLocaleDateString('en-US', { 
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          timeZone: timezone
+        });
+        
         historicalData.push({
           date: timeLabel,
+          dateLabel: dateLabel,
           waveHeight: parseFloat(waveHeight.toFixed(1)).toString(),
           wavePeriod: wavePeriod,
           waveDirection: waveDirection,
