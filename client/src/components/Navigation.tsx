@@ -95,7 +95,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                 className="px-4 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
               >
                 <Link href="/">
-                  <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-emerald-400" />
+                  <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-white" />
                   Surf Spots
                 </Link>
               </Button>
