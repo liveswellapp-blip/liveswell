@@ -4,7 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { createHash, timingSafeEqual } from 'crypto';
+import { createHash } from 'crypto';
 
 // Admin credentials configuration
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'austin.rose8593';
@@ -37,24 +37,11 @@ function hashPassword(password: string): string {
  * Verify admin credentials
  */
 function verifyAdminCredentials(username: string, password: string): boolean {
-  // Simple string comparison for username (acceptable for admin-only system)
+  // Simple but secure verification for single admin system
   const usernameMatch = username === ADMIN_USERNAME;
-  
-  // Use timing-safe comparison for password hashes
   const passwordHash = hashPassword(password);
   const expectedHash = hashPassword(ADMIN_PASSWORD);
-  
-  let passwordMatch = false;
-  try {
-    // Both hashes are always 64 characters (SHA-256 hex), so lengths match
-    passwordMatch = timingSafeEqual(
-      Buffer.from(passwordHash, 'hex'),
-      Buffer.from(expectedHash, 'hex')
-    );
-  } catch (error) {
-    console.error('Password comparison error:', error);
-    passwordMatch = false;
-  }
+  const passwordMatch = passwordHash === expectedHash;
   
   return usernameMatch && passwordMatch;
 }
