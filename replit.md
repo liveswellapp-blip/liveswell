@@ -86,6 +86,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-25: Sunrise/Sunset Data Integration for All Surf Spots
+- ✅ **Added Sunrise/Sunset Card**: New "Sun" card in CurrentConditions showing sunrise time, sunset time, and daylight hours
+- ✅ **OpenWeather API Integration**: Leverages existing OpenWeather API sunrise/sunset data for all 218+ surf spots globally
+- ✅ **Daylight Hours Calculation**: Automatically calculates and displays total daylight duration (e.g., "13h 46m")
+- ✅ **Responsive Grid Layout**: Updated conditions grid from 3-column to 4-column layout (1/2/4 cols on mobile/tablet/desktop)
+- ✅ **Consistent Styling**: Matches existing card design with emerald accents, loading states, and dark mode support
+- ✅ **Timezone Aware**: Displays sunrise/sunset times in local timezone for each surf spot location
+- ✅ **Global Coverage**: Available for all surf spots across USA, international locations, and territories
+
 ### 2025-07-24: South Carolina & Texas Gulf Coast Major Expansion - Comprehensive Coverage Gap Resolution
 - ✅ **South Carolina Complete**: Added 8 major surf spots (Charleston area, Hilton Head, Kiawah Island) covering all premier SC breaks
 - ✅ **Texas Gulf Coast Massive Expansion**: Added 11 comprehensive spots across entire Texas coastline (Houston, Galveston, Corpus Christi, South Padre Island)

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun } from "lucide-react";
 import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -233,7 +233,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
 
         {/* Current Conditions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Wave Conditions with Expandable History */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
             <div className="flex items-center justify-between mb-2">
@@ -478,6 +478,77 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <TideChart tides={todayTides} date="today" location={location} />
                   )}
                 </>
+              )}
+            </div>
+          </div>
+
+          {/* Sunrise & Sunset Information */}
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
+                <span className="font-medium">Sun</span>
+              </div>
+              <span className="text-sm opacity-75">Today</span>
+            </div>
+            
+            <div className="space-y-3">
+              {/* Sunrise */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Sunrise</span>
+                {isLoading ? (
+                  <Skeleton className="h-4 w-16 bg-white/20" />
+                ) : (
+                  <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
+                    {conditions?.sunrise || "N/A"}
+                  </span>
+                )}
+              </div>
+              
+              {/* Sunset */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Sunset</span>
+                {isLoading ? (
+                  <Skeleton className="h-4 w-16 bg-white/20" />
+                ) : (
+                  <span className="text-lg font-semibold text-blue-900 dark:text-emerald-400">
+                    {conditions?.sunset || "N/A"}
+                  </span>
+                )}
+              </div>
+              
+              {/* Day Length Calculation */}
+              {!isLoading && conditions?.sunrise && conditions?.sunset && (
+                <div className="mt-4 pt-3 border-t border-border">
+                  <div className="text-xs opacity-75 mb-1">Daylight Hours</div>
+                  <div className="text-sm text-blue-900 dark:text-emerald-400 font-medium">
+                    {(() => {
+                      try {
+                        // Parse times assuming they're in format "6:39 AM" or "8:24 PM"
+                        const today = new Date();
+                        const parseTime = (timeStr: string) => {
+                          const [time, period] = timeStr.split(' ');
+                          const [hours, minutes] = time.split(':').map(Number);
+                          const adjustedHours = period === 'PM' && hours !== 12 ? hours + 12 : 
+                                              period === 'AM' && hours === 12 ? 0 : hours;
+                          const date = new Date(today);
+                          date.setHours(adjustedHours, minutes, 0, 0);
+                          return date;
+                        };
+                        
+                        const sunriseTime = parseTime(conditions.sunrise);
+                        const sunsetTime = parseTime(conditions.sunset);
+                        const diffMs = sunsetTime.getTime() - sunriseTime.getTime();
+                        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                        
+                        return `${hours}h ${minutes}m`;
+                      } catch {
+                        return "N/A";
+                      }
+                    })()}
+                  </div>
+                </div>
               )}
             </div>
           </div>
