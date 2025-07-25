@@ -1,4 +1,4 @@
-import { Settings } from "lucide-react";
+import { Settings, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import logoImageDark from "@assets/LiveSwell logo (6)_1753469985642.png";
@@ -20,10 +20,15 @@ export default function Header() {
             </div>
           </div>
           
-          {/* Settings only */}
+          {/* Navigation buttons */}
           <div className="flex items-center space-x-4">
+            <Link href="/monitoring">
+              <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="System Monitoring">
+                <Activity className="h-5 w-5" />
+              </Button>
+            </Link>
             <Link href="/settings">
-              <Button variant="ghost" size="icon" className="text-white hover:text-gray-200">
+              <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="Settings">
                 <Settings className="h-5 w-5" />
               </Button>
             </Link>
