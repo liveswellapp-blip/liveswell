@@ -234,79 +234,76 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
         {/* Current Conditions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-          {/* Wave Conditions with Expandable History */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">Swell</span>
-              </div>
-            </div>
-            <div className="flex items-end space-x-2">
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 bg-white/20" />
-              ) : (
-                <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight || "0"}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
-                </>
-              )}
-            </div>
-            <div className="text-sm mt-2">
-              {isLoading ? (
-                <Skeleton className="h-4 w-32 bg-white/20" />
-              ) : (
-                <>
-                  <div className="mb-1">
-                    <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
-                  </div>
-                  <div>
-                    <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
-                  </div>
-                </>
-              )}
-            </div>
-
-          </div>
-
-          {/* Wind Conditions */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Navigation className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">Wind</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-end space-x-2">
-                  {isLoading ? (
-                    <Skeleton className="h-8 w-16 bg-white/20" />
-                  ) : (
-                    <>
-                      <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed || "0"}</span>
-                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
-                    </>
-                  )}
+          {/* Swell & Wind Side by Side */}
+          <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+            {/* Wave Conditions */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">Swell</span>
                 </div>
-                <div className="text-sm mt-2">
-                  {isLoading ? (
-                    <Skeleton className="h-4 w-32 bg-white/20" />
-                  ) : (
-                    <div>
-                      <div className="mb-1">
-                        <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
-                      </div>
-                      <div>
-                        <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
-                      </div>
+              </div>
+              <div className="flex items-end space-x-2">
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 bg-white/20" />
+                ) : (
+                  <>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight || "0"}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                  </>
+                )}
+              </div>
+              <div className="text-sm mt-2">
+                {isLoading ? (
+                  <Skeleton className="h-4 w-32 bg-white/20" />
+                ) : (
+                  <>
+                    <div className="mb-1">
+                      <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
                     </div>
-                  )}
-                </div>
+                    <div>
+                      <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
+            {/* Wind Conditions */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Navigation className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">Wind</span>
+                </div>
+              </div>
+              
+              <div className="flex items-end space-x-2">
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 bg-white/20" />
+                ) : (
+                  <>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed || "0"}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
+                  </>
+                )}
+              </div>
+              <div className="text-sm mt-2">
+                {isLoading ? (
+                  <Skeleton className="h-4 w-32 bg-white/20" />
+                ) : (
+                  <div>
+                    <div className="mb-1">
+                      <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
+                    </div>
+                    <div>
+                      <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Tide Information */}
