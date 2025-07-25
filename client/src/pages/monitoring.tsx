@@ -15,13 +15,19 @@ interface AdminStatus {
 export default function Monitoring() {
   const [loginRefresh, setLoginRefresh] = useState(0);
   
-  const { data: adminStatus, isLoading } = useQuery<AdminStatus>({
+  const { data: adminStatus, isLoading, refetch } = useQuery<AdminStatus>({
     queryKey: ['/api/admin/status', loginRefresh],
-    retry: false
+    retry: false,
+    staleTime: 0, // Always consider data stale
+    refetchInterval: false // Don't auto-refetch
   });
 
   const handleLoginSuccess = () => {
     setLoginRefresh(prev => prev + 1);
+    // Force a refetch after login
+    setTimeout(() => {
+      refetch();
+    }, 100);
   };
 
   if (isLoading) {

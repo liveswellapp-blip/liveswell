@@ -35,7 +35,10 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     },
     onSuccess: () => {
       setError('');
+      // Force refresh the admin status
       queryClient.invalidateQueries({ queryKey: ['/api/admin/status'] });
+      queryClient.refetchQueries({ queryKey: ['/api/admin/status'] });
+      // Trigger parent component refresh
       onLoginSuccess();
     },
     onError: (error: Error) => {
