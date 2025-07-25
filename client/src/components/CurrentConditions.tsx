@@ -290,7 +290,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </>
                   )}
                 </div>
-                <div className="text-sm mt-2 flex justify-between items-end">
+                <div className="text-sm mt-2">
                   {isLoading ? (
                     <Skeleton className="h-4 w-32 bg-white/20" />
                   ) : (
@@ -303,83 +303,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       </div>
                     </div>
                   )}
-                  
-                  {/* Future Wind Forecast Toggle - Aligned with Gust data */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsWindForecastExpanded(!isWindForecastExpanded)}
-                    className="flex items-center space-x-1 hover:bg-white/10 p-1 h-auto"
-                  >
-                    <span className="text-sm opacity-75">Future</span>
-                    {isWindForecastExpanded ? (
-                      <ChevronUp className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
-                    ) : (
-                      <ChevronDown className="h-3 w-3 text-blue-600 dark:text-emerald-400" />
-                    )}
-                  </Button>
                 </div>
               </div>
             </div>
-            
-            {/* Expandable Future Wind Data */}
-            {isWindForecastExpanded && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-3 text-white">Next 48 Hours</h4>
-                {windForecastLoading ? (
-                  <div className="space-y-2">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                      <Skeleton key={i} className="h-4 w-full bg-white/20" />
-                    ))}
-                  </div>
-                ) : windForecastData && windForecastData.length > 0 ? (
-                  <div className="max-h-48 overflow-y-auto pr-2">
-                    <div className="space-y-1">
-                      {windForecastData.map((data, index) => {
-                        const currentDate = new Date(data.timestamp);
-                        const prevDate = index > 0 ? new Date(windForecastData[index - 1].timestamp) : null;
-                        const showDateHeader = index === 0 || !prevDate || currentDate.toDateString() !== prevDate.toDateString();
-                        const today = new Date();
-                        const isToday = currentDate.toDateString() === today.toDateString();
-                        
-                        return (
-                          <div key={index}>
-                            {showDateHeader && !isToday && (
-                              <div className="mt-6 mb-2">
-                                <h5 className="text-xs font-medium text-white opacity-90 uppercase tracking-wide">
-                                  {currentDate.toLocaleDateString('en-US', { 
-                                    weekday: 'long', 
-                                    month: 'short', 
-                                    day: 'numeric' 
-                                  })}
-                                </h5>
-                                <div className="border-b border-gray-300 dark:border-gray-600 mt-1"></div>
-                              </div>
-                            )}
-                            <div className="flex justify-between items-center text-sm py-1">
-                              <span className="opacity-75">{data.time}</span>
-                              <div className="flex items-center space-x-3">
-                                <span className="font-medium text-blue-900 dark:text-emerald-400">
-                                  {data.windSpeed} mph
-                                </span>
-                                <span className="text-xs text-blue-900 dark:text-emerald-400">
-                                  {data.windDirection}
-                                </span>
-                              </div>
-                            </div>
-                            {index < windForecastData.length - 1 && (
-                              <div className="border-b border-gray-300 dark:border-gray-600"></div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs opacity-75">No forecast data available</p>
-                )}
-              </div>
-            )}
+
           </div>
 
           {/* Tide Information */}
