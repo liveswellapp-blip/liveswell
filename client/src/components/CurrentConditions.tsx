@@ -482,47 +482,50 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
           </div>
 
-          {/* Water Temperature */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">Water Temp</span>
+          {/* Water Temperature & UV Index Side by Side */}
+          <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+            {/* Water Temperature */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">Water Temp</span>
+                </div>
+              </div>
+              <div className="flex items-end space-x-2">
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 bg-white/20" />
+                ) : (
+                  <>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                  </>
+                )}
               </div>
             </div>
-            <div className="flex items-end space-x-2">
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 bg-white/20" />
-              ) : (
-                <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
-                </>
-              )}
-            </div>
-          </div>
 
-          {/* UV Index */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">UV Index</span>
+            {/* UV Index */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">UV Index</span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-end space-x-2">
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 bg-white/20" />
-              ) : (
-                <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
-                    {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
-                     conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
-                     conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
-                  </span>
-                </>
-              )}
+              <div className="flex items-end space-x-2">
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 bg-white/20" />
+                ) : (
+                  <>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
+                      {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
+                       conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
+                       conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
