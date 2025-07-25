@@ -434,27 +434,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
           {/* Tide Information */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="text-base font-medium">Tide</span>
               </div>
               <span className="text-sm opacity-75">Live</span>
-            </div>
-            <div className="flex items-end space-x-2">
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 bg-white/20" />
-              ) : (
-                <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.tideHeight || "0"}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
-                </>
-              )}
-            </div>
-            
-            {/* Local Time */}
-            <div className="text-sm mt-2 mb-2">
-              <span className="text-blue-900 dark:text-white">Local Time: <span className="text-blue-900 dark:text-emerald-400">{getCurrentLocalTime()}</span></span>
             </div>
             
             <div className="text-sm">
@@ -462,17 +447,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Skeleton className="h-4 w-32 bg-white/20" />
               ) : (
                 <>
-                  {/* Tide information above chart */}
-                  <div className="mb-2">
-                    {nextTide ? (
-                      <span>
-                        <span className="text-blue-900 dark:text-white">Upcoming: </span><span className="text-blue-900 dark:text-emerald-400">{nextTide.type === 'high' ? 'High' : 'Low'} Tide</span><span className="text-blue-900 dark:text-white"> </span><span className="text-blue-900 dark:text-emerald-400">{nextTide.time}</span>
-                      </span>
-                    ) : (
-                      <span className="text-blue-900 dark:text-white">No upcoming tides today</span>
-                    )}
-                  </div>
-                  
                   {/* Today's Tide Chart */}
                   {todayTides.length > 0 && (
                     <TideChart tides={todayTides} date="today" location={location} />
