@@ -66,28 +66,22 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
               ) : historicalData ? (
                 historicalData.map((data, index) => (
                 <div key={index} className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-white font-medium">
                       {data.date}
                     </span>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 text-sm">
                       {/* Wave Height */}
-                      <div className="text-right">
-                        <span className="text-lg font-semibold text-emerald-400">
-                          {data.waveHeight} ft
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Period and Direction */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-white">
-                        Period: <span className="text-emerald-400">{data.wavePeriod}s</span>
+                      <span className="text-emerald-400 font-semibold">
+                        {data.waveHeight} ft
                       </span>
-                      <span className="text-white">
-                        Direction: <span className="text-emerald-400">{data.waveDirection}</span>
+                      {/* Wave Period */}
+                      <span className="text-emerald-400 font-semibold">
+                        {data.wavePeriod}s
+                      </span>
+                      {/* Wave Direction */}
+                      <span className="text-emerald-400 font-semibold">
+                        {data.waveDirection}
                       </span>
                     </div>
                   </div>
