@@ -14,7 +14,7 @@ export default function DetailedData({ location }: DetailedDataProps) {
   });
 
   return (
-    <section className="container mx-auto px-4 py-6">
+    <section className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 gap-6">
         {/* Marine Weather */}
         <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">

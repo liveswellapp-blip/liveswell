@@ -209,7 +209,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   }
 
   return (
-    <section className="container mx-auto px-4 py-6">
+    <section className="container mx-auto px-4 py-8">
       <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
         <h1 className="text-2xl font-bold text-blue-900 dark:text-white mb-4">Live Conditions</h1>
         <div className="flex items-center justify-between mb-4">
