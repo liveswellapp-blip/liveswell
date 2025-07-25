@@ -37,14 +37,20 @@ function hashPassword(password: string): string {
  * Verify admin credentials
  */
 function verifyAdminCredentials(username: string, password: string): boolean {
+  // Pad buffers to same length for timing-safe comparison
+  const maxUsernameLength = Math.max(username.length, ADMIN_USERNAME.length);
+  const paddedUsername = username.padEnd(maxUsernameLength, '\0');
+  const paddedAdminUsername = ADMIN_USERNAME.padEnd(maxUsernameLength, '\0');
+  
   const usernameMatch = timingSafeEqual(
-    Buffer.from(username), 
-    Buffer.from(ADMIN_USERNAME)
+    Buffer.from(paddedUsername), 
+    Buffer.from(paddedAdminUsername)
   );
   
   const passwordHash = hashPassword(password);
   const expectedHash = hashPassword(ADMIN_PASSWORD);
   
+  // Hash lengths are always the same (SHA-256 = 64 hex chars)
   const passwordMatch = timingSafeEqual(
     Buffer.from(passwordHash, 'hex'),
     Buffer.from(expectedHash, 'hex')
