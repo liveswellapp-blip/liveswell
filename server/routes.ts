@@ -856,10 +856,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!API_KEY || API_KEY === "demo_key" || API_KEY.length < 10) {
           console.log("Using demo forecast data - API key not configured");
           
-          // Generate demo forecast data with proper timezone
+          // Generate demo forecast data with proper timezone (starting from tomorrow)
           const dailyForecasts = [];
           
-          for (let i = 0; i < 5; i++) {
+          for (let i = 1; i <= 5; i++) {
             const windSpeed = 8 + Math.random() * 12;
             const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
@@ -888,10 +888,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!forecastResponse.ok) {
           console.log(`Forecast API error: ${forecastResponse.status}, using demo data`);
           
-          // Generate demo forecast data as fallback with proper timezone
+          // Generate demo forecast data as fallback with proper timezone (starting from tomorrow)
           const dailyForecasts = [];
           
-          for (let i = 0; i < 5; i++) {
+          for (let i = 1; i <= 5; i++) {
             const windSpeed = 8 + Math.random() * 12;
             const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
             const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
@@ -934,11 +934,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           forecastsByDay.get(dayKey).push(item);
         }
         
-        // Process up to 5 days
+        // Process up to 5 days (starting from tomorrow)
         const sortedDays = Array.from(forecastsByDay.keys()).sort();
-        let dayOffset = 0;
+        let dayOffset = 1;
         
-        for (const dayKey of sortedDays.slice(0, 5)) {
+        for (const dayKey of sortedDays.slice(1, 6)) {
           const dayItems = forecastsByDay.get(dayKey);
           
           // Use the first item of the day for conditions (could be improved by averaging)

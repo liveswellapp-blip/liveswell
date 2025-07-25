@@ -52,7 +52,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-muted border border-border">
                 <div className="text-left">
                   <div className="font-medium mb-2 text-[18px] text-blue-900 dark:text-white">
-                    {index === 0 ? "Today" : day.date}
+                    {day.date}
                   </div>
                   <div className="flex items-center space-x-2 font-semibold mb-1 text-[25px] text-blue-900 dark:text-white">
                     <Waves className="h-[25px] w-[25px] text-blue-900 dark:text-white" />
