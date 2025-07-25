@@ -489,7 +489,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="text-base font-medium">Water Temp</span>
               </div>
-              <span className="text-sm opacity-75">Live</span>
             </div>
             <div className="flex items-end space-x-2">
               {isLoading ? (
@@ -498,6 +497,30 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <>
                   <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
                   <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* UV Index */}
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
+                <span className="text-base font-medium">UV Index</span>
+              </div>
+            </div>
+            <div className="flex items-end space-x-2">
+              {isLoading ? (
+                <Skeleton className="h-8 w-16 bg-white/20" />
+              ) : (
+                <>
+                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
+                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
+                    {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
+                     conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
+                     conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
+                  </span>
                 </>
               )}
             </div>
@@ -541,31 +564,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* UV Index */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">UV Index</span>
-              </div>
-              <span className="text-sm opacity-75">Live</span>
-            </div>
-            <div className="flex items-end space-x-2">
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 bg-white/20" />
-              ) : (
-                <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
-                    {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
-                     conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
-                     conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
-                  </span>
-                </>
-              )}
             </div>
           </div>
         </div>
