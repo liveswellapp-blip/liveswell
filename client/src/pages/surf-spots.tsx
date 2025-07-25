@@ -223,7 +223,6 @@ const USA_CITY_TO_STATE: { [key: string]: string } = {
   
   // Connecticut
   "Westport Beach": "Connecticut",
-  "Westport": "Connecticut",
   "Fairfield": "Connecticut",
   
   // Louisiana

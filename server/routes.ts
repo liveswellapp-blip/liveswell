@@ -1455,9 +1455,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/buoy/:stationId", async (req, res) => {
     try {
       const { stationId } = req.params;
-      const { fetchNOAABuoyData } = await import('./noaa-integration.js');
+      const { fetchBuoyData } = await import('./noaa-integration.js');
       
-      const buoyData = await fetchNOAABuoyData(stationId);
+      const buoyData = await fetchBuoyData(stationId);
       
       if (!buoyData) {
         return res.status(404).json({ message: "Buoy data not available" });
@@ -1481,8 +1481,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Valid latitude and longitude required" });
       }
       
-      const { getNearbyNOAABuoys } = await import('./noaa-integration.js');
-      const buoys = await getNearbyNOAABuoys(lat, lng, radius);
+      const { findNearbyStations } = await import('./noaa-integration.js');
+      const buoys = await findNearbyStations(lat, lng, radius);
       
       res.json(buoys);
     } catch (error) {
