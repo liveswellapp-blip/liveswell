@@ -571,9 +571,9 @@ export default function SurfSpots() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">
+      <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)] flex flex-col">
         <Header />
-        <main className="container mx-auto px-4 py-8 max-w-6xl">
+        <main className="container mx-auto px-4 py-8 max-w-6xl flex-1">
           <div className="space-y-6">
             <div className="space-y-4">
               <Skeleton className="h-8 w-48" />
@@ -596,9 +596,9 @@ export default function SurfSpots() {
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">
+    <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)] flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
+      <main className="container mx-auto px-4 py-8 max-w-6xl flex-1">
         <div className="space-y-6">
           {/* Header */}
           <div className="space-y-4">
