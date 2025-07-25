@@ -3,6 +3,19 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema } from "@shared/schema";
 import { z } from "zod";
+import { 
+  healthCheck, 
+  getMetrics, 
+  trackRequest, 
+  errorTrackingMiddleware 
+} from './monitoring';
+import { 
+  generalApiLimiter, 
+  weatherApiLimiter, 
+  searchApiLimiter, 
+  noaaApiLimiter,
+  trackOpenWeatherUsage 
+} from './rate-limiter';
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -458,6 +471,20 @@ async function fetchWeatherData(lat: number, lon: number) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Monitoring endpoints (should be first to avoid rate limiting)
+  app.get("/api/health", healthCheck);
+  app.get("/api/metrics", getMetrics);
+  
+  // Apply rate limiting to API routes
+  app.use("/api/locations", generalApiLimiter);
+  app.use("/api/weather", weatherApiLimiter);
+  app.use("/api/conditions", weatherApiLimiter);
+  app.use("/api/buoy", noaaApiLimiter);
+  app.use("/api/search", searchApiLimiter);
+  
+  // Track OpenWeather API usage for weather-related endpoints
+  app.use(["/api/conditions", "/api/locations/:id/conditions", "/api/weather"], trackOpenWeatherUsage);
+  
   // Search locations
   app.get("/api/locations/search", async (req, res) => {
     try {
@@ -1558,6 +1585,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add error handling middleware (should be last)
+  app.use(errorTrackingMiddleware);
+  
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Favorites from "@/pages/favorites";
 import Settings from "@/pages/settings";
 import SurfSpots from "@/pages/surf-spots";
+import Monitoring from "@/pages/monitoring";
 
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/conditions" component={Home} />
       <Route path="/favorites" component={Favorites} />
       <Route path="/settings" component={Settings} />
+      <Route path="/monitoring" component={Monitoring} />
       <Route component={NotFound} />
     </Switch>
   );

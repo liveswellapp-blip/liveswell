@@ -86,6 +86,17 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-25: Production-Ready Monitoring System
+- ✅ **Comprehensive Health Checks**: Added `/api/health` endpoint monitoring database, OpenWeather API, and NOAA service status
+- ✅ **Performance Metrics**: Implemented `/api/metrics` tracking response times, memory usage, API calls, and error rates
+- ✅ **Rate Limiting Protection**: Applied tiered rate limits (100/min general, 10/min weather, 30/min search, 20/min NOAA)
+- ✅ **Error Tracking System**: Added comprehensive error logging with request context and stack traces
+- ✅ **OpenWeather Usage Tracking**: Daily quota monitoring with automatic fallback to demo data
+- ✅ **Monitoring Dashboard**: Created `/monitoring` page with real-time system health visualization
+- ✅ **Production Security**: Sanitized error responses, secure monitoring endpoints, no sensitive data exposure
+- ✅ **Auto-cleanup Mechanisms**: Periodic cleanup of rate limit data and response time history
+- ✅ **Documentation**: Complete monitoring guide with troubleshooting and integration instructions
+
 ### 2025-07-25: Historical Conditions Section Implementation
 - ✅ **New Historical Conditions Section**: Added comprehensive section between Live Conditions and 5-Day Forecast
 - ✅ **API Endpoint**: Created `/api/locations/:id/historical-conditions` endpoint with realistic past 24-hour swell data
