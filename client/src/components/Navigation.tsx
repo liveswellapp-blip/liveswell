@@ -61,7 +61,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full px-4 py-2 pl-10 pr-4 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-900 dark:text-emerald-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-900 dark:text-white h-4 w-4" />
               </div>
               
               {/* Search Suggestions */}
