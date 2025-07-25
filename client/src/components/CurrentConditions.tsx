@@ -484,7 +484,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
           {/* Sunrise & Sunset Information */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
                 <span className="font-medium">Sun</span>
