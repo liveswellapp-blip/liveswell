@@ -24,22 +24,22 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
 
   return (
     <section className="py-8">
-      <Card className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-border">
+      <Card className="bg-black/90 backdrop-blur border-gray-800">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-blue-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-white">
               Historical Conditions
             </h2>
-            <span className="text-sm text-blue-900 dark:text-white opacity-75">
+            <span className="text-sm text-white opacity-75">
               Past 24 Hours
             </span>
           </div>
 
           {/* Historical Swell Card */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+          <div className="rounded-lg p-4 bg-muted text-white border border-border">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
+                <Waves className="h-5 w-5 text-white" />
                 <span className="text-base font-medium">Historical Swell</span>
               </div>
               <span className="text-sm opacity-75">{location.name}</span>
