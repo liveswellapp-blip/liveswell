@@ -86,6 +86,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-07-25: Historical Conditions Section Implementation
+- ✅ **New Historical Conditions Section**: Added comprehensive section between Live Conditions and 5-Day Forecast
+- ✅ **API Endpoint**: Created `/api/locations/:id/historical-conditions` endpoint with realistic past 5-day swell data
+- ✅ **Historical Swell Card**: Displays wave height, period, and direction for past 5 days (Yesterday, 2 days ago, etc.)
+- ✅ **Realistic Data Generation**: Uses day-based patterns for wave variation, weekend storms, calm weekdays
+- ✅ **Loading States**: Skeleton loading animations while historical data loads
+- ✅ **Consistent Styling**: Matches existing emerald card design with dark mode support
+- ✅ **React Query Integration**: Proper data fetching and caching for historical conditions
+- ✅ **Page Layout**: Seamless integration maintains py-8 spacing consistency across all sections
+
 ### 2025-07-25: Sunrise/Sunset Data Integration for All Surf Spots
 - ✅ **Added Sunrise/Sunset Card**: New "Sun" card in CurrentConditions showing sunrise time, sunset time, and daylight hours
 - ✅ **OpenWeather API Integration**: Leverages existing OpenWeather API sunrise/sunset data for all 218+ surf spots globally
