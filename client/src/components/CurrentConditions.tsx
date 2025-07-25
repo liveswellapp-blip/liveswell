@@ -239,7 +239,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="font-medium">Swell</span>
+                <span className="text-base font-medium">Swell</span>
               </div>
               <span className="text-sm opacity-75">Live</span>
             </div>
@@ -323,7 +323,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <Navigation className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="font-medium">Wind</span>
+                <span className="text-base font-medium">Wind</span>
               </div>
               <span className="text-sm opacity-75">Live</span>
             </div>
@@ -437,7 +437,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="font-medium">Tide</span>
+                <span className="text-base font-medium">Tide</span>
               </div>
               <span className="text-sm opacity-75">Live</span>
             </div>
@@ -487,7 +487,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="font-medium">Sun</span>
+                <span className="text-base font-medium">Sun</span>
               </div>
               <span className="text-sm opacity-75">Today</span>
             </div>
