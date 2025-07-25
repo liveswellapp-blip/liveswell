@@ -870,10 +870,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const variation = (Math.random() - 0.5) * 8;
         const windSpeed = Math.max(3, baseSpeed + variation);
         
-        // Generate realistic wind gusts (1.3-1.8x wind speed)
-        const gustMultiplier = 1.3 + (Math.random() * 0.5);
-        const windGusts = Math.round(windSpeed * gustMultiplier);
-        
         // Generate realistic wind direction for coastal locations with hourly shifts
         const directions = ['ESE', 'E', 'ENE', 'SE', 'SSE', 'NE'];
         const waveDirection = directions[Math.floor(Math.random() * directions.length)];
@@ -898,7 +894,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dateLabel: dateLabel,
           windSpeed: Math.round(windSpeed).toString(),
           windDirection: waveDirection,
-          windGusts: windGusts.toString(),
           timestamp: date.toISOString()
         });
       }
