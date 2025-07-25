@@ -61,7 +61,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                   onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full px-4 py-2 pl-10 pr-4 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-900 dark:text-white h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
               </div>
               
               {/* Search Suggestions */}
@@ -92,10 +92,10 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                 variant={location === "/" ? "default" : "outline"}
                 size="default"
                 asChild
-                className="px-4 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-300 transition-colors"
+                className="px-4 py-2 h-10 whitespace-nowrap bg-background hover:bg-muted border-input text-white hover:text-gray-300 transition-colors"
               >
                 <Link href="/">
-                  <Waves className="h-4 w-4 mr-2 text-blue-900 dark:text-white" />
+                  <Waves className="h-4 w-4 mr-2 text-white" />
                   Surf Spots
                 </Link>
               </Button>
