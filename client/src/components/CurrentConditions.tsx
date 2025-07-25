@@ -492,7 +492,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <span className="text-sm opacity-75">Today</span>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Sunrise */}
               <div className="flex items-center justify-between">
                 <span className="text-sm">Sunrise</span>
@@ -519,8 +519,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               
               {/* Day Length Calculation */}
               {!isLoading && conditions?.sunrise && conditions?.sunset && (
-                <div className="mt-4 pt-3 border-t border-border">
-                  <div className="text-xs opacity-75 mb-1">Daylight Hours</div>
+                <div className="pt-4 border-t border-border">
+                  <div className="text-xs opacity-75 mb-2">Daylight Hours</div>
                   <div className="text-sm text-blue-900 dark:text-emerald-400 font-medium">
                     {(() => {
                       try {
