@@ -773,43 +773,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Location not found" });
       }
 
-      // Generate 5 days of historical swell data
+      // Generate 24 hours of historical swell data
       const historicalData = [];
       const now = new Date();
+      const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
       
-      for (let i = 1; i <= 5; i++) {
-        const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)); // Go back i days
-        const day = date.getDay();
+      for (let i = 1; i <= 24; i++) {
+        const date = new Date(now.getTime() - (i * 60 * 60 * 1000)); // Go back i hours
+        const hour = date.getHours();
         
-        // Generate realistic wave height variation based on day patterns
-        // Higher waves on weekends/storms, lower on calm days
+        // Generate realistic wave height variation based on hourly patterns
+        // Higher waves typically in afternoon/evening, lower at dawn
         let baseHeight = 1.8;
-        if (day === 0 || day === 6) baseHeight = 2.2; // Weekends - often stormier
-        else if (day === 2 || day === 4) baseHeight = 1.5; // Tue/Thu - often calmer
-        else baseHeight = 1.9; // Other days - normal
+        if (hour >= 6 && hour <= 10) baseHeight = 1.5; // Dawn - smaller waves
+        else if (hour >= 11 && hour <= 16) baseHeight = 2.2; // Midday - bigger waves
+        else if (hour >= 17 && hour <= 20) baseHeight = 2.5; // Evening - biggest waves
+        else baseHeight = 1.9; // Night - moderate waves
         
-        // Add some random variation (±0.4 ft)
-        const variation = (Math.random() - 0.5) * 0.8;
+        // Add some random variation (±0.3 ft)
+        const variation = (Math.random() - 0.5) * 0.6;
         const waveHeight = Math.max(0.8, baseHeight + variation);
         
-        // Generate realistic wave period (6-12 seconds)
+        // Generate realistic wave period (6-12 seconds) with hourly variation
         const basePeriod = 8;
-        const periodVariation = (Math.random() - 0.5) * 4;
-        const wavePeriod = Math.max(6, Math.min(12, Math.round(basePeriod + periodVariation)));
+        const periodVariation = (Math.random() - 0.5) * 3;
+        const hourlyPeriodPattern = Math.sin((hour - 6) * Math.PI / 12) * 1; // Natural daily pattern
+        const wavePeriod = Math.max(6, Math.min(12, Math.round(basePeriod + periodVariation + hourlyPeriodPattern)));
         
-        // Generate realistic wave direction for East Coast locations
+        // Generate realistic wave direction for East Coast locations with slight hourly shifts
         const directions = ['E', 'ESE', 'SE', 'ENE', 'SSE'];
         const waveDirection = directions[Math.floor(Math.random() * directions.length)];
         
-        let dateLabel = "";
-        if (i === 1) dateLabel = "Yesterday";
-        else if (i === 2) dateLabel = "2 days ago";
-        else if (i === 3) dateLabel = "3 days ago";
-        else if (i === 4) dateLabel = "4 days ago";
-        else if (i === 5) dateLabel = "5 days ago";
+        // Format time label
+        const timeLabel = date.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          hour12: true,
+          timeZone: timezone
+        });
         
         historicalData.push({
-          date: dateLabel,
+          date: timeLabel,
           waveHeight: parseFloat(waveHeight.toFixed(1)).toString(),
           wavePeriod: wavePeriod,
           waveDirection: waveDirection,

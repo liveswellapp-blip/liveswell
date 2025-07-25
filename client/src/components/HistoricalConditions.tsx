@@ -31,7 +31,7 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
               Historical Conditions
             </h2>
             <span className="text-sm text-blue-900 dark:text-white opacity-75">
-              Past 5 Days
+              Past 24 Hours
             </span>
           </div>
 
@@ -45,11 +45,11 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
               <span className="text-sm opacity-75">{location.name}</span>
             </div>
 
-            {/* Historical Data Grid */}
-            <div className="space-y-3">
+            {/* Historical Data Grid - Scrollable for 24 hours */}
+            <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
               {isLoading ? (
-                // Loading skeletons
-                Array.from({ length: 5 }).map((_, index) => (
+                // Loading skeletons for first 8 hours
+                Array.from({ length: 8 }).map((_, index) => (
                   <div key={index} className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
                     <div className="flex items-center justify-between mb-2">
                       <Skeleton className="h-4 w-20 bg-white/20" />
