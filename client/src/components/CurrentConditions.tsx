@@ -482,6 +482,27 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
           </div>
 
+          {/* Water Temperature */}
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
+                <span className="text-base font-medium">Water Temp</span>
+              </div>
+              <span className="text-sm opacity-75">Live</span>
+            </div>
+            <div className="flex items-end space-x-2">
+              {isLoading ? (
+                <Skeleton className="h-8 w-16 bg-white/20" />
+              ) : (
+                <>
+                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* Sunrise & Sunset Information */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
             <div className="flex items-center justify-between mb-4">
@@ -520,27 +541,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Water Temperature */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">Water Temp</span>
-              </div>
-              <span className="text-sm opacity-75">Live</span>
-            </div>
-            <div className="flex items-end space-x-2">
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 bg-white/20" />
-              ) : (
-                <>
-                  <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
-                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
-                </>
-              )}
             </div>
           </div>
 
