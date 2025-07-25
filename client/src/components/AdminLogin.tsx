@@ -29,7 +29,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     mutationFn: async (creds: LoginCredentials) => {
       const response = await apiRequest('/api/admin/login', {
         method: 'POST',
-        body: JSON.stringify(creds)
+        body: creds
       });
       return response;
     },
