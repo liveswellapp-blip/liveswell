@@ -128,7 +128,7 @@ export default function NOAABuoyData({ stationId, stationName }: NOAABuoyDataPro
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-muted rounded-lg p-3">
-                <div className="text-sm text-muted-foreground">Wave Height</div>
+                <div className="text-sm text-muted-foreground">Swell</div>
                 <div className="text-lg font-semibold text-coral-500 dark:text-coral-400">
                   {convertWaveHeight(buoyData.waveHeight)}
                 </div>
