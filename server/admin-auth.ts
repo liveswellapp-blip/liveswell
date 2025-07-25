@@ -7,8 +7,8 @@ import { Request, Response, NextFunction } from 'express';
 import { createHash, timingSafeEqual } from 'crypto';
 
 // Admin credentials configuration
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Change this!
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'austin.rose8593';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Soccer4life!';
 
 // Session-based admin authentication
 interface AdminSession {

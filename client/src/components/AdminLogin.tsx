@@ -137,7 +137,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
             {process.env.NODE_ENV === 'development' && (
               <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded border">
                 <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                  <strong>Development Mode:</strong> Default credentials are admin/admin123
+                  <strong>Development Mode:</strong> Use your admin credentials to access monitoring
                 </p>
               </div>
             )}
