@@ -47,7 +47,7 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
               </div>
 
             {/* Historical Data Grid - Scrollable for 24 hours */}
-            <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
+            <div className="max-h-80 overflow-y-auto space-y-3 pr-2 historical-scroll">
               {isLoading ? (
                 // Loading skeletons for first 8 hours
                 Array.from({ length: 8 }).map((_, index) => (

@@ -71,6 +71,30 @@
   --forest-green: hsl(140, 40%, 35%);
 }
 
+/* Custom scrollbar for emerald theme */
+.historical-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(52, 211, 153, 0.6) rgba(6, 78, 59, 0.2);
+}
+
+.historical-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.historical-scroll::-webkit-scrollbar-track {
+  background: rgba(6, 78, 59, 0.2);
+  border-radius: 3px;
+}
+
+.historical-scroll::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.6);
+  border-radius: 3px;
+}
+
+.historical-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.8);
+}
+
 @layer base {
   * {
     @apply border-border;
