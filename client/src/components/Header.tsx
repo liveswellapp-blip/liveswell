@@ -1,7 +1,7 @@
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import logoImageDark from "@assets/LiveSwell logo (4)_1753367615325.png";
+import logoImageDark from "@assets/LiveSwell logo (6)_1753469985642.png";
 
 export default function Header() {
   return (
