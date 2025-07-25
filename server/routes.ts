@@ -1017,7 +1017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             distance: distance.toFixed(1),
           };
         })
-        .filter(spot => parseFloat(spot.distance) < 20) // Within 20 miles
+        .filter(spot => parseFloat(spot.distance) < 50) // Within 50 miles
         .sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance))
         .slice(0, 6); // Limit to 6 spots
       
