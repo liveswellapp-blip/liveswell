@@ -94,9 +94,13 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Scrollable Interface**: Max height container with scroll for all 24 hours of data
 - ✅ **Timezone Aware**: Historical times displayed in location's local timezone
 - ✅ **Loading States**: Skeleton loading animations while historical data loads
-- ✅ **Consistent Styling**: Matches existing emerald card design with dark mode support
+- ✅ **Consistent Styling**: Matches existing emerald card design with dark mode support, black background with gray swell card
 - ✅ **React Query Integration**: Proper data fetching and caching for historical conditions
-- ✅ **Page Layout**: Seamless integration maintains py-8 spacing consistency across all sections
+- ✅ **Page Layout**: Seamless integration maintains py-8 spacing consistency with proper container padding
+- ✅ **Clean Data Layout**: Simplified titles ("Swell" not "Historical Swell"), removed location names, moved "Past 24 Hours" under title
+- ✅ **Compact Data Display**: Removed "Period:" and "Direction:" labels, aligned all data (time, height, period, direction) with consistent text sizing
+- ✅ **Date Separators**: Added styled date headers when hourly data spans multiple days with emerald theme
+- ✅ **Custom Scrollbar**: Emerald-themed scrollbar with dark emerald track and hover effects matching application colors
 
 ### 2025-07-25: Sunrise/Sunset Data Integration for All Surf Spots
 - ✅ **Added Sunrise/Sunset Card**: New "Sun" card in CurrentConditions showing sunrise time, sunset time, and daylight hours
