@@ -294,10 +294,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 ) : (
                   <div>
                     <div className="mb-1">
-                      <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
+                      <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
                     </div>
                     <div>
-                      <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
+                      <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
                     </div>
                   </div>
                 )}
