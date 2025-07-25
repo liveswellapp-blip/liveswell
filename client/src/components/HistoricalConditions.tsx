@@ -24,26 +24,26 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
 
   return (
     <section className="py-8">
-      <Card className="bg-black/90 backdrop-blur border-gray-800">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Historical Conditions
-            </h2>
-            <span className="text-sm text-white opacity-75">
-              Past 24 Hours
-            </span>
-          </div>
-
-          {/* Historical Swell Card */}
-          <div className="rounded-lg p-4 bg-muted text-white border border-border">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <Waves className="h-5 w-5 text-white" />
-                <span className="text-base font-medium">Historical Swell</span>
-              </div>
-              <span className="text-sm opacity-75">{location.name}</span>
+      <div className="container mx-auto px-4">
+        <Card className="bg-black/90 backdrop-blur border-gray-800">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-white">
+                Historical Conditions
+              </h2>
             </div>
+
+            {/* Historical Swell Card */}
+            <div className="rounded-lg p-4 bg-muted text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Waves className="h-5 w-5 text-white" />
+                  <span className="text-base font-medium">Swell</span>
+                </div>
+              </div>
+              <div className="mb-4">
+                <span className="text-sm opacity-75">Past 24 Hours</span>
+              </div>
 
             {/* Historical Data Grid - Scrollable for 24 hours */}
             <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
@@ -99,9 +99,10 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
                 </div>
               )}
             </div>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </section>
   );
 }
