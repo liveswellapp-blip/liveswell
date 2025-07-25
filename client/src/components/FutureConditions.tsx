@@ -83,8 +83,8 @@ export default function FutureConditions({ location }: FutureConditionsProps) {
                       {/* Wind Data Card */}
                       <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-white opacity-90">{data.date}</span>
-                          <span className="text-lg font-semibold text-emerald-400">
+                          <span className="text-sm text-white font-medium">{data.date}</span>
+                          <span className="text-sm font-semibold text-emerald-400">
                             {data.windSpeed} mph {data.windDirection}
                           </span>
                         </div>
