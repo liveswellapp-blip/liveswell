@@ -36,13 +36,11 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
 
             {/* Historical Swell Card */}
             <div className="rounded-lg p-4 bg-muted text-white border border-border">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
                   <Waves className="h-5 w-5 text-white" />
                   <span className="text-base font-medium">Swell</span>
                 </div>
-              </div>
-              <div className="mb-4">
                 <span className="text-sm opacity-75">Past 24 Hours</span>
               </div>
 
