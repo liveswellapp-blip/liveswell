@@ -39,13 +39,13 @@ export default function Header() {
               variant="ghost" 
               size="icon" 
               onClick={toggleTheme}
-              className="text-blue-900 dark:text-emerald-400 hover:text-blue-700 dark:hover:text-emerald-300"
+              className="text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-200"
               title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
             >
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
             <Link href="/settings">
-              <Button variant="ghost" size="icon" className="text-blue-900 dark:text-emerald-400 hover:text-blue-700 dark:hover:text-emerald-300">
+              <Button variant="ghost" size="icon" className="text-blue-900 dark:text-white hover:text-blue-700 dark:hover:text-gray-200">
                 <Settings className="h-5 w-5" />
               </Button>
             </Link>
