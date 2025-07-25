@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Activity, Server, Database, Cloud, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, Server, Database, Cloud, AlertTriangle, CheckCircle, Clock, LogOut } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -108,6 +110,16 @@ export default function MonitoringDashboard() {
     refetchInterval: 60000, // Refresh every minute
   });
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest('/api/admin/logout', { method: 'POST' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/status'] });
+      window.location.href = '/monitoring';
+    }
+  });
+
   if (healthLoading || metricsLoading) {
     return (
       <div className="grid gap-6">
@@ -125,6 +137,24 @@ export default function MonitoringDashboard() {
 
   return (
     <div className="grid gap-6">
+      {/* Header with logout button */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">System Monitoring</h1>
+          <p className="text-muted-foreground">Real-time application health and performance</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => logoutMutation.mutate()}
+          disabled={logoutMutation.isPending}
+          className="flex items-center gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+        </Button>
+      </div>
+
       {/* Overall Health Status */}
       <Card>
         <CardHeader>

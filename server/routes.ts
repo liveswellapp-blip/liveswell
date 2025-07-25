@@ -16,6 +16,7 @@ import {
   noaaApiLimiter,
   trackOpenWeatherUsage 
 } from './rate-limiter';
+import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -471,9 +472,14 @@ async function fetchWeatherData(lat: number, lon: number) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Monitoring endpoints (should be first to avoid rate limiting)
-  app.get("/api/health", healthCheck);
-  app.get("/api/metrics", getMetrics);
+  // Admin authentication routes (public endpoints)
+  app.post("/api/admin/login", adminLogin);
+  app.post("/api/admin/logout", adminLogout);
+  app.get("/api/admin/status", adminStatus);
+  
+  // Protected monitoring endpoints - require admin authentication
+  app.get("/api/health", requireAdminAuth, healthCheck);
+  app.get("/api/metrics", requireAdminAuth, getMetrics);
   
   // Apply rate limiting to API routes
   app.use("/api/locations", generalApiLimiter);
