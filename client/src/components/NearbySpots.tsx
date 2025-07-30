@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Waves, Wind } from "lucide-react";
+import { Link } from "wouter";
 import { Location, NearbySpot } from "@/types/weather";
 
 interface NearbySpotsProps {
@@ -52,30 +53,29 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
             ))
           ) : nearbySpots.length > 0 ? (
             nearbySpots.map((spot) => (
-              <div
-                key={spot.id}
-                className="bg-muted rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer border border-border"
-              >
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
-                    <Waves className="h-6 w-6 text-emerald-600 dark:text-white" />
+              <Link key={spot.id} to={`/conditions?location=${spot.id}`}>
+                <div className="bg-muted rounded-lg p-4 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
+                      <Waves className="h-6 w-6 text-emerald-600 dark:text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-blue-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{spot.name}</h4>
+                      <p className="text-sm text-blue-900 dark:text-white">{spot.distance} miles away</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-blue-900 dark:text-white">{spot.name}</h4>
-                    <p className="text-sm text-blue-900 dark:text-white">{spot.distance} miles away</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Waves className="text-blue-900 dark:text-white h-4 w-4" />
+                      <span className="font-medium text-blue-900 dark:text-emerald-400">{spot.waveHeight}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Wind className="text-blue-900 dark:text-white h-4 w-4" />
+                      <span className="text-sm text-blue-900 dark:text-emerald-400">{spot.wind}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Waves className="text-blue-900 dark:text-white h-4 w-4" />
-                    <span className="font-medium text-blue-900 dark:text-emerald-400">{spot.waveHeight}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Wind className="text-blue-900 dark:text-white h-4 w-4" />
-                    <span className="text-sm text-blue-900 dark:text-emerald-400">{spot.wind}</span>
-                  </div>
-                </div>
-              </div>
+              </Link>
             ))
           ) : (
             <div className="col-span-full text-center text-blue-900 dark:text-emerald-400">
