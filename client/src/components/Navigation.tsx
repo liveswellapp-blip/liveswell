@@ -23,7 +23,6 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth <= 768;
-      console.log('Mobile detection:', { windowWidth: window.innerWidth, isMobile: mobile });
       setIsMobile(mobile);
     };
     
@@ -63,12 +62,8 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   };
 
   const handleSearchClick = () => {
-    console.log('Search clicked:', { isMobile, showSearchModal });
     if (isMobile) {
-      console.log('Opening search modal on mobile');
       setShowSearchModal(true);
-    } else {
-      console.log('Desktop mode - using normal search');
     }
   };
 
@@ -83,7 +78,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="Search Location"
+                  placeholder={isMobile ? "Tap to search surf spots..." : "Search Location"}
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onClick={handleSearchClick}
@@ -92,7 +87,23 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                   data-testid="input-search"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
+                {isMobile && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-emerald-400 font-medium">
+                    TAP
+                  </div>
+                )}
               </div>
+              
+              {/* Mobile Search Button - Always visible on small screens */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSearchModal(true)}
+                className="md:hidden absolute -right-8 top-1/2 transform -translate-y-1/2 text-emerald-400 hover:text-emerald-300"
+                data-testid="button-mobile-search"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
               
               {/* Search Suggestions - Only show on desktop */}
               {!isMobile && showSuggestions && searchResults.length > 0 && (

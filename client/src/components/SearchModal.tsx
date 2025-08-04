@@ -16,11 +16,6 @@ interface SearchModalProps {
 
 export default function SearchModal({ isOpen, onClose, onLocationSelect, initialQuery = "" }: SearchModalProps) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  
-  // Debug logging
-  useEffect(() => {
-    console.log('SearchModal props changed:', { isOpen, initialQuery });
-  }, [isOpen, initialQuery]);
 
   const { data: searchResults = [], isLoading } = useQuery<Location[]>({
     queryKey: [`/api/locations/search?q=${encodeURIComponent(searchQuery)}`],
