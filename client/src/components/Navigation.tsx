@@ -78,7 +78,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder={isMobile ? "Tap to search surf spots..." : "Search Location"}
+                  placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onClick={handleSearchClick}
@@ -87,11 +87,6 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                   data-testid="input-search"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
-                {isMobile && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-emerald-400 font-medium">
-                    TAP
-                  </div>
-                )}
               </div>
               
               {/* Mobile Search Button - Always visible on small screens */}

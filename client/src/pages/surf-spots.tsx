@@ -640,7 +640,7 @@ export default function SurfSpots() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 type="text"
-                placeholder={isMobile ? "Tap to search surf spots..." : "Search"}
+                placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onClick={handleSearchClick}
@@ -648,11 +648,6 @@ export default function SurfSpots() {
                 className="pl-10 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
                 data-testid="input-search-homepage"
               />
-              {isMobile && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-emerald-400 font-medium">
-                  TAP
-                </div>
-              )}
               
               {/* Mobile Search Button - Always visible on small screens */}
               <Button
