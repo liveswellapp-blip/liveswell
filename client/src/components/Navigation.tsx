@@ -82,23 +82,11 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   onClick={handleSearchClick}
-                  className="w-full px-4 py-2 pl-10 pr-4 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 pr-4 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
                   readOnly={isMobile}
                   data-testid="input-search"
                 />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
               </div>
-              
-              {/* Mobile Search Button - Always visible on small screens */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSearchModal(true)}
-                className="md:hidden absolute -right-8 top-1/2 transform -translate-y-1/2 text-emerald-400 hover:text-emerald-300"
-                data-testid="button-mobile-search"
-              >
-                <Search className="h-4 w-4" />
-              </Button>
               
               {/* Search Suggestions - Only show on desktop */}
               {!isMobile && showSuggestions && searchResults.length > 0 && (
