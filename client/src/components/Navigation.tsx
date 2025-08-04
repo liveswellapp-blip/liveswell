@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Waves, Home, Search, MapPin } from "lucide-react";
 import { Location } from "@/types/weather";
+import SearchModal from "./SearchModal";
 
 interface NavigationProps {
   onLocationSelect: (location: Location) => void;
@@ -14,7 +15,20 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const { data: searchResults = [] } = useQuery<Location[]>({
     queryKey: [`/api/locations/search?q=${encodeURIComponent(searchQuery)}`],
@@ -42,7 +56,14 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   const handleLocationSelect = (location: Location) => {
     setSearchQuery(location.name);
     setShowSuggestions(false);
+    setShowSearchModal(false);
     onLocationSelect(location);
+  };
+
+  const handleSearchClick = () => {
+    if (isMobile) {
+      setShowSearchModal(true);
+    }
   };
 
   return (
@@ -59,13 +80,16 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
                   placeholder="Search Location"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
+                  onClick={handleSearchClick}
                   className="w-full px-4 py-2 pl-10 pr-4 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
+                  readOnly={isMobile}
+                  data-testid="input-search"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-4 w-4" />
               </div>
               
-              {/* Search Suggestions */}
-              {showSuggestions && searchResults.length > 0 && (
+              {/* Search Suggestions - Only show on desktop */}
+              {!isMobile && showSuggestions && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-popover border border-border rounded-lg shadow-lg mt-1 z-50 max-h-60 overflow-y-auto">
                   {searchResults.map((loc: Location) => (
                     <button
@@ -105,6 +129,14 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
           </div>
         </div>
       </div>
+
+      {/* Mobile Search Modal */}
+      <SearchModal
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+        onLocationSelect={handleLocationSelect}
+        initialQuery={searchQuery}
+      />
     </nav>
   );
 }

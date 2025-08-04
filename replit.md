@@ -1,367 +1,57 @@
 # SurfCast - Real-time Surf Conditions App
 
 ## Overview
-
-SurfCast is a modern web application that provides real-time surf conditions and weather forecasts for coastal locations worldwide. The application combines current weather data, marine conditions, and surf forecasting to help surfers and marine enthusiasts make informed decisions about when and where to surf.
+SurfCast is a modern web application providing real-time surf conditions and weather forecasts for coastal locations globally. It integrates current weather, marine conditions, and surf forecasting to help surfers and marine enthusiasts make informed decisions. The project aims to be a comprehensive resource for surf data, offering an intuitive user experience and broad geographic coverage.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite for fast development and optimized production builds
-- **UI Framework**: Shadcn/ui components built on Radix UI primitives
-- **Styling**: Tailwind CSS with custom design tokens and color variables
-- **State Management**: React Query (TanStack Query) for server state management
-- **Routing**: Wouter for lightweight client-side routing
+- **Build Tool**: Vite
+- **UI Framework**: Shadcn/ui components (Radix UI primitives)
+- **Styling**: Tailwind CSS (custom design tokens)
+- **State Management**: React Query (TanStack Query)
+- **Routing**: Wouter
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express.js server
-- **Language**: TypeScript throughout the stack
-- **API Pattern**: RESTful API endpoints under `/api` namespace
-- **Development Server**: Custom Vite integration for hot module replacement
+- **Runtime**: Node.js with Express.js
+- **Language**: TypeScript
+- **API Pattern**: RESTful API (`/api` namespace)
 
 ### Data Layer
-- **ORM**: Drizzle ORM for type-safe database interactions
-- **Database**: PostgreSQL with Neon serverless driver
-- **Schema Management**: Drizzle Kit for migrations and schema management
-- **Storage Interface**: Abstracted storage layer with both database and in-memory implementations
+- **ORM**: Drizzle ORM
+- **Database**: PostgreSQL (Neon serverless driver)
+- **Schema Management**: Drizzle Kit
 
-## Key Components
-
-### Core Entities
-1. **Users**: Basic user management with username/password authentication
-2. **Locations**: Coastal locations with geographic coordinates and metadata
-3. **Surf Conditions**: Real-time weather, wave, wind, and marine data for each location
-
-### API Endpoints
-- **Location Search**: `/api/locations/search` - Search for coastal locations
-- **Current Conditions**: `/api/locations/:id/conditions` - Get real-time surf conditions
-- **Nearby Locations**: `/api/locations/nearby` - Find locations by coordinates
-- **Forecast Data**: `/api/locations/:id/forecast` - 5-day surf forecast
-- **Nearby Spots**: `/api/locations/:id/nearby` - Related surf spots
-
-### UI Components
-- **Header**: Search functionality and location selection
-- **CurrentConditions**: Real-time conditions display with automatic refresh
-- **ForecastSection**: 5-day forecast cards with weather and surf data
-- **DetailedData**: Tide charts and marine weather details
-- **NearbySpots**: Related surf locations with conditions summary
-
-## Data Flow
-
-1. **Location Selection**: Users search for or select locations via geolocation
-2. **Weather Integration**: External weather APIs (OpenWeatherMap) provide current conditions
-3. **Data Processing**: Server processes raw weather data into surf-specific metrics
-4. **Real-time Updates**: Client polls for updated conditions every 5 minutes
-5. **Caching Strategy**: React Query handles client-side caching with configurable stale times
-
-### External Weather Data Processing
-- Wind speed/direction converted to surf-friendly formats
-- UV index and visibility for safety conditions
-- Sunrise/sunset times for optimal surf timing
-- Temperature data for water and air conditions
+### Key Components & Features
+- **Core Entities**: Users, Locations, Surf Conditions (weather, wave, wind, marine data).
+- **API Endpoints**: Location search, current conditions, nearby locations, forecast data, nearby spots.
+- **UI Components**: Header (search), CurrentConditions (real-time display), ForecastSection (5-day forecast), DetailedData (tide charts, marine weather), NearbySpots.
+- **Data Flow**: Location selection, external weather API integration (OpenWeatherMap), server-side data processing, real-time updates (client polling), client-side caching.
+- **UI/UX Decisions**: Ocean-themed color scheme (emerald, coral, gold accents), responsive grid layouts, card-based designs, dark mode support, custom scrollbars.
+- **Key Features**: Comprehensive NOAA integration (1,355+ stations for real marine data), personalized favorites, global surf spot database (229+ locations), sunrise/sunset data, historical conditions, comprehensive health and monitoring system with admin authentication, dynamic station selection based on geographic distance and data quality, accurate timezone handling and tide calculations.
+- **Architecture Patterns**: Two-page architecture (`/` for surf spots discovery, `/conditions` for detailed view), stateless server design, client-side caching.
 
 ## External Dependencies
 
 ### Core Infrastructure
-- **Neon Database**: Serverless PostgreSQL hosting
-- **OpenWeatherMap API**: Weather and marine data source
-- **Replit**: Development and deployment platform
+- **Neon Database**: Serverless PostgreSQL hosting.
+- **OpenWeatherMap API**: Weather and marine data source.
+- **Replit**: Development and deployment platform.
+- **NOAA National Data Buoy Center (NDBC) API**: Real-time wave and marine data.
+- **Tides and Currents API**: Authentic tide information.
 
 ### Frontend Libraries
-- **React Query**: Server state management and caching
-- **Radix UI**: Accessible component primitives
-- **Lucide React**: Icon library
-- **Date-fns**: Date manipulation utilities
-- **Wouter**: Lightweight routing
+- **React Query**: Server state management and caching.
+- **Radix UI**: Accessible component primitives.
+- **Lucide React**: Icon library.
+- **Date-fns**: Date manipulation utilities.
+- **Wouter**: Lightweight routing.
 
 ### Development Tools
-- **ESBuild**: Server-side bundling for production
-- **TSX**: TypeScript execution for development
-- **Drizzle Kit**: Database migration management
-
-## Recent Changes
-
-### 2025-07-30: Authentic Wind Forecast Data Integration Fixed
-- ✅ **Future Wind Data Accuracy**: Fixed future-conditions endpoint to use authentic OpenWeather API forecast data instead of simulated patterns
-- ✅ **OpenWeather 5-Day Forecast Integration**: Implemented proper interpolation from 3-hour OpenWeather forecast intervals to hourly data points
-- ✅ **Realistic Wind Speeds**: Future wind forecasts now show authentic 4-5 mph conditions matching real OpenWeather data (previously showed fabricated 16-18 mph)
-- ✅ **Direction Accuracy**: Wind directions now derived from actual OpenWeather forecast data with proper degree-to-compass conversion
-- ✅ **TypeScript Error Resolution**: Fixed NOAA integration async/await issues preventing proper data fetching
-- ✅ **48-Hour Coverage**: Complete hourly wind forecast coverage using authentic OpenWeather 5-day/3-hour forecast API
-- ✅ **Historical Data Maintained**: Historical conditions continue using authentic NOAA buoy 41117 baseline for Jacksonville Beach (1.2-1.4ft, 8s periods)
-- ✅ **All 239+ Surf Spots**: Future wind forecast accuracy now available for all global surf locations using authentic OpenWeather data
-
-### 2025-07-25: Production-Ready Monitoring System with Admin Authentication
-- ✅ **Comprehensive Health Checks**: Added `/api/health` endpoint monitoring database, OpenWeather API, and NOAA service status
-- ✅ **Performance Metrics**: Implemented `/api/metrics` tracking response times, memory usage, API calls, and error rates
-- ✅ **Rate Limiting Protection**: Applied tiered rate limits (100/min general, 10/min weather, 30/min search, 20/min NOAA)
-- ✅ **Error Tracking System**: Added comprehensive error logging with request context and stack traces
-- ✅ **OpenWeather Usage Tracking**: Daily quota monitoring with automatic fallback to demo data
-- ✅ **Monitoring Dashboard**: Created `/monitoring` page with real-time system health visualization
-- ✅ **Admin-Only Access**: Implemented secure authentication system protecting monitoring dashboard from public access
-- ✅ **Session Management**: 24-hour admin sessions with secure cookie handling and automatic expiration
-- ✅ **Production Security**: Admin credentials (austin.rose8593), password hashing, brute force protection, logout functionality
-- ✅ **Auto-cleanup Mechanisms**: Periodic cleanup of rate limit data and response time history
-- ✅ **Documentation**: Complete monitoring guide with troubleshooting and integration instructions
-
-### 2025-07-25: Historical Conditions Section Implementation
-- ✅ **New Historical Conditions Section**: Added comprehensive section between Live Conditions and 5-Day Forecast
-- ✅ **API Endpoint**: Created `/api/locations/:id/historical-conditions` endpoint with realistic past 24-hour swell data
-- ✅ **Historical Swell Card**: Displays wave height, period, and direction for past 24 hours with hourly timestamps
-- ✅ **Realistic Data Generation**: Uses hourly patterns for wave variation (dawn smaller, evening bigger waves)
-- ✅ **Scrollable Interface**: Max height container with scroll for all 24 hours of data
-- ✅ **Timezone Aware**: Historical times displayed in location's local timezone
-- ✅ **Loading States**: Skeleton loading animations while historical data loads
-- ✅ **Consistent Styling**: Matches existing emerald card design with dark mode support, black background with gray swell card
-- ✅ **React Query Integration**: Proper data fetching and caching for historical conditions
-- ✅ **Page Layout**: Seamless integration maintains py-8 spacing consistency with proper container padding
-- ✅ **Clean Data Layout**: Simplified titles ("Swell" not "Historical Swell"), removed location names, moved "Past 24 Hours" under title
-- ✅ **Compact Data Display**: Removed "Period:" and "Direction:" labels, aligned all data (time, height, period, direction) with consistent text sizing
-- ✅ **Date Separators**: Added styled date headers when hourly data spans multiple days with emerald theme
-- ✅ **Custom Scrollbar**: Emerald-themed scrollbar with dark emerald track and hover effects matching application colors
-
-### 2025-07-25: Sunrise/Sunset Data Integration for All Surf Spots
-- ✅ **Added Sunrise/Sunset Card**: New "Sun" card in CurrentConditions showing sunrise time, sunset time, and daylight hours
-- ✅ **OpenWeather API Integration**: Leverages existing OpenWeather API sunrise/sunset data for all 218+ surf spots globally
-- ✅ **Daylight Hours Calculation**: Automatically calculates and displays total daylight duration (e.g., "13h 46m")
-- ✅ **Responsive Grid Layout**: Updated conditions grid from 3-column to 4-column layout (1/2/4 cols on mobile/tablet/desktop)
-- ✅ **Consistent Styling**: Matches existing card design with emerald accents, loading states, and dark mode support
-- ✅ **Timezone Aware**: Displays sunrise/sunset times in local timezone for each surf spot location
-- ✅ **Global Coverage**: Available for all surf spots across USA, international locations, and territories
-
-### 2025-07-24: South Carolina & Texas Gulf Coast Major Expansion - Comprehensive Coverage Gap Resolution
-- ✅ **South Carolina Complete**: Added 8 major surf spots (Charleston area, Hilton Head, Kiawah Island) covering all premier SC breaks
-- ✅ **Texas Gulf Coast Massive Expansion**: Added 11 comprehensive spots across entire Texas coastline (Houston, Galveston, Corpus Christi, South Padre Island)
-- ✅ **Total Database Growth**: 207 → 229 surf spots (+22 locations in 2 underserved states)
-- ✅ **South Carolina Coverage**: Folly Beach - The Washout, Hilton Head - Burkes Beach, Kiawah Island - Sandy Point, Isle of Palms, Sullivan's Island, Edisto Beach, Hunting Island State Park
-- ✅ **Texas Gulf Coast Coverage**: Galveston (3 spots), Corpus Christi (2 spots), South Padre Island (2 spots), Port Aransas (2 spots), plus Surfside Beach, Quintana Beach, Port Mansfield Jetty
-- ✅ **Regional Specialization**: Texas spots optimized for Gulf storm systems, hurricane swells, and cold front conditions
-- ✅ **NOAA Integration**: All new spots verified with nearby monitoring stations for authentic marine data
-- ✅ **Coverage Gap Resolution**: Addressed 2 largest underserved coastal regions with significant surfing populations
-- ✅ **US Territories - Caribbean & Pacific**: Puerto Rico (Rincon, Tres Palmas, Gas Chambers, Wilderness), US Virgin Islands (Hull Bay, Cane Bay), Guam (Talofofo Bay, Ritidian Beach), American Samoa (Coconut Point)
-- ✅ **Remote Mainland Coastal Areas**: Maine rugged Atlantic coast (Popham Beach, Reid State Park), Northern California (Shelter Cove, Mendocino), Florida Keys (Key Largo, Key West), Michigan Great Lakes (Grand Marais, Marquette)
-- ✅ **Isolated Expert Breaks**: Alaska remote surfing (Yakutat, Sitka), Pacific Northwest extreme conditions (Bandon State Park, Brookings), Remote Gulf Coast Texas (Port Aransas, Matagorda)
-- ✅ **Complete Geographic Coverage**: All 50 US states + 5 US territories + 3 international countries = 58 total regions
-- ✅ **Additional East Coast**: St. Augustine, Daytona Beach, Myrtle Beach, Folly Beach, Tybee Island, Jekyll Island
-- ✅ **Gulf Coast Expansion**: South Padre Island, Grand Isle, Surfside Beach, Freeport (Texas/Louisiana coverage)  
-- ✅ **West Coast Enhancement**: Eureka, Crescent City, Bandon Beach, Gold Beach (California/Oregon additions)
-- ✅ **Northeast Addition**: Martha's Vineyard, Cape Cod - Nauset Beach, Westport Beach, Fairfield Beach
-- ✅ **Comprehensive Surf Data**: Break types, difficulty levels, optimal conditions for each location
-- ✅ **Proximity Station Mapping**: Each spot linked to nearest NOAA monitoring stations for authentic data
-- ✅ **Search & Filter Integration**: All new locations fully integrated with hierarchical search system
-- ✅ **Quality Assurance**: Duplicate detection, location validation, and NOAA data verification during import
-- ✅ **Enhanced Coverage**: Famous surf breaks (Trestles, Rincon, Steamer Lane, Montauk Point, Outer Banks) + hidden gems
-
-### 2025-07-24: Comprehensive NOAA Integration - Complete Marine Monitoring Network  
-- ✅ **Massive Scale Expansion**: Integrated all 1,355+ active NOAA stations (up from only 5 legacy buoys)
-- ✅ **Complete Geographic Coverage**: Pacific Coast, Atlantic Coast, Gulf of Mexico, Great Lakes, and international partners
-- ✅ **Advanced Station Types**: 381 buoys, 712 fixed stations, 273 stations with wave data capability
-- ✅ **Intelligent Proximity Mapping**: Dynamic station selection based on geographic distance and data quality
-- ✅ **Multi-Source Data Aggregation**: Primary + backup station system for enhanced reliability
-- ✅ **Regional Specialization**: Custom configurations for Pacific Coast, Atlantic Coast, Gulf of Mexico, Great Lakes
-- ✅ **Comprehensive API Endpoints**: `/api/noaa/stations`, `/api/noaa/comprehensive/:lat/:lon` for full network access
-- ✅ **Real-Time Data Processing**: XML parsing, coordinate-based station discovery, comprehensive error handling
-- ✅ **Enhanced Marine Data**: Wave height, wave period, wind speed/direction, station status, last update timestamps
-- ✅ **Automatic Network Initialization**: Server startup connects to complete NOAA network automatically
-- ✅ **Data Quality Assessment**: Excellent/Good/Fair/Poor ratings based on available station count and data validity
-
-### 2025-07-24: Solid Color Background Theme Update
-- ✅ Replaced gradient backgrounds with solid colors: light blue (bg-blue-50) for light mode, darker custom emerald for dark mode
-- ✅ Updated all pages (Home, Surf Spots, Settings, Favorites, 404) with consistent solid color backgrounds
-- ✅ Applied custom darker emerald background `hsl(155,50%,8%)` for enhanced dark mode depth and contrast
-- ✅ Maintained original emerald-400 accent colors throughout the application for consistency
-- ✅ Preserved ocean-themed branding with clean, modern solid color approach
-
-### 2025-07-24: Global Surf Spots Made Home Page with Route Restructuring
-- ✅ Made Global Surf Spots the home page: "/" route now displays surf spots search/discovery page
-- ✅ Moved detailed conditions view to "/conditions" route with location parameter support
-- ✅ Updated all navigation links: "View Conditions" buttons and saved spots links now point to /conditions?location={id}
-- ✅ Fixed routing consistency across the application for improved user flow
-- ✅ Enhanced user experience: home page focuses on discovery, conditions page focuses on detailed data
-- ✅ Maintained backward compatibility with location parameter handling
-
-### 2025-07-23: Two-Page Architecture Clarification and Empty State Enhancement
-- ✅ Confirmed and refined two-page architecture: `/surf-spots` for search/discovery, `/?location={id}` for detailed conditions
-- ✅ Removed "Choose Your Destination" empty state from surf spots search page  
-- ✅ Added prominent Saved Spots card under search filters with ocean-themed gradient design
-- ✅ Implemented true empty state behavior - no surf spots shown until filters are applied
-- ✅ Enhanced user flow: search/discover spots → view detailed conditions → save favorites
-- ✅ Navigation properly configured to support browsing (Surf Spots page) and detailed viewing (Home with location)
-
-### 2025-07-23: Enhanced Surf Spots Page with Hierarchical State-Level Navigation
-- ✅ Created comprehensive Surf Spots page with hierarchical dropdown navigation system
-- ✅ Added 4-level navigation: North America → USA → Florida → Jacksonville Beach  
-- ✅ Implemented State filter specifically for USA locations to improve discoverability
-- ✅ All 119 surf spots organized by continent, country, state/region, and city
-- ✅ Added API endpoint /api/locations/all to serve complete surf spot database
-- ✅ Updated navigation bar with Surf Spots link for easy access
-- ✅ Enhanced spot cards with difficulty levels, break types, optimal conditions, and View Conditions buttons
-- ✅ Implemented cascading filter reset and clear filters functionality
-
-### 2025-07-23: Major Coastal Cities Expansion Using NOAA Buoy Data
-- ✅ Added 64 major US coastal cities that can leverage nearby NOAA buoy data for authentic surf conditions
-- ✅ Created intelligent coastal-cities-expansion.ts system that maps cities to nearest buoys within specified distance ranges
-- ✅ Successfully added 16 new cities: San Francisco Bay Area, Oakland, Monterey, San Diego, New York Harbor, Jersey Shore, and more
-- ✅ Implemented distance-based buoy selection (25-100 miles max range depending on location priority)  
-- ✅ Added API endpoints: /api/spots/expand-coastal-cities for manual expansion, /api/locations/:id/buoy-mapping for buoy relationships
-- ✅ Enhanced startup process to automatically expand coverage using nearby buoy data on server launch
-- ✅ **Total coverage now: 119 surf spots** (original 103 + 16 coastal cities expansion)
-- ✅ Covers major metros: San Francisco, Oakland, San Diego, New York, Jacksonville, Galveston, plus premium coastal destinations
-- ✅ Each new city validated to have real NOAA buoy data within reasonable distance for authentic conditions
-- ✅ Smart filtering skips cities without nearby monitoring stations to maintain data integrity
-- ❌ Removed interactive map page - did not meet user requirements for surf spot discovery
-
-### 2025-07-18: Real-Time NOAA Wave Monitoring Integration  
-- ✅ Successfully integrated NOAA National Data Buoy Center (NDBC) API for authentic real-time wave data
-- ✅ Added 55 NOAA buoy stations across US coastal waters providing live wave conditions
-- ✅ Created comprehensive NOAA integration system (server/noaa-integration.ts) with automatic data parsing
-- ✅ Built NOAABuoyData component displaying real-time wave height, wind, temperature, and pressure
-- ✅ Mapped famous surf spots to nearest NOAA monitoring stations for authentic local conditions
-- ✅ Added API endpoints for buoy data access (/api/buoy/:stationId, /api/buoys/nearby, /api/spots/import-noaa)
-- ✅ Enhanced statistics dashboard with NOAA import capabilities and real-time data indicators
-- ✅ Automatic NOAA station import during server startup for comprehensive coverage
-- ✅ **Total monitoring network: 119 surf spots + 55 real-time NOAA buoy stations = 174 total locations**
-- ✅ Live data available for major surf destinations: Malibu (Santa Monica Bay), Pipeline (Northwest Hawaii), Half Moon Bay (Mavericks)
-
-### 2025-07-18: Global Surf Spot Database Expansion
-- ✅ Expanded surf spot database from 15 to 52+ locations across 12 countries worldwide
-- ✅ Added comprehensive global surf spot data including Pipeline, Nazaré, Mundaka, Mavericks, Bondi Beach
-- ✅ Implemented surf spot metadata: break types, difficulty levels, optimal conditions, NOAA station IDs
-- ✅ Created spot-imports.ts system for managing global surf spot database with 60+ premium locations
-- ✅ Added API endpoints for surf spot statistics (/api/spots/stats) and manual imports (/api/spots/import)
-- ✅ Built SurfSpotStats component displaying total spots, country breakdowns, and regional statistics
-- ✅ Integrated statistics dashboard into home page for users without selected location
-- ✅ Added automatic import system that loads global database on server startup
-- ✅ Coverage includes USA (29 spots), Australia (4), Portugal (3), France (2), Spain (2), Indonesia (2), plus Costa Rica, South Africa, Chile, Brazil, Mexico, Fiji
-- ✅ Prepared infrastructure for future API integrations (Stormglass.io, NOAA, Surfline) to expand to thousands more spots
-
-### 2025-07-18: User Settings Page Implementation
-- ✅ Created comprehensive settings page with modern card-based layout
-- ✅ Added settings navigation via cog icon in header with wouter routing
-- ✅ Implemented settings categories: Theme & Appearance, Location & Units, Notifications, Data & Refresh, Privacy & Security
-- ✅ Added theme toggle functionality integrated with existing ThemeProvider
-- ✅ Created settings for measurement units (metric/imperial), language preferences, and default location
-- ✅ Added notification controls for push notifications and email alerts
-- ✅ Implemented data management options with auto-refresh toggle and cache controls
-- ✅ Added export/import functionality for user favorites and privacy controls
-- ✅ Enhanced header with clickable settings button linking to /settings route
-- ✅ Applied consistent ocean-themed styling with blue/emerald color scheme matching app design
-
-### 2025-07-18: Timezone and Next Tide Calculation Fixes
-- ✅ Fixed timezone detection for accurate local time display across all US time zones
-- ✅ Corrected sunrise/sunset times to display in location's timezone (Pacific Time for Malibu)
-- ✅ Fixed tide chart time indicator line to use location's timezone instead of browser timezone
-- ✅ Enhanced next tide calculation logic with proper timezone-aware date comparison
-- ✅ Updated tide time display throughout forecast components to use correct local time
-- ✅ Added comprehensive timezone mapping function for US coastal locations
-- ✅ Verified next tide display shows correct upcoming tide (1:30 PM high tide for Malibu)
-- ✅ Rearranged tide cards under curve chart to display tides in chronological order starting from first tide of the day
-
-### 2025-07-17: Real Marine Weather Data Integration
-- ✅ Integrated authentic NOAA buoy data for accurate wave conditions (replaced simulated data)
-- ✅ Connected to NOAA National Data Buoy Center (NDBC) for real-time wave heights and periods
-- ✅ Implemented NOAA tide station data using Tides and Currents API for authentic tide information
-- ✅ Fixed wave direction calculations using geographical coastal orientation instead of wind-based estimates
-- ✅ Added comprehensive buoy mapping for East Coast Florida (Jacksonville Beach uses buoy 41112)
-- ✅ Implemented tide station mapping for accurate local tide data (Jacksonville Beach uses Mayport station 8720218)
-- ✅ Enhanced timezone handling for proper local time display in Eastern Time zone
-- ✅ Added automatic fallback to simulated data for locations without nearby monitoring stations
-- ✅ Jacksonville Beach now displays: 2.3 ft waves (6-sec period), ESE direction, accurate tide data from official NOAA sources
-
-### 2025-07-17: Personalized Favorites Feature Implementation
-- ✅ Added personalized surf spot favorites list functionality with full CRUD operations
-- ✅ Created favorites database table with user-location relationships and timestamps
-- ✅ Implemented storage interface methods for favorites management (add, remove, list, check)
-- ✅ Added comprehensive API endpoints for favorites operations with proper validation
-- ✅ Created FavoriteButton component with heart icon for adding/removing favorites
-- ✅ Built FavoritesList component with card-based layout showing user's saved spots
-- ✅ Added navigation system with Home and Favorites pages using wouter routing
-- ✅ Integrated favorites button into CurrentConditions header for easy access
-- ✅ Added favorites page at /favorites route with clean list interface
-- ✅ Implemented real-time updates using React Query for favorites status
-
-### 2025-07-18: Complementary Color Enhancement for Dark Mode Theme
-- ✅ Enhanced dark mode with complementary color palette to improve visual hierarchy
-- ✅ Added coral/salmon accent colors for wave heights and favorites heart icons
-- ✅ Applied warm gold accents to tide heights, day names, and UV index data
-- ✅ Introduced soft purple highlights for wind speeds and visibility information
-- ✅ Maintained emerald green as the primary base color for consistency
-- ✅ Created vibrant, balanced color scheme that enhances readability and engagement
-- ✅ Applied strategic color mapping across all components: CurrentConditions, ForecastSection, TideChart, DetailedData
-- ✅ Enhanced Favorites button with salmon-pink heart icon for better visual feedback
-- ✅ Improved tide chart with warm gold tide types, coral times, and soft purple heights
-
-### 2025-07-17: Complete Dark Mode Implementation with Ocean-Themed Color Scheme
-- ✅ Implemented comprehensive dark mode support using Tailwind CSS dark: variants
-- ✅ Created ThemeProvider component with React context for theme state management
-- ✅ Added theme toggle button in header with moon/sun icons for intuitive switching
-- ✅ Updated all components to use semantic color tokens (bg-background, text-foreground, etc.)
-- ✅ Replaced custom color classes with Tailwind CSS design system colors
-- ✅ Added proper light/dark mode persistence using localStorage
-- ✅ Configured automatic theme detection based on system preferences
-- ✅ Enhanced user experience with smooth theme transitions across entire application
-- ✅ Applied ocean-themed color scheme: dark blue (text-blue-900) for light mode, emerald green (text-emerald-400) for dark mode
-- ✅ Updated all text, icons, and UI elements across Header, CurrentConditions, ForecastSection, DetailedData, NearbySpots, FavoritesList
-- ✅ Added branded logo images: blue LiveSwell logo for light mode, emerald green LiveSwell logo for dark mode
-- ✅ Consistent color application throughout entire application for enhanced visual coherence and ocean aesthetic
-
-### 2025-07-17: Tide Chart Time Indicator Enhancement
-- ✅ Added current time indicator line to tide charts showing live position in 24-hour cycle
-- ✅ Implemented blue straight line with marker dot matching tide curve color scheme
-- ✅ Added conditional logic to show time indicator only on today's charts (current conditions and today's forecast)
-- ✅ Hidden time indicator from future forecast charts for cleaner appearance
-- ✅ Enhanced tide chart functionality with real-time position awareness
-
-### 2025-07-16: Live Conditions UI Improvements
-- ✅ Removed interactive wave energy visualization canvas component for cleaner interface
-- ✅ Removed interactive wind direction compass gauge for simpler data display
-- ✅ Added "Direction: " labels for wind direction consistency with other data fields
-- ✅ Reorganized wave and wind data into vertical layouts for better readability
-- ✅ Added "Live Conditions" title to main conditions card for clear identification
-- ✅ Reordered condition cards: Wave Height → Wind → Tide for logical flow
-
-### 2025-07-16: Production Deployment Fixes Applied
-- ✅ Added production environment validation for required secrets (OPENWEATHER_API_KEY, SESSION_SECRET)
-- ✅ Implemented comprehensive error handling and logging for server startup failures
-- ✅ Fixed static file serving path issues for production builds with post-build script
-- ✅ Added session middleware with secure cookie configuration for production
-- ✅ Created deployment scripts to handle correct file structure (scripts/post-build.js)
-- ✅ Added API key status logging and graceful fallback to demo data when keys missing
-- ✅ Enhanced startup logging to show environment mode and configuration status
-
-### 2025-07-16: Initial Project Setup
-- ✅ Core project structure with React frontend and Express backend
-- ✅ Real-time surf conditions with OpenWeather API integration
-- ✅ 5-day forecast with realistic tide data simulation
-- ✅ Responsive UI with modern design components
-- ✅ In-memory storage for development and testing
-
-## Deployment Strategy
-
-### Development Environment
-- **Hot Reloading**: Vite dev server with Express middleware integration
-- **Error Handling**: Runtime error overlay for development debugging
-- **File Watching**: Automatic server restart on backend changes
-
-### Production Build
-- **Client Build**: Vite optimized bundle with code splitting
-- **Server Build**: ESBuild bundle for Node.js execution
-- **Static Assets**: Served from `/dist/public` directory
-
-### Environment Configuration
-- **Database URL**: PostgreSQL connection string required
-- **Weather API**: OpenWeatherMap API key for external data
-- **Session Management**: PostgreSQL-backed session store
-
-### Scalability Considerations
-- **Serverless-Ready**: Neon database supports serverless deployments
-- **Stateless Design**: Server maintains no user state between requests
-- **Caching Strategy**: Client-side caching reduces API load
-- **Error Boundaries**: Graceful degradation when external services fail
-
-The application follows modern web development best practices with TypeScript throughout, comprehensive error handling, and a responsive design that works across desktop and mobile devices.
+- **ESBuild**: Server-side bundling.
+- **TSX**: TypeScript execution.
+- **Drizzle Kit**: Database migration management.
