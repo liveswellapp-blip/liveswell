@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FavoriteButton from "@/components/FavoriteButton";
+import SearchModal from "@/components/SearchModal";
 import { Location } from "@/types/weather";
 
 interface SurfSpot {
@@ -471,6 +472,19 @@ export default function SurfSpots() {
   const [selectedContinent, setSelectedContinent] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedState, setSelectedState] = useState("");
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const { data: spots, isLoading } = useQuery<SurfSpot[]>({
     queryKey: ["/api/locations/search", "all"],
@@ -561,6 +575,17 @@ export default function SurfSpots() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleLocationSelect = (location: Location) => {
+    setShowSearchModal(false);
+    setLocation(`/conditions?location=${location.id}`);
+  };
+
+  const handleSearchClick = () => {
+    if (isMobile) {
+      setShowSearchModal(true);
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedContinent("");
@@ -615,11 +640,30 @@ export default function SurfSpots() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 type="text"
-                placeholder="Search"
+                placeholder={isMobile ? "Tap to search surf spots..." : "Search"}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onClick={handleSearchClick}
+                readOnly={isMobile}
                 className="pl-10 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
+                data-testid="input-search-homepage"
               />
+              {isMobile && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-emerald-400 font-medium">
+                  TAP
+                </div>
+              )}
+              
+              {/* Mobile Search Button - Always visible on small screens */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSearchModal(true)}
+                className="md:hidden absolute -right-8 top-1/2 transform -translate-y-1/2 text-emerald-400 hover:text-emerald-300"
+                data-testid="button-mobile-search-homepage"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
 
             {(searchQuery.trim() || selectedContinent || selectedCountry || selectedState) && (
@@ -803,6 +847,14 @@ export default function SurfSpots() {
         </div>
       </main>
       <Footer />
+      
+      {/* Mobile Search Modal */}
+      <SearchModal
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+        onLocationSelect={handleLocationSelect}
+        initialQuery=""
+      />
     </div>
   );
 }
