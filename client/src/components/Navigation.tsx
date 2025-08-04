@@ -22,7 +22,9 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      console.log('Mobile detection:', { windowWidth: window.innerWidth, isMobile: mobile });
+      setIsMobile(mobile);
     };
     
     checkMobile();
@@ -61,8 +63,12 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
   };
 
   const handleSearchClick = () => {
+    console.log('Search clicked:', { isMobile, showSearchModal });
     if (isMobile) {
+      console.log('Opening search modal on mobile');
       setShowSearchModal(true);
+    } else {
+      console.log('Desktop mode - using normal search');
     }
   };
 
