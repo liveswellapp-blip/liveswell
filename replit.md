@@ -55,3 +55,23 @@ Preferred communication style: Simple, everyday language.
 - **ESBuild**: Server-side bundling.
 - **TSX**: TypeScript execution.
 - **Drizzle Kit**: Database migration management.
+
+## Recent Changes
+
+### 2025-07-30: Mobile Search Experience Enhancement
+- ✅ **Mobile Search Modal**: Created dedicated popup search interface for mobile devices (≤768px screens)
+- ✅ **Keyboard Visibility Fix**: Search results now visible without keyboard obstruction on mobile
+- ✅ **Responsive Detection**: Automatic mobile/desktop detection with appropriate UI behavior
+- ✅ **Real-time Search**: Live search results as you type in the mobile popup
+- ✅ **Improved UX**: Clean, focused search interface with easy navigation to surf spots
+- ✅ **Clickable Nearby Spots**: Made nearby surf spots clickable for direct navigation to conditions pages
+
+### 2025-07-30: Authentic Wind Forecast Data Integration Fixed
+- ✅ **Future Wind Data Accuracy**: Fixed future-conditions endpoint to use authentic OpenWeather API forecast data instead of simulated patterns
+- ✅ **OpenWeather 5-Day Forecast Integration**: Implemented proper interpolation from 3-hour OpenWeather forecast intervals to hourly data points
+- ✅ **Realistic Wind Speeds**: Future wind forecasts now show authentic 4-5 mph conditions matching real OpenWeather data (previously showed fabricated 16-18 mph)
+- ✅ **Direction Accuracy**: Wind directions now derived from actual OpenWeather forecast data with proper degree-to-compass conversion
+- ✅ **TypeScript Error Resolution**: Fixed NOAA integration async/await issues preventing proper data fetching
+- ✅ **48-Hour Coverage**: Complete hourly wind forecast coverage using authentic OpenWeather 5-day/3-hour forecast API
+- ✅ **Historical Data Maintained**: Historical conditions continue using authentic NOAA buoy 41117 baseline for Jacksonville Beach (1.2-1.4ft, 8s periods)
+- ✅ **All 239+ Surf Spots**: Future wind forecast accuracy now available for all global surf locations using authentic OpenWeather data
