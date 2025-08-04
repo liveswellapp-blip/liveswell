@@ -45,20 +45,9 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-h-[80vh] p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-foreground">
-              Search Surf Spots
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="h-8 w-8"
-              data-testid="button-close-search"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-xl font-semibold text-foreground">
+            Search Surf Spots
+          </DialogTitle>
         </DialogHeader>
 
         <div className="px-6 pb-4">
