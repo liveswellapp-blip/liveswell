@@ -43,14 +43,14 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] p-0 gap-0">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] p-0 gap-0 flex flex-col">
+        <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold text-foreground">
             Search Surf Spots
           </DialogTitle>
         </DialogHeader>
 
-        <div className="px-6 pb-4">
+        <div className="px-6 pb-4 flex-shrink-0">
           <div className="relative">
             <Input
               type="text"
@@ -65,8 +65,8 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
           </div>
         </div>
 
-        {/* Search Results */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
+        {/* Search Results - Scrollable container */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
           {searchQuery.length < 2 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -86,7 +86,7 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
               ))}
             </div>
           ) : searchResults.length > 0 ? (
-            <div className="space-y-1">
+            <div className="space-y-1 max-h-[350px] overflow-y-auto">
               {searchResults.map((location: Location) => (
                 <button
                   key={location.id}
