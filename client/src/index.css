@@ -252,4 +252,28 @@
   }
 }
 
+/* Mobile keyboard viewport fix for search modal */
+@media (max-width: 768px) {
+  [data-radix-dialog-overlay] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* Dynamic viewport height for mobile */
+  }
+  
+  [data-radix-dialog-content] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-height: 80vh !important;
+    max-height: 80dvh !important; /* Dynamic viewport height for mobile */
+    width: calc(100vw - 2rem) !important;
+    margin: 0 !important;
+  }
+}
+
 

@@ -16,6 +16,7 @@ interface SearchModalProps {
 
 export default function SearchModal({ isOpen, onClose, onLocationSelect, initialQuery = "" }: SearchModalProps) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
 
   const { data: searchResults = [], isLoading } = useQuery<Location[]>({
     queryKey: [`/api/locations/search?q=${encodeURIComponent(searchQuery)}`],
@@ -30,6 +31,36 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
     }
   }, [isOpen, initialQuery]);
 
+  // Handle viewport height changes for mobile keyboard
+  useEffect(() => {
+    const handleViewportChange = () => {
+      // Use visual viewport if available (better for mobile keyboards)
+      const height = window.visualViewport?.height || window.innerHeight;
+      setViewportHeight(height);
+    };
+
+    if (isOpen && typeof window !== 'undefined') {
+      // Listen for visual viewport changes (more accurate for mobile keyboards)
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', handleViewportChange);
+      } else {
+        // Fallback to window resize
+        window.addEventListener('resize', handleViewportChange);
+      }
+      
+      // Initial height check
+      handleViewportChange();
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+      } else {
+        window.removeEventListener('resize', handleViewportChange);
+      }
+    };
+  }, [isOpen]);
+
   const handleLocationSelect = (location: Location) => {
     onLocationSelect(location);
     onClose();
@@ -41,9 +72,17 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
     setSearchQuery("");
   };
 
+  // Calculate dynamic height for mobile keyboard support
+  const isMobile = window.innerWidth <= 768;
+  const maxHeight = isMobile ? Math.min(viewportHeight * 0.8, 600) : '85vh';
+  const resultsHeight = isMobile ? Math.max(200, viewportHeight * 0.4) : 280;
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[85vh] p-0 gap-0 flex flex-col">
+      <DialogContent 
+        className="sm:max-w-[500px] p-0 gap-0 flex flex-col"
+        style={{ maxHeight: isMobile ? `${maxHeight}px` : maxHeight }}
+      >
         <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold text-foreground">
             Search Surf Spots
@@ -86,7 +125,10 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
               ))}
             </div>
           ) : searchResults.length > 0 ? (
-            <div className="space-y-1 h-[280px] overflow-y-auto historical-scroll">
+            <div 
+              className="space-y-1 overflow-y-auto historical-scroll"
+              style={{ height: `${resultsHeight}px` }}
+            >
               {searchResults.map((location: Location) => (
                 <button
                   key={location.id}
