@@ -1,19 +1,47 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Waves, MapPin, Heart } from "lucide-react";
+import { Waves, MapPin, Heart, LogIn } from "lucide-react";
 import { Location } from "@/types/weather";
 import FavoriteButton from "./FavoriteButton";
+import { useAuth } from "@/components/AuthContext";
+import { Button } from "@/components/ui/button";
 
 interface FavoritesListProps {
   onLocationSelect?: (location: Location) => void;
 }
 
 export default function FavoritesList({ onLocationSelect }: FavoritesListProps) {
+  const { isAuthenticated } = useAuth();
+  
   const { data: favorites, isLoading, error } = useQuery<Location[]>({
     queryKey: ["/api/favorites"],
     refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: isAuthenticated, // Only fetch if authenticated
   });
+
+  // Show login prompt if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
+            <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
+            <span>Saved</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 space-y-4">
+            <LogIn className="h-12 w-12 mx-auto text-muted-foreground" />
+            <div>
+              <p className="text-muted-foreground mb-2">Sign in to save your favorite surf spots</p>
+              <p className="text-sm text-muted-foreground">Keep track of conditions at your preferred locations</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (

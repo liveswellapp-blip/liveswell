@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema } from "@shared/schema";
+import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from 'bcrypt';
 import { 
   healthCheck, 
   getMetrics, 
@@ -1501,88 +1502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user's favorite locations
-  app.get("/api/favorites", async (req, res) => {
-    try {
-      // For now, use a default user ID (we'll add proper auth later)
-      const userId = 1;
-      const favorites = await storage.getUserFavorites(userId);
-      res.json(favorites);
-    } catch (error) {
-      console.error('Get favorites error:', error);
-      res.status(500).json({ message: "Failed to get favorites" });
-    }
-  });
 
-  // Add a location to favorites
-  app.post("/api/favorites", async (req, res) => {
-    try {
-      const userId = 1; // Default user ID
-      const { locationId } = req.body;
-      
-      if (!locationId) {
-        return res.status(400).json({ message: "Location ID is required" });
-      }
-
-      // Check if location exists
-      const location = await storage.getLocation(locationId);
-      if (!location) {
-        return res.status(404).json({ message: "Location not found" });
-      }
-
-      // Check if already favorited
-      const isFav = await storage.isFavorite(userId, locationId);
-      if (isFav) {
-        return res.status(409).json({ message: "Location already in favorites" });
-      }
-
-      const favorite = await storage.addFavorite({ userId, locationId });
-      res.status(201).json(favorite);
-    } catch (error) {
-      console.error('Add favorite error:', error);
-      res.status(500).json({ message: "Failed to add favorite" });
-    }
-  });
-
-  // Remove a location from favorites
-  app.delete("/api/favorites/:locationId", async (req, res) => {
-    try {
-      const userId = 1; // Default user ID
-      const locationId = parseInt(req.params.locationId);
-      
-      if (isNaN(locationId)) {
-        return res.status(400).json({ message: "Invalid location ID" });
-      }
-
-      const success = await storage.removeFavorite(userId, locationId);
-      if (!success) {
-        return res.status(404).json({ message: "Favorite not found" });
-      }
-
-      res.json({ message: "Favorite removed successfully" });
-    } catch (error) {
-      console.error('Remove favorite error:', error);
-      res.status(500).json({ message: "Failed to remove favorite" });
-    }
-  });
-
-  // Check if a location is favorited
-  app.get("/api/favorites/:locationId", async (req, res) => {
-    try {
-      const userId = 1; // Default user ID
-      const locationId = parseInt(req.params.locationId);
-      
-      if (isNaN(locationId)) {
-        return res.status(400).json({ message: "Invalid location ID" });
-      }
-
-      const isFav = await storage.isFavorite(userId, locationId);
-      res.json({ isFavorite: isFav });
-    } catch (error) {
-      console.error('Check favorite error:', error);
-      res.status(500).json({ message: "Failed to check favorite status" });
-    }
-  });
 
   // Get surf spot statistics
   app.get("/api/spots/stats", async (req, res) => {
@@ -1863,6 +1783,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Regional stats error:', error);
       res.status(500).json({ message: "Failed to get regional surf statistics" });
+    }
+  });
+
+  // User Authentication Routes
+  
+  // User registration
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: result.error.issues 
+        });
+      }
+
+      const { username, password } = result.data;
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+
+      // Hash password
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Create user
+      const user = await storage.createUser({ 
+        username, 
+        password: hashedPassword 
+      });
+
+      // Create session
+      (req.session as any).user = {
+        id: user.id,
+        username: user.username,
+        loginTime: Date.now()
+      };
+
+      res.status(201).json({ 
+        message: "User registered successfully",
+        user: { id: user.id, username: user.username }
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ message: "Failed to register user" });
+    }
+  });
+
+  // User login
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      // Find user
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Check password
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (!passwordMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Create session
+      (req.session as any).user = {
+        id: user.id,
+        username: user.username,
+        loginTime: Date.now()
+      };
+
+      res.json({ 
+        message: "Login successful",
+        user: { id: user.id, username: user.username }
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: "Failed to login" });
+    }
+  });
+
+  // User logout
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Logout error:', err);
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.json({ message: "Logout successful" });
+    });
+  });
+
+  // Get current user
+  app.get("/api/auth/me", (req, res) => {
+    const user = (req.session as any)?.user;
+    
+    if (!user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    // Check session expiry (24 hours)
+    const sessionAge = Date.now() - user.loginTime;
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    
+    if (sessionAge >= maxAge) {
+      req.session.destroy(() => {});
+      return res.status(401).json({ message: "Session expired" });
+    }
+
+    res.json({ user: { id: user.id, username: user.username } });
+  });
+
+  // Middleware to require authentication
+  const requireAuth = (req: any, res: any, next: any) => {
+    const user = req.session?.user;
+    
+    if (!user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    // Check session expiry
+    const sessionAge = Date.now() - user.loginTime;
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    
+    if (sessionAge >= maxAge) {
+      req.session.destroy(() => {});
+      return res.status(401).json({ message: "Session expired" });
+    }
+
+    req.user = user;
+    next();
+  };
+
+  // Update favorites endpoints to use authenticated user
+  app.get("/api/favorites", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const favorites = await storage.getUserFavorites(userId);
+      res.json(favorites);
+    } catch (error) {
+      console.error('Get favorites error:', error);
+      res.status(500).json({ message: "Failed to get favorites" });
+    }
+  });
+
+  app.post("/api/favorites", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { locationId } = req.body;
+      
+      if (!locationId) {
+        return res.status(400).json({ message: "Location ID is required" });
+      }
+
+      // Check if location exists
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      // Check if already favorited
+      const isFav = await storage.isFavorite(userId, locationId);
+      if (isFav) {
+        return res.status(409).json({ message: "Location already in favorites" });
+      }
+
+      const favorite = await storage.addFavorite({ userId, locationId });
+      res.status(201).json(favorite);
+    } catch (error) {
+      console.error('Add favorite error:', error);
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  app.delete("/api/favorites/:locationId", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const locationId = parseInt(req.params.locationId);
+      
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+
+      const success = await storage.removeFavorite(userId, locationId);
+      if (!success) {
+        return res.status(404).json({ message: "Favorite not found" });
+      }
+
+      res.json({ message: "Favorite removed successfully" });
+    } catch (error) {
+      console.error('Remove favorite error:', error);
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  app.get("/api/favorites/:locationId", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const locationId = parseInt(req.params.locationId);
+      
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+
+      const isFav = await storage.isFavorite(userId, locationId);
+      res.json({ isFavorite: isFav });
+    } catch (error) {
+      console.error('Check favorite error:', error);
+      res.status(500).json({ message: "Failed to check favorite status" });
     }
   });
 

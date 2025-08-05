@@ -1,4 +1,6 @@
 import { users, locations, surfConditions, favorites, type User, type InsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, like, or } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -227,4 +229,125 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// PostgreSQL Storage Implementation
+export class DbStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  async getLocation(id: number): Promise<Location | undefined> {
+    const result = await db.select().from(locations).where(eq(locations.id, id));
+    return result[0];
+  }
+
+  async getLocationByCoords(lat: number, lng: number): Promise<Location | undefined> {
+    // Simple coordinate matching - in production you'd use PostGIS
+    const tolerance = 0.1;
+    const allLocations = await db.select().from(locations);
+    return allLocations.find(location => {
+      const latDiff = Math.abs(parseFloat(location.latitude) - lat);
+      const lngDiff = Math.abs(parseFloat(location.longitude) - lng);
+      return latDiff <= tolerance && lngDiff <= tolerance;
+    });
+  }
+
+  async getAllLocations(): Promise<Location[]> {
+    return await db.select().from(locations);
+  }
+
+  async searchLocations(query: string): Promise<Location[]> {
+    if (!query.trim()) {
+      return await this.getAllLocations();
+    }
+    
+    const lowerQuery = `%${query.toLowerCase()}%`;
+    return await db.select().from(locations).where(
+      or(
+        like(locations.name, lowerQuery),
+        like(locations.city, lowerQuery),
+        like(locations.country, lowerQuery)
+      )
+    );
+  }
+
+  async createLocation(location: InsertLocation): Promise<Location> {
+    const result = await db.insert(locations).values(location).returning();
+    return result[0];
+  }
+
+  async getSurfConditions(locationId: number): Promise<SurfConditions | undefined> {
+    const result = await db.select().from(surfConditions).where(eq(surfConditions.locationId, locationId));
+    return result[0];
+  }
+
+  async createSurfConditions(conditions: InsertSurfConditions): Promise<SurfConditions> {
+    const result = await db.insert(surfConditions).values(conditions).returning();
+    return result[0];
+  }
+
+  async updateSurfConditions(locationId: number, updateData: Partial<InsertSurfConditions>): Promise<SurfConditions | undefined> {
+    const result = await db.update(surfConditions)
+      .set({ ...updateData, lastUpdated: new Date() })
+      .where(eq(surfConditions.locationId, locationId))
+      .returning();
+    return result[0];
+  }
+
+  async getUserFavorites(userId: number): Promise<Location[]> {
+    const result = await db.select({
+      id: locations.id,
+      name: locations.name,
+      city: locations.city,
+      country: locations.country,
+      latitude: locations.latitude,
+      longitude: locations.longitude,
+      isCoastal: locations.isCoastal,
+    })
+    .from(favorites)
+    .innerJoin(locations, eq(favorites.locationId, locations.id))
+    .where(eq(favorites.userId, userId));
+    
+    return result;
+  }
+
+  async addFavorite(favorite: InsertFavorite): Promise<Favorite> {
+    const result = await db.insert(favorites).values(favorite).returning();
+    return result[0];
+  }
+
+  async removeFavorite(userId: number, locationId: number): Promise<boolean> {
+    const result = await db.delete(favorites).where(
+      and(
+        eq(favorites.userId, userId),
+        eq(favorites.locationId, locationId)
+      )
+    ).returning();
+    
+    return result.length > 0;
+  }
+
+  async isFavorite(userId: number, locationId: number): Promise<boolean> {
+    const result = await db.select().from(favorites).where(
+      and(
+        eq(favorites.userId, userId),
+        eq(favorites.locationId, locationId)
+      )
+    );
+    
+    return result.length > 0;
+  }
+}
+
+// Use database storage instead of memory storage
+export const storage = new DbStorage();

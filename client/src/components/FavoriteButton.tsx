@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/components/AuthContext";
 
 interface FavoriteButtonProps {
   locationId: number;
@@ -14,15 +15,22 @@ interface FavoriteButtonProps {
 export default function FavoriteButton({ locationId, locationName, size = "md" }: FavoriteButtonProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
 
-  // Check if location is favorited
+  // Check if location is favorited (only if authenticated)
   const { data: favoriteStatus } = useQuery({
     queryKey: ["/api/favorites", locationId],
     queryFn: async () => {
       const response = await fetch(`/api/favorites/${locationId}`);
-      if (!response.ok) throw new Error("Failed to check favorite status");
+      if (!response.ok) {
+        if (response.status === 401) {
+          return { isFavorite: false }; // Not authenticated
+        }
+        throw new Error("Failed to check favorite status");
+      }
       return response.json();
     },
+    enabled: isAuthenticated, // Only run query if authenticated
   });
 
   const isFavorite = favoriteStatus?.isFavorite || false;
@@ -77,6 +85,15 @@ export default function FavoriteButton({ locationId, locationName, size = "md" }
   });
 
   const handleToggleFavorite = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save surf spots to your favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (isFavorite) {
       removeFavoriteMutation.mutate();
     } else {
