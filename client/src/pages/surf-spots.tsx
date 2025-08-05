@@ -526,8 +526,12 @@ export default function SurfSpots() {
   const filteredSpots = useMemo(() => {
     if (!spots) return [];
     
-    // Don't show any spots until filters are applied or search is used
-    if (!selectedContinent && !selectedCountry && !selectedState && !searchQuery.trim()) {
+    // Show results if any filter is applied OR if there's a search query
+    const hasFilters = selectedContinent || selectedCountry || selectedState;
+    const hasSearch = searchQuery.trim().length > 0;
+    
+    // Don't show any spots until at least one filter or search is used
+    if (!hasFilters && !hasSearch) {
       return [];
     }
     
