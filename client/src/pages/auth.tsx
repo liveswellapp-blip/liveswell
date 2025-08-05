@@ -70,7 +70,7 @@ export default function AuthPage() {
       </div>
 
       {/* Footer */}
-      <div className="text-center py-8 text-emerald-300/70">
+      <div className="text-center py-8 text-white/70">
         <p className="text-sm">
           Real-time surf conditions and forecasts for surfers worldwide
         </p>

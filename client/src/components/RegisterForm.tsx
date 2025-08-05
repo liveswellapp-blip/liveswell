@@ -91,7 +91,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
     <Card className="w-full max-w-md mx-auto bg-black/40 backdrop-blur-sm border-emerald-800/50">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center text-white">Create Account</CardTitle>
-        <CardDescription className="text-center text-emerald-300/80">
+        <CardDescription className="text-center text-white/80">
           Join LiveSwell to save your favorite surf spots and track conditions
         </CardDescription>
       </CardHeader>
@@ -111,12 +111,12 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-emerald-300">Username</FormLabel>
+                  <FormLabel className="text-white">Username</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Choose a username"
-                      className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
+                      className="bg-black/20 border-emerald-800/50 text-white placeholder:text-white/50 focus:border-emerald-400"
                       data-testid="input-register-username"
                     />
                   </FormControl>
@@ -130,7 +130,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-emerald-300">Password</FormLabel>
+                  <FormLabel className="text-white">Password</FormLabel>
                   <FormControl>
                     <div className="space-y-2">
                       <div className="relative">
@@ -138,14 +138,14 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
                           {...field}
                           type={showPassword ? "text" : "password"}
                           placeholder="Create a password"
-                          className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
+                          className="bg-black/20 border-emerald-800/50 text-white placeholder:text-white/50 focus:border-emerald-400"
                           data-testid="input-register-password"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-emerald-300 hover:text-emerald-200"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white hover:text-white/80"
                           onClick={() => setShowPassword(!showPassword)}
                           data-testid="button-toggle-register-password"
                         >
@@ -171,7 +171,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
                               />
                             ))}
                           </div>
-                          <p className="text-xs text-emerald-300/70">
+                          <p className="text-xs text-white/70">
                             Strength: {strengthLabels[passwordStrength - 1] || "Very Weak"}
                           </p>
                         </div>
@@ -188,21 +188,21 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-emerald-300">Confirm Password</FormLabel>
+                  <FormLabel className="text-white">Confirm Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         {...field}
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
-                        className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
+                        className="bg-black/20 border-emerald-800/50 text-white placeholder:text-white/50 focus:border-emerald-400"
                         data-testid="input-confirm-password"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-emerald-300 hover:text-emerald-200"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-white hover:text-white/80"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         data-testid="button-toggle-confirm-password"
                       >
@@ -241,11 +241,11 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
         </Form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-emerald-300/80">
+          <p className="text-sm text-white/80">
             Already have an account?{" "}
             <Button
               variant="link"
-              className="p-0 h-auto font-medium text-emerald-300 hover:text-emerald-200"
+              className="p-0 h-auto font-medium text-white hover:text-white/80"
               onClick={onSwitchToLogin}
               data-testid="button-switch-login"
             >
