@@ -5,22 +5,45 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Favorites from "@/pages/favorites";
 import Settings from "@/pages/settings";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
+import AuthPage from "@/pages/auth";
 
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={SurfSpots} />
-      <Route path="/conditions" component={Home} />
-      <Route path="/favorites" component={Favorites} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/monitoring" component={Monitoring} />
+      <Route path="/auth" component={AuthPage} />
+      <Route path="/">
+        <ProtectedRoute>
+          <SurfSpots />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/conditions">
+        <ProtectedRoute>
+          <Home />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/favorites">
+        <ProtectedRoute>
+          <Favorites />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/settings">
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/monitoring">
+        <ProtectedRoute>
+          <Monitoring />
+        </ProtectedRoute>
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

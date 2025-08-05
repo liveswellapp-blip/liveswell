@@ -2,28 +2,10 @@ import { Settings, Activity, User, LogOut, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useAuth } from "@/components/AuthContext";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import LoginForm from "@/components/LoginForm";
-import RegisterForm from "@/components/RegisterForm";
-import { useState } from "react";
 import logoImageDark from "@assets/LiveSwell logo (6)_1753469985642.png";
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
-  const [authDialogOpen, setAuthDialogOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-
-  const handleAuthSuccess = () => {
-    setAuthDialogOpen(false);
-  };
-
-  const switchToRegister = () => {
-    setAuthMode("register");
-  };
-
-  const switchToLogin = () => {
-    setAuthMode("login");
-  };
 
   return (
     <header className="bg-background shadow-lg sticky top-0 z-50 border-b border-border">
@@ -75,32 +57,17 @@ export default function Header() {
                 </Button>
               </div>
             ) : (
-              <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-white border-white hover:bg-white hover:text-gray-900"
-                    data-testid="button-open-auth"
-                  >
-                    <LogIn className="h-4 w-4 mr-1" />
-                    Sign In
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  {authMode === "login" ? (
-                    <LoginForm
-                      onSuccess={handleAuthSuccess}
-                      onSwitchToRegister={switchToRegister}
-                    />
-                  ) : (
-                    <RegisterForm
-                      onSuccess={handleAuthSuccess}
-                      onSwitchToLogin={switchToLogin}
-                    />
-                  )}
-                </DialogContent>
-              </Dialog>
+              <Link href="/auth">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-white border-white hover:bg-white hover:text-gray-900"
+                  data-testid="button-open-auth"
+                >
+                  <LogIn className="h-4 w-4 mr-1" />
+                  Sign In
+                </Button>
+              </Link>
             )}
           </div>
         </div>

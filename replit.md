@@ -58,6 +58,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### 2025-08-05: Complete User Authentication System with Dedicated Pages
+- ✅ **Dedicated Authentication Pages**: Created `/auth` route with full-page login and registration forms
+- ✅ **Protected Route System**: All main pages now require authentication, automatic redirect to login
+- ✅ **PostgreSQL User Storage**: Migrated from in-memory to database storage for persistent user accounts
+- ✅ **Secure Authentication**: Bcrypt password hashing, express sessions, 24-hour session expiry
+- ✅ **Form Validation**: Comprehensive form validation with password strength indicators
+- ✅ **Protected Favorites**: Favorites system now requires authentication, shows login prompts for guests
+- ✅ **Clean Navigation**: Header shows user status, one-click login/logout, proper authentication flow
+- ✅ **Accessibility Fixes**: Removed dialog accessibility warnings by using dedicated pages instead
+
 ### 2025-08-05: Nearby Surf Spots Navigation System Complete
 - ✅ **Nearby Spots Navigation Fix**: Resolved navigation issues where clicking nearby surf spot cards highlighted but didn't navigate
 - ✅ **URL Parameter Detection**: Fixed useEffect dependencies to properly detect URL changes and load new location data
