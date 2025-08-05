@@ -251,3 +251,32 @@
     background-color: hsl(var(--forest-green));
   }
 }
+
+/* Search modal custom scrollbar - always visible for better UX */
+.search-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.search-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+.search-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.4);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.2s ease;
+}
+
+.search-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* Firefox scrollbar support */
+.search-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.4) hsl(var(--muted) / 0.5);
+}

@@ -65,8 +65,8 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
           </div>
         </div>
 
-        {/* Search Results - Scrollable container */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0">
+        {/* Search Results - Scrollable container with visible scrollbar */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6 min-h-0 search-scrollbar">
           {searchQuery.length < 2 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -86,7 +86,7 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
               ))}
             </div>
           ) : searchResults.length > 0 ? (
-            <div className="space-y-1 max-h-[350px] overflow-y-auto">
+            <div className="space-y-1 max-h-[350px] overflow-y-auto search-scrollbar pr-2">
               {searchResults.map((location: Location) => (
                 <button
                   key={location.id}
