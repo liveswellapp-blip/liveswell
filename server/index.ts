@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -34,9 +35,16 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure session middleware
+// Configure session middleware with PostgreSQL store
 const sessionSecret = process.env.SESSION_SECRET || 'dev-secret-key-change-in-production';
+const PgSession = connectPg(session);
+
 app.use(session({
+  store: new PgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: 'session', // Table name for sessions
+    createTableIfMissing: true, // Automatically create table if it doesn't exist
+  }),
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
