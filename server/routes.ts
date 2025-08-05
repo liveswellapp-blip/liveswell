@@ -19,6 +19,7 @@ import {
 } from './rate-limiter';
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
 import { findNearbyStations } from "./noaa-integration";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -474,6 +475,21 @@ async function fetchWeatherData(lat: number, lon: number) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup Replit Auth middleware
+  await setupAuth(app);
+  
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // Admin authentication routes (public endpoints)
   app.post("/api/admin/login", adminLogin);
   app.post("/api/admin/logout", adminLogout);

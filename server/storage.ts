@@ -1,9 +1,10 @@
-import { users, locations, surfConditions, favorites, userProfiles, type User, type InsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
@@ -17,14 +18,14 @@ export interface IStorage {
   createSurfConditions(conditions: InsertSurfConditions): Promise<SurfConditions>;
   updateSurfConditions(locationId: number, conditions: Partial<InsertSurfConditions>): Promise<SurfConditions | undefined>;
   
-  getUserFavorites(userId: number): Promise<Location[]>;
+  getUserFavorites(userId: string): Promise<Location[]>;
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
-  removeFavorite(userId: number, locationId: number): Promise<boolean>;
-  isFavorite(userId: number, locationId: number): Promise<boolean>;
+  removeFavorite(userId: string, locationId: number): Promise<boolean>;
+  isFavorite(userId: string, locationId: number): Promise<boolean>;
   
-  getUserProfile(userId: number): Promise<UserProfile | undefined>;
+  getUserProfile(userId: string): Promise<UserProfile | undefined>;
   createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
-  updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<UserProfile | undefined>;
+  updateUserProfile(userId: string, profile: UpdateUserProfile): Promise<UserProfile | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -248,21 +249,36 @@ export class MemStorage implements IStorage {
   }
 }
 
-// PostgreSQL Storage Implementation
-export class DbStorage implements IStorage {
-  async getUser(id: number): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id));
-    return result[0];
+// PostgreSQL Storage Implementation for Replit Auth
+export class DatabaseStorage implements IStorage {
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.email, email));
-    return result[0];
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(user).returning();
-    return result[0];
+    const [result] = await db.insert(users).values(user).returning();
+    return result;
   }
 
   async getLocation(id: number): Promise<Location | undefined> {
@@ -323,7 +339,7 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getUserFavorites(userId: number): Promise<Location[]> {
+  async getUserFavorites(userId: string): Promise<Location[]> {
     const result = await db.select({
       id: locations.id,
       name: locations.name,
@@ -341,11 +357,11 @@ export class DbStorage implements IStorage {
   }
 
   async addFavorite(favorite: InsertFavorite): Promise<Favorite> {
-    const result = await db.insert(favorites).values(favorite).returning();
-    return result[0];
+    const [result] = await db.insert(favorites).values(favorite).returning();
+    return result;
   }
 
-  async removeFavorite(userId: number, locationId: number): Promise<boolean> {
+  async removeFavorite(userId: string, locationId: number): Promise<boolean> {
     const result = await db.delete(favorites).where(
       and(
         eq(favorites.userId, userId),
@@ -356,7 +372,7 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
-  async isFavorite(userId: number, locationId: number): Promise<boolean> {
+  async isFavorite(userId: string, locationId: number): Promise<boolean> {
     const result = await db.select().from(favorites).where(
       and(
         eq(favorites.userId, userId),
@@ -367,24 +383,24 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
-  async getUserProfile(userId: number): Promise<UserProfile | undefined> {
-    const result = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
-    return result[0];
+  async getUserProfile(userId: string): Promise<UserProfile | undefined> {
+    const [result] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+    return result;
   }
 
   async createUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
-    const result = await db.insert(userProfiles).values(profile).returning();
-    return result[0];
+    const [result] = await db.insert(userProfiles).values(profile).returning();
+    return result;
   }
 
-  async updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<UserProfile | undefined> {
-    const result = await db.update(userProfiles)
+  async updateUserProfile(userId: string, profile: UpdateUserProfile): Promise<UserProfile | undefined> {
+    const [result] = await db.update(userProfiles)
       .set({ ...profile, updatedAt: new Date() })
       .where(eq(userProfiles.userId, userId))
       .returning();
-    return result[0];
+    return result;
   }
 }
 
 // Use database storage instead of memory storage
-export const storage = new DbStorage();
+export const storage = new DatabaseStorage();
