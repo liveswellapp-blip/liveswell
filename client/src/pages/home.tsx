@@ -59,7 +59,10 @@ export default function Home() {
   // Load location based on URL parameter or default
   useEffect(() => {
     const loadLocation = async () => {
-      const locationParam = getLocationNameFromUrl();
+      const urlParams = new URLSearchParams(window.location.search);
+      const locationParam = urlParams.get('location');
+      
+      console.log('Loading location from URL:', locationParam);
       
       if (locationParam) {
         // Check if it's a numeric ID
@@ -72,6 +75,7 @@ export default function Home() {
               const locations = await response.json();
               const location = locations.find((loc: Location) => loc.id === locationId);
               if (location) {
+                console.log('Found location by ID:', location.name);
                 setCurrentLocation(location);
                 return;
               }
@@ -86,6 +90,7 @@ export default function Home() {
             if (response.ok) {
               const locations = await response.json();
               if (locations.length > 0) {
+                console.log('Found location by name:', locations[0].name);
                 setCurrentLocation(locations[0]);
                 return;
               }
@@ -96,22 +101,25 @@ export default function Home() {
         }
       }
       
-      // Fallback to default location
-      try {
-        const response = await fetch("/api/locations/search?q=Malibu");
-        if (response.ok) {
-          const locations = await response.json();
-          if (locations.length > 0) {
-            setCurrentLocation(locations[0]);
+      // Fallback to default location only if no current location
+      if (!currentLocation) {
+        try {
+          const response = await fetch("/api/locations/search?q=Malibu");
+          if (response.ok) {
+            const locations = await response.json();
+            if (locations.length > 0) {
+              console.log('Loading default location:', locations[0].name);
+              setCurrentLocation(locations[0]);
+            }
           }
+        } catch (error) {
+          console.error("Error loading default location:", error);
         }
-      } catch (error) {
-        console.error("Error loading default location:", error);
       }
     };
 
     loadLocation();
-  }, [location]);
+  }, [location, window.location.search]);
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">

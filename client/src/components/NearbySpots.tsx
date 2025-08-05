@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Waves, Wind } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Location, NearbySpot } from "@/types/weather";
 
 interface NearbySpotsProps {
@@ -10,10 +10,16 @@ interface NearbySpotsProps {
 }
 
 export default function NearbySpots({ location }: NearbySpotsProps) {
+  const [, setLocation] = useLocation();
   const { data: nearbySpots = [], isLoading, error } = useQuery<NearbySpot[]>({
     queryKey: [`/api/locations/${location.id}/nearby`],
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
+
+  const handleSpotClick = (spotId: number) => {
+    console.log('Navigating to spot:', spotId);
+    setLocation(`/conditions?location=${spotId}`);
+  };
 
   if (error) {
     return (
@@ -53,29 +59,32 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
             ))
           ) : nearbySpots.length > 0 ? (
             nearbySpots.map((spot) => (
-              <Link key={spot.id} to={`/conditions?location=${spot.id}`} data-testid={`link-nearby-spot-${spot.id}`}>
-                <div className="bg-muted rounded-lg p-4 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border" data-testid={`card-nearby-spot-${spot.id}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
-                      <Waves className="h-6 w-6 text-emerald-600 dark:text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-blue-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" data-testid={`text-spot-name-${spot.id}`}>{spot.name}</h4>
-                      <p className="text-sm text-blue-900 dark:text-white" data-testid={`text-spot-distance-${spot.id}`}>{spot.distance} miles away</p>
-                    </div>
+              <div 
+                key={spot.id} 
+                onClick={() => handleSpotClick(spot.id)}
+                className="bg-muted rounded-lg p-4 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border" 
+                data-testid={`card-nearby-spot-${spot.id}`}
+              >
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
+                    <Waves className="h-6 w-6 text-emerald-600 dark:text-white" />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Waves className="text-blue-900 dark:text-white h-4 w-4" />
-                      <span className="font-medium text-blue-900 dark:text-emerald-400" data-testid={`text-wave-height-${spot.id}`}>{spot.waveHeight}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Wind className="text-blue-900 dark:text-white h-4 w-4" />
-                      <span className="text-sm text-blue-900 dark:text-emerald-400" data-testid={`text-wind-speed-${spot.id}`}>{spot.wind}</span>
-                    </div>
+                  <div>
+                    <h4 className="font-semibold text-blue-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" data-testid={`text-spot-name-${spot.id}`}>{spot.name}</h4>
+                    <p className="text-sm text-blue-900 dark:text-white" data-testid={`text-spot-distance-${spot.id}`}>{spot.distance} miles away</p>
                   </div>
                 </div>
-              </Link>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Waves className="text-blue-900 dark:text-white h-4 w-4" />
+                    <span className="font-medium text-blue-900 dark:text-emerald-400" data-testid={`text-wave-height-${spot.id}`}>{spot.waveHeight}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Wind className="text-blue-900 dark:text-white h-4 w-4" />
+                    <span className="text-sm text-blue-900 dark:text-emerald-400" data-testid={`text-wind-speed-${spot.id}`}>{spot.wind}</span>
+                  </div>
+                </div>
+              </div>
             ))
           ) : (
             <div className="col-span-full text-center text-blue-900 dark:text-emerald-400">
