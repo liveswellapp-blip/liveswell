@@ -41,8 +41,8 @@ export default function Header() {
               <div className="flex items-center space-x-2">
                 <div className="flex items-center space-x-2 text-white">
                   <User className="h-4 w-4" />
-                  <span className="text-sm font-medium" data-testid="text-username">
-                    {user?.username}
+                  <span className="text-sm font-medium" data-testid="text-email">
+                    {user?.email}
                   </span>
                 </div>
                 <Button

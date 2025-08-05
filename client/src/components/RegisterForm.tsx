@@ -11,10 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const registerSchema = z.object({
-  username: z.string()
-    .min(3, "Username must be at least 3 characters")
-    .max(30, "Username must be less than 30 characters")
-    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string()
     .min(6, "Password must be at least 6 characters")
     .max(100, "Password must be less than 100 characters"),
@@ -39,7 +36,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
   const form = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
       confirmPassword: "",
     },
@@ -105,16 +102,17 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
 
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white">Username</FormLabel>
+                  <FormLabel className="text-white">Email</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Choose a username"
+                      type="email"
+                      placeholder="Enter your email address"
                       className="bg-black/20 border-emerald-800/50 text-white placeholder:text-white/50 focus:border-emerald-400"
-                      data-testid="input-register-username"
+                      data-testid="input-register-email"
                     />
                   </FormControl>
                   <FormMessage />

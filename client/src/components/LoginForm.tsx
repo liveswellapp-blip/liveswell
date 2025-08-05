@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -30,7 +30,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -79,16 +79,17 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
 
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white">Username</FormLabel>
+                  <FormLabel className="text-white">Email</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Enter your username"
+                      type="email"
+                      placeholder="Enter your email address"
                       className="bg-black/20 border-emerald-800/50 text-white placeholder:text-white/50 focus:border-emerald-400"
-                      data-testid="input-username"
+                      data-testid="input-email"
                     />
                   </FormControl>
                   <FormMessage />

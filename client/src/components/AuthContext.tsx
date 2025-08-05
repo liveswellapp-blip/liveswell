@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface User {
   id: number;
-  username: string;
+  email: string;
 }
 
 interface AuthContextType {
