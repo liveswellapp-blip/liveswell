@@ -1,6 +1,6 @@
 import { users, locations, surfConditions, favorites, userProfiles, type User, type InsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, or } from "drizzle-orm";
+import { eq, and, like, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -293,9 +293,9 @@ export class DbStorage implements IStorage {
     const lowerQuery = `%${query.toLowerCase()}%`;
     return await db.select().from(locations).where(
       or(
-        like(locations.name, lowerQuery),
-        like(locations.city, lowerQuery),
-        like(locations.country, lowerQuery)
+        sql`LOWER(${locations.name}) LIKE ${lowerQuery}`,
+        sql`LOWER(${locations.city}) LIKE ${lowerQuery}`,
+        sql`LOWER(${locations.country}) LIKE ${lowerQuery}`
       )
     );
   }
