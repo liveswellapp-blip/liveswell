@@ -18,7 +18,15 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
 
   const handleSpotClick = (spotId: number) => {
     console.log('Navigating to spot:', spotId);
-    setLocation(`/conditions?location=${spotId}`);
+    const newUrl = `/conditions?location=${spotId}`;
+    window.history.pushState(null, '', newUrl);
+    
+    // Dispatch a popstate event to trigger navigation
+    const popStateEvent = new PopStateEvent('popstate', { state: null });
+    window.dispatchEvent(popStateEvent);
+    
+    // Also try wouter navigation as backup
+    setLocation(newUrl);
   };
 
   if (error) {

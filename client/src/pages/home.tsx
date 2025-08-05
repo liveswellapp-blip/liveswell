@@ -20,6 +20,7 @@ export default function Home() {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [location] = useLocation();
+  const [urlParams, setUrlParams] = useState(new URLSearchParams(window.location.search));
 
   // Get location name from URL parameters
   const getLocationNameFromUrl = () => {
@@ -56,18 +57,34 @@ export default function Home() {
     );
   };
 
+  // Monitor URL changes
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const newParams = new URLSearchParams(window.location.search);
+      setUrlParams(newParams);
+    };
+
+    window.addEventListener('popstate', handleUrlChange);
+    return () => window.removeEventListener('popstate', handleUrlChange);
+  }, []);
+
   // Load location based on URL parameter or default
   useEffect(() => {
     const loadLocation = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
       const locationParam = urlParams.get('location');
       
-      console.log('Loading location from URL:', locationParam);
+      console.log('Loading location from URL:', locationParam, 'Current location:', currentLocation?.name);
       
       if (locationParam) {
         // Check if it's a numeric ID
         const locationId = parseInt(locationParam);
         if (!isNaN(locationId)) {
+          // Skip if we already have this location loaded
+          if (currentLocation && currentLocation.id === locationId) {
+            console.log('Location already loaded:', currentLocation.name);
+            return;
+          }
+          
           // Load specific location by ID
           try {
             const response = await fetch(`/api/locations/all`);
@@ -119,7 +136,7 @@ export default function Home() {
     };
 
     loadLocation();
-  }, [location]);
+  }, [location, urlParams]);
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">
