@@ -111,7 +111,7 @@ export default function Home() {
     };
 
     loadLocation();
-  }, [location, window.location.search]);
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">
