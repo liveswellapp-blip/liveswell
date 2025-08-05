@@ -252,34 +252,4 @@
   }
 }
 
-/* Search modal custom scrollbar - always visible for better UX */
-.search-scrollbar {
-  scrollbar-width: auto !important;
-  scrollbar-color: #9ca3af #f3f4f6 !important;
-}
 
-.search-scrollbar::-webkit-scrollbar {
-  width: 14px !important;
-  background: #f3f4f6 !important;
-}
-
-.search-scrollbar::-webkit-scrollbar-track {
-  background: #f3f4f6 !important;
-  border-radius: 8px !important;
-  border: 1px solid #e5e7eb !important;
-}
-
-.search-scrollbar::-webkit-scrollbar-thumb {
-  background: #9ca3af !important;
-  border-radius: 8px !important;
-  border: 2px solid #f3f4f6 !important;
-  min-height: 20px !important;
-}
-
-.search-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6b7280 !important;
-}
-
-.search-scrollbar::-webkit-scrollbar-button {
-  display: none !important;
-}
