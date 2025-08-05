@@ -66,7 +66,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center text-white">Welcome Back</CardTitle>
         <CardDescription className="text-center text-white/80">
-          login to view live surf conditions
+          Login to view live surf conditions!
         </CardDescription>
       </CardHeader>
       <CardContent>
