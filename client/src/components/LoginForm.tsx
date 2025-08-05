@@ -65,9 +65,6 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
     <Card className="w-full max-w-md mx-auto bg-black/40 backdrop-blur-sm border-emerald-800/50">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center text-white">Welcome Back</CardTitle>
-        <CardDescription className="text-center text-white/80">
-          Sign in to access your surf spots and favorites
-        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
