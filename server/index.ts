@@ -43,7 +43,7 @@ app.use(session({
   cookie: {
     secure: false, // Allow non-HTTPS in development
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days for development work
+    maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days for extended development work
   }
 }));
 
