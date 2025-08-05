@@ -35,7 +35,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-emerald-900">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-emerald-900 flex flex-col">
       {/* Header */}
       <div className="w-full bg-black/30 backdrop-blur-sm border-b border-emerald-800/30">
         <div className="container mx-auto px-4 py-6">
@@ -53,7 +53,7 @@ export default function AuthPage() {
       </div>
 
       {/* Auth Form */}
-      <div className="flex items-start md:items-center justify-center min-h-[calc(100vh-120px)] p-4 pt-12 md:pt-4">
+      <div className="flex items-start md:items-center justify-center flex-1 p-4 pt-12 md:pt-4">
         <div className="w-full max-w-md">
           {authMode === "login" ? (
             <LoginForm
@@ -70,7 +70,7 @@ export default function AuthPage() {
       </div>
 
       {/* Footer */}
-      <div className="bg-black text-center py-6 text-white/70 mt-8">
+      <div className="bg-black text-center py-6 text-white/70">
         <p className="text-sm">
           Real-time surf conditions and forecasts for surfers worldwide
         </p>
