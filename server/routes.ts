@@ -1258,18 +1258,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const dailyForecasts = [];
           
           for (let i = 1; i <= 5; i++) {
-            const windSpeed = 8 + Math.random() * 12;
-            const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
-            const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
+            // Create more realistic and consistent demo forecast data
+            const baseWindSpeed = 6 + (Math.sin(i * 0.8) + 1) * 6; // Vary between 6-18 mph
+            const windSpeed = Math.max(2, baseWindSpeed);
+            const waveHeight = Math.max(1, windSpeed * 0.25 + Math.sin(i * 1.2) * 1.5);
+            
+            let conditions;
+            if (windSpeed < 5) {
+              conditions = "Glassy";
+            } else if (windSpeed < 8) {
+              conditions = "Clean";
+            } else if (windSpeed < 12) {
+              conditions = "Fair";
+            } else if (windSpeed < 18) {
+              conditions = "Poor";
+            } else {
+              conditions = "Very Poor";
+            }
             
             // Generate realistic tide data for each day
             const tides = generateRealisticTides(i, timezone);
             
+            // Create consistent wave height range
+            const waveMin = Math.floor(waveHeight);
+            const waveMax = Math.ceil(waveHeight + 0.5);
+            
             dailyForecasts.push({
               date: getDayName(i),
-              waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
+              waveHeight: `${waveMin}-${waveMax} ft`,
               conditions,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(Math.random() * 360)}`,
+              wind: `${Math.round(windSpeed)} mph ${getWindDirection(45 + i * 60)}`,
               icon: "🌊",
               tides
             });
@@ -1290,18 +1308,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const dailyForecasts = [];
           
           for (let i = 1; i <= 5; i++) {
-            const windSpeed = 8 + Math.random() * 12;
-            const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
-            const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
+            // Create more realistic and consistent demo forecast data
+            const baseWindSpeed = 6 + (Math.sin(i * 0.8) + 1) * 6; // Vary between 6-18 mph
+            const windSpeed = Math.max(2, baseWindSpeed);
+            const waveHeight = Math.max(1, windSpeed * 0.25 + Math.sin(i * 1.2) * 1.5);
+            
+            let conditions;
+            if (windSpeed < 5) {
+              conditions = "Glassy";
+            } else if (windSpeed < 8) {
+              conditions = "Clean";
+            } else if (windSpeed < 12) {
+              conditions = "Fair";
+            } else if (windSpeed < 18) {
+              conditions = "Poor";
+            } else {
+              conditions = "Very Poor";
+            }
             
             // Generate realistic tide data for each day
             const tides = generateRealisticTides(i, timezone);
             
+            // Create consistent wave height range
+            const waveMin = Math.floor(waveHeight);
+            const waveMax = Math.ceil(waveHeight + 0.5);
+            
             dailyForecasts.push({
               date: getDayName(i),
-              waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
+              waveHeight: `${waveMin}-${waveMax} ft`,
               conditions,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(Math.random() * 360)}`,
+              wind: `${Math.round(windSpeed)} mph ${getWindDirection(45 + i * 60)}`,
               icon: "🌊",
               tides
             });
@@ -1338,36 +1374,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         for (const dayKey of sortedDays.slice(1, 6)) {
           const dayItems = forecastsByDay.get(dayKey);
+          if (!dayItems || dayItems.length === 0) continue;
           
-          // Use the first item of the day for conditions (could be improved by averaging)
-          const representativeItem = dayItems[0];
-          const windSpeed = representativeItem.wind.speed;
-          const waveHeight = Math.max(1, windSpeed * 0.3 + Math.random() * 2);
-          const conditions = windSpeed < 10 ? "Clean" : windSpeed < 15 ? "Fair" : windSpeed < 20 ? "Poor" : "Very Poor";
+          // Calculate average conditions from all readings for the day
+          const avgWindSpeed = dayItems.reduce((sum: number, item: any) => sum + (item.wind?.speed || 0), 0) / dayItems.length;
+          const avgWindDeg = dayItems.reduce((sum: number, item: any) => sum + (item.wind?.deg || 0), 0) / dayItems.length;
+          const maxWindSpeed = Math.max(...dayItems.map((item: any) => item.wind?.speed || 0));
+          
+          // More realistic wave height calculation based on wind and location
+          // Base wave height on sustained wind with location-specific factors
+          const baseWaveHeight = Math.max(0.5, avgWindSpeed * 0.25);
+          const windSwell = maxWindSpeed > 15 ? (maxWindSpeed - 15) * 0.2 : 0;
+          const waveHeight = Math.max(1, baseWaveHeight + windSwell);
+          
+          // More nuanced surf conditions based on wind speed and direction
+          let conditions;
+          if (avgWindSpeed < 5) {
+            conditions = "Glassy";
+          } else if (avgWindSpeed < 8) {
+            conditions = "Clean";
+          } else if (avgWindSpeed < 12) {
+            conditions = "Fair";
+          } else if (avgWindSpeed < 18) {
+            conditions = "Poor";
+          } else {
+            conditions = "Very Poor";
+          }
+          
+          // Adjust conditions for offshore vs onshore winds (simplified)
+          if (avgWindDeg >= 45 && avgWindDeg <= 135) {
+            // Onshore winds - worse conditions
+            if (conditions === "Clean") conditions = "Fair";
+            else if (conditions === "Fair") conditions = "Poor";
+          }
           
           // Generate realistic tide data for each day
           const tides = generateRealisticTides(dayOffset, timezone);
+          
+          // Create consistent wave height range
+          const waveMin = Math.floor(waveHeight);
+          const waveMax = Math.ceil(waveHeight + 0.5);
 
-          if (waveHeight > 5) {
-            const qualityBonus = windSpeed < 8 ? "Excellent" : windSpeed < 12 ? "Good" : "Fair";
-            dailyForecasts.push({
-              date: getDayName(dayOffset),
-              waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
-              conditions: qualityBonus,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(representativeItem.wind.deg)}`,
-              icon: "🌊",
-              tides
-            });
-          } else {
-            dailyForecasts.push({
-              date: getDayName(dayOffset),
-              waveHeight: `${Math.floor(waveHeight)}-${Math.ceil(waveHeight + 1)} ft`,
-              conditions,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(representativeItem.wind.deg)}`,
-              icon: "🌊",
-              tides
-            });
-          }
+          dailyForecasts.push({
+            date: getDayName(dayOffset),
+            waveHeight: `${waveMin}-${waveMax} ft`,
+            conditions,
+            wind: `${Math.round(avgWindSpeed)} mph ${getWindDirection(avgWindDeg)}`,
+            icon: "🌊",
+            tides
+          });
           
           dayOffset++;
         }
