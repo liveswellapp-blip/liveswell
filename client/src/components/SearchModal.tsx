@@ -86,7 +86,7 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
               ))}
             </div>
           ) : searchResults.length > 0 ? (
-            <div className="space-y-1 max-h-[350px] overflow-y-auto search-scrollbar pr-2">
+            <div className="space-y-1 h-[280px] overflow-y-scroll search-scrollbar pr-1">
               {searchResults.map((location: Location) => (
                 <button
                   key={location.id}
