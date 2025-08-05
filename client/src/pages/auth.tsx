@@ -4,7 +4,7 @@ import { useAuth } from "@/components/AuthContext";
 import LoginForm from "@/components/LoginForm";
 import RegisterForm from "@/components/RegisterForm";
 import { Card, CardContent } from "@/components/ui/card";
-import logoImageDark from "@assets/LiveSwell logo_1752785462142.png";
+import logoImageDark from "@assets/LiveSwell logo (6)_1753469985642.png";
 
 export default function AuthPage() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -40,18 +40,13 @@ export default function AuthPage() {
       <div className="w-full bg-black/30 backdrop-blur-sm border-b border-emerald-800/30">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-3">
+            <div className="relative w-48 h-12">
               <img 
                 src={logoImageDark} 
-                alt="LiveSwell Logo" 
-                className="h-12 w-auto object-contain"
-                onLoad={() => console.log('Logo loaded successfully')}
-                onError={(e) => {
-                  console.error('Logo failed to load from:', logoImageDark);
-                  console.error('Error details:', e);
-                }}
+                alt="LiveSwell" 
+                className="h-12 object-contain object-center"
+                style={{ imageRendering: 'auto' }}
               />
-              <div className="text-3xl font-bold text-emerald-300">LiveSwell</div>
             </div>
           </div>
         </div>
