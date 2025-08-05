@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, Bell, Globe, Shield, Save, LogOut } from "lucide-react";
+import { ArrowLeft, User, Globe, Shield, Save, LogOut } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -21,8 +21,6 @@ import React from "react";
 
 const profileSchema = z.object({
   language: z.enum(["en", "es", "fr", "pt"]).default("en"),
-  pushNotifications: z.boolean().default(true),
-  emailNotifications: z.boolean().default(false),
   autoRefresh: z.boolean().default(true),
   refreshInterval: z.number().min(5).max(300).default(30),
 });
@@ -176,59 +174,7 @@ export default function Profile() {
               </Card>
 
 
-              {/* Notifications */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-emerald-400">
-                    <Bell className="h-5 w-5 mr-2" />
-                    Notifications
-                  </CardTitle>
-                  <CardDescription>
-                    Manage your notification preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="pushNotifications"
-                    render={({ field }) => (
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base text-slate-300">Push Notifications</Label>
-                          <div className="text-sm text-slate-400">
-                            Receive alerts for weather changes
-                          </div>
-                        </div>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-push-notifications"
-                        />
-                      </div>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="emailNotifications"
-                    render={({ field }) => (
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base text-slate-300">Email Notifications</Label>
-                          <div className="text-sm text-slate-400">
-                            Get daily surf reports via email
-                          </div>
-                        </div>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-email-notifications"
-                        />
-                      </div>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+
 
               {/* Data & Refresh */}
               <Card>
