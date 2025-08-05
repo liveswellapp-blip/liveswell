@@ -1891,9 +1891,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    // Check session expiry (24 hours)
+    // Check session expiry (7 days for development)
     const sessionAge = Date.now() - user.loginTime;
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
     
     if (sessionAge >= maxAge) {
       req.session.destroy(() => {});
@@ -1911,9 +1911,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ message: "Authentication required" });
     }
 
-    // Check session expiry
+    // Check session expiry  
     const sessionAge = Date.now() - user.loginTime;
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
     
     if (sessionAge >= maxAge) {
       req.session.destroy(() => {});
