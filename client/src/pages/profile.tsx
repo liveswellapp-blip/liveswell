@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, Bell, Globe, Shield, MapPin, Save } from "lucide-react";
+import { ArrowLeft, User, Bell, Globe, Shield, MapPin, Save, LogOut } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -33,7 +33,7 @@ const profileSchema = z.object({
 type ProfileData = z.infer<typeof profileSchema>;
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -401,6 +401,30 @@ export default function Profile() {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
+
+              {/* Account Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-emerald-400">
+                    <Shield className="h-5 w-5 mr-2" />
+                    Account Actions
+                  </CardTitle>
+                  <CardDescription>
+                    Manage your account and session
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button 
+                    onClick={logout}
+                    variant="outline" 
+                    className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out of Account
+                  </Button>
                   
                   <Separator className="bg-slate-700" />
                   

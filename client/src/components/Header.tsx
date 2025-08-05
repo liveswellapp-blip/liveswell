@@ -1,4 +1,4 @@
-import { Settings, Activity, User, LogOut, LogIn } from "lucide-react";
+import { User, LogOut, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useAuth } from "@/components/AuthContext";
@@ -23,43 +23,14 @@ export default function Header() {
             </div>
           </div>
           
-          {/* Navigation buttons */}
-          <div className="flex items-center space-x-4">
-            <Link href="/monitoring">
-              <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="System Monitoring">
-                <Activity className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/profile">
-              <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="User Profile">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="/settings">
-              <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="Settings">
-                <Settings className="h-5 w-5" />
-              </Button>
-            </Link>
-            
-            {/* Authentication section */}
+          {/* User account section */}
+          <div className="flex items-center">
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-2 text-white">
-                  <span className="text-sm font-medium" data-testid="text-email">
-                    {user?.email}
-                  </span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={logout}
-                  className="text-white hover:text-gray-200"
-                  data-testid="button-logout"
-                >
-                  <LogOut className="h-4 w-4 mr-1" />
-                  Logout
+              <Link href="/profile">
+                <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="User Account">
+                  <User className="h-6 w-6" />
                 </Button>
-              </div>
+              </Link>
             ) : (
               <Link href="/auth">
                 <Button

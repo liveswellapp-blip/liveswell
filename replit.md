@@ -72,6 +72,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Profile Database Schema**: Created user_profiles table with personal preferences (units, notifications, language, theme)
 - ✅ **Profile API Routes**: Full CRUD operations for user profile data with authentication protection
 - ✅ **Profile Navigation**: Added profile icon to header navigation for easy access to user settings
+- ✅ **Simplified Header Design**: Streamlined header to show only LiveSwell logo and user account icon when authenticated
+- ✅ **Logout Moved to Profile**: Relocated logout functionality from header to user profile page for cleaner interface
 
 ### 2025-08-05: Nearby Surf Spots Navigation System Complete
 - ✅ **Nearby Spots Navigation Fix**: Resolved navigation issues where clicking nearby surf spot cards highlighted but didn't navigate
