@@ -88,11 +88,11 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
   const strengthColors = ["bg-red-500", "bg-orange-500", "bg-yellow-500", "bg-blue-500", "bg-green-500"];
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-black/40 backdrop-blur-sm border-emerald-800/50">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
-        <CardDescription className="text-center">
-          Join SurfCast to save your favorite surf spots and track conditions
+        <CardTitle className="text-2xl font-bold text-center text-white">Create Account</CardTitle>
+        <CardDescription className="text-center text-emerald-300/80">
+          Join LiveSwell to save your favorite surf spots and track conditions
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -111,11 +111,12 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel className="text-emerald-300">Username</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Choose a username"
+                      className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
                       data-testid="input-register-username"
                     />
                   </FormControl>
@@ -129,7 +130,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="text-emerald-300">Password</FormLabel>
                   <FormControl>
                     <div className="space-y-2">
                       <div className="relative">
@@ -137,13 +138,14 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
                           {...field}
                           type={showPassword ? "text" : "password"}
                           placeholder="Create a password"
+                          className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
                           data-testid="input-register-password"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-emerald-300 hover:text-emerald-200"
                           onClick={() => setShowPassword(!showPassword)}
                           data-testid="button-toggle-register-password"
                         >
@@ -169,7 +171,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
                               />
                             ))}
                           </div>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-emerald-300/70">
                             Strength: {strengthLabels[passwordStrength - 1] || "Very Weak"}
                           </p>
                         </div>
@@ -186,20 +188,21 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
+                  <FormLabel className="text-emerald-300">Confirm Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         {...field}
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm your password"
+                        className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
                         data-testid="input-confirm-password"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-emerald-300 hover:text-emerald-200"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         data-testid="button-toggle-confirm-password"
                       >
@@ -210,7 +213,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
                         )}
                       </Button>
                       {field.value && field.value === passwordValue && (
-                        <CheckCircle className="absolute right-8 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                        <CheckCircle className="absolute right-8 top-1/2 transform -translate-y-1/2 h-4 w-4 text-emerald-400" />
                       )}
                     </div>
                   </FormControl>
@@ -221,7 +224,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
               disabled={registerMutation.isPending}
               data-testid="button-register"
             >
@@ -238,11 +241,11 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
         </Form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-emerald-300/80">
             Already have an account?{" "}
             <Button
               variant="link"
-              className="p-0 h-auto font-medium"
+              className="p-0 h-auto font-medium text-emerald-300 hover:text-emerald-200"
               onClick={onSwitchToLogin}
               data-testid="button-switch-login"
             >

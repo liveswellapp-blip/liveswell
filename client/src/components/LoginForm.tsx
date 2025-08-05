@@ -62,10 +62,10 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto bg-black/40 backdrop-blur-sm border-emerald-800/50">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
-        <CardDescription className="text-center">
+        <CardTitle className="text-2xl font-bold text-center text-white">Welcome Back</CardTitle>
+        <CardDescription className="text-center text-emerald-300/80">
           Sign in to access your surf spots and favorites
         </CardDescription>
       </CardHeader>
@@ -85,11 +85,12 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel className="text-emerald-300">Username</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="Enter your username"
+                      className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
                       data-testid="input-username"
                     />
                   </FormControl>
@@ -103,20 +104,21 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel className="text-emerald-300">Password</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         {...field}
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
+                        className="bg-black/20 border-emerald-800/50 text-white placeholder:text-emerald-300/50 focus:border-emerald-400"
                         data-testid="input-password"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-emerald-300 hover:text-emerald-200"
                         onClick={() => setShowPassword(!showPassword)}
                         data-testid="button-toggle-password"
                       >
@@ -135,7 +137,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
               disabled={loginMutation.isPending}
               data-testid="button-login"
             >
@@ -152,11 +154,11 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
         </Form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-emerald-300/80">
             Don't have an account?{" "}
             <Button
               variant="link"
-              className="p-0 h-auto font-medium"
+              className="p-0 h-auto font-medium text-emerald-300 hover:text-emerald-200"
               onClick={onSwitchToRegister}
               data-testid="button-switch-register"
             >
