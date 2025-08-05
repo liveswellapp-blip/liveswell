@@ -27,6 +27,9 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
     
     // Also try wouter navigation as backup
     setLocation(newUrl);
+    
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (error) {
