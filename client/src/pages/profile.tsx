@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, Bell, Globe, Shield, MapPin, Save, LogOut } from "lucide-react";
+import { ArrowLeft, User, Bell, Globe, Shield, Save, LogOut } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -20,14 +20,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import React from "react";
 
 const profileSchema = z.object({
-  defaultLocation: z.string().optional(),
-  units: z.enum(["metric", "imperial"]).default("metric"),
   language: z.enum(["en", "es", "fr", "pt"]).default("en"),
   pushNotifications: z.boolean().default(true),
   emailNotifications: z.boolean().default(false),
   autoRefresh: z.boolean().default(true),
   refreshInterval: z.number().min(5).max(300).default(30),
-
 });
 
 type ProfileData = z.infer<typeof profileSchema>;
@@ -178,60 +175,6 @@ export default function Profile() {
                 </CardContent>
               </Card>
 
-              {/* Location & Units */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-emerald-400">
-                    <MapPin className="h-5 w-5 mr-2" />
-                    Location & Units
-                  </CardTitle>
-                  <CardDescription>
-                    Set your preferred location and measurement units
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="defaultLocation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-300">Default Location</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter your preferred surf spot"
-                            className="bg-slate-800 border-slate-700 text-white"
-                            data-testid="input-default-location"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="units"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-300">Measurement Units</FormLabel>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                              <SelectValue placeholder="Select units" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="metric">Metric (m, km/h, °C)</SelectItem>
-                              <SelectItem value="imperial">Imperial (ft, mph, °F)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
 
               {/* Notifications */}
               <Card>
