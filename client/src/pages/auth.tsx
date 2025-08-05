@@ -53,7 +53,7 @@ export default function AuthPage() {
       </div>
 
       {/* Auth Form */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-4">
+      <div className="flex items-start md:items-center justify-center min-h-[calc(100vh-120px)] p-4 pt-12 md:pt-4">
         <div className="w-full max-w-md">
           {authMode === "login" ? (
             <LoginForm
