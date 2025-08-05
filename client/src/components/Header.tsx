@@ -30,6 +30,11 @@ export default function Header() {
                 <Activity className="h-5 w-5" />
               </Button>
             </Link>
+            <Link href="/profile">
+              <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="User Profile">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
             <Link href="/settings">
               <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="Settings">
                 <Settings className="h-5 w-5" />
@@ -40,7 +45,6 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 <div className="flex items-center space-x-2 text-white">
-                  <User className="h-4 w-4" />
                   <span className="text-sm font-medium" data-testid="text-email">
                     {user?.email}
                   </span>

@@ -10,6 +10,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Favorites from "@/pages/favorites";
 import Settings from "@/pages/settings";
+import Profile from "@/pages/profile";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import AuthPage from "@/pages/auth";
@@ -37,6 +38,11 @@ function Router() {
       <Route path="/settings">
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute>
+          <Profile />
         </ProtectedRoute>
       </Route>
       <Route path="/monitoring">

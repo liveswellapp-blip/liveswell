@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, type User, type InsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, type User, type InsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or } from "drizzle-orm";
 
@@ -21,6 +21,10 @@ export interface IStorage {
   addFavorite(favorite: InsertFavorite): Promise<Favorite>;
   removeFavorite(userId: number, locationId: number): Promise<boolean>;
   isFavorite(userId: number, locationId: number): Promise<boolean>;
+  
+  getUserProfile(userId: number): Promise<UserProfile | undefined>;
+  createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+  updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<UserProfile | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -227,6 +231,21 @@ export class MemStorage implements IStorage {
       favorite => favorite.userId === userId && favorite.locationId === locationId
     );
   }
+
+  async getUserProfile(userId: number): Promise<UserProfile | undefined> {
+    // For MemStorage, we would need to add userProfiles Map, but since we're using DbStorage, this is just a placeholder
+    return undefined;
+  }
+
+  async createUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
+    // Placeholder for MemStorage
+    throw new Error("User profiles not implemented in MemStorage");
+  }
+
+  async updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<UserProfile | undefined> {
+    // Placeholder for MemStorage
+    return undefined;
+  }
 }
 
 // PostgreSQL Storage Implementation
@@ -346,6 +365,24 @@ export class DbStorage implements IStorage {
     );
     
     return result.length > 0;
+  }
+
+  async getUserProfile(userId: number): Promise<UserProfile | undefined> {
+    const result = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+    return result[0];
+  }
+
+  async createUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
+    const result = await db.insert(userProfiles).values(profile).returning();
+    return result[0];
+  }
+
+  async updateUserProfile(userId: number, profile: UpdateUserProfile): Promise<UserProfile | undefined> {
+    const result = await db.update(userProfiles)
+      .set({ ...profile, updatedAt: new Date() })
+      .where(eq(userProfiles.userId, userId))
+      .returning();
+    return result[0];
   }
 }
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema, insertUserSchema } from "@shared/schema";
+import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema, insertUserSchema, updateUserProfileSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
 import { 
@@ -1900,7 +1900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ message: "Session expired" });
     }
 
-    res.json({ user: { id: user.id, username: user.username } });
+    res.json({ user: { id: user.id, email: user.email } });
   });
 
   // Middleware to require authentication
@@ -2000,6 +2000,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Check favorite error:', error);
       res.status(500).json({ message: "Failed to check favorite status" });
+    }
+  });
+
+  // User Profile Routes
+  app.get("/api/profile", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const profile = await storage.getUserProfile(userId);
+      
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      
+      res.json(profile);
+    } catch (error) {
+      console.error('Get profile error:', error);
+      res.status(500).json({ message: "Failed to get profile" });
+    }
+  });
+
+  app.put("/api/profile", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      
+      const result = updateUserProfileSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid profile data", 
+          errors: result.error.issues 
+        });
+      }
+
+      // Check if profile exists
+      let profile = await storage.getUserProfile(userId);
+      
+      if (!profile) {
+        // Create new profile
+        profile = await storage.createUserProfile({
+          userId,
+          ...result.data
+        });
+      } else {
+        // Update existing profile
+        profile = await storage.updateUserProfile(userId, result.data);
+      }
+      
+      if (!profile) {
+        return res.status(500).json({ message: "Failed to update profile" });
+      }
+      
+      res.json(profile);
+    } catch (error) {
+      console.error('Update profile error:', error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 

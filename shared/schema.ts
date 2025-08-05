@@ -44,6 +44,21 @@ export const favorites = pgTable("favorites", {
   addedAt: timestamp("added_at").defaultNow(),
 });
 
+export const userProfiles = pgTable("user_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  defaultLocation: text("default_location"),
+  units: text("units").default("metric"), // metric or imperial
+  language: text("language").default("en"),
+  pushNotifications: boolean("push_notifications").default(true),
+  emailNotifications: boolean("email_notifications").default(false),
+  autoRefresh: boolean("auto_refresh").default(true),
+  refreshInterval: integer("refresh_interval").default(30), // minutes
+  theme: text("theme").default("dark"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
@@ -63,6 +78,19 @@ export const insertFavoriteSchema = createInsertSchema(favorites).omit({
   addedAt: true,
 });
 
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Location = typeof locations.$inferSelect;
@@ -71,3 +99,6 @@ export type SurfConditions = typeof surfConditions.$inferSelect;
 export type InsertSurfConditions = z.infer<typeof insertSurfConditionsSchema>;
 export type Favorite = typeof favorites.$inferSelect;
 export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
