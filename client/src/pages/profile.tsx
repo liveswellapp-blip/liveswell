@@ -27,7 +27,7 @@ const profileSchema = z.object({
   emailNotifications: z.boolean().default(false),
   autoRefresh: z.boolean().default(true),
   refreshInterval: z.number().min(5).max(300).default(30),
-  theme: z.enum(["light", "dark"]).default("dark"),
+
 });
 
 type ProfileData = z.infer<typeof profileSchema>;
@@ -52,7 +52,7 @@ export default function Profile() {
             emailNotifications: false,
             autoRefresh: true,
             refreshInterval: 30,
-            theme: "dark",
+
           };
         }
         throw new Error("Failed to fetch profile");
@@ -71,7 +71,6 @@ export default function Profile() {
       emailNotifications: false,
       autoRefresh: true,
       refreshInterval: 30,
-      theme: "dark",
     },
   });
 
@@ -368,41 +367,7 @@ export default function Profile() {
                 </CardContent>
               </Card>
 
-              {/* Theme & Display */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-emerald-400">
-                    <Shield className="h-5 w-5 mr-2" />
-                    Theme & Display
-                  </CardTitle>
-                  <CardDescription>
-                    Customize the app appearance
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="theme"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-300">Theme</FormLabel>
-                        <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                              <SelectValue placeholder="Select theme" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="dark">Dark Mode</SelectItem>
-                              <SelectItem value="light">Light Mode</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
+
 
               {/* Account Actions */}
               <Card>

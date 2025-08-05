@@ -54,7 +54,6 @@ export const userProfiles = pgTable("user_profiles", {
   emailNotifications: boolean("email_notifications").default(false),
   autoRefresh: boolean("auto_refresh").default(true),
   refreshInterval: integer("refresh_interval").default(30), // minutes
-  theme: text("theme").default("dark"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
