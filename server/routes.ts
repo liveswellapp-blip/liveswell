@@ -534,11 +534,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { search, limit = 50, offset = 0 } = req.query;
       const spots = await storage.getAllSurfSpotsWithData(
-        search as string,
+        search as string || undefined,
         parseInt(limit as string) || 50,
         parseInt(offset as string) || 0
       );
-      res.json(spots);
+      res.json({ logs: spots, total: spots.length });
     } catch (error) {
       console.error('Get surf spots failed:', error);
       res.status(500).json({ message: "Failed to get surf spots data" });
@@ -548,7 +548,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/surf-spots/:spotId", requireAdminAuth, async (req, res) => {
     try {
       const { spotId } = req.params;
-      const spotDetails = await storage.getSurfSpotDetails(parseInt(spotId));
+      const numericSpotId = parseInt(spotId);
+      
+      if (isNaN(numericSpotId)) {
+        return res.status(400).json({ message: "Invalid spot ID" });
+      }
+      
+      const spotDetails = await storage.getSurfSpotDetails(numericSpotId);
       if (!spotDetails) {
         return res.status(404).json({ message: "Surf spot not found" });
       }
