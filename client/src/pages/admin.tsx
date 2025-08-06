@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Shield, Activity, Users, Database, Globe, BarChart3, AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
 import UserDatabase from "@/components/UserDatabase";
+import ErrorLogs from "@/components/ErrorLogs";
 
 interface AdminSession {
   isAuthenticated: boolean;
@@ -59,6 +60,7 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [showUserDatabase, setShowUserDatabase] = useState(false);
+  const [showErrorLogs, setShowErrorLogs] = useState(false);
   const { toast } = useToast();
 
   // Admin login mutation
@@ -189,6 +191,17 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-background p-6">
         <div className="container mx-auto max-w-7xl">
           <UserDatabase onClose={() => setShowUserDatabase(false)} />
+        </div>
+      </div>
+    );
+  }
+
+  // Show Error Logs
+  if (showErrorLogs) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="container mx-auto max-w-7xl">
+          <ErrorLogs onClose={() => setShowErrorLogs(false)} />
         </div>
       </div>
     );
@@ -382,7 +395,12 @@ export default function AdminDashboard() {
                   <div className="text-sm text-muted-foreground">View all users and their data</div>
                 </div>
               </Button>
-              <Button variant="outline" className="justify-start h-auto p-4">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto p-4"
+                onClick={() => setShowErrorLogs(true)}
+                data-testid="button-error-logs"
+              >
                 <div className="text-left">
                   <div className="font-semibold">Error Logs</div>
                   <div className="text-sm text-muted-foreground">Check application errors</div>

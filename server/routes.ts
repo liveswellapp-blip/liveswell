@@ -499,6 +499,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", requireAdminAuth, healthCheck);
   app.get("/api/metrics", requireAdminAuth, getMetrics);
   
+  // Error logging endpoints
+  app.get("/api/admin/error-logs", requireAdminAuth, async (req, res) => {
+    try {
+      const { logError, getErrorLogs } = await import('./monitoring');
+      const { level, limit = 50, offset = 0 } = req.query;
+      
+      const result = getErrorLogs(
+        level as 'error' | 'warning' | 'info' | undefined,
+        parseInt(limit as string) || 50,
+        parseInt(offset as string) || 0
+      );
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Get error logs failed:', error);
+      res.status(500).json({ message: "Failed to get error logs" });
+    }
+  });
+  
+  app.get("/api/admin/error-stats", requireAdminAuth, async (req, res) => {
+    try {
+      const { getErrorStats } = await import('./monitoring');
+      const stats = getErrorStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Get error stats failed:', error);
+      res.status(500).json({ message: "Failed to get error statistics" });
+    }
+  });
+  
   // Admin user management endpoints
   app.get("/api/admin/users", requireAdminAuth, async (req, res) => {
     try {

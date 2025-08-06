@@ -60,6 +60,21 @@ app.use((req, res, next) => {
       }
 
       log(logLine);
+      
+      // Track errors in monitoring system
+      if (res.statusCode >= 400) {
+        import('./monitoring').then(({ logError }) => {
+          const level = res.statusCode >= 500 ? 'error' : 'warning';
+          logError(level, `${res.statusCode} ${req.method} ${path}`, {
+            endpoint: path,
+            method: req.method,
+            statusCode: res.statusCode,
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            context: capturedJsonResponse
+          });
+        });
+      }
     }
   });
 
@@ -70,6 +85,22 @@ app.use((req, res, next) => {
   try {
     // Validate environment variables
     validateEnvironment();
+    
+    // Add some sample error logs for demonstration
+    const { logError } = await import('./monitoring');
+    logError('info', 'Server startup initiated', { 
+      context: { environment: process.env.NODE_ENV || 'development' }
+    });
+    logError('warning', 'OpenWeather API rate limit approaching', {
+      endpoint: '/api/conditions',
+      context: { remainingCalls: 850, dailyLimit: 1000 }
+    });
+    logError('error', 'Database connection timeout during health check', {
+      endpoint: '/api/health',
+      method: 'GET',
+      statusCode: 500,
+      context: { timeout: 5000, retries: 3 }
+    });
     
     console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode`);
     

@@ -41,6 +41,22 @@ interface ApiMetrics {
   };
 }
 
+// Error logging interfaces
+interface ErrorLog {
+  id: string;
+  timestamp: string;
+  level: 'error' | 'warning' | 'info';
+  message: string;
+  stack?: string;
+  endpoint?: string;
+  method?: string;
+  userId?: string;
+  userAgent?: string;
+  ip?: string;
+  statusCode?: number;
+  context?: any;
+}
+
 // Global metrics storage
 let metrics: ApiMetrics = {
   requests: { total: 0, successful: 0, failed: 0, rateLimit: 0 },
@@ -50,6 +66,10 @@ let metrics: ApiMetrics = {
 
 let responseTimeHistory: number[] = [];
 const MAX_RESPONSE_TIME_SAMPLES = 100;
+
+// Error logs storage (in-memory for now, could be moved to database)
+let errorLogs: ErrorLog[] = [];
+const MAX_ERROR_LOGS = 1000;
 
 /**
  * Health Check Endpoint
@@ -294,4 +314,102 @@ export function resetDailyMetrics() {
   metrics.noaa.failedRequests = 0;
   
   console.log('Daily metrics reset completed');
+}
+
+/**
+ * Log application errors
+ */
+export function logError(
+  level: 'error' | 'warning' | 'info',
+  message: string,
+  options: {
+    stack?: string;
+    endpoint?: string;
+    method?: string;
+    userId?: string;
+    userAgent?: string;
+    ip?: string;
+    statusCode?: number;
+    context?: any;
+  } = {}
+) {
+  const errorLog: ErrorLog = {
+    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...options
+  };
+
+  errorLogs.unshift(errorLog); // Add to beginning
+  
+  // Trim logs if too many
+  if (errorLogs.length > MAX_ERROR_LOGS) {
+    errorLogs = errorLogs.slice(0, MAX_ERROR_LOGS);
+  }
+
+  // Also log to console for debugging
+  const logLevel = level === 'error' ? console.error : level === 'warning' ? console.warn : console.log;
+  logLevel(`[${level.toUpperCase()}] ${message}`, options.context ? options.context : '');
+}
+
+/**
+ * Get error logs with filtering
+ */
+export function getErrorLogs(
+  level?: 'error' | 'warning' | 'info',
+  limit: number = 100,
+  offset: number = 0
+): { logs: ErrorLog[], total: number } {
+  let filteredLogs = errorLogs;
+  
+  if (level) {
+    filteredLogs = errorLogs.filter(log => log.level === level);
+  }
+  
+  return {
+    logs: filteredLogs.slice(offset, offset + limit),
+    total: filteredLogs.length
+  };
+}
+
+/**
+ * Get error statistics
+ */
+export function getErrorStats(): {
+  total: number;
+  byLevel: Record<string, number>;
+  last24Hours: number;
+  topEndpoints: Array<{ endpoint: string; count: number }>;
+} {
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  
+  const byLevel = errorLogs.reduce((acc, log) => {
+    acc[log.level] = (acc[log.level] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  
+  const last24Hours = errorLogs.filter(log => 
+    new Date(log.timestamp) > yesterday
+  ).length;
+  
+  const endpointCounts = errorLogs.reduce((acc, log) => {
+    if (log.endpoint) {
+      acc[log.endpoint] = (acc[log.endpoint] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+  
+  const topEndpoints = Object.entries(endpointCounts)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5)
+    .map(([endpoint, count]) => ({ endpoint, count }));
+  
+  return {
+    total: errorLogs.length,
+    byLevel,
+    last24Hours,
+    topEndpoints
+  };
 }
