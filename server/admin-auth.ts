@@ -71,7 +71,7 @@ export async function adminLogin(req: Request, res: Response) {
       
       res.json({ 
         success: true, 
-        message: 'Authentication successful',
+        message: 'Authentication successful (session valid for 7 days)',
         redirectUrl: '/monitoring'
       });
     } else {
@@ -110,9 +110,9 @@ export function adminStatus(req: Request, res: Response) {
   const adminAuth = req.session.adminAuth as AdminSession | undefined;
   
   if (adminAuth?.isAuthenticated) {
-    // Check if session is still valid (24 hours)
+    // Check if session is still valid (7 days)
     const sessionAge = Date.now() - adminAuth.loginTime;
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
     
     if (sessionAge < maxAge) {
       res.json({
@@ -145,7 +145,7 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
   
   // Check session expiry
   const sessionAge = Date.now() - adminAuth.loginTime;
-  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+  const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
   
   if (sessionAge >= maxAge) {
     req.session.adminAuth = undefined;
