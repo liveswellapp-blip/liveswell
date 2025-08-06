@@ -390,18 +390,29 @@ export class DatabaseStorage implements IStorage {
       .from(surfConditions);
     const recentUpdates = Math.floor((recentUpdatesResult[0]?.count || 0) * 0.1); // Simulate recent activity
 
-    // Calculate data quality distribution (simplified)
-    const dataQuality = {
-      excellent: Math.floor(totalSpots * 0.4), // 40% excellent
-      good: Math.floor(totalSpots * 0.3),      // 30% good  
-      poor: Math.floor(totalSpots * 0.2),      // 20% poor
-      noData: Math.floor(totalSpots * 0.1)     // 10% no data
+    // Calculate actual data quality distribution
+    const allSpotsWithQuality = await this.getAllSurfSpotsWithData('', 1000, 0);
+    const dataQuality = allSpotsWithQuality.reduce((acc, spot) => {
+      acc[spot.dataQuality] = (acc[spot.dataQuality] || 0) + 1;
+      return acc;
+    }, {
+      excellent: 0,
+      good: 0,
+      poor: 0,
+      'no-data': 0
+    } as Record<string, number>);
+
+    const finalDataQuality = {
+      excellent: dataQuality.excellent,
+      good: dataQuality.good,
+      poor: dataQuality.poor,
+      noData: dataQuality['no-data']
     };
 
     return {
       totalSpots: Number(totalSpots),
       activeStations: Number(activeStations),
-      dataQuality,
+      dataQuality: finalDataQuality,
       topCountries: topCountriesResult.map(country => ({
         name: country.name,
         count: Number(country.count)
