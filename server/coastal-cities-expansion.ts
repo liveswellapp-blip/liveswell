@@ -1,5 +1,5 @@
 import { storage } from './storage.js';
-import { getNearbyNOAABuoys } from './noaa-integration.js';
+import { findNearbyStations } from './noaa-integration.js';
 import type { InsertLocation } from '@shared/schema';
 
 // Major US coastal cities that can leverage nearby NOAA buoy data
@@ -124,15 +124,15 @@ export async function expandCoastalCitiesWithBuoyData(): Promise<{ added: number
         continue;
       }
 
-      // Find nearby NOAA buoys within the city's maximum distance
-      const nearbyBuoys = await getNearbyNOAABuoys(
+      // Find nearby NOAA stations within the city's maximum distance
+      const nearbyStations = await findNearbyStations(
         parseFloat(city.latitude), 
         parseFloat(city.longitude), 
         city.maxBuoyDistanceMiles
       );
 
-      // Only add city if it has at least one nearby buoy for data
-      if (nearbyBuoys.length > 0) {
+      // Only add city if it has at least one nearby station for data
+      if (nearbyStations.length > 0) {
         const locationData: InsertLocation = {
           name: city.name,
           city: city.city,
@@ -145,9 +145,9 @@ export async function expandCoastalCitiesWithBuoyData(): Promise<{ added: number
         await storage.createLocation(locationData);
         added++;
         
-        console.log(`✅ Added ${city.name} with ${nearbyBuoys.length} nearby buoys (closest: ${nearbyBuoys[0].name})`);
+        console.log(`✅ Added ${city.name} with ${nearbyStations.length} nearby stations (closest: ${nearbyStations[0].name})`);
       } else {
-        console.log(`⚠️ Skipped ${city.name} - no NOAA buoys within ${city.maxBuoyDistanceMiles} miles`);
+        console.log(`⚠️ Skipped ${city.name} - no NOAA stations within ${city.maxBuoyDistanceMiles} miles`);
         skipped++;
       }
       
@@ -168,13 +168,13 @@ export async function getCityBuoyMapping(cityLat: number, cityLng: number): Prom
   allNearbyBuoys: any[];
   distanceToClosest: number | null;
 }> {
-  const nearbyBuoys = await getNearbyNOAABuoys(cityLat, cityLng, 150); // 150 mile search radius
+  const nearbyStations = await findNearbyStations(cityLat, cityLng, 150); // 150 mile search radius
   
-  if (nearbyBuoys.length === 0) {
+  if (nearbyStations.length === 0) {
     return { closestBuoy: null, allNearbyBuoys: [], distanceToClosest: null };
   }
 
-  const closestBuoy = nearbyBuoys[0];
+  const closestBuoy = nearbyStations[0];
   const distanceToClosest = Math.sqrt(
     Math.pow(parseFloat(closestBuoy.latitude) - cityLat, 2) + 
     Math.pow(parseFloat(closestBuoy.longitude) - cityLng, 2)
@@ -182,7 +182,7 @@ export async function getCityBuoyMapping(cityLat: number, cityLng: number): Prom
 
   return {
     closestBuoy,
-    allNearbyBuoys: nearbyBuoys,
+    allNearbyBuoys: nearbyStations,
     distanceToClosest
   };
 }
