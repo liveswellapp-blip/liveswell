@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ArrowLeft, 
   MapPin, 
@@ -21,7 +22,8 @@ import {
   Globe,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Filter
 } from "lucide-react";
 
 interface SurfSpot {
@@ -92,6 +94,7 @@ interface SurfSpotsMonitoringProps {
 export default function SurfSpotsMonitoring({ onClose }: SurfSpotsMonitoringProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpot, setSelectedSpot] = useState<number | null>(null);
+  const [qualityFilter, setQualityFilter] = useState<string>("all");
 
   // Fetch surf spots statistics
   const { data: spotsStats, isLoading: statsLoading, refetch: refetchStats } = useQuery<SurfSpotsStats>({
@@ -107,6 +110,12 @@ export default function SurfSpotsMonitoring({ onClose }: SurfSpotsMonitoringProp
     queryKey: ['/api/admin/surf-spots', searchTerm],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Filter spots by data quality
+  const filteredSpots = surfSpots?.logs ? surfSpots.logs.filter(spot => {
+    if (qualityFilter === "all") return true;
+    return spot.dataQuality === qualityFilter;
+  }) : [];
 
   // Fetch selected spot details
   const { data: spotDetails, isLoading: detailsLoading } = useQuery<SurfSpotDetails>({
@@ -380,47 +389,106 @@ export default function SurfSpotsMonitoring({ onClose }: SurfSpotsMonitoringProp
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded">
+              <div 
+                className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                onClick={() => setQualityFilter(qualityFilter === "excellent" ? "all" : "excellent")}
+                data-testid="filter-excellent"
+              >
                 <div className="text-2xl font-bold text-green-600">{spotsStats.dataQuality.excellent}</div>
                 <div className="text-sm text-muted-foreground">Excellent</div>
+                {qualityFilter === "excellent" && <div className="text-xs text-green-600 mt-1">● Active Filter</div>}
               </div>
-              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded">
+              <div 
+                className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                onClick={() => setQualityFilter(qualityFilter === "good" ? "all" : "good")}
+                data-testid="filter-good"
+              >
                 <div className="text-2xl font-bold text-blue-600">{spotsStats.dataQuality.good}</div>
                 <div className="text-sm text-muted-foreground">Good</div>
+                {qualityFilter === "good" && <div className="text-xs text-blue-600 mt-1">● Active Filter</div>}
               </div>
-              <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded">
+              <div 
+                className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded cursor-pointer hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors"
+                onClick={() => setQualityFilter(qualityFilter === "poor" ? "all" : "poor")}
+                data-testid="filter-poor"
+              >
                 <div className="text-2xl font-bold text-yellow-600">{spotsStats.dataQuality.poor}</div>
                 <div className="text-sm text-muted-foreground">Poor</div>
+                {qualityFilter === "poor" && <div className="text-xs text-yellow-600 mt-1">● Active Filter</div>}
               </div>
-              <div className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded">
+              <div 
+                className="text-center p-4 bg-red-50 dark:bg-red-900/20 rounded cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                onClick={() => setQualityFilter(qualityFilter === "no-data" ? "all" : "no-data")}
+                data-testid="filter-no-data"
+              >
                 <div className="text-2xl font-bold text-red-600">{spotsStats.dataQuality.noData}</div>
                 <div className="text-sm text-muted-foreground">No Data</div>
+                {qualityFilter === "no-data" && <div className="text-xs text-red-600 mt-1">● Active Filter</div>}
               </div>
+            </div>
+            <div className="text-center mt-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setQualityFilter("all")}
+                disabled={qualityFilter === "all"}
+                data-testid="button-clear-filter"
+              >
+                Clear Filter
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Search */}
+      {/* Search and Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search surf spots by name, city, or country..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-              data-testid="input-spot-search"
-            />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search surf spots by name, city, or country..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="input-spot-search"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={qualityFilter} onValueChange={setQualityFilter}>
+                <SelectTrigger className="w-48" data-testid="select-quality-filter">
+                  <SelectValue placeholder="Filter by data quality" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Quality Levels</SelectItem>
+                  <SelectItem value="excellent">Excellent Data</SelectItem>
+                  <SelectItem value="good">Good Data</SelectItem>
+                  <SelectItem value="poor">Poor Data</SelectItem>
+                  <SelectItem value="no-data">No Data</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Surf Spots List */}
       <Card>
-        <CardHeader>
-          <CardTitle>All Surf Spots</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>
+            Surf Spots {qualityFilter !== "all" && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                · Filtered by {qualityFilter.replace('-', ' ')} quality
+              </span>
+            )}
+          </CardTitle>
+          {filteredSpots.length > 0 && (
+            <Badge variant="outline" className="ml-2">
+              {filteredSpots.length} of {surfSpots?.logs.length || 0} spots
+            </Badge>
+          )}
         </CardHeader>
         <CardContent>
           {spotsLoading ? (
@@ -435,9 +503,9 @@ export default function SurfSpotsMonitoring({ onClose }: SurfSpotsMonitoringProp
                 </div>
               ))}
             </div>
-          ) : surfSpots && surfSpots.logs && surfSpots.logs.length > 0 ? (
+          ) : filteredSpots.length > 0 ? (
             <div className="space-y-2">
-              {surfSpots.logs.map((spot) => (
+              {filteredSpots.map((spot) => (
                 <div
                   key={spot.id}
                   className="flex items-center justify-between p-4 border rounded hover:bg-muted/50 cursor-pointer transition-colors"
@@ -483,7 +551,10 @@ export default function SurfSpotsMonitoring({ onClose }: SurfSpotsMonitoringProp
             <div className="text-center py-8">
               <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                {searchTerm ? 'No surf spots found matching your search' : 'No surf spots found'}
+                {searchTerm || qualityFilter !== "all" 
+                  ? `No surf spots found ${searchTerm ? 'matching your search' : ''} ${qualityFilter !== "all" ? `with ${qualityFilter.replace('-', ' ')} data quality` : ''}`
+                  : 'No surf spots found'
+                }
               </p>
             </div>
           )}
