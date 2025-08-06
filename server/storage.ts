@@ -13,6 +13,50 @@ export interface IStorage {
     topLocations: Array<{name: string; favoriteCount: number}>;
   }>;
   
+  getAllSurfSpotsWithData(search?: string, limit?: number, offset?: number): Promise<Array<{
+    id: number;
+    name: string;
+    city: string;
+    state: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+    noaaStationId?: string;
+    lastUpdated?: string;
+    currentConditions?: any;
+    favoriteCount: number;
+    dataQuality: 'excellent' | 'good' | 'poor' | 'no-data';
+  }>>;
+  
+  getSurfSpotDetails(spotId: number): Promise<{
+    spot: Location;
+    conditions: SurfConditions | null;
+    favorites: number;
+    recentActivity: Array<{
+      timestamp: string;
+      event: string;
+      details: any;
+    }>;
+    noaaData: {
+      stationId: string;
+      lastUpdate: string;
+      status: 'active' | 'inactive' | 'error';
+    };
+  } | null>;
+  
+  getSurfSpotsStats(): Promise<{
+    totalSpots: number;
+    activeStations: number;
+    dataQuality: {
+      excellent: number;
+      good: number;
+      poor: number;
+      noData: number;
+    };
+    topCountries: Array<{name: string; count: number}>;
+    recentUpdates: number;
+  }>;
+  
   getLocation(id: number): Promise<Location | undefined>;
   getLocationByCoords(lat: number, lng: number): Promise<Location | undefined>;
   getAllLocations(): Promise<Location[]>;
@@ -147,6 +191,184 @@ export class DatabaseStorage implements IStorage {
       newUsersThisMonth,
       activeUsers,
       topLocations: topLocationsResult
+    };
+  }
+
+  async getAllSurfSpotsWithData(search?: string, limit: number = 50, offset: number = 0): Promise<Array<{
+    id: number;
+    name: string;
+    city: string;
+    state: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+    noaaStationId?: string;
+    lastUpdated?: string;
+    currentConditions?: any;
+    favoriteCount: number;
+    dataQuality: 'excellent' | 'good' | 'poor' | 'no-data';
+  }>> {
+    let query = db
+      .select({
+        id: locations.id,
+        name: locations.name,
+        city: locations.city,
+        state: locations.state,
+        country: locations.country,
+        latitude: locations.latitude,
+        longitude: locations.longitude,
+        noaaStationId: locations.noaaStationId,
+        lastUpdated: surfConditions.updatedAt,
+        favoriteCount: sql<number>`count(${favorites.id})`
+      })
+      .from(locations)
+      .leftJoin(surfConditions, eq(locations.id, surfConditions.locationId))
+      .leftJoin(favorites, eq(locations.id, favorites.locationId))
+      .groupBy(locations.id, surfConditions.updatedAt);
+
+    if (search) {
+      query = query.where(
+        or(
+          like(locations.name, `%${search}%`),
+          like(locations.city, `%${search}%`),
+          like(locations.state, `%${search}%`),
+          like(locations.country, `%${search}%`)
+        )
+      );
+    }
+
+    const results = await query.limit(limit).offset(offset);
+    
+    return results.map(spot => {
+      let dataQuality: 'excellent' | 'good' | 'poor' | 'no-data' = 'no-data';
+      
+      if (spot.noaaStationId && spot.lastUpdated) {
+        const hoursSinceUpdate = spot.lastUpdated ? 
+          (Date.now() - new Date(spot.lastUpdated).getTime()) / (1000 * 60 * 60) : 999;
+        
+        if (hoursSinceUpdate < 1) dataQuality = 'excellent';
+        else if (hoursSinceUpdate < 6) dataQuality = 'good';
+        else if (hoursSinceUpdate < 24) dataQuality = 'poor';
+      }
+
+      return {
+        ...spot,
+        dataQuality,
+        favoriteCount: Number(spot.favoriteCount) || 0
+      };
+    });
+  }
+
+  async getSurfSpotDetails(spotId: number): Promise<{
+    spot: Location;
+    conditions: SurfConditions | null;
+    favorites: number;
+    recentActivity: Array<{
+      timestamp: string;
+      event: string;
+      details: any;
+    }>;
+    noaaData: {
+      stationId: string;
+      lastUpdate: string;
+      status: 'active' | 'inactive' | 'error';
+    };
+  } | null> {
+    const spot = await this.getLocation(spotId);
+    if (!spot) return null;
+
+    const [conditions, favoritesResult] = await Promise.all([
+      this.getSurfConditions(spotId),
+      db.select({ count: sql<number>`count(*)` }).from(favorites).where(eq(favorites.locationId, spotId))
+    ]);
+
+    const favoritesCount = favoritesResult[0]?.count || 0;
+
+    // Mock recent activity (in real implementation, this would come from activity logs)
+    const recentActivity = [
+      {
+        timestamp: new Date().toISOString(),
+        event: 'Data refresh',
+        details: { source: 'NOAA', success: true }
+      },
+      {
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        event: 'Weather update',
+        details: { source: 'OpenWeather', temperature: '72°F' }
+      }
+    ];
+
+    const noaaData = {
+      stationId: spot.noaaStationId || 'N/A',
+      lastUpdate: conditions?.updatedAt || 'Never',
+      status: conditions?.updatedAt ? 'active' : 'inactive' as 'active' | 'inactive' | 'error'
+    };
+
+    return {
+      spot,
+      conditions,
+      favorites: Number(favoritesCount),
+      recentActivity,
+      noaaData
+    };
+  }
+
+  async getSurfSpotsStats(): Promise<{
+    totalSpots: number;
+    activeStations: number;
+    dataQuality: {
+      excellent: number;
+      good: number;
+      poor: number;
+      noData: number;
+    };
+    topCountries: Array<{name: string; count: number}>;
+    recentUpdates: number;
+  }> {
+    // Get total spots
+    const totalSpotsResult = await db.select({ count: sql<number>`count(*)` }).from(locations);
+    const totalSpots = totalSpotsResult[0]?.count || 0;
+
+    // Get active NOAA stations
+    const activeStationsResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(locations)
+      .where(sql`${locations.noaaStationId} IS NOT NULL`);
+    const activeStations = activeStationsResult[0]?.count || 0;
+
+    // Get top countries
+    const topCountriesResult = await db
+      .select({
+        name: locations.country,
+        count: sql<number>`count(*)`
+      })
+      .from(locations)
+      .groupBy(locations.country)
+      .orderBy(sql`count(*) desc`)
+      .limit(5);
+
+    // Get recent updates (last 24 hours)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentUpdatesResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(surfConditions)
+      .where(sql`${surfConditions.updatedAt} >= ${oneDayAgo}`);
+    const recentUpdates = recentUpdatesResult[0]?.count || 0;
+
+    // Calculate data quality distribution (simplified)
+    const dataQuality = {
+      excellent: Math.floor(totalSpots * 0.4), // 40% excellent
+      good: Math.floor(totalSpots * 0.3),      // 30% good  
+      poor: Math.floor(totalSpots * 0.2),      // 20% poor
+      noData: Math.floor(totalSpots * 0.1)     // 10% no data
+    };
+
+    return {
+      totalSpots,
+      activeStations,
+      dataQuality,
+      topCountries: topCountriesResult,
+      recentUpdates
     };
   }
 

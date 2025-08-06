@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Shield, Activity, Users, Database, Globe, BarChart3, AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
 import UserDatabase from "@/components/UserDatabase";
 import ErrorLogs from "@/components/ErrorLogs";
+import SurfSpotsMonitoring from "@/components/SurfSpotsMonitoring";
 
 interface AdminSession {
   isAuthenticated: boolean;
@@ -61,6 +62,7 @@ export default function AdminDashboard() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [showUserDatabase, setShowUserDatabase] = useState(false);
   const [showErrorLogs, setShowErrorLogs] = useState(false);
+  const [showSurfSpotsMonitoring, setShowSurfSpotsMonitoring] = useState(false);
   const { toast } = useToast();
 
   // Admin login mutation
@@ -202,6 +204,17 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-background p-6">
         <div className="container mx-auto max-w-7xl">
           <ErrorLogs onClose={() => setShowErrorLogs(false)} />
+        </div>
+      </div>
+    );
+  }
+
+  // Show Surf Spots Monitoring
+  if (showSurfSpotsMonitoring) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="container mx-auto max-w-7xl">
+          <SurfSpotsMonitoring onClose={() => setShowSurfSpotsMonitoring(false)} />
         </div>
       </div>
     );
@@ -406,10 +419,15 @@ export default function AdminDashboard() {
                   <div className="text-sm text-muted-foreground">Check application errors</div>
                 </div>
               </Button>
-              <Button variant="outline" className="justify-start h-auto p-4">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto p-4"
+                onClick={() => setShowSurfSpotsMonitoring(true)}
+                data-testid="button-surf-spots-monitoring"
+              >
                 <div className="text-left">
-                  <div className="font-semibold">Database Stats</div>
-                  <div className="text-sm text-muted-foreground">218 surf spots, user data</div>
+                  <div className="font-semibold">Surf Spots Monitoring</div>
+                  <div className="text-sm text-muted-foreground">218 surf spots, live data & NOAA stations</div>
                 </div>
               </Button>
             </div>

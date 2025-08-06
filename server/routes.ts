@@ -529,6 +529,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Surf spots monitoring endpoints
+  app.get("/api/admin/surf-spots", requireAdminAuth, async (req, res) => {
+    try {
+      const { search, limit = 50, offset = 0 } = req.query;
+      const spots = await storage.getAllSurfSpotsWithData(
+        search as string,
+        parseInt(limit as string) || 50,
+        parseInt(offset as string) || 0
+      );
+      res.json(spots);
+    } catch (error) {
+      console.error('Get surf spots failed:', error);
+      res.status(500).json({ message: "Failed to get surf spots data" });
+    }
+  });
+  
+  app.get("/api/admin/surf-spots/:spotId", requireAdminAuth, async (req, res) => {
+    try {
+      const { spotId } = req.params;
+      const spotDetails = await storage.getSurfSpotDetails(parseInt(spotId));
+      if (!spotDetails) {
+        return res.status(404).json({ message: "Surf spot not found" });
+      }
+      res.json(spotDetails);
+    } catch (error) {
+      console.error('Get surf spot details failed:', error);
+      res.status(500).json({ message: "Failed to get surf spot details" });
+    }
+  });
+  
+  app.get("/api/admin/surf-spots-stats", requireAdminAuth, async (req, res) => {
+    try {
+      const stats = await storage.getSurfSpotsStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Get surf spots stats failed:', error);
+      res.status(500).json({ message: "Failed to get surf spots statistics" });
+    }
+  });
+  
   // Admin user management endpoints
   app.get("/api/admin/users", requireAdminAuth, async (req, res) => {
     try {
