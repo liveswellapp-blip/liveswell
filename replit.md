@@ -83,7 +83,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Simplified Header Design**: Streamlined header to show only LiveSwell logo and user account icon when authenticated
 - ✅ **Logout Moved to Profile**: Relocated logout functionality from header to user profile page for cleaner interface
 
-### 2025-08-06: Replit Auth Integration & Branding Update Complete
+### 2025-08-06: Replit Auth Integration & UI Improvements Complete
 - ✅ **Replit OAuth Integration**: Replaced custom email/password authentication with secure Replit Auth using OpenID Connect
 - ✅ **Database Schema Migration**: Updated users table to support string-based user IDs and Replit user profile data
 - ✅ **Landing Page for Guests**: Created professional landing page with "Sign in with Replit" button for unauthenticated users
@@ -93,6 +93,8 @@ Preferred communication style: Simple, everyday language.
 - ✅ **DatabaseStorage Active**: Switched from MemStorage to DatabaseStorage for production-ready data persistence
 - ✅ **User Profile Integration**: Updated profile page to work with Replit Auth user data and logout functionality
 - ✅ **Branding Update**: Changed app name from SurfCast to LiveSwell with consistent logo usage across landing page and headers
+- ✅ **Favorites Authentication Fix**: Fixed 401 errors when saving surf spots by updating favorites endpoints to use Replit Auth
+- ✅ **Data Formatting Improvements**: Updated swell data to show 1 decimal point (2.6 ft) and removed decimals from wind data (3 mph)
 
 ### 2025-08-05: Nearby Surf Spots Navigation System Complete
 - ✅ **Nearby Spots Navigation Fix**: Resolved navigation issues where clicking nearby surf spot cards highlighted but didn't navigate

@@ -248,7 +248,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight || "0"}</span>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
                     <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
                   </>
                 )}
@@ -283,7 +283,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed || "0"}</span>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
                     <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
                   </>
                 )}
@@ -294,7 +294,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 ) : (
                   <div>
                     <div className="mb-1">
-                      <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts || "0"} mph</span></span>
+                      <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts ? Math.round(parseFloat(conditions.windGusts)) : "0"} mph</span></span>
                     </div>
                     <div>
                       <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
