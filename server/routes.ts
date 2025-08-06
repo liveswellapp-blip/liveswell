@@ -1941,9 +1941,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Update favorites endpoints to use authenticated user
-  app.get("/api/favorites", requireAuth, async (req: any, res) => {
+  app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
@@ -1952,9 +1952,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/favorites", requireAuth, async (req: any, res) => {
+  app.post("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const { locationId } = req.body;
       
       if (!locationId) {
@@ -1981,9 +1981,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/favorites/:locationId", requireAuth, async (req: any, res) => {
+  app.delete("/api/favorites/:locationId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const locationId = parseInt(req.params.locationId);
       
       if (isNaN(locationId)) {
@@ -2002,9 +2002,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/favorites/:locationId", requireAuth, async (req: any, res) => {
+  app.get("/api/favorites/:locationId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const locationId = parseInt(req.params.locationId);
       
       if (isNaN(locationId)) {
@@ -2020,9 +2020,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Profile Routes
-  app.get("/api/profile", requireAuth, async (req: any, res) => {
+  app.get("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const profile = await storage.getUserProfile(userId);
       
       if (!profile) {
@@ -2036,9 +2036,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/profile", requireAuth, async (req: any, res) => {
+  app.put("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       
       const result = updateUserProfileSchema.safeParse(req.body);
       if (!result.success) {
