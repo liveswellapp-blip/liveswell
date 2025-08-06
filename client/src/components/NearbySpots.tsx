@@ -34,20 +34,17 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
 
   if (error) {
     return (
-      <section className="container mx-auto px-4 py-8">
-        <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
-          <div className="text-center text-red-600">
-            <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
-          </div>
-        </Card>
-      </section>
+      <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
+        <div className="text-center text-red-600">
+          <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <section className="container mx-auto px-4 py-8">
-      <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+    <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
         <h3 className="text-xl font-semibold mb-4 text-black dark:text-white">Nearby Surf Spots</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,7 +100,6 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
             </div>
           )}
         </div>
-      </Card>
-    </section>
+    </Card>
   );
 }
