@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Shield, Activity, Users, Database, Globe, BarChart3, AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
+import UserDatabase from "@/components/UserDatabase";
 
 interface AdminSession {
   isAuthenticated: boolean;
@@ -57,6 +58,7 @@ interface ApiMetrics {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [showUserDatabase, setShowUserDatabase] = useState(false);
   const { toast } = useToast();
 
   // Admin login mutation
@@ -177,6 +179,17 @@ export default function AdminDashboard() {
             </form>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // Show User Database
+  if (showUserDatabase) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="container mx-auto max-w-7xl">
+          <UserDatabase onClose={() => setShowUserDatabase(false)} />
+        </div>
       </div>
     );
   }
@@ -358,10 +371,15 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="justify-start h-auto p-4">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto p-4"
+                onClick={() => setShowUserDatabase(true)}
+                data-testid="button-user-database"
+              >
                 <div className="text-left">
-                  <div className="font-semibold">User Activity</div>
-                  <div className="text-sm text-muted-foreground">View recent user actions</div>
+                  <div className="font-semibold">User Database</div>
+                  <div className="text-sm text-muted-foreground">View all users and their data</div>
                 </div>
               </Button>
               <Button variant="outline" className="justify-start h-auto p-4">

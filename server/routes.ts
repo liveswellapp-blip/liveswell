@@ -499,6 +499,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", requireAdminAuth, healthCheck);
   app.get("/api/metrics", requireAdminAuth, getMetrics);
   
+  // Admin user management endpoints
+  app.get("/api/admin/users", requireAdminAuth, async (req, res) => {
+    try {
+      const { search } = req.query;
+      const users = await storage.getAllUsers(search as string);
+      res.json(users);
+    } catch (error) {
+      console.error('Get users error:', error);
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
+  
+  app.get("/api/admin/users/:userId", requireAdminAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get user's favorites and profile
+      const [favorites, profile] = await Promise.all([
+        storage.getUserFavorites(userId),
+        storage.getUserProfile(userId)
+      ]);
+      
+      res.json({
+        user,
+        favorites,
+        profile,
+        stats: {
+          favoritesCount: favorites.length,
+          joinDate: user.createdAt,
+          lastActivity: user.updatedAt
+        }
+      });
+    } catch (error) {
+      console.error('Get user details error:', error);
+      res.status(500).json({ message: "Failed to get user details" });
+    }
+  });
+  
+  app.get("/api/admin/user-stats", requireAdminAuth, async (req, res) => {
+    try {
+      const stats = await storage.getUserStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Get user stats error:', error);
+      res.status(500).json({ message: "Failed to get user statistics" });
+    }
+  });
+  
   // Apply rate limiting to API routes
   app.use("/api/locations", generalApiLimiter);
   app.use("/api/weather", weatherApiLimiter);

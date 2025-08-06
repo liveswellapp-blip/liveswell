@@ -5,6 +5,13 @@ import { eq, and, like, or, sql } from "drizzle-orm";
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(search?: string): Promise<User[]>;
+  getUserStats(): Promise<{
+    totalUsers: number;
+    newUsersThisMonth: number;
+    activeUsers: number;
+    topLocations: Array<{name: string; favoriteCount: number}>;
+  }>;
   
   getLocation(id: number): Promise<Location | undefined>;
   getLocationByCoords(lat: number, lng: number): Promise<Location | undefined>;
@@ -78,6 +85,69 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getAllUsers(search?: string): Promise<User[]> {
+    let query = db.select().from(users);
+    
+    if (search) {
+      query = query.where(
+        or(
+          like(users.email, `%${search}%`),
+          like(users.firstName, `%${search}%`),
+          like(users.lastName, `%${search}%`)
+        )
+      );
+    }
+    
+    const allUsers = await query.orderBy(users.createdAt);
+    return allUsers;
+  }
+
+  async getUserStats(): Promise<{
+    totalUsers: number;
+    newUsersThisMonth: number;
+    activeUsers: number;
+    topLocations: Array<{name: string; favoriteCount: number}>;
+  }> {
+    // Get total users
+    const totalUsersResult = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const totalUsers = totalUsersResult[0]?.count || 0;
+
+    // Get new users this month
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    const newUsersResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(sql`${users.createdAt} >= ${oneMonthAgo}`);
+    const newUsersThisMonth = newUsersResult[0]?.count || 0;
+
+    // Get active users (users with favorites)
+    const activeUsersResult = await db
+      .select({ count: sql<number>`count(distinct ${favorites.userId})` })
+      .from(favorites);
+    const activeUsers = activeUsersResult[0]?.count || 0;
+
+    // Get top favorite locations
+    const topLocationsResult = await db
+      .select({
+        name: locations.name,
+        favoriteCount: sql<number>`count(*)`
+      })
+      .from(favorites)
+      .innerJoin(locations, eq(favorites.locationId, locations.id))
+      .groupBy(locations.id, locations.name)
+      .orderBy(sql`count(*) desc`)
+      .limit(5);
+
+    return {
+      totalUsers,
+      newUsersThisMonth,
+      activeUsers,
+      topLocations: topLocationsResult
+    };
   }
 
 
