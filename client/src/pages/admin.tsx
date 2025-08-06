@@ -62,11 +62,18 @@ export default function AdminDashboard() {
   // Admin login mutation
   const loginMutation = useMutation({
     mutationFn: async (creds: { username: string; password: string }) => {
-      return await apiRequest('/api/admin/login', {
+      const response = await fetch('/api/admin/login', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(creds),
-        headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Login failed' }));
+        throw new Error(errorData.error || 'Login failed');
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       setIsAuthenticated(true);
