@@ -574,6 +574,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get surf spots statistics" });
     }
   });
+
+  // Admin data quality audit - fetch all locations
+  app.post("/api/admin/audit-all-spots", requireAdminAuth, async (req, res) => {
+    try {
+      console.log('🔍 Starting data quality audit for all surf spots...');
+      
+      // Get all locations
+      const allLocations = await storage.getAllLocations();
+      const totalLocations = allLocations.length;
+      
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+      
+      // Process locations in batches to avoid overwhelming APIs
+      const batchSize = 10;
+      for (let i = 0; i < allLocations.length; i += batchSize) {
+        const batch = allLocations.slice(i, i + batchSize);
+        
+        const batchPromises = batch.map(async (location) => {
+          try {
+            const weatherData = await fetchWeatherData(
+              parseFloat(location.latitude),
+              parseFloat(location.longitude)
+            );
+            
+            // Check if conditions exist, update or create
+            const existingConditions = await storage.getSurfConditions(location.id);
+            if (existingConditions) {
+              await storage.updateSurfConditions(location.id, weatherData);
+            } else {
+              await storage.createSurfConditions({
+                locationId: location.id,
+                ...weatherData,
+              });
+            }
+            
+            successCount++;
+            console.log(`✅ Updated ${location.name} (${successCount}/${totalLocations})`);
+          } catch (error) {
+            errorCount++;
+            const errorMsg = `${location.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            errors.push(errorMsg);
+            console.error(`❌ Failed ${location.name}:`, error);
+          }
+        });
+        
+        await Promise.all(batchPromises);
+        
+        // Small delay between batches to be respectful to APIs
+        if (i + batchSize < allLocations.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      console.log(`🏁 Data quality audit completed: ${successCount} success, ${errorCount} errors`);
+      
+      res.json({
+        success: true,
+        message: "Data quality audit completed",
+        results: {
+          totalLocations,
+          successCount,
+          errorCount,
+          errors: errors.slice(0, 10) // Limit error list
+        }
+      });
+    } catch (error) {
+      console.error('Data quality audit failed:', error);
+      res.status(500).json({ 
+        success: false,
+        message: "Data quality audit failed",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   // Admin user management endpoints
   app.get("/api/admin/users", requireAdminAuth, async (req, res) => {

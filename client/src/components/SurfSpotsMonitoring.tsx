@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   ArrowLeft, 
   MapPin, 
@@ -23,7 +25,9 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Filter
+  Filter,
+  PlayCircle,
+  Loader2
 } from "lucide-react";
 
 interface SurfSpot {
@@ -89,6 +93,54 @@ interface SurfSpotsStats {
 
 interface SurfSpotsMonitoringProps {
   onClose: () => void;
+}
+
+function DataQualityAuditButton() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const auditMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/admin/audit-all-spots', {
+        method: 'POST',
+      });
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Data Quality Audit Complete",
+        description: `Updated ${data.results.successCount}/${data.results.totalLocations} surf spots`,
+        variant: "default",
+      });
+      
+      // Refresh the data after audit
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/surf-spots'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/surf-spots-stats'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Audit Failed",
+        description: error.message || "Failed to run data quality audit",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Button
+      variant="default"
+      onClick={() => auditMutation.mutate()}
+      disabled={auditMutation.isPending}
+      className="flex items-center gap-2"
+      data-testid="button-audit-all"
+    >
+      {auditMutation.isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <PlayCircle className="h-4 w-4" />
+      )}
+      {auditMutation.isPending ? 'Running Audit...' : 'Audit All Spots'}
+    </Button>
+  );
 }
 
 export default function SurfSpotsMonitoring({ onClose }: SurfSpotsMonitoringProps) {
@@ -335,6 +387,7 @@ export default function SurfSpotsMonitoring({ onClose }: SurfSpotsMonitoringProp
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          <DataQualityAuditButton />
           <Button onClick={onClose} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
