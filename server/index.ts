@@ -1,8 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeSurfSpots } from "./storage";
 
 // Validate required environment variables for production
 function validateEnvironment() {
@@ -35,25 +34,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure session middleware with PostgreSQL store
-const sessionSecret = process.env.SESSION_SECRET || 'dev-secret-key-change-in-production';
-const PgSession = connectPg(session);
-
-app.use(session({
-  store: new PgSession({
-    conString: process.env.DATABASE_URL,
-    tableName: 'session', // Table name for sessions
-    createTableIfMissing: true, // Automatically create table if it doesn't exist
-  }),
-  secret: sessionSecret,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false, // Allow non-HTTPS in development
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days for extended development work
-  }
-}));
+// Session configuration is handled by Replit Auth in replitAuth.ts
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -91,6 +72,9 @@ app.use((req, res, next) => {
     validateEnvironment();
     
     console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode`);
+    
+    // Initialize surf spots database on startup
+    await initializeSurfSpots();
     
     const server = await registerRoutes(app);
 

@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Waves, MapPin, Heart, LogIn } from "lucide-react";
 import { Location } from "@/types/weather";
 import FavoriteButton from "./FavoriteButton";
-import { useAuth } from "@/components/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 interface FavoritesListProps {

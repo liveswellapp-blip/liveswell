@@ -9,14 +9,16 @@ import { Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-import { useAuth } from "@/components/AuthContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
 
   return (
-    <ProtectedRoute>
       <div className="min-h-screen bg-[hsl(155,50%,8%)]">
         <Header />
         
@@ -82,7 +84,7 @@ export default function Profile() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button 
-                    onClick={logout}
+                    onClick={handleLogout}
                     variant="outline" 
                     className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
                     data-testid="button-logout"
@@ -105,6 +107,5 @@ export default function Profile() {
         
         <Footer />
       </div>
-    </ProtectedRoute>
   );
 }
