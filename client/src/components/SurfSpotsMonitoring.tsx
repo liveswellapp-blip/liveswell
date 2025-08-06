@@ -106,17 +106,27 @@ function DataQualityAuditButton() {
       });
     },
     onSuccess: (data: any) => {
-      toast({
-        title: "Data Quality Audit Complete",
-        description: `Updated ${data.results.successCount}/${data.results.totalLocations} surf spots`,
-        variant: "default",
-      });
+      console.log('Audit response:', data);
+      if (data.success) {
+        toast({
+          title: "Data Quality Audit Complete",
+          description: `Successfully updated ${data.results.successCount}/${data.results.totalLocations} surf spots. ${data.results.errorCount} errors.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Audit Completed with Issues",
+          description: data.message || "Some locations failed to update",
+          variant: "destructive",
+        });
+      }
       
       // Refresh the data after audit
       queryClient.invalidateQueries({ queryKey: ['/api/admin/surf-spots'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/surf-spots-stats'] });
     },
     onError: (error: any) => {
+      console.error('Audit error:', error);
       toast({
         title: "Audit Failed",
         description: error.message || "Failed to run data quality audit",
