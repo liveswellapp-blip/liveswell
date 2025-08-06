@@ -13,6 +13,7 @@ import Profile from "@/pages/profile";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
+import AdminDashboard from "@/pages/admin";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -29,6 +30,17 @@ function Router() {
           <Route path="/settings" component={Settings} />
           <Route path="/profile" component={Profile} />
           <Route path="/monitoring" component={Monitoring} />
+        </>
+      )}
+      
+      {/* Admin route - accessible regardless of auth status */}
+      <Route path="/admin" component={AdminDashboard} />
+      
+      {/* Catch-all route */}
+      {(isLoading || !isAuthenticated) ? (
+        <Route component={Landing} />
+      ) : (
+        <>
         </>
       )}
       <Route component={NotFound} />
