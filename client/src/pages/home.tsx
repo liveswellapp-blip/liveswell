@@ -144,36 +144,15 @@ export default function Home() {
       <Navigation onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (
-        <div className="container mx-auto px-4 py-6 max-w-7xl">
-          {/* Desktop optimized grid layout */}
-          <div className="hidden lg:grid lg:grid-cols-12 lg:gap-6">
-            {/* Main conditions - spans 8 columns */}
-            <div className="lg:col-span-8 space-y-6">
-              <CurrentConditions location={currentLocation} />
-              <HistoricalConditions location={currentLocation} />
-              <FutureConditions location={currentLocation} />
-            </div>
-            
-            {/* Side panel - spans 4 columns */}
-            <div className="lg:col-span-4 space-y-6">
-              <ForecastSection location={currentLocation} />
-            </div>
-            
-            {/* Full width bottom section */}
-            <div className="lg:col-span-12">
-              <NearbySpots location={currentLocation} />
-            </div>
-          </div>
-          
-          {/* Mobile and tablet layout */}
-          <div className="lg:hidden space-y-4">
-            <CurrentConditions location={currentLocation} />
-            <HistoricalConditions location={currentLocation} />
-            <FutureConditions location={currentLocation} />
-            <ForecastSection location={currentLocation} />
-            <NearbySpots location={currentLocation} />
-          </div>
-        </div>
+        <>
+          <CurrentConditions location={currentLocation} />
+          <HistoricalConditions location={currentLocation} />
+          <FutureConditions location={currentLocation} />
+          <ForecastSection location={currentLocation} />
+          <DetailedData location={currentLocation} />
+
+          <NearbySpots location={currentLocation} />
+        </>
       ) : (
         <div className="container mx-auto px-4 py-12 space-y-8">
           <div className="text-center">

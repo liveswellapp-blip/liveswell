@@ -23,7 +23,9 @@ export default function FutureConditions({ location }: FutureConditionsProps) {
   });
 
   return (
-    <Card className="bg-black/90 backdrop-blur border-gray-800">
+    <section className="py-8">
+      <div className="container mx-auto px-4">
+        <Card className="bg-black/90 backdrop-blur border-gray-800">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">
@@ -98,6 +100,8 @@ export default function FutureConditions({ location }: FutureConditionsProps) {
             </div>
             </div>
           </div>
-    </Card>
+        </Card>
+      </div>
+    </section>
   );
 }

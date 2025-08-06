@@ -17,20 +17,23 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
 
   if (error) {
     return (
-      <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-        <div className="text-center text-red-600">
-          <p className="text-destructive">Unable to load forecast data. Please try again later.</p>
-        </div>
-      </Card>
+      <section className="container mx-auto px-4 py-8">
+        <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+          <div className="text-center text-red-600">
+            <p className="text-destructive">Unable to load forecast data. Please try again later.</p>
+          </div>
+        </Card>
+      </section>
     );
   }
 
   return (
-    <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
-      <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
-      
-      {/* Forecast Cards */}
-      <div className="grid grid-cols-1 gap-4">
+    <section className="container mx-auto px-4 py-8">
+      <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
+        
+        {/* Forecast Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {isLoading ? (
             // Loading skeletons
             (Array.from({ length: 5 }).map((_, index) => (
@@ -72,7 +75,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               <p>No forecast data available</p>
             </div>
           )}
-      </div>
-    </Card>
+        </div>
+      </Card>
+    </section>
   );
 }
