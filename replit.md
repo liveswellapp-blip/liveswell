@@ -1,7 +1,7 @@
-# SurfCast - Real-time Surf Conditions App
+# LiveSwell - Real-time Surf Conditions App
 
 ## Overview
-SurfCast is a modern web application providing real-time surf conditions and weather forecasts for coastal locations globally. It integrates current weather, marine conditions, and surf forecasting to help surfers and marine enthusiasts make informed decisions. The project aims to be a comprehensive resource for surf data, offering an intuitive user experience and broad geographic coverage.
+LiveSwell is a modern web application providing real-time surf conditions and weather forecasts for coastal locations globally. It integrates current weather, marine conditions, and surf forecasting to help surfers and marine enthusiasts make informed decisions. The project aims to be a comprehensive resource for surf data, offering an intuitive user experience and broad geographic coverage.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -83,7 +83,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Simplified Header Design**: Streamlined header to show only LiveSwell logo and user account icon when authenticated
 - ✅ **Logout Moved to Profile**: Relocated logout functionality from header to user profile page for cleaner interface
 
-### 2025-08-06: Replit Auth Integration Complete
+### 2025-08-06: Replit Auth Integration & Branding Update Complete
 - ✅ **Replit OAuth Integration**: Replaced custom email/password authentication with secure Replit Auth using OpenID Connect
 - ✅ **Database Schema Migration**: Updated users table to support string-based user IDs and Replit user profile data
 - ✅ **Landing Page for Guests**: Created professional landing page with "Sign in with Replit" button for unauthenticated users
@@ -92,6 +92,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Clean Code Architecture**: Removed old authentication components (AuthContext, ProtectedRoute, LoginForm) and simplified codebase
 - ✅ **DatabaseStorage Active**: Switched from MemStorage to DatabaseStorage for production-ready data persistence
 - ✅ **User Profile Integration**: Updated profile page to work with Replit Auth user data and logout functionality
+- ✅ **Branding Update**: Changed app name from SurfCast to LiveSwell with consistent logo usage across landing page and headers
 
 ### 2025-08-05: Nearby Surf Spots Navigation System Complete
 - ✅ **Nearby Spots Navigation Fix**: Resolved navigation issues where clicking nearby surf spot cards highlighted but didn't navigate

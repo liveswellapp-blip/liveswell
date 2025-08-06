@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Waves, MapPin, TrendingUp, Star } from "lucide-react";
+import logoImageDark from "@assets/LiveSwell logo (6)_1753469985642.png";
 
 export default function Landing() {
   const handleLogin = () => {
@@ -13,12 +14,14 @@ export default function Landing() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-6">
-            <div className="bg-emerald-600 p-3 rounded-full mr-4">
-              <Waves className="h-8 w-8 text-white" />
+            <div className="relative w-64 h-16">
+              <img 
+                src={logoImageDark} 
+                alt="LiveSwell" 
+                className="h-16 object-contain mx-auto"
+                style={{ imageRendering: 'auto' }}
+              />
             </div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-              SurfCast
-            </h1>
           </div>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Real-time surf conditions and weather forecasts for coastal locations worldwide.
