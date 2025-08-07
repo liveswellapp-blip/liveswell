@@ -112,6 +112,7 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Branding Update**: Changed app name from SurfCast to LiveSwell with consistent logo usage across landing page and headers
 - ✅ **Favorites Authentication Fix**: Fixed 401 errors when saving surf spots by updating favorites endpoints to use Replit Auth
 - ✅ **Data Formatting Improvements**: Updated swell data to show 1 decimal point (2.6 ft) and removed decimals from wind data (3 mph)
+- ✅ **Forecast UI Optimization**: Removed high/low tide specific times and feet from 5-day forecast while preserving visual tide charts for cleaner forecast presentation
 
 ### 2025-08-05: Nearby Surf Spots Navigation System Complete
 - ✅ **Nearby Spots Navigation Fix**: Resolved navigation issues where clicking nearby surf spot cards highlighted but didn't navigate
