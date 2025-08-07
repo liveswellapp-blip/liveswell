@@ -144,15 +144,14 @@ export default function Home() {
       <Navigation onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (
-        <>
+        <div className="space-y-8">
           <CurrentConditions location={currentLocation} />
           <HistoricalConditions location={currentLocation} />
           <FutureConditions location={currentLocation} />
           <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
-
           <NearbySpots location={currentLocation} />
-        </>
+        </div>
       ) : (
         <div className="container mx-auto px-4 py-12 space-y-8">
           <div className="text-center">
