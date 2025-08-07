@@ -290,6 +290,50 @@ async function fetchTideData(lat: number, lon: number) {
   }
 }
 
+function getRealisticWaterTemperature(lat: number, lon: number): number {
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+  
+  // Base temperatures by region in August (peak summer)
+  let baseTemp = 72;
+  
+  // Regional adjustments
+  if (lat >= 40) {
+    // Northern waters (Maine, Great Lakes, Pacific Northwest)
+    baseTemp = 65;
+  } else if (lat >= 35) {
+    // Mid-Atlantic, Northern California
+    baseTemp = 70;
+  } else if (lat >= 30) {
+    // Southern California, North Carolina, Southern East Coast
+    baseTemp = 75;
+  } else if (lat >= 25) {
+    // Florida, Gulf Coast, Southern California
+    baseTemp = 80;
+  } else {
+    // Hawaii, Caribbean
+    baseTemp = 82;
+  }
+  
+  // Pacific Coast is generally cooler due to upwelling
+  if (lon < -115) {
+    baseTemp -= 5;
+  }
+  
+  // Great Lakes are warmer in summer
+  if (lat >= 41 && lat <= 49 && lon >= -92 && lon <= -76) {
+    baseTemp = 72;
+  }
+  
+  // Seasonal variation (sinusoidal, peak in August)
+  const seasonalVariation = Math.sin((month - 8) * Math.PI / 6) * 8;
+  
+  // Small random variation
+  const randomVariation = (Math.random() - 0.5) * 2;
+  
+  return Math.max(45, Math.min(85, baseTemp + seasonalVariation + randomVariation));
+}
+
 function generateRealisticTides(dayOffset: number, timezone: string = 'UTC') {
   const tides: Array<{
     time: string;
@@ -358,9 +402,8 @@ async function generateDemoWeatherData(lat: number, lon: number) {
   const tideHeight = tideData.currentTide || (2 + Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) * 2);
   const tideStatus = tideData.tideStatus || (Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling");
   
-  // Temperature based on latitude (rough approximation)
-  const baseTemp = 70 - Math.abs(lat - 25) * 0.8;
-  const waterTemp = baseTemp * 0.85;
+  // Water temperature based on geographic location and season
+  const waterTemp = getRealisticWaterTemperature(lat, lon);
   
   // Get timezone for location
   const timezone = getTimezone(lat, lon);
@@ -447,8 +490,8 @@ async function fetchWeatherData(lat: number, lon: number) {
     const tideHeight = tideData.currentTide || (2 + Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) * 2);
     const tideStatus = tideData.tideStatus || (Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling");
     
-    // Water temperature approximation based on air temp
-    const waterTemp = weatherData.main.temp * 0.8;
+    // Water temperature based on geographic location and season
+    const waterTemp = getRealisticWaterTemperature(lat, lon);
     
     // Get timezone for location
     const timezone = getTimezone(lat, lon);
