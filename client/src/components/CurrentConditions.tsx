@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield } from "lucide-react";
+import { MapPin, Waves, BarChart3, Navigation, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield, ArrowUp } from "lucide-react";
 import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -12,6 +12,17 @@ import { Button } from "@/components/ui/button";
 interface CurrentConditionsProps {
   location: Location;
 }
+
+// Convert wind direction to arrow rotation degrees
+const getWindArrowRotation = (direction: string): number => {
+  const directions: { [key: string]: number } = {
+    'N': 180,   'NNE': 202.5, 'NE': 225,  'ENE': 247.5,
+    'E': 270,   'ESE': 292.5, 'SE': 315,  'SSE': 337.5,
+    'S': 0,     'SSW': 22.5,  'SW': 45,   'WSW': 67.5,
+    'W': 90,    'WNW': 112.5, 'NW': 135,  'NNW': 157.5
+  };
+  return directions[direction.toUpperCase()] || 0;
+};
 
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
@@ -285,6 +296,16 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <>
                     <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
                     <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
+                    {conditions?.windDirection && (
+                      <ArrowUp 
+                        className="h-5 w-5 text-blue-900 dark:text-emerald-400 mb-1" 
+                        style={{ 
+                          transform: `rotate(${getWindArrowRotation(conditions.windDirection)}deg)`,
+                          transition: 'transform 0.2s ease'
+                        }}
+                        data-testid="current-wind-arrow"
+                      />
+                    )}
                   </>
                 )}
               </div>
@@ -296,7 +317,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="mb-1">
                       <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts ? Math.round(parseFloat(conditions.windGusts)) : "0"} mph</span></span>
                     </div>
-                    <div>
+                    <div className="flex items-center space-x-2">
                       <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
                     </div>
                   </div>
