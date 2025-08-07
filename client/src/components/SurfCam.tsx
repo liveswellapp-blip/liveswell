@@ -19,71 +19,101 @@ interface SurfCamProps {
   location: Location;
 }
 
-// Curated list of high-quality public surf cams mapped to our surf spots
+// Curated list of working public surf cams mapped to our surf spots
 const SURF_CAM_DATABASE: Record<string, SurfCam[]> = {
-  // California Spots - Using both city names and spot names for better matching
+  // California Spots - Using verified working cam sources
   "Malibu": [
     {
-      id: "malibu-point-hdontap",
-      name: "Malibu Point Live",
-      embedUrl: "https://hdontap.com/embed/842711",
-      directUrl: "https://hdontap.com/stream/842711/malibu_surf_cam/",
+      id: "malibu-pier-hdontap",
+      name: "Malibu Pier Live",
+      embedUrl: "https://player.hdontap.com?c=204757",
+      directUrl: "https://hdontap.com/stream/204757/malibu-pier-live-webcam/",
       provider: "hdontap",
       isActive: true,
       quality: "HD",
-      description: "Live view of Malibu Point surf break"
+      description: "Live view of Malibu Pier and beach conditions"
     }
   ],
   
   "Malibu Point": [
     {
-      id: "malibu-point-hdontap",
-      name: "Malibu Point Live",
-      embedUrl: "https://hdontap.com/embed/842711",
-      directUrl: "https://hdontap.com/stream/842711/malibu_surf_cam/",
+      id: "malibu-pier-hdontap",
+      name: "Malibu Pier Live",
+      embedUrl: "https://player.hdontap.com?c=204757",
+      directUrl: "https://hdontap.com/stream/204757/malibu-pier-live-webcam/",
       provider: "hdontap",
       isActive: true,
       quality: "HD",
-      description: "Live view of Malibu Point surf break"
+      description: "Live view of Malibu Pier and beach conditions"
     }
   ],
   
   "Huntington Beach": [
     {
-      id: "hb-pier-hdontap", 
-      name: "Huntington Pier",
-      embedUrl: "https://hdontap.com/embed/255678",
-      directUrl: "https://hdontap.com/stream/255678/huntington-beach-pier-live-cam/",
-      provider: "hdontap",
+      id: "hb-overview-hbcams", 
+      name: "HB Overview",
+      embedUrl: "https://cdn.pixelcaster.com/api/iframe/hb-innocean",
+      directUrl: "https://hbcams.com/webcams-huntington-beach-overview",
+      provider: "hbcams",
       isActive: true,
       quality: "HD",
-      description: "Huntington Beach Pier surf conditions"
+      description: "Live overview of Huntington Beach"
+    },
+    {
+      id: "hb-pier-south-hbcams", 
+      name: "South of Pier",
+      embedUrl: "https://cdn.pixelcaster.com/api/iframe/hb-pier-south",
+      directUrl: "https://hbcams.com/webcams-huntington-beach-south-of-pier",
+      provider: "hbcams",
+      isActive: true,
+      quality: "HD",
+      description: "Live view south of Huntington Beach Pier"
     }
   ],
   
   "Huntington Pier": [
     {
-      id: "hb-pier-hdontap", 
-      name: "Huntington Pier",
-      embedUrl: "https://hdontap.com/embed/255678",
-      directUrl: "https://hdontap.com/stream/255678/huntington-beach-pier-live-cam/",
-      provider: "hdontap",
+      id: "hb-overview-hbcams", 
+      name: "HB Overview",
+      embedUrl: "https://cdn.pixelcaster.com/api/iframe/hb-innocean",
+      directUrl: "https://hbcams.com/webcams-huntington-beach-overview",
+      provider: "hbcams",
       isActive: true,
       quality: "HD",
-      description: "Huntington Beach Pier surf conditions"
+      description: "Live overview of Huntington Beach"
+    },
+    {
+      id: "hb-pier-south-hbcams", 
+      name: "South of Pier",
+      embedUrl: "https://cdn.pixelcaster.com/api/iframe/hb-pier-south",
+      directUrl: "https://hbcams.com/webcams-huntington-beach-south-of-pier",
+      provider: "hbcams",
+      isActive: true,
+      quality: "HD",
+      description: "Live view south of Huntington Beach Pier"
     }
   ],
   
   "Manhattan Beach": [
     {
-      id: "el-porto-hdontap",
-      name: "El Porto",
-      embedUrl: "https://hdontap.com/embed/256987", 
-      directUrl: "https://hdontap.com/stream/256987/el-porto-manhattan-beach-live-webcam/",
+      id: "el-porto-roving-hdontap",
+      name: "El Porto Roving",
+      embedUrl: "https://player.hdontap.com?c=158254",
+      directUrl: "https://hdontap.com/stream/158254/el-porto-beach-roving-live-cam/",
       provider: "hdontap",
       isActive: true,
       quality: "HD",
-      description: "El Porto surf spot near Manhattan Beach"
+      description: "El Porto Beach roving surf cam near Manhattan Beach"
+    },
+    {
+      id: "manhattan-pier-hdontap",
+      name: "Manhattan Pier",
+      embedUrl: "https://player.hdontap.com?c=126730",
+      directUrl: "https://hdontap.com/stream/126730/manhattan-beach-pier-ultra-hd-live-webcam/",
+      provider: "hdontap",
+      isActive: true,
+      quality: "HD",
+      description: "Manhattan Beach Pier Ultra HD webcam"
     }
   ],
   
@@ -113,12 +143,12 @@ const SURF_CAM_DATABASE: Record<string, SurfCam[]> = {
     }
   ],
   
-  // Hawaii Spots  
+  // Hawaii Spots - Using verified working streams
   "Pipeline": [
     {
-      id: "pipeline-explore",
+      id: "pipeline-explore-embed",
       name: "Pipeline North Shore", 
-      embedUrl: "https://explore.org/livecams/hawaii/hawaii-pipeline-cam",
+      embedUrl: "https://explore.org/livecams/hawaii/hawaii-pipeline-cam/embed",
       directUrl: "https://explore.org/livecams/hawaii/hawaii-pipeline-cam",
       provider: "explore",
       isActive: true,
@@ -129,9 +159,9 @@ const SURF_CAM_DATABASE: Record<string, SurfCam[]> = {
   
   "Haleiwa": [
     {
-      id: "pipeline-explore",
+      id: "pipeline-explore-embed",
       name: "Pipeline North Shore", 
-      embedUrl: "https://explore.org/livecams/hawaii/hawaii-pipeline-cam",
+      embedUrl: "https://explore.org/livecams/hawaii/hawaii-pipeline-cam/embed",
       directUrl: "https://explore.org/livecams/hawaii/hawaii-pipeline-cam",
       provider: "explore",
       isActive: true,
@@ -169,14 +199,14 @@ const SURF_CAM_DATABASE: Record<string, SurfCam[]> = {
   // East Coast Florida Spots  
   "Cocoa Beach": [
     {
-      id: "cocoa-beach-surfguru",
+      id: "cocoa-beach-webcam",
       name: "Cocoa Beach Pier",
-      embedUrl: "https://www.cocoabeach.com/surfcam",
-      directUrl: "https://www.cocoabeach.com/surfcam",
+      embedUrl: "https://embed.windy.com/embed2.html?lat=28.336&lon=-80.606&detailLat=28.336&detailLon=-80.606&width=650&height=450&zoom=11&level=surface&overlay=webcams&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1",
+      directUrl: "https://www.cocoabeach.com/surfcam/",
       provider: "hdontap",
-      isActive: true,
+      isActive: false,
       quality: "Standard",
-      description: "Cocoa Beach Pier surf conditions"
+      description: "Cocoa Beach area weather and surf view"
     }
   ],
   
@@ -300,13 +330,16 @@ export default function SurfCam({ location }: SurfCamProps) {
                   width="100%"
                   height="100%"
                   frameBorder="0"
-                  allow="autoplay; encrypted-media"
+                  allow="autoplay; encrypted-media; fullscreen"
                   allowFullScreen
                   className="w-full h-full"
                   data-testid="iframe-surf-cam"
+                  onError={() => {
+                    console.log("Surf cam failed to load:", defaultCam.embedUrl);
+                  }}
                 />
               ) : (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex flex-col items-center justify-center h-full space-y-4">
                   <Button
                     onClick={() => setIsPlaying(true)}
                     size="lg"
@@ -314,8 +347,11 @@ export default function SurfCam({ location }: SurfCamProps) {
                     data-testid="button-play-cam"
                   >
                     <Play className="h-6 w-6" />
-                    <span>Watch Live</span>
+                    <span>Watch Live Surf Cam</span>
                   </Button>
+                  <p className="text-sm text-muted-foreground text-center max-w-xs">
+                    Click to view live HD surf conditions for {location.name}
+                  </p>
                 </div>
               )}
             </div>
@@ -374,7 +410,13 @@ export default function SurfCam({ location }: SurfCamProps) {
           <div className="text-xs text-muted-foreground text-center pt-2 border-t border-border">
             Live stream provided by {defaultCam.provider === 'hdontap' ? 'HDOnTap' : 
               defaultCam.provider === 'explore' ? 'Explore.org' :
-              defaultCam.provider === 'swellmagnet' ? 'SwellMagnet' : 'HBcams'}
+              defaultCam.provider === 'swellmagnet' ? 'SwellMagnet' : 
+              defaultCam.provider === 'hbcams' ? 'HBcams' : defaultCam.provider}
+            {!defaultCam.isActive && (
+              <span className="ml-2 px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded text-xs">
+                Currently Offline
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
