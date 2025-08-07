@@ -355,16 +355,19 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <span className="text-base font-medium">Water</span>
                 </div>
               </div>
-              <div className="flex items-end space-x-2">
+              <div>
                 {isLoading ? (
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
-                  <>
-                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}°F</span>
-                    <span className="text-sm mb-1 text-blue-900 dark:text-emerald-400">
+                  <div>
+                    <div className="flex items-end space-x-2">
+                      <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                    </div>
+                    <div className="text-lg text-blue-900 dark:text-emerald-400">
                       {conditions?.waterTemp ? `${Math.round((parseFloat(conditions.waterTemp) - 32) * 5/9)}°C` : "0°C"}
-                    </span>
-                  </>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
