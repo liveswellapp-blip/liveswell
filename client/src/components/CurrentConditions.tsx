@@ -403,22 +403,18 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <span className="text-base font-medium">UV Index</span>
                 </div>
               </div>
-              <div>
+              <div className="flex items-end space-x-2">
                 {isLoading ? (
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
-                  <div>
-                    <div className="flex items-end space-x-2">
-                      <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
-                    </div>
-                    <div className="mt-2">
-                      <span className="text-xl text-blue-900 dark:text-emerald-400">
-                        {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
-                         conditions?.uvIndex && conditions.uvIndex > 5 ? "Medium" : 
-                         conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Minimal"}
-                      </span>
-                    </div>
-                  </div>
+                  <>
+                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
+                      {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
+                       conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
+                       conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
