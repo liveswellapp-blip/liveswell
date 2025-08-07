@@ -319,26 +319,21 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Skeleton className="h-4 w-32 bg-white/20" />
               ) : (
                 <>
-                  {/* High/Low Tide Times and Heights */}
-                  {todayTides.length > 0 && (
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      {todayTides.filter(tide => tide.type === 'high' || tide.type === 'low').map((tide, index) => (
-                        <div key={index} className={`rounded-lg p-3 ${tide.type === 'high' ? 'bg-emerald-900/30 border-emerald-800/50' : 'bg-blue-900/30 border-blue-800/50'} border`}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-white capitalize">{tide.type} Tide</span>
-                            <span className="text-sm text-emerald-400">{tide.time}</span>
-                          </div>
-                          <div className="mt-1">
-                            <span className="text-lg font-semibold text-emerald-400">{tide.height.toFixed(1)} ft</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
                   {/* Today's Tide Chart */}
                   {todayTides.length > 0 && (
                     <TideChart tides={todayTides} date="today" location={location} />
+                  )}
+                  
+                  {/* High/Low Tide Times and Heights - List View */}
+                  {todayTides.length > 0 && (
+                    <div className="space-y-2">
+                      {todayTides.filter(tide => tide.type === 'high' || tide.type === 'low').map((tide, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm">
+                          <span className="text-white capitalize">{tide.type} Tide</span>
+                          <span className="text-emerald-400">{tide.time} - {tide.height.toFixed(1)} ft</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </>
               )}
