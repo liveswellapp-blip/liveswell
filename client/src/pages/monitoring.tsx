@@ -67,7 +67,7 @@ export default function Monitoring() {
         </div>
       </main>
       
-      <Footer />
+      <Footer hideSupport />
     </div>
   );
 }
