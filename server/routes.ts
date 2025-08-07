@@ -1702,14 +1702,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const conditions = await storage.getSurfConditions(spot.id);
             return {
               ...spot,
-              waveHeight: conditions?.waveHeight || `${Math.floor(Math.random() * 3 + 2)}-${Math.floor(Math.random() * 2 + 4)} ft`,
-              wind: conditions?.windSpeed ? `${conditions.windSpeed} mph` : `${Math.floor(Math.random() * 10 + 5)} mph`,
+              waveHeight: conditions?.waveHeight ? `${parseFloat(conditions.waveHeight).toFixed(1)} ft` : `${(Math.random() * 2 + 2).toFixed(1)} ft`,
+              wind: conditions?.windSpeed ? `${Math.round(parseFloat(conditions.windSpeed))} mph` : `${Math.round(Math.random() * 10 + 5)} mph`,
             };
           } catch {
             return {
               ...spot,
-              waveHeight: `${Math.floor(Math.random() * 3 + 2)}-${Math.floor(Math.random() * 2 + 4)} ft`,
-              wind: `${Math.floor(Math.random() * 10 + 5)} mph`,
+              waveHeight: `${(Math.random() * 2 + 2).toFixed(1)} ft`,
+              wind: `${Math.round(Math.random() * 10 + 5)} mph`,
             };
           }
         })
