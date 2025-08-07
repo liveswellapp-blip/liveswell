@@ -17,8 +17,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4">
-        <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+      <div className="w-full">
+        <Card className="bg-card shadow-lg p-6 border border-border mx-4 md:mx-auto md:max-w-7xl rounded-none md:rounded-xl">
           <div className="text-center text-red-600">
             <p className="text-destructive">Unable to load forecast data. Please try again later.</p>
           </div>
@@ -28,8 +28,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
   }
 
   return (
-    <div className="container mx-auto px-4">
-      <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
+    <div className="w-full">
+      <Card className="bg-card shadow-lg p-6 border border-border mx-4 md:mx-auto md:max-w-7xl rounded-none md:rounded-xl">
         <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
         
         {/* Forecast Cards */}

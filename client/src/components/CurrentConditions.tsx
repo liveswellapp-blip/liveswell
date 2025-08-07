@@ -220,18 +220,20 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   }
 
   return (
-    <div className="container mx-auto px-4 pt-8">
+    <div className="w-full">
       {/* Standalone Location Header */}
-      <div className="flex items-center space-x-3 mb-6">
-        <FavoriteButton 
-          locationId={location.id} 
-          locationName={location.name}
-          size="sm"
-        />
-        <h1 className="text-2xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
+      <div className="container mx-auto px-4 pt-8">
+        <div className="flex items-center space-x-3 mb-6">
+          <FavoriteButton 
+            locationId={location.id} 
+            locationName={location.name}
+            size="sm"
+          />
+          <h1 className="text-2xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
+        </div>
       </div>
 
-      <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
+      <Card className="bg-card shadow-lg p-6 mb-6 border border-border mx-4 md:mx-auto md:max-w-7xl rounded-none md:rounded-xl">
         <h2 className="text-xl font-bold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {conditions?.warning && (
