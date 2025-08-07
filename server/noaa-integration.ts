@@ -24,6 +24,7 @@ interface BuoyData {
   waveDirection: string | null;
   windSpeed: number | null;
   windDirection: string | null;
+  waterTemp: number | null;
   stationId: string;
   lastUpdate: Date | null;
 }
@@ -168,6 +169,7 @@ export async function fetchBuoyData(stationId: string): Promise<BuoyData> {
         waveDirection: null,
         windSpeed: null,
         windDirection: null,
+        waterTemp: null,
         stationId,
         lastUpdate: null
       };
@@ -195,11 +197,13 @@ export async function fetchBuoyData(stationId: string): Promise<BuoyData> {
     const waveHeightM = parseFloat(dataLine[8]); // meters
     const dominantPeriod = parseInt(dataLine[9]); // seconds
     const meanWaveDir = parseInt(dataLine[11]); // degrees
+    const waterTempC = parseFloat(dataLine[14]); // water temperature in Celsius
 
     // Convert and validate data
     const lastUpdate = new Date(year, month - 1, day, hour, minute);
     const waveHeightFt = !isNaN(waveHeightM) ? waveHeightM * 3.28084 : null;
     const windSpeedMph = !isNaN(windSpeed) ? windSpeed * 2.237 : null;
+    const waterTempF = !isNaN(waterTempC) ? waterTempC * 9/5 + 32 : null; // Convert Celsius to Fahrenheit
     
     const windDirectionStr = !isNaN(windDir) ? degreesToCompass(windDir) : null;
     const waveDirectionStr = !isNaN(meanWaveDir) ? degreesToCompass(meanWaveDir) : null;
@@ -210,6 +214,7 @@ export async function fetchBuoyData(stationId: string): Promise<BuoyData> {
       waveDirection: waveDirectionStr,
       windSpeed: windSpeedMph,
       windDirection: windDirectionStr,
+      waterTemp: waterTempF,
       stationId,
       lastUpdate
     };
@@ -222,6 +227,7 @@ export async function fetchBuoyData(stationId: string): Promise<BuoyData> {
       waveDirection: null,
       windSpeed: null,
       windDirection: null,
+      waterTemp: null,
       stationId,
       lastUpdate: null
     };

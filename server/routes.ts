@@ -142,16 +142,17 @@ async function fetchMarineData(lat: number, lon: number) {
       return {
         waveHeight: marineData.primary.waveHeight,
         wavePeriod: marineData.primary.wavePeriod,
-        waveDirection: marineData.primary.waveDirection
+        waveDirection: marineData.primary.waveDirection,
+        waterTemp: marineData.primary.waterTemp
       };
     }
     
     // No nearby stations found
-    return { waveHeight: null, wavePeriod: null, waveDirection: null };
+    return { waveHeight: null, wavePeriod: null, waveDirection: null, waterTemp: null };
     
   } catch (error) {
     console.warn('Error fetching comprehensive marine data:', error);
-    return { waveHeight: null, wavePeriod: null, waveDirection: null };
+    return { waveHeight: null, wavePeriod: null, waveDirection: null, waterTemp: null };
   }
 }
 
@@ -402,8 +403,8 @@ async function generateDemoWeatherData(lat: number, lon: number) {
   const tideHeight = tideData.currentTide || (2 + Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) * 2);
   const tideStatus = tideData.tideStatus || (Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling");
   
-  // Water temperature based on geographic location and season
-  const waterTemp = getRealisticWaterTemperature(lat, lon);
+  // Try to get real water temperature from NOAA first
+  const waterTemp = marineData.waterTemp || getRealisticWaterTemperature(lat, lon);
   
   // Get timezone for location
   const timezone = getTimezone(lat, lon);
@@ -490,8 +491,8 @@ async function fetchWeatherData(lat: number, lon: number) {
     const tideHeight = tideData.currentTide || (2 + Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) * 2);
     const tideStatus = tideData.tideStatus || (Math.sin((new Date().getHours() + new Date().getMinutes() / 60) * Math.PI / 6) > 0 ? "Rising" : "Falling");
     
-    // Water temperature based on geographic location and season
-    const waterTemp = getRealisticWaterTemperature(lat, lon);
+    // Use real water temperature from NOAA buoys or fall back to realistic approximation
+    const waterTemp = marineData.waterTemp || getRealisticWaterTemperature(lat, lon);
     
     // Get timezone for location
     const timezone = getTimezone(lat, lon);
