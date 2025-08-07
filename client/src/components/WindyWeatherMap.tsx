@@ -1,11 +1,27 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Navigation } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Location } from "@/types/weather";
 
 interface WindyWeatherMapProps {
   location: Location;
 }
 
+interface FutureWindData {
+  date: string;
+  dateLabel: string;
+  windSpeed: string;
+  windDirection: string;
+  timestamp: string;
+}
+
 export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
+  // Fetch future wind data for the table
+  const { data: futureData, isLoading } = useQuery<FutureWindData[]>({
+    queryKey: [`/api/locations/${location.id}/future-conditions`],
+    enabled: !!location.id,
+  });
 
   // Generate Windy embed URL with location coordinates for wind data
   const generateWindyUrl = () => {
@@ -57,6 +73,67 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
                 data-testid="iframe-windy-map"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Wind Forecast Table */}
+        <div className="pt-4 border-t border-border mt-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Navigation className="h-5 w-5 text-muted-foreground" />
+              <span className="text-base font-medium">Wind Forecast</span>
+            </div>
+            <span className="text-sm text-muted-foreground">Next 48 Hours</span>
+          </div>
+
+          {/* Wind Data Grid - Scrollable for 48 hours */}
+          <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
+            {isLoading ? (
+              // Loading skeletons for first 8 hours
+              Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="bg-muted rounded-lg p-3 border border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                </div>
+              ))
+            ) : futureData ? (
+              futureData.map((data, index) => {
+                // Check if we need to show a date separator
+                const showDateSeparator = index === 0 || 
+                  (index > 0 && data.dateLabel !== futureData[index - 1].dateLabel);
+                
+                return (
+                  <div key={index}>
+                    {/* Date Separator */}
+                    {showDateSeparator && (
+                      <div className="flex items-center justify-center mb-3 mt-2">
+                        <div className="flex-1 border-t border-border"></div>
+                        <div className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          {data.dateLabel}
+                        </div>
+                        <div className="flex-1 border-t border-border"></div>
+                      </div>
+                    )}
+                    
+                    {/* Wind Data Card */}
+                    <div className="bg-muted rounded-lg p-3 border border-border">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{data.date}</span>
+                        <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                          {data.windSpeed} mph {data.windDirection}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No future wind data available</p>
+              </div>
+            )}
           </div>
         </div>
 

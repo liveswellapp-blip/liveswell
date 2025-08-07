@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import Header from "@/components/Header";
 import CurrentConditions from "@/components/CurrentConditions";
 import HistoricalConditions from "@/components/HistoricalConditions";
-import FutureConditions from "@/components/FutureConditions";
+
 import ForecastSection from "@/components/ForecastSection";
 import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
@@ -185,7 +185,6 @@ export default function Home() {
           <CurrentConditions location={currentLocation} />
           <WindyWeatherMap location={currentLocation} />
           <HistoricalConditions location={currentLocation} />
-          <FutureConditions location={currentLocation} />
           <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
           <NearbySpots location={currentLocation} />
