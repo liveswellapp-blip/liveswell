@@ -173,7 +173,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   if (error) {
     return (
-      <section className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4">
         <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-blue-900 dark:text-white">
@@ -204,12 +204,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
           </CardContent>
         </Card>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4">
       {/* Standalone Location Header */}
       <div className="flex items-center space-x-3 mb-6">
         <FavoriteButton 
@@ -461,6 +461,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
         </div>
       </Card>
-    </section>
+    </div>
   );
 }
