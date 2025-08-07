@@ -103,9 +103,9 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-family: 'Inter', sans-serif;
-    /* Apply emerald scrollbar globally */
+    /* Apply emerald scrollbar globally with black background */
     scrollbar-width: thin;
-    scrollbar-color: rgba(52, 211, 153, 0.6) rgba(6, 78, 59, 0.2);
+    scrollbar-color: rgba(52, 211, 153, 0.6) rgba(0, 0, 0, 0.8);
   }
 
   /* Global emerald scrollbar styling for webkit browsers */
@@ -114,7 +114,7 @@
   }
 
   body::-webkit-scrollbar-track {
-    background: rgba(6, 78, 59, 0.2);
+    background: rgba(0, 0, 0, 0.8);
     border-radius: 4px;
   }
 
@@ -130,7 +130,7 @@
   /* Apply to all scrollable elements */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(52, 211, 153, 0.6) rgba(6, 78, 59, 0.2);
+    scrollbar-color: rgba(52, 211, 153, 0.6) rgba(0, 0, 0, 0.8);
   }
 
   *::-webkit-scrollbar {
@@ -139,7 +139,7 @@
   }
 
   *::-webkit-scrollbar-track {
-    background: rgba(6, 78, 59, 0.2);
+    background: rgba(0, 0, 0, 0.8);
     border-radius: 4px;
   }
 
