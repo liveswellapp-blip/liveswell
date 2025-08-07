@@ -11,7 +11,6 @@ import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
 import SurfSpotStats from "@/components/SurfSpotStats";
 import LoadingScreen from "@/components/LoadingScreen";
-import SurfCam from "@/components/SurfCam";
 
 import Footer from "@/components/Footer";
 import { Location } from "@/types/weather";
@@ -183,7 +182,6 @@ export default function Home() {
       {currentLocation ? (
         <div className="space-y-4">
           <CurrentConditions location={currentLocation} />
-          <SurfCam location={currentLocation} />
           <HistoricalConditions location={currentLocation} />
           <FutureConditions location={currentLocation} />
           <ForecastSection location={currentLocation} />

@@ -108,6 +108,12 @@ Preferred communication style: Simple, everyday language.
 - ✅ **Navigation Spacing Fix**: Added proper pt-8 top padding to maintain appropriate spacing between search navigation and surf spot header
 - ✅ **Visual Rhythm Improvement**: Achieved consistent visual spacing throughout the entire conditions page for better user experience
 
+### 2025-08-07: Live Surf Cam Feature Removed
+- ✅ **Surf Cam Integration Removed**: Removed live surf cam functionality due to reliability concerns with public webcam feeds
+- ✅ **Clean Code Architecture**: Removed SurfCam component and all related embed URL infrastructure
+- ✅ **Focus on Core Features**: Streamlined app to focus on reliable surf data from authenticated sources (NOAA, OpenWeather)
+- ✅ **Improved Page Performance**: Eliminated potential iframe loading issues and external dependencies
+
 ### 2025-08-06: Replit Auth Integration & UI Improvements Complete
 - ✅ **Replit OAuth Integration**: Replaced custom email/password authentication with secure Replit Auth using OpenID Connect
 - ✅ **Database Schema Migration**: Updated users table to support string-based user IDs and Replit user profile data
