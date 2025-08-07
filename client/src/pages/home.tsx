@@ -144,7 +144,7 @@ export default function Home() {
       <Navigation onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (
-        <div className="space-y-8">
+        <div className="space-y-4">
           <CurrentConditions location={currentLocation} />
           <HistoricalConditions location={currentLocation} />
           <FutureConditions location={currentLocation} />
