@@ -76,25 +76,36 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
           </div>
         </div>
 
+        {/* Provider Attribution */}
+        <div className="text-xs text-muted-foreground text-center pt-3 border-t border-border mt-3">
+          Interactive wind data provided by{" "}
+          <a 
+            href="https://www.windy.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:text-blue-600 underline"
+          >
+            Windy.com
+          </a>
+          {" "}• ECMWF forecast model
+        </div>
+
         {/* Wind Forecast Table */}
         <div className="pt-4 border-t border-border mt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Navigation className="h-5 w-5 text-muted-foreground" />
-              <span className="text-base font-medium">Wind Forecast</span>
-            </div>
-            <span className="text-sm text-muted-foreground">Next 48 Hours</span>
+          <div className="flex items-center space-x-2 mb-4">
+            <Navigation className="h-5 w-5 text-emerald-500" />
+            <span className="text-sm text-emerald-400 font-medium">Next 48 Hours</span>
           </div>
 
           {/* Wind Data Grid - Scrollable for 48 hours */}
-          <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
+          <div className="max-h-80 overflow-y-auto space-y-3 pr-2 historical-scroll">
             {isLoading ? (
               // Loading skeletons for first 8 hours
               Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="bg-muted rounded-lg p-3 border border-border">
+                <div key={index} className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
                   <div className="flex items-center justify-between mb-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-5 w-12" />
+                    <Skeleton className="h-4 w-20 bg-white/20" />
+                    <Skeleton className="h-5 w-12 bg-white/20" />
                   </div>
                 </div>
               ))
@@ -109,19 +120,19 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
                     {/* Date Separator */}
                     {showDateSeparator && (
                       <div className="flex items-center justify-center mb-3 mt-2">
-                        <div className="flex-1 border-t border-border"></div>
-                        <div className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        <div className="flex-1 border-t border-emerald-600/30"></div>
+                        <div className="px-3 text-xs font-medium text-emerald-400 uppercase tracking-wide">
                           {data.dateLabel}
                         </div>
-                        <div className="flex-1 border-t border-border"></div>
+                        <div className="flex-1 border-t border-emerald-600/30"></div>
                       </div>
                     )}
                     
                     {/* Wind Data Card */}
-                    <div className="bg-muted rounded-lg p-3 border border-border">
+                    <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{data.date}</span>
-                        <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                        <span className="text-sm text-white font-medium">{data.date}</span>
+                        <span className="text-sm font-semibold text-emerald-400">
                           {data.windSpeed} mph {data.windDirection}
                         </span>
                       </div>
@@ -131,24 +142,10 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
               })
             ) : (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">No future wind data available</p>
+                <p className="text-white opacity-75">No future wind data available</p>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Provider Attribution */}
-        <div className="text-xs text-muted-foreground text-center pt-3 border-t border-border mt-3">
-          Interactive wind data provided by{" "}
-          <a 
-            href="https://www.windy.com" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:text-blue-600 underline"
-          >
-            Windy.com
-          </a>
-          {" "}• ECMWF forecast model
         </div>
       </CardContent>
     </Card>
