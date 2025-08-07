@@ -53,7 +53,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {isLoading ? (
             // Loading skeletons
-            Array.from({ length: 6 }).map((_, index) => (
+            Array.from({ length: 3 }).map((_, index) => (
               <div key={index} className="bg-muted rounded-lg p-4">
                 <div className="flex items-center space-x-3 mb-3">
                   <Skeleton className="w-12 h-12 rounded-full" />
@@ -69,7 +69,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
               </div>
             ))
           ) : nearbySpots.length > 0 ? (
-            nearbySpots.map((spot) => (
+            nearbySpots.slice(0, 3).map((spot) => (
               <div 
                 key={spot.id} 
                 onClick={() => handleSpotClick(spot.id)}
