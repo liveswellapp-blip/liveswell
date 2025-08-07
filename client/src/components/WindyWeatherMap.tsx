@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Navigation } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Location } from "@/types/weather";
 
@@ -93,7 +93,7 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
         {/* Wind Forecast Table */}
         <div className="pt-4 border-t border-border mt-4">
           <div className="flex items-center space-x-2 mb-4">
-            <Navigation className="h-5 w-5 text-emerald-500" />
+            <Clock className="h-5 w-5 text-emerald-500" />
             <span className="text-sm text-emerald-400 font-medium">Next 48 Hours</span>
           </div>
 
