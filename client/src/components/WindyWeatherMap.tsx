@@ -77,7 +77,7 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
         </div>
 
         {/* Provider Attribution */}
-        <div className="text-xs text-muted-foreground text-center pt-3 border-t border-border mt-3">
+        <div className="text-xs text-muted-foreground text-center pt-3 mt-3">
           Interactive wind data provided by{" "}
           <a 
             href="https://www.windy.com" 
