@@ -327,13 +327,33 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   {/* High/Low Tide Times and Heights - List View */}
                   {todayTides.length > 0 && (
                     <div className="space-y-2">
-                      {todayTides.filter(tide => tide.type === 'high' || tide.type === 'low').map((tide, index, filteredTides) => (
+                      {todayTides
+                        .filter(tide => tide.type === 'high' || tide.type === 'low')
+                        .sort((a, b) => {
+                          // Parse time strings to compare chronologically
+                          const parseTime = (timeStr: string) => {
+                            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                            if (!match) return 0;
+                            
+                            let hours = parseInt(match[1]);
+                            const minutes = parseInt(match[2]);
+                            const isPM = match[3].toUpperCase() === 'PM';
+                            
+                            if (isPM && hours !== 12) hours += 12;
+                            if (!isPM && hours === 12) hours = 0;
+                            
+                            return hours * 60 + minutes; // Convert to minutes for easy comparison
+                          };
+                          
+                          return parseTime(a.time) - parseTime(b.time);
+                        })
+                        .map((tide, index, sortedTides) => (
                         <div key={index}>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-white capitalize">{tide.type} Tide</span>
                             <span className="text-emerald-400">{tide.time} - {tide.height.toFixed(1)} ft</span>
                           </div>
-                          {index < filteredTides.length - 1 && (
+                          {index < sortedTides.length - 1 && (
                             <div className="border-t border-gray-600/30 mt-2"></div>
                           )}
                         </div>
