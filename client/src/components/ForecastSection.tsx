@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wind, Waves } from "lucide-react";
 import { Location, ForecastDay } from "@/types/weather";
-import SimpleTideChart from "./SimpleTideChart";
+import TideChart from "./TideChart";
 
 interface ForecastSectionProps {
   location: Location;
@@ -49,30 +49,25 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="rounded-lg p-3 hover:shadow-md transition-shadow bg-muted border border-border">
-                <div className="flex justify-between items-start">
-                  {/* Left side - Text data */}
-                  <div className="text-left flex-1">
-                    <div className="font-medium mb-2 text-sm text-blue-900 dark:text-white">
-                      {day.date}
-                    </div>
-                    <div className="flex items-center space-x-1 font-semibold mb-1 text-lg text-blue-900 dark:text-white">
-                      <Waves className="h-4 w-4 text-blue-900 dark:text-white" />
-                      <span>{day.waveHeight}</span>
-                    </div>
-                    <div className="flex items-center space-x-1 mb-2 text-sm text-blue-900 dark:text-white">
-                      <Wind className="h-3 w-3 text-blue-900 dark:text-white" />
-                      <span>{day.wind}</span>
-                    </div>
+              <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-muted border border-border">
+                <div className="text-left">
+                  <div className="font-medium mb-2 text-[18px] text-blue-900 dark:text-white">
+                    {day.date}
                   </div>
-                  
-                  {/* Right side - Tide Chart */}
-                  {day.tides && day.tides.length > 0 && (
-                    <div className="w-16 ml-2">
-                      <SimpleTideChart tides={day.tides} />
-                    </div>
-                  )}
+                  <div className="flex items-center space-x-2 font-semibold mb-1 text-[25px] text-blue-900 dark:text-white">
+                    <Waves className="h-[25px] w-[25px] text-blue-900 dark:text-white" />
+                    <span>{day.waveHeight}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 mb-2 text-[18px] text-blue-900 dark:text-white">
+                    <Wind className="h-[18px] w-[18px] text-blue-900 dark:text-white" />
+                    <span>{day.wind}</span>
+                  </div>
                 </div>
+                
+                {/* Tide Chart */}
+                {day.tides && day.tides.length > 0 && (
+                  <TideChart tides={day.tides} date={day.date} location={location} />
+                )}
               </div>
             ))
           ) : (
