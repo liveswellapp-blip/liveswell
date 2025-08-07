@@ -10,6 +10,7 @@ import ForecastSection from "@/components/ForecastSection";
 import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
 import SurfSpotStats from "@/components/SurfSpotStats";
+import LoadingScreen from "@/components/LoadingScreen";
 
 import Footer from "@/components/Footer";
 import { Location } from "@/types/weather";
@@ -18,7 +19,8 @@ import { Location } from "@/types/weather";
 
 export default function Home() {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true); // Start as true
+  const [isNavigating, setIsNavigating] = useState(false);
   const [location] = useLocation();
   const [urlParams, setUrlParams] = useState(new URLSearchParams(window.location.search));
 
@@ -75,6 +77,16 @@ export default function Home() {
       
       console.log('Loading location from URL:', locationParam, 'Current location:', currentLocation?.name);
       
+      // Start loading state when navigating
+      if (locationParam && currentLocation) {
+        const locationId = parseInt(locationParam);
+        if (!isNaN(locationId) && currentLocation.id !== locationId) {
+          setIsNavigating(true);
+          // Scroll to top for better UX
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+      
       if (locationParam) {
         // Check if it's a numeric ID
         const locationId = parseInt(locationParam);
@@ -82,6 +94,8 @@ export default function Home() {
           // Skip if we already have this location loaded
           if (currentLocation && currentLocation.id === locationId) {
             console.log('Location already loaded:', currentLocation.name);
+            setIsLoadingLocation(false);
+            setIsNavigating(false);
             return;
           }
           
@@ -94,11 +108,15 @@ export default function Home() {
               if (location) {
                 console.log('Found location by ID:', location.name);
                 setCurrentLocation(location);
+                setIsLoadingLocation(false);
+                setIsNavigating(false);
                 return;
               }
             }
           } catch (error) {
             console.error("Error loading location by ID:", error);
+            setIsLoadingLocation(false);
+            setIsNavigating(false);
           }
         } else {
           // Load specific location by name (fallback for old URLs)
@@ -109,11 +127,15 @@ export default function Home() {
               if (locations.length > 0) {
                 console.log('Found location by name:', locations[0].name);
                 setCurrentLocation(locations[0]);
+                setIsLoadingLocation(false);
+                setIsNavigating(false);
                 return;
               }
             }
           } catch (error) {
             console.error("Error loading location by name:", error);
+            setIsLoadingLocation(false);
+            setIsNavigating(false);
           }
         }
       }
@@ -127,16 +149,30 @@ export default function Home() {
             if (locations.length > 0) {
               console.log('Loading default location:', locations[0].name);
               setCurrentLocation(locations[0]);
+              setIsLoadingLocation(false);
             }
           }
         } catch (error) {
           console.error("Error loading default location:", error);
+          setIsLoadingLocation(false);
         }
       }
     };
 
     loadLocation();
   }, [location, urlParams]);
+
+  // Show full loading screen when initially loading or navigating
+  if (isLoadingLocation || isNavigating) {
+    return (
+      <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">
+        <Header />
+        <Navigation onLocationSelect={setCurrentLocation} />
+        <LoadingScreen type="conditions" />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">
@@ -156,7 +192,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-12 space-y-8">
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-blue-900 dark:text-white mb-4">
-              Welcome to SurfCast
+              Welcome to LiveSwell
             </h2>
             <p className="text-blue-900 dark:text-emerald-400 mb-8">
               Search for a coastal location or allow location access to get started

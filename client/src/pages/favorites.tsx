@@ -9,8 +9,8 @@ export default function Favorites() {
   const [, setLocation] = useLocation();
 
   const handleLocationSelect = (location: Location) => {
-    // Navigate to home page with location name as URL parameter
-    setLocation(`/?location=${encodeURIComponent(location.name)}`);
+    // Navigate to conditions page with location ID (better for loading states)
+    setLocation(`/conditions?location=${location.id}`);
   };
 
   return (

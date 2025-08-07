@@ -59,6 +59,11 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
     setShowSuggestions(false);
     setShowSearchModal(false);
     onLocationSelect(location);
+    
+    // Navigate to conditions page with location ID
+    window.history.pushState({}, '', `/conditions?location=${location.id}`);
+    const popStateEvent = new PopStateEvent('popstate', { state: {} });
+    window.dispatchEvent(popStateEvent);
   };
 
   const handleSearchClick = () => {
