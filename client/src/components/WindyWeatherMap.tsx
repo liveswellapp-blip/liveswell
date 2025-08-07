@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock } from "lucide-react";
+import { Clock, ArrowUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Location } from "@/types/weather";
 
@@ -15,6 +15,17 @@ interface FutureWindData {
   windDirection: string;
   timestamp: string;
 }
+
+// Convert wind direction to arrow rotation degrees
+const getWindArrowRotation = (direction: string): number => {
+  const directions: { [key: string]: number } = {
+    'N': 180,   'NNE': 202.5, 'NE': 225,  'ENE': 247.5,
+    'E': 270,   'ESE': 292.5, 'SE': 315,  'SSE': 337.5,
+    'S': 0,     'SSW': 22.5,  'SW': 45,   'WSW': 67.5,
+    'W': 90,    'WNW': 112.5, 'NW': 135,  'NNW': 157.5
+  };
+  return directions[direction.toUpperCase()] || 0;
+};
 
 export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
   // Fetch future wind data for the table
@@ -132,9 +143,22 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
                     <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-white font-medium">{data.date}</span>
-                        <span className="text-sm font-semibold text-emerald-400">
-                          {data.windSpeed} mph {data.windDirection}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-semibold text-emerald-400">
+                            {data.windSpeed} mph
+                          </span>
+                          <ArrowUp 
+                            className="h-4 w-4 text-emerald-400" 
+                            style={{ 
+                              transform: `rotate(${getWindArrowRotation(data.windDirection)}deg)`,
+                              transition: 'transform 0.2s ease'
+                            }}
+                            data-testid={`wind-arrow-${index}`}
+                          />
+                          <span className="text-xs text-emerald-300">
+                            {data.windDirection}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
