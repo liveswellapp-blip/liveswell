@@ -25,7 +25,7 @@ export default function HistoricalConditions({ location }: HistoricalConditionsP
 
   return (
     <div className="w-full">
-      <Card className="bg-black/90 backdrop-blur border-gray-800 mx-4 md:mx-auto md:max-w-7xl rounded-none md:rounded-xl">
+      <Card className="bg-black/90 backdrop-blur border-0 md:border md:border-gray-800 md:mx-auto md:max-w-7xl rounded-none md:rounded-xl">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">

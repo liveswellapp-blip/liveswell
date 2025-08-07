@@ -65,7 +65,7 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
 
   return (
     <div className="w-full">
-      <Card className="w-full mx-4 md:mx-auto md:max-w-7xl rounded-none md:rounded-xl" data-testid="card-windy-weather-map">
+      <Card className="w-full border-0 md:border md:border-border md:mx-auto md:max-w-7xl rounded-none md:rounded-xl" data-testid="card-windy-weather-map">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">Wind Forecast</CardTitle>
       </CardHeader>

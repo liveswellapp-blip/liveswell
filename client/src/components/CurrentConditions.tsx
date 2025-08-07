@@ -233,7 +233,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         </div>
       </div>
 
-      <Card className="bg-card shadow-lg p-6 mb-6 border border-border mx-4 md:mx-auto md:max-w-7xl rounded-none md:rounded-xl">
+      <Card className="bg-card shadow-lg p-6 mb-6 border-0 md:border md:border-border md:mx-auto md:max-w-7xl rounded-none md:rounded-xl">
         <h2 className="text-xl font-bold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {conditions?.warning && (
