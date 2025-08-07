@@ -327,10 +327,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   {/* High/Low Tide Times and Heights - List View */}
                   {todayTides.length > 0 && (
                     <div className="space-y-2">
-                      {todayTides.filter(tide => tide.type === 'high' || tide.type === 'low').map((tide, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm">
-                          <span className="text-white capitalize">{tide.type} Tide</span>
-                          <span className="text-emerald-400">{tide.time} - {tide.height.toFixed(1)} ft</span>
+                      {todayTides.filter(tide => tide.type === 'high' || tide.type === 'low').map((tide, index, filteredTides) => (
+                        <div key={index}>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-white capitalize">{tide.type} Tide</span>
+                            <span className="text-emerald-400">{tide.time} - {tide.height.toFixed(1)} ft</span>
+                          </div>
+                          {index < filteredTides.length - 1 && (
+                            <div className="border-t border-gray-600/30 mt-2"></div>
+                          )}
                         </div>
                       ))}
                     </div>
