@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import Navigation from "@/components/Navigation";
 import Header from "@/components/Header";
 import CurrentConditions from "@/components/CurrentConditions";
-import HistoricalConditions from "@/components/HistoricalConditions";
+
 
 import ForecastSection from "@/components/ForecastSection";
 import DetailedData from "@/components/DetailedData";
@@ -184,7 +184,6 @@ export default function Home() {
         <div className="space-y-4">
           <CurrentConditions location={currentLocation} />
           <WindyWeatherMap location={currentLocation} />
-          <HistoricalConditions location={currentLocation} />
           <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
           <NearbySpots location={currentLocation} />
