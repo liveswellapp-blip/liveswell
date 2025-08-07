@@ -17,18 +17,18 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
 
   if (error) {
     return (
-      <section className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4">
         <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
           <div className="text-center text-red-600">
             <p className="text-destructive">Unable to load forecast data. Please try again later.</p>
           </div>
         </Card>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4">
       <Card className="bg-card rounded-xl shadow-lg p-6 border border-border">
         <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
         
@@ -77,6 +77,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           )}
         </div>
       </Card>
-    </section>
+    </div>
   );
 }
