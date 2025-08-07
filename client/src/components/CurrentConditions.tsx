@@ -385,7 +385,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
                     </div>
                     <div className="text-lg text-blue-900 dark:text-emerald-400">
-                      {conditions?.waterTemp ? `${Math.round((parseFloat(conditions.waterTemp) - 32) * 5/9)}°C` : "0°C"}
+                      {conditions?.waterTemp ? `${(((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1)}°C` : "0.0°C"}
                     </div>
                   </div>
                 )}
