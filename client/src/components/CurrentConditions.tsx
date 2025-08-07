@@ -343,8 +343,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
-                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}°F</span>
+                    <span className="text-sm mb-1 text-blue-900 dark:text-emerald-400">
+                      {conditions?.waterTemp ? `${Math.round((parseFloat(conditions.waterTemp) - 32) * 5/9)}°C` : "0°C"}
+                    </span>
                   </>
                 )}
               </div>
@@ -363,7 +365,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
+                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
                     <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
                       {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
                        conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
