@@ -222,7 +222,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <div className="w-full">
       {/* Standalone Location Header */}
-      <div className="container mx-auto px-4 pt-8">
+      <div className="container mx-auto px-6 pt-8">
         <div className="flex items-center space-x-3 mb-6">
           <FavoriteButton 
             locationId={location.id} 

@@ -74,7 +74,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
 
   return (
     <nav className="bg-background">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-6">
         <div className="flex items-center justify-center h-16 w-full">
           {/* Centered container for search and favorites */}
           <div className="flex items-center space-x-6 w-full max-w-4xl justify-center">
