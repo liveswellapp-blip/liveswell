@@ -222,8 +222,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <div className="w-full">
       {/* Standalone Location Header */}
-      <div className="container mx-auto px-6 pt-8">
-        <div className="flex items-center space-x-3 mb-6">
+      <div className="container mx-auto px-6 pt-6">
+        <div className="flex items-center space-x-3 mb-4">
           <FavoriteButton 
             locationId={location.id} 
             locationName={location.name}
@@ -234,10 +234,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </div>
 
       {/* Thin emerald separator line */}
-      <div className="w-full border-b border-emerald-500/30 mb-6"></div>
+      <div className="w-full border-b border-emerald-500/30 mb-4"></div>
 
-      <div className="p-6 mb-6 md:mx-auto md:max-w-7xl border-b border-emerald-500/30">
-        <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4 -mt-2">Live Conditions</h2>
+      <div className="px-6 mb-4 md:mx-auto md:max-w-7xl border-b border-emerald-500/30">
+        <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {conditions?.warning && (
           <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
