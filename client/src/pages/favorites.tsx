@@ -17,7 +17,7 @@ export default function Favorites() {
     <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)]">
       <Header />
       <Navigation onLocationSelect={handleLocationSelect} />
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-6 py-6">
         <div className="max-w-2xl mx-auto">
           <FavoritesList onLocationSelect={handleLocationSelect} />
         </div>

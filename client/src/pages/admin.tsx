@@ -139,7 +139,7 @@ export default function AdminDashboard() {
   // Login Form
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto bg-blue-600 p-3 rounded-full mb-4">
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
   if (showUserDatabase) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto max-w-7xl px-6">
           <UserDatabase onClose={() => setShowUserDatabase(false)} />
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function AdminDashboard() {
   if (showErrorLogs) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto max-w-7xl px-6">
           <ErrorLogs onClose={() => setShowErrorLogs(false)} />
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function AdminDashboard() {
   if (showSurfSpotsMonitoring) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <div className="container mx-auto max-w-7xl">
+        <div className="container mx-auto max-w-7xl px-6">
           <SurfSpotsMonitoring onClose={() => setShowSurfSpotsMonitoring(false)} />
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
   // Admin Dashboard
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="container mx-auto max-w-7xl">
+      <div className="container mx-auto max-w-7xl px-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

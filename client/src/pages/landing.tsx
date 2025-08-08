@@ -10,7 +10,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-950 dark:to-blue-950">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-6 py-16">
         {/* Header */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-6">

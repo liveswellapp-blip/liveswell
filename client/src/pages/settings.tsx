@@ -23,7 +23,7 @@ export default function Settings() {
     <div className="min-h-screen bg-[hsl(155,50%,8%)]">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-6 py-8">
         {/* Back Navigation */}
         <div className="mb-6">
           <Link href="/">
