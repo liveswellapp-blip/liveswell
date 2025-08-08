@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import Navigation from "@/components/Navigation";
 import Header from "@/components/Header";
 import CurrentConditions from "@/components/CurrentConditions";
 
@@ -167,8 +166,7 @@ export default function Home() {
   if (isLoadingLocation || isNavigating) {
     return (
       <div className="min-h-screen bg-black">
-        <Header />
-        <Navigation onLocationSelect={setCurrentLocation} />
+        <Header onLocationSelect={setCurrentLocation} />
         <LoadingScreen type="conditions" />
         <Footer />
       </div>
@@ -177,8 +175,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Header />
-      <Navigation onLocationSelect={setCurrentLocation} />
+      <Header onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (
         <div className="space-y-4">
