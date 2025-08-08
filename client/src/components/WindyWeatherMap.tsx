@@ -39,26 +39,20 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
 
   return (
     <div className="w-full">
-      <div className="w-full md:mx-auto md:max-w-7xl border-b border-emerald-500/30 pb-6 mb-6" data-testid="card-windy-weather-map">
-        <div className="pb-3">
-          <h3 className="text-lg font-semibold text-blue-900 dark:text-white">Wind Forecast</h3>
-        </div>
-
-        <div className="pt-0">
-        <div className="space-y-3">
-          {/* Interactive Windy Map */}
-          <div className="relative">
-            <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-              <iframe
-                src={generateWindyUrl()}
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                className="w-full h-full"
-                title={`Windy wind forecast map for ${location.name}`}
-                data-testid="iframe-windy-map"
-              />
-            </div>
+      <div className="p-6 md:mx-auto md:max-w-7xl border-b border-emerald-500/30 pb-6 mb-6" data-testid="card-windy-weather-map">
+        <h3 className="text-lg font-semibold text-blue-900 dark:text-white mb-4">Wind Forecast</h3>
+        {/* Interactive Windy Map */}
+        <div className="relative">
+          <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+            <iframe
+              src={generateWindyUrl()}
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              className="w-full h-full"
+              title={`Windy wind forecast map for ${location.name}`}
+              data-testid="iframe-windy-map"
+            />
           </div>
         </div>
 
@@ -74,7 +68,6 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
             Windy.com
           </a>
           {" "}• ECMWF forecast model
-        </div>
         </div>
       </div>
     </div>
