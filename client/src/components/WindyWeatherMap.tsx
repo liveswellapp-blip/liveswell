@@ -1,38 +1,12 @@
-// Removed Card imports as we're using simple divs now
-import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, ArrowUp } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { Location } from "@/types/weather";
 
 interface WindyWeatherMapProps {
   location: Location;
 }
 
-interface FutureWindData {
-  date: string;
-  dateLabel: string;
-  windSpeed: string;
-  windDirection: string;
-  timestamp: string;
-}
 
-// Convert wind direction to arrow rotation degrees
-const getWindArrowRotation = (direction: string): number => {
-  const directions: { [key: string]: number } = {
-    'N': 180,   'NNE': 202.5, 'NE': 225,  'ENE': 247.5,
-    'E': 270,   'ESE': 292.5, 'SE': 315,  'SSE': 337.5,
-    'S': 0,     'SSW': 22.5,  'SW': 45,   'WSW': 67.5,
-    'W': 90,    'WNW': 112.5, 'NW': 135,  'NNW': 157.5
-  };
-  return directions[direction.toUpperCase()] || 0;
-};
 
 export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
-  // Fetch future wind data for the table
-  const { data: futureData, isLoading } = useQuery<FutureWindData[]>({
-    queryKey: [`/api/locations/${location.id}/future-conditions`],
-    enabled: !!location.id,
-  });
 
   // Generate Windy embed URL with location coordinates for wind data
   const generateWindyUrl = () => {
@@ -100,77 +74,6 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
             Windy.com
           </a>
           {" "}• ECMWF forecast model
-        </div>
-
-        {/* Wind Forecast Table */}
-        <div className="pt-4 border-t border-border mt-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <Clock className="h-5 w-5 text-emerald-500" />
-            <span className="text-sm text-emerald-400 font-medium">Next 48 Hours</span>
-          </div>
-
-          {/* Wind Data Grid - Scrollable for 48 hours */}
-          <div className="max-h-80 overflow-y-auto space-y-3 pr-2 historical-scroll">
-            {isLoading ? (
-              // Loading skeletons for first 8 hours
-              Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <Skeleton className="h-4 w-20 bg-white/20" />
-                    <Skeleton className="h-5 w-12 bg-white/20" />
-                  </div>
-                </div>
-              ))
-            ) : futureData ? (
-              futureData.map((data, index) => {
-                // Check if we need to show a date separator
-                const showDateSeparator = index === 0 || 
-                  (index > 0 && data.dateLabel !== futureData[index - 1].dateLabel);
-                
-                return (
-                  <div key={index}>
-                    {/* Date Separator */}
-                    {showDateSeparator && (
-                      <div className="flex items-center justify-center mb-3 mt-2">
-                        <div className="flex-1 border-t border-emerald-600/30"></div>
-                        <div className="px-3 text-xs font-medium text-emerald-400 uppercase tracking-wide">
-                          {data.dateLabel}
-                        </div>
-                        <div className="flex-1 border-t border-emerald-600/30"></div>
-                      </div>
-                    )}
-                    
-                    {/* Wind Data Card */}
-                    <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-white font-medium">{data.date}</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-semibold text-emerald-400">
-                            {data.windSpeed} mph
-                          </span>
-                          <ArrowUp 
-                            className="h-4 w-4 text-emerald-400" 
-                            style={{ 
-                              transform: `rotate(${getWindArrowRotation(data.windDirection)}deg)`,
-                              transition: 'transform 0.2s ease'
-                            }}
-                            data-testid={`wind-arrow-${index}`}
-                          />
-                          <span className="text-xs text-emerald-300">
-                            {data.windDirection}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-white opacity-75">No future wind data available</p>
-              </div>
-            )}
-          </div>
         </div>
         </div>
       </div>
