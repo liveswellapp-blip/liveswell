@@ -31,36 +31,37 @@ export default function Header({ onLocationSelect }: HeaderProps) {
             </div>
           </div>
           
-          {/* Navigation icons for conditions page */}
-          {location === "/conditions" && (
-            <div className="flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowSearchModal(true)}
-                className="text-white hover:text-gray-200"
-                title="Search surf spots"
-                data-testid="button-search"
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-              
-              <Link href="/">
+          {/* Right side icons with consistent spacing */}
+          <div className="flex items-center space-x-1">
+            {/* Navigation icons for conditions page */}
+            {location === "/conditions" && (
+              <>
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setShowSearchModal(true)}
                   className="text-white hover:text-gray-200"
-                  title="Browse surf spots"
-                  data-testid="button-surf-spots"
+                  title="Search surf spots"
+                  data-testid="button-search"
                 >
-                  <Waves className="h-5 w-5" />
+                  <Search className="h-5 w-5" />
                 </Button>
-              </Link>
-            </div>
-          )}
-          
-          {/* User account section */}
-          <div className="flex items-center">
+                
+                <Link href="/">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:text-gray-200"
+                    title="Browse surf spots"
+                    data-testid="button-surf-spots"
+                  >
+                    <Waves className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </>
+            )}
+            
+            {/* User account section */}
             {isAuthenticated ? (
               <Link href="/profile">
                 <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="User Account">
