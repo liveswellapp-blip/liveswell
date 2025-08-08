@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Removed Card imports as we're using simple divs now
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, ArrowUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -65,12 +65,12 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
 
   return (
     <div className="w-full">
-      <Card className="w-full border-0 md:border md:border-border md:mx-auto md:max-w-7xl rounded-none md:rounded-xl" data-testid="card-windy-weather-map">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Wind Forecast</CardTitle>
-      </CardHeader>
+      <div className="w-full md:mx-auto md:max-w-7xl border-b border-emerald-500/30 pb-6 mb-6" data-testid="card-windy-weather-map">
+        <div className="pb-3">
+          <h3 className="text-lg font-semibold text-blue-900 dark:text-white">Wind Forecast</h3>
+        </div>
 
-      <CardContent className="pt-0">
+        <div className="pt-0">
         <div className="space-y-3">
           {/* Interactive Windy Map */}
           <div className="relative">
@@ -172,8 +172,8 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+        </div>
+      </div>
     </div>
   );
 }
