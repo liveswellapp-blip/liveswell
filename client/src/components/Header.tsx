@@ -33,7 +33,7 @@ export default function Header({ onLocationSelect }: HeaderProps) {
           
           {/* Navigation icons for conditions page */}
           {location === "/conditions" && (
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1">
               <Button
                 variant="ghost"
                 size="icon"
