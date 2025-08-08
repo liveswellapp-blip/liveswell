@@ -40,7 +40,7 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
   return (
     <div className="w-full">
       <div className="p-6 md:mx-auto md:max-w-7xl border-b border-emerald-500/30 pb-6 mb-6" data-testid="card-windy-weather-map">
-        <h3 className="text-lg font-semibold text-blue-900 dark:text-white mb-4">Wind Forecast</h3>
+        <h3 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Wind Forecast</h3>
         {/* Interactive Windy Map */}
         <div className="relative">
           <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">

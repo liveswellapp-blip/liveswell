@@ -48,7 +48,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
   return (
     <div className="w-full">
       <div className="p-6 md:mx-auto md:max-w-7xl border-b border-emerald-500/30 pb-6 mb-6">
-        <h3 className="text-xl font-semibold mb-4 text-black dark:text-white">Nearby Surf Spots</h3>
+        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {isLoading ? (
