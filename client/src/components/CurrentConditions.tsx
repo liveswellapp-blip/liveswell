@@ -233,6 +233,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         </div>
       </div>
 
+      {/* Thin emerald separator line */}
+      <div className="w-full border-b border-emerald-500/30 mb-6"></div>
+
       <div className="p-6 mb-6 md:mx-auto md:max-w-7xl border-b border-emerald-500/30">
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
