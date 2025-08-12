@@ -487,6 +487,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
         </div>
       </div>
+      
+      {/* Additional spacing before next section */}
+      <div className="mb-4"></div>
     </div>
   );
 }
