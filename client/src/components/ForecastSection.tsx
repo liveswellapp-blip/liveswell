@@ -29,7 +29,10 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
 
   return (
     <div className="w-full">
-      <div className="px-6 md:mx-auto md:max-w-7xl border-b border-emerald-500/30 pb-4 mb-4">
+      {/* Emerald separator line with spacing above */}
+      <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
+      
+      <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4">
         <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
         
         {/* Forecast Cards */}
