@@ -11,6 +11,7 @@ import NearbySpots from "@/components/NearbySpots";
 import SurfSpotStats from "@/components/SurfSpotStats";
 import LoadingScreen from "@/components/LoadingScreen";
 import WindyWeatherMap from "@/components/WindyWeatherMap";
+import FavoriteButton from "@/components/FavoriteButton";
 
 import Footer from "@/components/Footer";
 import { Location } from "@/types/weather";
@@ -179,6 +180,27 @@ export default function Home() {
       
       {currentLocation ? (
         <>
+          {/* Location Header - Desktop Only */}
+          <div className="hidden xl:block px-4 mb-6">
+            <div className="bg-muted rounded-lg border border-border p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <FavoriteButton 
+                    locationId={currentLocation.id} 
+                    locationName={currentLocation.name}
+                    size="sm"
+                  />
+                  <h1 className="text-xl font-bold text-blue-900 dark:text-white">{currentLocation.name}</h1>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-sm text-muted-foreground">{currentLocation.city}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Desktop Grid Layout - Hidden on mobile */}
           <div className="hidden xl:block">
             <div className="px-4 py-6">

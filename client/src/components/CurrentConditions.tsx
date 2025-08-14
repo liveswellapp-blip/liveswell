@@ -244,26 +244,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         <div className="w-full border-b border-emerald-500/30 mb-4"></div>
       </div>
 
-      {/* Desktop Compact Header */}
-      <div className="hidden xl:block px-4 mb-6">
-        <div className="bg-muted rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <FavoriteButton 
-              locationId={location.id} 
-              locationName={location.name}
-              size="sm"
-            />
-            <h1 className="text-xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-sm text-muted-foreground">{location.city}</span>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-          </div>
-          </div>
-        </div>
-      </div>
+
 
       <div className="xl:hidden px-6 mb-4 md:mx-auto md:max-w-7xl">
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
