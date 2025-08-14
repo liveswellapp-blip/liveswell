@@ -221,32 +221,29 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   return (
     <div className="w-full">
-      {/* Mobile/Tablet Header Layout */}
-      <div className="lg:hidden">
-        <div className="container mx-auto px-6 pt-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-2 lg:space-y-0">
-            <div className="flex items-center space-x-3">
-              <FavoriteButton 
-                locationId={location.id} 
-                locationName={location.name}
-                size="sm"
-              />
-              <h1 className="text-2xl lg:text-3xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
-            </div>
-            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-              <span>{location.city}</span>
-              <span>•</span>
-              <span>Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-            </div>
+      {/* Enhanced Location Header for Desktop */}
+      <div className="container mx-auto px-6 pt-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-2 lg:space-y-0">
+          <div className="flex items-center space-x-3">
+            <FavoriteButton 
+              locationId={location.id} 
+              locationName={location.name}
+              size="sm"
+            />
+            <h1 className="text-2xl lg:text-3xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
+          </div>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <span>{location.city}</span>
+            <span>•</span>
+            <span>Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
           </div>
         </div>
-        {/* Thin emerald separator line */}
-        <div className="w-full border-b border-emerald-500/30 mb-4"></div>
       </div>
 
+      {/* Thin emerald separator line */}
+      <div className="w-full border-b border-emerald-500/30 mb-4"></div>
 
-
-      <div className="lg:hidden px-6 mb-4 md:mx-auto md:max-w-7xl">
+      <div className="px-6 mb-4 md:mx-auto md:max-w-7xl">
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {conditions?.warning && (
@@ -256,8 +253,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         )}
         
 
-        {/* Mobile/Tablet Current Conditions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+
+        {/* Enhanced Current Conditions Grid for Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
           {/* Swell & Wind Side by Side */}
           <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-4">
             {/* Wave Conditions */}
@@ -493,109 +491,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Compact Layout */}
-      <div className="hidden lg:block">
-        <h2 className="text-lg font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
-        
-        {conditions?.warning && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800 text-sm">{conditions.warning}</p>
-          </div>
-        )}
-
-        {/* Desktop Compact Grid - 3 columns */}
-        <div className="grid grid-cols-3 gap-4">
-          {/* Swell & Wind Combined */}
-          <div className="col-span-2 grid grid-cols-2 gap-4">
-            {/* Wave Conditions */}
-            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center space-x-2 mb-2">
-                <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-sm font-medium">Swell</span>
-              </div>
-              <div className="flex items-end space-x-2">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-white/20" />
-                ) : (
-                  <>
-                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
-                    <span className="text-sm mb-1 text-blue-900 dark:text-emerald-400">ft</span>
-                  </>
-                )}
-              </div>
-              <div className="text-xs mt-1 space-y-1">
-                {isLoading ? (
-                  <Skeleton className="h-3 w-24 bg-white/20" />
-                ) : (
-                  <>
-                    <div>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></div>
-                    <div>From: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Wind Conditions */}
-            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center space-x-2 mb-2">
-                <Wind className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-sm font-medium">Wind</span>
-              </div>
-              <div className="flex items-end space-x-2">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-white/20" />
-                ) : (
-                  <>
-                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
-                    <span className="text-sm mb-1 text-blue-900 dark:text-emerald-400">mph</span>
-                    {conditions?.windDirection && (
-                      <ArrowUp 
-                        className="h-4 w-4 text-blue-900 dark:text-emerald-400 mb-1" 
-                        style={{ 
-                          transform: `rotate(${getWindArrowRotation(conditions.windDirection)}deg)`,
-                          transition: 'transform 0.2s ease'
-                        }}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
-              <div className="text-xs mt-1 space-y-1">
-                {isLoading ? (
-                  <Skeleton className="h-3 w-24 bg-white/20" />
-                ) : (
-                  <>
-                    <div>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts ? Math.round(parseFloat(conditions.windGusts)) : "0"} mph</span></div>
-                    <div>From: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Tide Information - Single Column */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center space-x-2 mb-2">
-              <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
-              <span className="text-sm font-medium">Tide</span>
-            </div>
-            
-            {isLoading || forecastLoading ? (
-              <Skeleton className="h-16 w-full bg-white/20" />
-            ) : (
-              <>
-                {/* Compact Tide Chart */}
-                {todayTides.length > 0 && (
-                  <div className="mb-2">
-                    <TideChart tides={todayTides} date="today" location={location} />
-                  </div>
-                )}
-              </>
-            )}
           </div>
         </div>
       </div>

@@ -11,7 +11,6 @@ import NearbySpots from "@/components/NearbySpots";
 import SurfSpotStats from "@/components/SurfSpotStats";
 import LoadingScreen from "@/components/LoadingScreen";
 import WindyWeatherMap from "@/components/WindyWeatherMap";
-import FavoriteButton from "@/components/FavoriteButton";
 
 import Footer from "@/components/Footer";
 import { Location } from "@/types/weather";
@@ -24,16 +23,6 @@ export default function Home() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [location] = useLocation();
   const [urlParams, setUrlParams] = useState(new URLSearchParams(window.location.search));
-  
-  // Debug screen width
-  useEffect(() => {
-    const logScreenInfo = () => {
-      console.log("Screen width:", window.innerWidth, "xl breakpoint is 1280px+");
-    };
-    logScreenInfo();
-    window.addEventListener('resize', logScreenInfo);
-    return () => window.removeEventListener('resize', logScreenInfo);
-  }, []);
 
   // Get location name from URL parameters
   const getLocationNameFromUrl = () => {
@@ -189,71 +178,13 @@ export default function Home() {
       <Header onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (
-        <>
-          {/* Location Header - Desktop Only */}
-          <div className="hidden lg:block px-4 mb-6">
-            <div className="bg-muted rounded-lg border border-border p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <FavoriteButton 
-                    locationId={currentLocation.id} 
-                    locationName={currentLocation.name}
-                    size="sm"
-                  />
-                  <h1 className="text-xl font-bold text-blue-900 dark:text-white">{currentLocation.name}</h1>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-sm text-muted-foreground">{currentLocation.city}</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Grid Layout - Hidden on mobile */}
-          <div className="hidden lg:block">
-            <div className="px-4 py-6">
-              {/* Top Row - Current Conditions and Weather Map */}
-              <div className="grid grid-cols-12 gap-6 mb-6">
-                {/* Current Conditions - 7 columns */}
-                <div className="col-span-7">
-                  <CurrentConditions location={currentLocation} />
-                </div>
-                {/* Weather Map - 5 columns */}
-                <div className="col-span-5">
-                  <WindyWeatherMap location={currentLocation} />
-                </div>
-              </div>
-              
-              {/* Middle Row - 5-Day Forecast (Full Width) */}
-              <div className="mb-6">
-                <ForecastSection location={currentLocation} />
-              </div>
-              
-              {/* Bottom Row - Detailed Data and Nearby Spots */}
-              <div className="grid grid-cols-12 gap-6">
-                {/* Detailed Data - 8 columns */}
-                <div className="col-span-8">
-                  <DetailedData location={currentLocation} />
-                </div>
-                {/* Nearby Spots - 4 columns */}
-                <div className="col-span-4">
-                  <NearbySpots location={currentLocation} />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Mobile/Tablet Layout - Hidden on desktop */}
-          <div className="lg:hidden space-y-4">
-            <CurrentConditions location={currentLocation} />
-            <WindyWeatherMap location={currentLocation} />
-            <ForecastSection location={currentLocation} />
-            <DetailedData location={currentLocation} />
-            <NearbySpots location={currentLocation} />
-          </div>
-        </>
+        <div className="space-y-4">
+          <CurrentConditions location={currentLocation} />
+          <WindyWeatherMap location={currentLocation} />
+          <ForecastSection location={currentLocation} />
+          <DetailedData location={currentLocation} />
+          <NearbySpots location={currentLocation} />
+        </div>
       ) : (
         <div className="container mx-auto px-4 py-12 space-y-8">
           <div className="text-center">
