@@ -17,7 +17,7 @@ export default function Header({ onLocationSelect }: HeaderProps) {
 
   return (
     <header className="bg-background shadow-lg sticky top-0 z-50 border-b border-border">
-      <div className="px-4 py-4 mx-auto bg-red-500/20">
+      <div className="px-4 py-4 mx-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="relative h-12">

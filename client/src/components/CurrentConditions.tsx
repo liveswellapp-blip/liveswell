@@ -245,7 +245,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </div>
 
       {/* Desktop Compact Header */}
-      <div className="hidden xl:block px-4 mb-6 bg-blue-500/20">
+      <div className="px-4 mb-6">
         <div className="bg-muted rounded-lg border border-border p-6">
           <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
