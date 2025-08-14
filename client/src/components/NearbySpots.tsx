@@ -47,13 +47,15 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
 
   return (
     <div className="w-full">
-      {/* Emerald separator line with spacing above */}
-      <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
-      
-      <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4">
-        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
+      {/* Mobile/Tablet Layout */}
+      <div className="xl:hidden">
+        {/* Emerald separator line with spacing above */}
+        <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+        <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {isLoading ? (
             // Loading skeletons
             Array.from({ length: 3 }).map((_, index) => (
@@ -105,6 +107,74 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
               <p>No nearby surf spots found</p>
             </div>
           )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Compact Layout */}
+      <div className="hidden xl:block">
+        <div className="bg-muted rounded-lg border border-border p-4">
+          <h3 className="text-lg font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
+          
+          <div className="space-y-3">
+            {isLoading ? (
+              // Desktop Loading skeletons
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="bg-background rounded-lg border border-border p-3">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <Skeleton className="w-8 h-8 rounded-full" />
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Skeleton className="h-3 w-3 rounded-full" />
+                      <Skeleton className="h-3 w-12" />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Skeleton className="h-3 w-3 rounded-full" />
+                      <Skeleton className="h-3 w-10" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : nearbySpots.length > 0 ? (
+              nearbySpots.map((spot) => (
+                <div
+                  key={spot.id}
+                  onClick={() => handleSpotClick(spot.id)}
+                  className="bg-background rounded-lg border border-border p-3 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer" 
+                  data-testid={`card-nearby-spot-${spot.id}`}
+                >
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
+                      <Waves className="h-4 w-4 text-emerald-600 dark:text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm text-blue-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" data-testid={`text-spot-name-${spot.id}`}>{spot.name}</h4>
+                      <p className="text-xs text-blue-900 dark:text-white" data-testid={`text-spot-distance-${spot.id}`}>{spot.distance} miles away</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Waves className="text-blue-900 dark:text-white h-3 w-3" />
+                      <span className="text-xs font-medium text-blue-900 dark:text-emerald-400" data-testid={`text-wave-height-${spot.id}`}>{spot.waveHeight}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Wind className="text-blue-900 dark:text-white h-3 w-3" />
+                      <span className="text-xs text-blue-900 dark:text-emerald-400" data-testid={`text-wind-speed-${spot.id}`}>{spot.wind}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <p>No nearby surf spots found</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

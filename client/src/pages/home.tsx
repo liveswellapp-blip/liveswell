@@ -178,13 +178,50 @@ export default function Home() {
       <Header onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (
-        <div className="space-y-4">
-          <CurrentConditions location={currentLocation} />
-          <WindyWeatherMap location={currentLocation} />
-          <ForecastSection location={currentLocation} />
-          <DetailedData location={currentLocation} />
-          <NearbySpots location={currentLocation} />
-        </div>
+        <>
+          {/* Desktop Grid Layout - Hidden on mobile */}
+          <div className="hidden xl:block">
+            <div className="container mx-auto px-6 py-6 max-w-[1400px]">
+              {/* Top Row - Current Conditions and Weather Map */}
+              <div className="grid grid-cols-12 gap-6 mb-6">
+                {/* Current Conditions - 7 columns */}
+                <div className="col-span-7">
+                  <CurrentConditions location={currentLocation} />
+                </div>
+                {/* Weather Map - 5 columns */}
+                <div className="col-span-5">
+                  <WindyWeatherMap location={currentLocation} />
+                </div>
+              </div>
+              
+              {/* Middle Row - 5-Day Forecast (Full Width) */}
+              <div className="mb-6">
+                <ForecastSection location={currentLocation} />
+              </div>
+              
+              {/* Bottom Row - Detailed Data and Nearby Spots */}
+              <div className="grid grid-cols-12 gap-6">
+                {/* Detailed Data - 8 columns */}
+                <div className="col-span-8">
+                  <DetailedData location={currentLocation} />
+                </div>
+                {/* Nearby Spots - 4 columns */}
+                <div className="col-span-4">
+                  <NearbySpots location={currentLocation} />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Mobile/Tablet Layout - Hidden on desktop */}
+          <div className="xl:hidden space-y-4">
+            <CurrentConditions location={currentLocation} />
+            <WindyWeatherMap location={currentLocation} />
+            <ForecastSection location={currentLocation} />
+            <DetailedData location={currentLocation} />
+            <NearbySpots location={currentLocation} />
+          </div>
+        </>
       ) : (
         <div className="container mx-auto px-4 py-12 space-y-8">
           <div className="text-center">
