@@ -257,13 +257,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         {/* Enhanced Current Conditions Grid for Desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
           {/* Swell, Wind & Water Temperature - Top Row */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-3 grid grid-cols-3 gap-2 md:gap-4">
             {/* Wave Conditions */}
-            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-base font-medium">Swell</span>
+                  <span className="text-sm md:text-base font-medium">Swell</span>
                 </div>
               </div>
               <div className="flex items-end space-x-2">
@@ -271,12 +271,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
-                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                    <span className="text-xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
+                    <span className="text-sm md:text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
                   </>
                 )}
               </div>
-              <div className="text-sm mt-2">
+              <div className="text-xs md:text-sm mt-2">
                 {isLoading ? (
                   <Skeleton className="h-4 w-32 bg-white/20" />
                 ) : (
@@ -293,11 +293,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
             {/* Wind Conditions */}
-            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Wind className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-base font-medium">Wind</span>
+                  <span className="text-sm md:text-base font-medium">Wind</span>
                 </div>
               </div>
               
@@ -306,8 +306,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
-                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
+                    <span className="text-xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
+                    <span className="text-sm md:text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
                     {conditions?.windDirection && (
                       <ArrowUp 
                         className="h-5 w-5 text-blue-900 dark:text-emerald-400 mb-1" 
@@ -321,7 +321,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   </>
                 )}
               </div>
-              <div className="text-sm mt-2">
+              <div className="text-xs md:text-sm mt-2">
                 {isLoading ? (
                   <Skeleton className="h-4 w-32 bg-white/20" />
                 ) : (
@@ -338,11 +338,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
             {/* Water Temperature - moved next to wind */}
-            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-base font-medium">Water</span>
+                  <span className="text-sm md:text-base font-medium">Water</span>
                 </div>
               </div>
               <div>
@@ -351,14 +351,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 ) : (
                   <div>
                     <div className="flex items-end space-x-2">
-                      <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
-                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                      <span className="text-xl md:text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                      <span className="text-sm md:text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
                     </div>
                     <div className="flex items-end space-x-2">
-                      <span className="text-lg text-blue-900 dark:text-emerald-400">
+                      <span className="text-sm md:text-lg text-blue-900 dark:text-emerald-400">
                         {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
                       </span>
-                      <span className="text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
+                      <span className="text-xs md:text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
                     </div>
                   </div>
                 )}
