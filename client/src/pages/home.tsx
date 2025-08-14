@@ -191,7 +191,7 @@ export default function Home() {
       {currentLocation ? (
         <>
           {/* Location Header - Desktop Only */}
-          <div className="px-4 mb-6 bg-red-500">
+          <div className="hidden lg:block px-4 mb-6">
             <div className="bg-muted rounded-lg border border-border p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -212,7 +212,7 @@ export default function Home() {
           </div>
 
           {/* Desktop Grid Layout - Hidden on mobile */}
-          <div className="hidden xl:block">
+          <div className="hidden lg:block">
             <div className="px-4 py-6">
               {/* Top Row - Current Conditions and Weather Map */}
               <div className="grid grid-cols-12 gap-6 mb-6">

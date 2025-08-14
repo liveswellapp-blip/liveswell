@@ -246,7 +246,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
 
 
-      <div className="xl:hidden px-6 mb-4 md:mx-auto md:max-w-7xl">
+      <div className="lg:hidden px-6 mb-4 md:mx-auto md:max-w-7xl">
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {conditions?.warning && (
