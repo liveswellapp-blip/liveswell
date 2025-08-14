@@ -19,8 +19,8 @@ export default function Header({ onLocationSelect }: HeaderProps) {
     <header className="bg-background shadow-lg sticky top-0 z-50 border-b border-border">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="relative w-48 h-12">
+          <div className="flex items-center">
+            <div className="relative h-12">
               {/* Dark mode logo only */}
               <img 
                 src={logoImageDark} 
