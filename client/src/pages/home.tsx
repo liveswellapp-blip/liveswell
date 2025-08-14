@@ -181,7 +181,7 @@ export default function Home() {
         <>
           {/* Desktop Grid Layout - Hidden on mobile */}
           <div className="hidden xl:block">
-            <div className="container mx-auto px-6 py-6 max-w-[1400px]">
+            <div className="container mx-auto px-8 py-6 max-w-[1600px]">
               {/* Top Row - Current Conditions and Weather Map */}
               <div className="grid grid-cols-12 gap-6 mb-6">
                 {/* Current Conditions - 7 columns */}
