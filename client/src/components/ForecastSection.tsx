@@ -38,52 +38,52 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
         {/* Enhanced Forecast Cards for Desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
           {isLoading ? (
-            // Enhanced Loading skeletons
+            // Mobile optimized loading skeletons
             (Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="bg-muted rounded-lg p-4 lg:p-6 min-h-[220px] lg:min-h-[280px] flex flex-col">
-                <div className="space-y-3">
-                  <Skeleton className="h-6 w-20 border-b border-border/30 pb-2" />
-                  <div className="space-y-2 lg:space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <Skeleton className="h-6 w-6 lg:h-8 lg:w-8 rounded-full" />
-                      <Skeleton className="h-8 w-16" />
+              <div key={index} className="bg-muted rounded-lg p-3 lg:p-6 min-h-[180px] lg:min-h-[280px] flex flex-col">
+                <div className="space-y-2 lg:space-y-3">
+                  <Skeleton className="h-5 lg:h-6 w-16 lg:w-20 border-b border-border/30 pb-1 lg:pb-2" />
+                  <div className="space-y-1.5 lg:space-y-3">
+                    <div className="flex items-center space-x-2 lg:space-x-3">
+                      <Skeleton className="h-5 w-5 lg:h-8 lg:w-8 rounded-full" />
+                      <Skeleton className="h-6 lg:h-8 w-12 lg:w-16" />
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Skeleton className="h-5 w-5 lg:h-6 lg:w-6 rounded-full" />
-                      <Skeleton className="h-6 w-12" />
+                    <div className="flex items-center space-x-2 lg:space-x-3">
+                      <Skeleton className="h-4 w-4 lg:h-6 lg:w-6 rounded-full" />
+                      <Skeleton className="h-5 lg:h-6 w-10 lg:w-12" />
                     </div>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-border/30">
-                    <Skeleton className="h-16 w-full" />
+                  <div className="mt-2 lg:mt-3 pt-1.5 lg:pt-2 border-t border-border/30">
+                    <Skeleton className="h-12 lg:h-16 w-full" />
                   </div>
                 </div>
               </div>
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[220px] lg:min-h-[280px] flex flex-col">
+              <div key={index} className="rounded-lg p-3 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[180px] lg:min-h-[280px] flex flex-col">
                 <div className="text-left h-full flex flex-col justify-between">
                   {/* Date Header */}
-                  <div className="font-semibold mb-3 text-[18px] lg:text-[22px] text-blue-900 dark:text-white border-b border-border/30 pb-2">
+                  <div className="font-semibold mb-2 lg:mb-3 text-[16px] lg:text-[22px] text-blue-900 dark:text-white border-b border-border/30 pb-1 lg:pb-2">
                     {day.date}
                   </div>
                   
-                  {/* Wave and Wind Data - Compact spacing */}
-                  <div className="flex-1 space-y-2 lg:space-y-3">
-                    <div className="flex items-center space-x-3 font-semibold text-[24px] lg:text-[30px] text-blue-900 dark:text-white">
-                      <Waves className="h-[24px] w-[24px] lg:h-[30px] lg:w-[30px] text-blue-900 dark:text-white flex-shrink-0" />
+                  {/* Wave and Wind Data - Mobile optimized spacing */}
+                  <div className="flex-1 space-y-1.5 lg:space-y-3">
+                    <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[20px] lg:text-[30px] text-blue-900 dark:text-white">
+                      <Waves className="h-[20px] w-[20px] lg:h-[30px] lg:w-[30px] text-blue-900 dark:text-white flex-shrink-0" />
                       <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
                     </div>
                     
-                    <div className="flex items-center space-x-3 text-[18px] lg:text-[22px] text-blue-900 dark:text-white">
-                      <Wind className="h-[18px] w-[18px] lg:h-[22px] lg:w-[22px] text-blue-900 dark:text-white flex-shrink-0" />
+                    <div className="flex items-center space-x-2 lg:space-x-3 text-[16px] lg:text-[22px] text-blue-900 dark:text-white">
+                      <Wind className="h-[16px] w-[16px] lg:h-[22px] lg:w-[22px] text-blue-900 dark:text-white flex-shrink-0" />
                       <span className="text-gray-600 dark:text-gray-300">{day.wind}</span>
                     </div>
                   </div>
                 </div>
                 
-                  {/* Tide Chart - Compact positioning */}
-                  <div className="mt-3 pt-2 border-t border-border/30">
+                  {/* Tide Chart - Mobile optimized positioning */}
+                  <div className="mt-2 lg:mt-3 pt-1.5 lg:pt-2 border-t border-border/30">
                     {day.tides && day.tides.length > 0 && (
                       <TideChart tides={day.tides} date={day.date} location={location} />
                     )}
