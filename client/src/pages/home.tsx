@@ -24,6 +24,16 @@ export default function Home() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [location] = useLocation();
   const [urlParams, setUrlParams] = useState(new URLSearchParams(window.location.search));
+  
+  // Debug screen width
+  useEffect(() => {
+    const logScreenInfo = () => {
+      console.log("Screen width:", window.innerWidth, "xl breakpoint is 1280px+");
+    };
+    logScreenInfo();
+    window.addEventListener('resize', logScreenInfo);
+    return () => window.removeEventListener('resize', logScreenInfo);
+  }, []);
 
   // Get location name from URL parameters
   const getLocationNameFromUrl = () => {
@@ -181,7 +191,7 @@ export default function Home() {
       {currentLocation ? (
         <>
           {/* Location Header - Desktop Only */}
-          <div className="hidden xl:block px-4 mb-6">
+          <div className="px-4 mb-6 bg-red-500">
             <div className="bg-muted rounded-lg border border-border p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
