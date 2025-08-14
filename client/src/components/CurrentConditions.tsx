@@ -245,8 +245,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </div>
 
       {/* Desktop Compact Header */}
-      <div className="hidden xl:block bg-muted rounded-lg border border-border p-6 mb-6">
-        <div className="flex items-center justify-between">
+      <div className="hidden xl:block">
+        <div className="bg-muted rounded-lg border border-border p-6 mb-6 mx-8">
+          <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
               locationId={location.id} 
@@ -259,6 +260,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
           <div className="text-xs text-muted-foreground">
             Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+          </div>
           </div>
         </div>
       </div>
