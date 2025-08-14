@@ -41,9 +41,9 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             // Enhanced Loading skeletons
             (Array.from({ length: 5 }).map((_, index) => (
               <div key={index} className="bg-muted rounded-lg p-4 lg:p-6 min-h-[220px] lg:min-h-[280px] flex flex-col">
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <Skeleton className="h-6 w-20 border-b border-border/30 pb-2" />
-                  <div className="space-y-4 lg:space-y-6">
+                  <div className="space-y-2 lg:space-y-3">
                     <div className="flex items-center space-x-3">
                       <Skeleton className="h-6 w-6 lg:h-8 lg:w-8 rounded-full" />
                       <Skeleton className="h-8 w-16" />
@@ -53,7 +53,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                       <Skeleton className="h-6 w-12" />
                     </div>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-border/30">
+                  <div className="mt-3 pt-2 border-t border-border/30">
                     <Skeleton className="h-16 w-full" />
                   </div>
                 </div>
@@ -64,12 +64,12 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               <div key={index} className="rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[220px] lg:min-h-[280px] flex flex-col">
                 <div className="text-left h-full flex flex-col justify-between">
                   {/* Date Header */}
-                  <div className="font-semibold mb-4 text-[18px] lg:text-[22px] text-blue-900 dark:text-white border-b border-border/30 pb-2">
+                  <div className="font-semibold mb-3 text-[18px] lg:text-[22px] text-blue-900 dark:text-white border-b border-border/30 pb-2">
                     {day.date}
                   </div>
                   
-                  {/* Wave and Wind Data - Better spacing */}
-                  <div className="flex-1 space-y-4 lg:space-y-6">
+                  {/* Wave and Wind Data - Compact spacing */}
+                  <div className="flex-1 space-y-2 lg:space-y-3">
                     <div className="flex items-center space-x-3 font-semibold text-[24px] lg:text-[30px] text-blue-900 dark:text-white">
                       <Waves className="h-[24px] w-[24px] lg:h-[30px] lg:w-[30px] text-blue-900 dark:text-white flex-shrink-0" />
                       <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
@@ -82,8 +82,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   </div>
                 </div>
                 
-                  {/* Tide Chart - Better positioned */}
-                  <div className="mt-4 pt-3 border-t border-border/30">
+                  {/* Tide Chart - Compact positioning */}
+                  <div className="mt-3 pt-2 border-t border-border/30">
                     {day.tides && day.tides.length > 0 && (
                       <TideChart tides={day.tides} date={day.date} location={location} />
                     )}
