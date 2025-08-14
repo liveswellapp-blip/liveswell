@@ -246,7 +246,7 @@ export default function Home() {
           </div>
           
           {/* Mobile/Tablet Layout - Hidden on desktop */}
-          <div className="xl:hidden space-y-4">
+          <div className="lg:hidden space-y-4">
             <CurrentConditions location={currentLocation} />
             <WindyWeatherMap location={currentLocation} />
             <ForecastSection location={currentLocation} />

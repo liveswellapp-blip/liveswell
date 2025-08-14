@@ -222,7 +222,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <div className="w-full">
       {/* Mobile/Tablet Header Layout */}
-      <div className="xl:hidden">
+      <div className="lg:hidden">
         <div className="container mx-auto px-6 pt-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-2 lg:space-y-0">
             <div className="flex items-center space-x-3">
@@ -498,7 +498,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </div>
 
       {/* Desktop Compact Layout */}
-      <div className="hidden xl:block">
+      <div className="hidden lg:block">
         <h2 className="text-lg font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {conditions?.warning && (
