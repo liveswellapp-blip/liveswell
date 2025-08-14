@@ -256,8 +256,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
         {/* Enhanced Current Conditions Grid for Desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
-          {/* Swell & Wind Side by Side */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-4">
+          {/* Swell, Wind & Water Temperature - Top Row */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Wave Conditions */}
             <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
@@ -331,6 +331,34 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                     <div className="flex items-center space-x-2">
                       <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Water Temperature - moved next to wind */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">Water</span>
+                </div>
+              </div>
+              <div>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 bg-white/20" />
+                ) : (
+                  <div>
+                    <div className="flex items-end space-x-2">
+                      <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                    </div>
+                    <div className="flex items-end space-x-2">
+                      <span className="text-lg text-blue-900 dark:text-emerald-400">
+                        {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
+                      </span>
+                      <span className="text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
                     </div>
                   </div>
                 )}
@@ -438,58 +466,27 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
           </div>
 
-          {/* Water Temperature & UV Index Side by Side - Enhanced for Desktop */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-4">
-            {/* Water Temperature */}
-            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-base font-medium">Water</span>
-                </div>
-              </div>
-              <div>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-white/20" />
-                ) : (
-                  <div>
-                    <div className="flex items-end space-x-2">
-                      <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
-                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
-                    </div>
-                    <div className="flex items-end space-x-2">
-                      <span className="text-lg text-blue-900 dark:text-emerald-400">
-                        {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
-                      </span>
-                      <span className="text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
-                    </div>
-                  </div>
-                )}
+          {/* UV Index - Standalone */}
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-blue-900 dark:text-white" />
+                <span className="text-base font-medium">UV Index</span>
               </div>
             </div>
-
-            {/* UV Index */}
-            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-base font-medium">UV Index</span>
-                </div>
-              </div>
-              <div className="flex items-end space-x-2">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-white/20" />
-                ) : (
-                  <>
-                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
-                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
-                      {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
-                       conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
-                       conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
-                    </span>
-                  </>
-                )}
-              </div>
+            <div className="flex items-end space-x-2">
+              {isLoading ? (
+                <Skeleton className="h-8 w-16 bg-white/20" />
+              ) : (
+                <>
+                  <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
+                  <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
+                    {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
+                     conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
+                     conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
