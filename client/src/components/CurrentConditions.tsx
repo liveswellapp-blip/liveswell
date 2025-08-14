@@ -245,8 +245,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </div>
 
       {/* Desktop Compact Header */}
-      <div className="hidden xl:block">
-        <div className="bg-muted rounded-lg border border-border p-6 mb-6 mx-8">
+      <div className="hidden xl:block px-8 mb-6">
+        <div className="bg-muted rounded-lg border border-border p-6">
           <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
