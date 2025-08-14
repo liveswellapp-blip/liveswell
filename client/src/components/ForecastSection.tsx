@@ -77,7 +77,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     
                     <div className="flex items-center space-x-2 lg:space-x-3 text-[16px] lg:text-[22px] text-blue-900 dark:text-white">
                       <Wind className="h-[16px] w-[16px] lg:h-[22px] lg:w-[22px] text-blue-900 dark:text-white flex-shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300">{day.wind}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">{day.wind}</span>
                     </div>
                   </div>
                 </div>
