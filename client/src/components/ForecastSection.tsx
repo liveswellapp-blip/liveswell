@@ -35,8 +35,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
       <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4">
         <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
         
-        {/* Forecast Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {/* Enhanced Forecast Cards for Desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
           {isLoading ? (
             // Loading skeletons
             (Array.from({ length: 5 }).map((_, index) => (
@@ -52,19 +52,21 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-muted border border-border">
-                <div className="text-left">
-                  <div className="font-medium mb-2 text-[18px] text-blue-900 dark:text-white">
+              <div key={index} className="rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[200px] lg:min-h-[240px]">
+                <div className="text-left h-full flex flex-col">
+                  <div className="font-medium mb-3 text-[18px] lg:text-[20px] text-blue-900 dark:text-white">
                     {day.date}
                   </div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2 font-semibold text-[25px] text-blue-900 dark:text-white">
-                      <Waves className="h-[25px] w-[25px] text-blue-900 dark:text-white" />
-                      <span>{day.waveHeight}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-[18px] text-blue-900 dark:text-white">
-                      <Wind className="h-[18px] w-[18px] text-blue-900 dark:text-white" />
-                      <span>{day.wind}</span>
+                  <div className="flex items-center justify-between mb-4 flex-1">
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex items-center space-x-2 font-semibold text-[25px] lg:text-[28px] text-blue-900 dark:text-white">
+                        <Waves className="h-[25px] w-[25px] lg:h-[28px] lg:w-[28px] text-blue-900 dark:text-white" />
+                        <span>{day.waveHeight}</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-[18px] lg:text-[20px] text-blue-900 dark:text-white">
+                        <Wind className="h-[18px] w-[18px] lg:h-[20px] lg:w-[20px] text-blue-900 dark:text-white" />
+                        <span>{day.wind}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

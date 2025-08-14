@@ -221,15 +221,22 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   return (
     <div className="w-full">
-      {/* Standalone Location Header */}
+      {/* Enhanced Location Header for Desktop */}
       <div className="container mx-auto px-6 pt-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <FavoriteButton 
-            locationId={location.id} 
-            locationName={location.name}
-            size="sm"
-          />
-          <h1 className="text-2xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-2 lg:space-y-0">
+          <div className="flex items-center space-x-3">
+            <FavoriteButton 
+              locationId={location.id} 
+              locationName={location.name}
+              size="sm"
+            />
+            <h1 className="text-2xl lg:text-3xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
+          </div>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <span>{location.city}</span>
+            <span>•</span>
+            <span>Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+          </div>
         </div>
       </div>
 
@@ -247,10 +254,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         
 
 
-        {/* Current Conditions Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        {/* Enhanced Current Conditions Grid for Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
           {/* Swell & Wind Side by Side */}
-          <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-4">
             {/* Wave Conditions */}
             <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
@@ -431,8 +438,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
           </div>
 
-          {/* Water Temperature & UV Index Side by Side */}
-          <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4">
+          {/* Water Temperature & UV Index Side by Side - Enhanced for Desktop */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-4">
             {/* Water Temperature */}
             <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">

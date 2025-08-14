@@ -53,7 +53,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
       <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4">
         <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
           {isLoading ? (
             // Loading skeletons
             Array.from({ length: 3 }).map((_, index) => (
@@ -72,11 +72,11 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
               </div>
             ))
           ) : nearbySpots.length > 0 ? (
-            nearbySpots.slice(0, 3).map((spot) => (
+            nearbySpots.slice(0, 6).map((spot) => (
               <div 
                 key={spot.id} 
                 onClick={() => handleSpotClick(spot.id)}
-                className="bg-muted rounded-lg p-4 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border" 
+                className="bg-muted rounded-lg p-4 lg:p-6 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border min-h-[120px] lg:min-h-[140px]" 
                 data-testid={`card-nearby-spot-${spot.id}`}
               >
                 <div className="flex items-center space-x-3 mb-3">
