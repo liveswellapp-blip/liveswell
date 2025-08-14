@@ -523,6 +523,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             {" "}• ECMWF forecast model
           </div>
         </div>
+
       </div>
     </div>
   );

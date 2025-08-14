@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import CurrentConditions from "@/components/CurrentConditions";
 
 
+import ForecastSection from "@/components/ForecastSection";
 import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
 import SurfSpotStats from "@/components/SurfSpotStats";
@@ -178,6 +179,7 @@ export default function Home() {
       {currentLocation ? (
         <div className="space-y-4">
           <CurrentConditions location={currentLocation} />
+          <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
           <NearbySpots location={currentLocation} />
         </div>
