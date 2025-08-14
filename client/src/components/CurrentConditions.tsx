@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, BarChart3, Wind, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield, ArrowUp, Eye } from "lucide-react";
+import { MapPin, Waves, BarChart3, Wind, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield, ArrowUp } from "lucide-react";
 import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -22,15 +22,6 @@ const getWindArrowRotation = (direction: string): number => {
     'W': 90,    'WNW': 112.5, 'NW': 135,  'NNW': 157.5
   };
   return directions[direction.toUpperCase()] || 0;
-};
-
-// Get UV category based on index
-const getUVCategory = (uvIndex: number): string => {
-  if (uvIndex <= 2) return "Low";
-  if (uvIndex <= 5) return "Moderate";
-  if (uvIndex <= 7) return "High";
-  if (uvIndex <= 10) return "Very High";
-  return "Extreme";
 };
 
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
@@ -263,50 +254,63 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         
 
 
-        {/* Compact Current Conditions Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left Side - Ultra Compact Cards */}
-          <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-            {/* Swell Card */}
-            <div className="rounded-lg p-2 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center space-x-1 mb-1">
-                <Waves className="h-3 w-3 text-blue-900 dark:text-white" />
-                <span className="text-xs font-medium">Swell</span>
+        {/* Enhanced Current Conditions Grid for Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
+          {/* Swell & Wind Side by Side */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-4">
+            {/* Wave Conditions */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">Swell</span>
+                </div>
               </div>
-              <div className="text-center">
+              <div className="flex items-end space-x-2">
                 {isLoading ? (
-                  <Skeleton className="h-5 w-10 bg-white/20 mx-auto" />
+                  <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
-                  <div className="text-lg font-bold text-blue-900 dark:text-emerald-400">
-                    {conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"} ft
-                  </div>
+                  <>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                  </>
                 )}
-                {!isLoading && (
-                  <div className="text-xs mt-0.5">
-                    {conditions?.wavePeriod || 0}s {conditions?.waveDirection || "N/A"}
-                  </div>
+              </div>
+              <div className="text-sm mt-2">
+                {isLoading ? (
+                  <Skeleton className="h-4 w-32 bg-white/20" />
+                ) : (
+                  <>
+                    <div className="mb-1">
+                      <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
+                    </div>
+                    <div>
+                      <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
 
-            {/* Wind Card */}
-            <div className="rounded-lg p-2 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center space-x-1 mb-1">
-                <Wind className="h-3 w-3 text-blue-900 dark:text-white" />
-                <span className="text-xs font-medium">Wind</span>
+            {/* Wind Conditions */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Wind className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">Wind</span>
+                </div>
               </div>
-              <div className="text-center">
+              
+              <div className="flex items-end space-x-2">
                 {isLoading ? (
-                  <Skeleton className="h-5 w-10 bg-white/20 mx-auto" />
+                  <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
-                  <div className="flex items-center justify-center space-x-1">
-                    <div className="text-lg font-bold text-blue-900 dark:text-emerald-400">
-                      {conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"} 
-                    </div>
-                    <span className="text-xs text-blue-900 dark:text-emerald-400">mph</span>
+                  <>
+                    <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
                     {conditions?.windDirection && (
                       <ArrowUp 
-                        className="h-3 w-3 text-blue-900 dark:text-emerald-400" 
+                        className="h-5 w-5 text-blue-900 dark:text-emerald-400 mb-1" 
                         style={{ 
                           transform: `rotate(${getWindArrowRotation(conditions.windDirection)}deg)`,
                           transition: 'transform 0.2s ease'
@@ -314,79 +318,33 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         data-testid="current-wind-arrow"
                       />
                     )}
-                  </div>
-                )}
-                {!isLoading && (
-                  <div className="text-xs mt-0.5">
-                    Gusts: {conditions?.windGusts ? Math.round(parseFloat(conditions.windGusts)) : "0"} mph
-                  </div>
+                  </>
                 )}
               </div>
-            </div>
-
-            {/* Water Temp Card */}
-            <div className="rounded-lg p-2 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center space-x-1 mb-1">
-                <Thermometer className="h-3 w-3 text-blue-900 dark:text-white" />
-                <span className="text-xs font-medium">Water</span>
-              </div>
-              <div className="text-center">
+              <div className="text-sm mt-2">
                 {isLoading ? (
-                  <Skeleton className="h-5 w-10 bg-white/20 mx-auto" />
+                  <Skeleton className="h-4 w-32 bg-white/20" />
                 ) : (
-                  <div className="text-lg font-bold text-blue-900 dark:text-emerald-400">
-                    {conditions?.waterTemp ? Math.round(parseFloat(conditions.waterTemp)) : "0"}°F
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* UV Index Card */}
-            <div className="rounded-lg p-2 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center space-x-1 mb-1">
-                <Eye className="h-3 w-3 text-blue-900 dark:text-white" />
-                <span className="text-xs font-medium">UV</span>
-              </div>
-              <div className="text-center">
-                {isLoading ? (
-                  <Skeleton className="h-5 w-8 bg-white/20 mx-auto" />
-                ) : (
-                  <div className="text-lg font-bold text-blue-900 dark:text-emerald-400">
-                    {conditions?.uvIndex || "0"}
-                  </div>
-                )}
-                {!isLoading && (
-                  <div className="text-xs mt-0.5">
-                    {getUVCategory(conditions?.uvIndex || 0)}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Sun Card */}
-            <div className="rounded-lg p-2 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center space-x-1 mb-1">
-                <Sun className="h-3 w-3 text-blue-900 dark:text-white" />
-                <span className="text-xs font-medium">Sun</span>
-              </div>
-              <div className="text-center">
-                {isLoading ? (
-                  <Skeleton className="h-5 w-12 bg-white/20 mx-auto" />
-                ) : (
-                  <div className="text-xs space-y-0.5">
-                    <div>↑ {conditions?.sunrise || "N/A"}</div>
-                    <div>↓ {conditions?.sunset || "N/A"}</div>
+                  <div>
+                    <div className="mb-1">
+                      <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts ? Math.round(parseFloat(conditions.windGusts)) : "0"} mph</span></span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Right Side - Tide Information */}
+          {/* Tide Information */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center space-x-2 mb-4">
-              <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
-              <span className="text-base font-medium">Tide</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
+                <span className="text-base font-medium">Tide</span>
+              </div>
             </div>
             
             <div className="space-y-3">
@@ -437,6 +395,101 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </>
               )}
+            </div>
+          </div>
+
+          {/* Sunrise & Sunset Information */}
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
+                <span className="text-base font-medium">Sun</span>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {/* Sunrise */}
+              <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white">Sunrise</span>
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-16 bg-white/20" />
+                  ) : (
+                    <span className="text-lg font-semibold text-emerald-400">
+                      {conditions?.sunrise || "N/A"}
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Sunset */}
+              <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white">Sunset</span>
+                  {isLoading ? (
+                    <Skeleton className="h-4 w-16 bg-white/20" />
+                  ) : (
+                    <span className="text-lg font-semibold text-emerald-400">
+                      {conditions?.sunset || "N/A"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Water Temperature & UV Index Side by Side - Enhanced for Desktop */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-4">
+            {/* Water Temperature */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">Water</span>
+                </div>
+              </div>
+              <div>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 bg-white/20" />
+                ) : (
+                  <div>
+                    <div className="flex items-end space-x-2">
+                      <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                      <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                    </div>
+                    <div className="flex items-end space-x-2">
+                      <span className="text-lg text-blue-900 dark:text-emerald-400">
+                        {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
+                      </span>
+                      <span className="text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* UV Index */}
+            <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-blue-900 dark:text-white" />
+                  <span className="text-base font-medium">UV Index</span>
+                </div>
+              </div>
+              <div className="flex items-end space-x-2">
+                {isLoading ? (
+                  <Skeleton className="h-8 w-16 bg-white/20" />
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.uvIndex || 0}</span>
+                    <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">
+                      {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
+                       conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
+                       conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
