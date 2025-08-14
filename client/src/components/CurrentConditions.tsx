@@ -427,9 +427,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Sun & UV Index Side by Side on Mobile */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-2 gap-2 md:gap-4">
+          <div className="col-span-1 md:col-span-2 lg:col-span-2 xl:col-span-2 grid grid-cols-5 gap-2 md:gap-4">
             {/* Sunrise & Sunset Information */}
-            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="col-span-3 rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2 md:mb-4">
                 <div className="flex items-center space-x-2">
                   <Sun className="h-4 w-4 md:h-5 md:w-5 text-blue-900 dark:text-white" />
@@ -469,7 +469,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
             {/* UV Index */}
-            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="col-span-2 rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Shield className="h-4 w-4 md:h-5 md:w-5 text-blue-900 dark:text-white" />
