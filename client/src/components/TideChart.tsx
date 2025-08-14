@@ -4,9 +4,10 @@ interface TideChartProps {
   tides: TidePoint[];
   date: string;
   location?: Location;
+  compact?: boolean;
 }
 
-export default function TideChart({ tides, date, location }: TideChartProps) {
+export default function TideChart({ tides, date, location, compact = false }: TideChartProps) {
   // Convert tide times to hours for interpolation
   const parseTimeToHours = (timeStr: string) => {
     const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -160,13 +161,13 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   const isToday = date === "today" || date === "Today";
 
   return (
-    <div className="mt-4 p-4 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg">
+    <div className={compact ? "mt-2 p-2 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg" : "mt-4 p-4 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg"}>
       
       {/* Tide Chart SVG */}
-      <div className="relative mb-4">
+      <div className={compact ? "relative mb-2" : "relative mb-4"}>
         <svg 
           viewBox="0 0 100 50" 
-          className="w-full h-24 overflow-visible"
+          className={compact ? "w-full h-12 overflow-visible" : "w-full h-24 overflow-visible"}
           preserveAspectRatio="none"
         >
           <defs>

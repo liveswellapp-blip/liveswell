@@ -52,28 +52,28 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="rounded-lg p-4 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[200px] lg:min-h-[240px]">
-                <div className="text-left h-full flex flex-col">
-                  <div className="font-medium mb-3 text-[18px] lg:text-[20px] text-blue-900 dark:text-white">
+              <div key={index} className="rounded-lg p-4 hover:shadow-md transition-shadow bg-muted border border-border">
+                <div className="text-left">
+                  <div className="font-medium mb-3 text-[18px] text-blue-900 dark:text-white">
                     {day.date}
                   </div>
-                  <div className="flex items-center justify-between mb-4 flex-1">
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex items-center space-x-2 font-semibold text-[25px] lg:text-[28px] text-blue-900 dark:text-white">
-                        <Waves className="h-[25px] w-[25px] lg:h-[28px] lg:w-[28px] text-blue-900 dark:text-white" />
-                        <span>{day.waveHeight}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-[18px] lg:text-[20px] text-blue-900 dark:text-white">
-                        <Wind className="h-[18px] w-[18px] lg:h-[20px] lg:w-[20px] text-blue-900 dark:text-white" />
-                        <span>{day.wind}</span>
-                      </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 font-semibold text-[25px] text-blue-900 dark:text-white">
+                      <Waves className="h-[25px] w-[25px] text-blue-900 dark:text-white" />
+                      <span>{day.waveHeight}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-[18px] text-blue-900 dark:text-white">
+                      <Wind className="h-[18px] w-[18px] text-blue-900 dark:text-white" />
+                      <span>{day.wind}</span>
                     </div>
                   </div>
                 </div>
                 
-                {/* Tide Chart */}
+                {/* Compact Tide Chart */}
                 {day.tides && day.tides.length > 0 && (
-                  <TideChart tides={day.tides} date={day.date} location={location} />
+                  <div className="mt-3">
+                    <TideChart tides={day.tides} date={day.date} location={location} compact={true} />
+                  </div>
                 )}
               </div>
             ))
