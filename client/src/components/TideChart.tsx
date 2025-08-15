@@ -160,13 +160,13 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   const isToday = date === "today" || date === "Today";
 
   return (
-    <div className="mt-4 p-4 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg">
+    <div className="p-2 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg h-full flex flex-col justify-center">
       
       {/* Tide Chart SVG */}
-      <div className="relative mb-4">
+      <div className="relative flex-1">
         <svg 
           viewBox="0 0 100 50" 
-          className="w-full h-24 overflow-visible"
+          className="w-full h-full overflow-visible"
           preserveAspectRatio="none"
         >
           <defs>
@@ -336,12 +336,10 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
           )}
         </svg>
         
-        {/* Time labels positioned to align with longer tick marks */}
-        <div className="relative text-xs text-gray-400 dark:text-emerald-500 mt-1">
+        {/* Simplified time labels for compact view */}
+        <div className="relative text-[10px] text-gray-400 dark:text-emerald-500 mt-0.5">
           <span className="absolute" style={{ left: '0%', transform: 'translateX(-50%)' }}>12a</span>
-          <span className="absolute" style={{ left: '25%', transform: 'translateX(-50%)' }}>6a</span>
           <span className="absolute" style={{ left: '50%', transform: 'translateX(-50%)' }}>12p</span>
-          <span className="absolute" style={{ left: '75%', transform: 'translateX(-50%)' }}>6p</span>
           <span className="absolute" style={{ left: '100%', transform: 'translateX(-50%)' }}>12a</span>
         </div>
       </div>

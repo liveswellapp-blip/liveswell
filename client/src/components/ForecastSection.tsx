@@ -62,13 +62,14 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
               <div key={index} className="rounded-lg p-3 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[180px] lg:min-h-[280px] flex flex-col">
-                <div className="text-left h-full flex flex-col justify-between">
-                  {/* Date Header */}
-                  <div className="font-semibold mb-2 lg:mb-3 text-[16px] lg:text-[22px] text-blue-900 dark:text-white border-b border-border/30 pb-1 lg:pb-2">
-                    {day.date}
-                  </div>
-                  
-                  {/* Wave and Wind Data - Mobile optimized spacing */}
+                {/* Date Header */}
+                <div className="font-semibold mb-2 lg:mb-3 text-[16px] lg:text-[22px] text-blue-900 dark:text-white border-b border-border/30 pb-1 lg:pb-2">
+                  {day.date}
+                </div>
+                
+                {/* Main Content - Side by side layout */}
+                <div className="flex-1 flex gap-2 lg:gap-4">
+                  {/* Wave and Wind Data - Left side */}
                   <div className="flex-1 space-y-1.5 lg:space-y-3">
                     <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[20px] lg:text-[30px] text-blue-900 dark:text-white">
                       <Waves className="h-[20px] w-[20px] lg:h-[30px] lg:w-[30px] text-blue-900 dark:text-white flex-shrink-0" />
@@ -80,14 +81,16 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                       <span className="text-emerald-600 dark:text-emerald-400">{day.wind}</span>
                     </div>
                   </div>
-                </div>
-                
-                  {/* Tide Chart - Mobile optimized positioning */}
-                  <div className="mt-2 lg:mt-3 pt-1.5 lg:pt-2 border-t border-border/30">
+                  
+                  {/* Tide Chart - Right side, smaller */}
+                  <div className="flex-1 flex items-center justify-center">
                     {day.tides && day.tides.length > 0 && (
-                      <TideChart tides={day.tides} date={day.date} location={location} />
+                      <div className="w-full h-20 lg:h-24">
+                        <TideChart tides={day.tides} date={day.date} location={location} />
+                      </div>
                     )}
                   </div>
+                </div>
               </div>
             ))
           ) : (
