@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, BarChart3, Wind, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield, ArrowUp } from "lucide-react";
+import { MapPin, Waves, BarChart3, Wind, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield, Navigation } from "lucide-react";
 import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -309,7 +309,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <span className="text-3xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
                     <span className="text-lg md:text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
                     {conditions?.windDirection && (
-                      <ArrowUp 
+                      <Navigation 
                         className="h-5 w-5 text-blue-900 dark:text-emerald-400 mb-1" 
                         style={{ 
                           transform: `rotate(${getWindArrowRotation(conditions.windDirection)}deg)`,
