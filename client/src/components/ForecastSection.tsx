@@ -61,9 +61,9 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="rounded-lg p-3 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[180px] lg:min-h-[280px] flex flex-col">
+              <div key={index} className="rounded-lg p-3 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[160px] lg:min-h-[280px] flex flex-col">
                 {/* Date Header */}
-                <div className="font-semibold mb-2 lg:mb-3 text-[20px] lg:text-[26px] text-blue-900 dark:text-white border-b border-border/30 pb-1 lg:pb-2">
+                <div className="font-semibold mb-1 lg:mb-3 text-[20px] lg:text-[26px] text-blue-900 dark:text-white border-b border-border/30 pb-0.5 lg:pb-2">
                   {day.date}
                 </div>
                 
