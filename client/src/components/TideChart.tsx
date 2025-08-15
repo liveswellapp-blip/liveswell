@@ -94,7 +94,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   // Create SVG path for tide curve
   const createTidePath = () => {
     const width = 100; // SVG viewBox width
-    const height = 50; // SVG viewBox height
+    const height = 60; // SVG viewBox height - increased to match viewBox
     
     const points = hourlyData.map((point, index) => {
       const x = (index / (hourlyData.length - 1)) * width;
@@ -160,13 +160,13 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   const isToday = date === "today" || date === "Today";
 
   return (
-    <div className="p-1 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg h-full flex flex-col justify-center overflow-hidden">
+    <div className="p-2 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg h-full flex flex-col justify-center">
       
       {/* Tide Chart SVG */}
-      <div className="relative flex-1 py-1">
+      <div className="relative flex-1">
         <svg 
-          viewBox="0 0 100 50" 
-          className="w-full h-full"
+          viewBox="0 0 100 60" 
+          className="w-full h-full overflow-visible"
           preserveAspectRatio="none"
         >
           <defs>
@@ -182,20 +182,20 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
           
           {/* Grid lines */}
           <g stroke="#e5e7eb" strokeWidth="0.3" opacity="0.4" className="dark:stroke-emerald-700">
-            <line x1="0" y1="12.5" x2="100" y2="12.5" />
-            <line x1="0" y1="25" x2="100" y2="25" />
-            <line x1="0" y1="37.5" x2="100" y2="37.5" />
+            <line x1="0" y1="15" x2="100" y2="15" />
+            <line x1="0" y1="30" x2="100" y2="30" />
+            <line x1="0" y1="45" x2="100" y2="45" />
           </g>
           
           {/* Tide curve area */}
           <path
-            d={`${createTidePath()} L 100,50 L 0,50 Z`}
+            d={`${createTidePath()} L 100,60 L 0,60 Z`}
             fill={`url(#tideGradient-${date})`}
             className="dark:hidden"
             stroke="none"
           />
           <path
-            d={`${createTidePath()} L 100,50 L 0,50 Z`}
+            d={`${createTidePath()} L 100,60 L 0,60 Z`}
             fill={`url(#tideGradientDark-${date})`}
             className="hidden dark:block"
             stroke="none"
@@ -236,7 +236,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
             
             // Calculate where the line intersects the curve
             const normalizedHeight = ((closestDataPoint.height - minHeight) / heightRange);
-            const curveY = 50 - (normalizedHeight * 50);
+            const curveY = 60 - (normalizedHeight * 60);
             
             return (
               <g key={`tide-line-${index}`}>
@@ -245,7 +245,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
                   x1={x}
                   y1={curveY}
                   x2={x}
-                  y2="50"
+                  y2="60"
                   stroke="#2563eb"
                   strokeWidth="0.5"
                   opacity="0.7"
@@ -255,7 +255,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
                   x1={x}
                   y1={curveY}
                   x2={x}
-                  y2="50"
+                  y2="60"
                   stroke="#10b981"
                   strokeWidth="0.5"
                   opacity="0.7"
@@ -271,7 +271,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
           {Array.from({ length: 25 }, (_, i) => {
             // Make 12am (0), 6am (6), 12pm (12), 6pm (18) longer
             const isMainHour = i === 0 || i === 6 || i === 12 || i === 18;
-            const startY = isMainHour ? "46" : "48";
+            const startY = isMainHour ? "56" : "58";
             
             return (
               <line
@@ -279,7 +279,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
                 x1={i * (100/24)}
                 y1={startY}
                 x2={i * (100/24)}
-                y2="50"
+                y2="60"
                 stroke="#2563eb"
                 strokeWidth="0.3"
                 opacity="0.6"
@@ -290,7 +290,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
           {Array.from({ length: 25 }, (_, i) => {
             // Make 12am (0), 6am (6), 12pm (12), 6pm (18) longer
             const isMainHour = i === 0 || i === 6 || i === 12 || i === 18;
-            const startY = isMainHour ? "46" : "48";
+            const startY = isMainHour ? "56" : "58";
             
             return (
               <line
@@ -298,7 +298,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
                 x1={i * (100/24)}
                 y1={startY}
                 x2={i * (100/24)}
-                y2="50"
+                y2="60"
                 stroke="#10b981"
                 strokeWidth="0.3"
                 opacity="0.6"
@@ -314,7 +314,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
                 x1={currentTimeX}
                 y1="0"
                 x2={currentTimeX}
-                y2="50"
+                y2="60"
                 stroke="#2563eb"
                 strokeWidth="0.8"
                 opacity="0.8"
@@ -324,7 +324,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
                 x1={currentTimeX}
                 y1="0"
                 x2={currentTimeX}
-                y2="50"
+                y2="60"
                 stroke="#10b981"
                 strokeWidth="0.8"
                 opacity="0.8"
