@@ -488,9 +488,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
           </div>
         </div>
-
+        
         {/* Windy Weather Map - moved from Wind Forecast section */}
-        <div className="container mx-auto px-6 pb-4 mb-4 mt-8" data-testid="card-windy-weather-map">
+        <div className="mt-8" data-testid="card-windy-weather-map">
           {/* Interactive Windy Map */}
           <div className="relative">
             <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
