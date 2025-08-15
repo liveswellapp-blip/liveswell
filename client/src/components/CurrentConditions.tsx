@@ -431,7 +431,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">Sun & UV</span>
+                <span className="text-base font-medium">Sun</span>
               </div>
             </div>
             
