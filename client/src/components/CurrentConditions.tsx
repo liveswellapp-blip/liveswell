@@ -351,7 +351,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 ) : (
                   <div>
                     <div className="flex items-end space-x-2">
-                      <span className="text-3xl md:text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                      <span className="text-2xl md:text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
                       <span className="text-lg md:text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
                     </div>
                     <div className="flex items-end space-x-2">
