@@ -493,7 +493,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
         
         <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4" data-testid="card-windy-weather-map">
-          <h3 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Wind Forecast</h3>
           {/* Interactive Windy Map */}
           <div className="relative">
             <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
