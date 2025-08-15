@@ -14,12 +14,13 @@ interface CurrentConditionsProps {
 }
 
 // Convert wind direction to arrow rotation degrees
+// Navigation icon points up by default, so 0° = North
 const getWindArrowRotation = (direction: string): number => {
   const directions: { [key: string]: number } = {
-    'N': 180,   'NNE': 202.5, 'NE': 225,  'ENE': 247.5,
-    'E': 270,   'ESE': 292.5, 'SE': 315,  'SSE': 337.5,
-    'S': 0,     'SSW': 22.5,  'SW': 45,   'WSW': 67.5,
-    'W': 90,    'WNW': 112.5, 'NW': 135,  'NNW': 157.5
+    'N': 0,     'NNE': 22.5,  'NE': 45,   'ENE': 67.5,
+    'E': 90,    'ESE': 112.5, 'SE': 135,  'SSE': 157.5,
+    'S': 180,   'SSW': 202.5, 'SW': 225,  'WSW': 247.5,
+    'W': 270,   'WNW': 292.5, 'NW': 315,  'NNW': 337.5
   };
   return directions[direction.toUpperCase()] || 0;
 };
