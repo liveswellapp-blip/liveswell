@@ -68,9 +68,9 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                 </div>
                 
                 {/* Main Content - Side by side layout */}
-                <div className="flex-1 flex gap-2 lg:gap-4">
-                  {/* Wave and Wind Data - Left side */}
-                  <div className="flex-1 space-y-1.5 lg:space-y-3">
+                <div className="flex-1 flex gap-1 lg:gap-4">
+                  {/* Wave and Wind Data - Left side, aligned with tide chart center */}
+                  <div className="flex-[0.8] space-y-1.5 lg:space-y-3 flex flex-col justify-center">
                     <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[20px] lg:text-[30px] text-blue-900 dark:text-white">
                       <Waves className="h-[20px] w-[20px] lg:h-[30px] lg:w-[30px] text-blue-900 dark:text-white flex-shrink-0" />
                       <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
@@ -82,8 +82,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     </div>
                   </div>
                   
-                  {/* Tide Chart - Right side, smaller */}
-                  <div className="flex-1 flex items-center justify-center">
+                  {/* Tide Chart - Right side, bigger to fill space */}
+                  <div className="flex-[1.2] flex items-center justify-center">
                     {day.tides && day.tides.length > 0 && (
                       <div className="w-full h-20 lg:h-24">
                         <TideChart tides={day.tides} date={day.date} location={location} />
