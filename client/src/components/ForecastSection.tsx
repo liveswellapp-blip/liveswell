@@ -70,14 +70,14 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                 {/* Main Content - Side by side layout */}
                 <div className="flex-1 flex gap-1 lg:gap-4">
                   {/* Wave and Wind Data - Left side, aligned with tide chart center */}
-                  <div className="flex-[0.8] space-y-1.5 lg:space-y-3 flex flex-col justify-center">
-                    <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[20px] lg:text-[30px] text-blue-900 dark:text-white">
-                      <Waves className="h-[20px] w-[20px] lg:h-[30px] lg:w-[30px] text-blue-900 dark:text-white flex-shrink-0" />
+                  <div className="flex-[0.8] space-y-2 lg:space-y-3 flex flex-col justify-center">
+                    <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[22px] lg:text-[30px] text-blue-900 dark:text-white">
+                      <Waves className="h-[22px] w-[22px] lg:h-[30px] lg:w-[30px] text-blue-900 dark:text-white flex-shrink-0" />
                       <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
                     </div>
                     
-                    <div className="flex items-center space-x-2 lg:space-x-3 text-[16px] lg:text-[22px] text-blue-900 dark:text-white">
-                      <Wind className="h-[16px] w-[16px] lg:h-[22px] lg:w-[22px] text-blue-900 dark:text-white flex-shrink-0" />
+                    <div className="flex items-center space-x-2 lg:space-x-3 text-[18px] lg:text-[22px] text-blue-900 dark:text-white">
+                      <Wind className="h-[18px] w-[18px] lg:h-[22px] lg:w-[22px] text-blue-900 dark:text-white flex-shrink-0" />
                       <span className="text-emerald-600 dark:text-emerald-400">{day.wind}</span>
                     </div>
                   </div>
