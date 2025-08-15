@@ -465,7 +465,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
 
               {/* UV Index */}
-              <div className="bg-orange-900/30 rounded-lg p-3 border border-orange-800/50">
+              <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Shield className="h-4 w-4 text-white" />
