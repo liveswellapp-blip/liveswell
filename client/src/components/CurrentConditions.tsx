@@ -14,7 +14,8 @@ interface CurrentConditionsProps {
 }
 
 // Convert wind direction to arrow rotation degrees
-// Navigation icon points up by default, so 0° = North
+// Wind direction shows where wind is coming FROM, arrow shows where it's going TO
+// Add 180° to show the direction the wind is blowing toward
 const getWindArrowRotation = (direction: string): number => {
   const directions: { [key: string]: number } = {
     'N': 0,     'NNE': 22.5,  'NE': 45,   'ENE': 67.5,
@@ -22,7 +23,8 @@ const getWindArrowRotation = (direction: string): number => {
     'S': 180,   'SSW': 202.5, 'SW': 225,  'WSW': 247.5,
     'W': 270,   'WNW': 292.5, 'NW': 315,  'NNW': 337.5
   };
-  return directions[direction.toUpperCase()] || 0;
+  const baseRotation = directions[direction.toUpperCase()] || 0;
+  return (baseRotation + 180) % 360; // Add 180° to show direction wind is going TO
 };
 
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
