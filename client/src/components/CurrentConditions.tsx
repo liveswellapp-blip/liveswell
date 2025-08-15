@@ -271,8 +271,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-2xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
-                    <span className="text-base md:text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                    <span className="text-3xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
+                    <span className="text-lg md:text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
                   </>
                 )}
               </div>
@@ -306,8 +306,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-white/20" />
                 ) : (
                   <>
-                    <span className="text-2xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
-                    <span className="text-base md:text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
+                    <span className="text-3xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
+                    <span className="text-lg md:text-lg mb-1 text-blue-900 dark:text-emerald-400">mph</span>
                     {conditions?.windDirection && (
                       <ArrowUp 
                         className="h-5 w-5 text-blue-900 dark:text-emerald-400 mb-1" 
@@ -351,14 +351,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 ) : (
                   <div>
                     <div className="flex items-end space-x-2">
-                      <span className="text-2xl md:text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
-                      <span className="text-base md:text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                      <span className="text-3xl md:text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
+                      <span className="text-lg md:text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
                     </div>
                     <div className="flex items-end space-x-2">
-                      <span className="text-base md:text-lg text-blue-900 dark:text-emerald-400">
+                      <span className="text-lg md:text-lg text-blue-900 dark:text-emerald-400">
                         {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
                       </span>
-                      <span className="text-sm md:text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
+                      <span className="text-base md:text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
                     </div>
                   </div>
                 )}
