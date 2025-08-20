@@ -386,7 +386,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <>
                   {/* Today's Tide Chart */}
                   {todayTides.length > 0 && (
-                    <TideChart tides={todayTides} date="today" location={location} />
+                    <div className="h-20 md:h-auto">
+                      <TideChart tides={todayTides} date="today" location={location} />
+                    </div>
                   )}
                   
                   {/* High/Low Tide Times and Heights - List View */}
