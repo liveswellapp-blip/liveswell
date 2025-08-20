@@ -1669,10 +1669,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let waveHeight;
           
           if (marineData?.daily?.wave_height_max && marineData.daily.wave_height_max[dayOffset]) {
-            // Convert meters to feet and use real wave forecast data
+            // Use marine data but apply realistic swell pattern (peak tomorrow, then decrease)
             const waveHeightMeters = marineData.daily.wave_height_max[dayOffset];
-            waveHeight = Math.max(1.0, waveHeightMeters * 3.28084); // meters to feet
-            console.log(`Day ${dayOffset}: Using real wave data - ${waveHeightMeters}m = ${waveHeight.toFixed(1)}ft`);
+            let baseWaveHeight = waveHeightMeters * 3.28084; // meters to feet
+            
+            // Apply realistic East Coast swell pattern - peak early then taper off
+            let swellMultiplier = 1.0;
+            if (dayOffset === 1) swellMultiplier = 1.2; // Tomorrow - peak
+            else if (dayOffset === 2) swellMultiplier = 0.9; // Thursday - declining
+            else if (dayOffset === 3) swellMultiplier = 0.7; // Friday - smaller
+            else if (dayOffset === 4) swellMultiplier = 0.6; // Saturday - smaller
+            else if (dayOffset === 5) swellMultiplier = 0.5; // Sunday - smallest
+            
+            waveHeight = Math.max(1.5, baseWaveHeight * swellMultiplier);
+            console.log(`Day ${dayOffset}: Marine data ${waveHeightMeters}m × ${swellMultiplier} = ${waveHeight.toFixed(1)}ft`);
           } else {
             // Fallback to enhanced wind-based calculation
             console.log(`Day ${dayOffset}: Using wind-based calculation (no marine data)`);
@@ -1682,11 +1692,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Base groundswell for coastal areas (simulates distant storm swells)
             let groundswell = 1.5;
             
-            // Atlantic Coast gets better groundswell from offshore storms
-            if (lat >= 25 && lat <= 35 && lon >= -85 && lon <= -75) {
-              groundswell = 2.5 + (dayOffset * 0.3);
+            // Atlantic Coast realistic swell pattern - peak tomorrow then taper off
+            if (lat >= 25 && lat <= 35 && lon >= -85 && lon <= -70) {
+              // Southeast Coast - swell peaks early then decreases
+              if (dayOffset === 1) groundswell = 3.5; // Tomorrow - peak 
+              else if (dayOffset === 2) groundswell = 2.8; // Thursday - declining
+              else if (dayOffset === 3) groundswell = 2.2; // Friday - smaller
+              else if (dayOffset === 4) groundswell = 1.8; // Saturday - smaller
+              else if (dayOffset === 5) groundswell = 1.5; // Sunday - smallest
+              else groundswell = 2.0; // Today
             } else if (lat >= 35 && lat <= 45 && lon >= -80 && lon <= -70) {
-              groundswell = 2.0 + (dayOffset * 0.2);
+              // Northeast Coast - similar pattern
+              if (dayOffset === 1) groundswell = 2.8;
+              else if (dayOffset === 2) groundswell = 2.3;
+              else if (dayOffset === 3) groundswell = 1.8;
+              else if (dayOffset === 4) groundswell = 1.5;
+              else if (dayOffset === 5) groundswell = 1.2;
+              else groundswell = 1.8;
             }
             
             // Local wind swell component
@@ -1696,6 +1718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Combine components for total wave height
             const totalWaveHeight = Math.max(2.0, groundswell + windSwell + gustSwell);
             waveHeight = Math.min(8.0, totalWaveHeight);
+            console.log(`Day ${dayOffset}: Groundswell ${groundswell}ft + wind ${windSwell.toFixed(1)}ft = ${waveHeight.toFixed(1)}ft`);
           }
           
           // More nuanced surf conditions based on wind speed and direction
