@@ -433,23 +433,23 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Sun & UV Index Combined */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center justify-between mb-2 md:mb-4">
               <div className="flex items-center space-x-2">
-                <Sun className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">Sun</span>
+                <Sun className="h-4 w-4 md:h-5 md:w-5 text-blue-900 dark:text-white" />
+                <span className="text-sm md:text-base font-medium">Sun</span>
               </div>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-1 md:space-y-3">
               {/* Sunrise */}
-              <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
+              <div className="bg-emerald-900/30 rounded-lg p-2 md:p-3 border border-emerald-800/50">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white">Sunrise</span>
+                  <span className="text-xs md:text-sm text-white">Sunrise</span>
                   {isLoading ? (
-                    <Skeleton className="h-4 w-16 bg-white/20" />
+                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-white/20" />
                   ) : (
-                    <span className="text-lg font-semibold text-emerald-400">
+                    <span className="text-sm md:text-lg font-semibold text-emerald-400">
                       {conditions?.sunrise || "N/A"}
                     </span>
                   )}
@@ -457,13 +457,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
               
               {/* Sunset */}
-              <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
+              <div className="bg-emerald-900/30 rounded-lg p-2 md:p-3 border border-emerald-800/50">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white">Sunset</span>
+                  <span className="text-xs md:text-sm text-white">Sunset</span>
                   {isLoading ? (
-                    <Skeleton className="h-4 w-16 bg-white/20" />
+                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-white/20" />
                   ) : (
-                    <span className="text-lg font-semibold text-emerald-400">
+                    <span className="text-sm md:text-lg font-semibold text-emerald-400">
                       {conditions?.sunset || "N/A"}
                     </span>
                   )}
@@ -471,18 +471,18 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
 
               {/* UV Index */}
-              <div className="bg-emerald-900/30 rounded-lg p-3 border border-emerald-800/50">
+              <div className="bg-emerald-900/30 rounded-lg p-2 md:p-3 border border-emerald-800/50">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Shield className="h-4 w-4 text-white" />
-                    <span className="text-sm text-white">UV Index</span>
+                  <div className="flex items-center space-x-1 md:space-x-2">
+                    <Shield className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                    <span className="text-xs md:text-sm text-white">UV Index</span>
                   </div>
                   {isLoading ? (
-                    <Skeleton className="h-4 w-16 bg-white/20" />
+                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-white/20" />
                   ) : (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-semibold text-emerald-400">{conditions?.uvIndex || 0}</span>
-                      <span className="text-sm text-emerald-400">
+                    <div className="flex items-center space-x-1 md:space-x-2">
+                      <span className="text-sm md:text-lg font-semibold text-emerald-400">{conditions?.uvIndex || 0}</span>
+                      <span className="text-xs md:text-sm text-emerald-400">
                         {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
                          conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
                          conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
