@@ -433,7 +433,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Sun & UV Index Combined */}
-          <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+          <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
             <div className="flex items-center justify-between mb-2 md:mb-4">
               <div className="flex items-center space-x-2">
                 <Sun className="h-4 w-4 md:h-5 md:w-5 text-blue-900 dark:text-white" />
