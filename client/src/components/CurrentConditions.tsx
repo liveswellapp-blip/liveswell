@@ -272,7 +272,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
               <div className="flex items-end space-x-2">
                 {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-white/20" />
+                  <Skeleton className="h-8 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                 ) : (
                   <>
                     <span className="text-3xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
@@ -282,7 +282,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
               <div className="text-xs md:text-sm mt-2">
                 {isLoading ? (
-                  <Skeleton className="h-4 w-32 bg-white/20" />
+                  <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
                 ) : (
                   <>
                     <div className="mb-1">
@@ -310,7 +310,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               
               <div className="flex items-end space-x-2">
                 {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-white/20" />
+                  <Skeleton className="h-8 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                 ) : (
                   <>
                     <span className="text-3xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.windSpeed ? Math.round(parseFloat(conditions.windSpeed)) : "0"}</span>
@@ -330,7 +330,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
               <div className="text-xs md:text-sm mt-2">
                 {isLoading ? (
-                  <Skeleton className="h-4 w-32 bg-white/20" />
+                  <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
                 ) : (
                   <div>
                     <div className="mb-1">
@@ -357,7 +357,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
               <div>
                 {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-white/20" />
+                  <Skeleton className="h-8 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                 ) : (
                   <div>
                     <div className="flex items-end space-x-2">
@@ -390,7 +390,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             
             <div className="space-y-3">
               {isLoading || forecastLoading ? (
-                <Skeleton className="h-4 w-32 bg-white/20" />
+                <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
               ) : (
                 <>
                   {/* Today's Tide Chart */}
@@ -459,7 +459,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="flex items-center justify-between">
                   <span className="text-xs md:text-sm text-white">Sunrise</span>
                   {isLoading ? (
-                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-white/20" />
+                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                   ) : (
                     <span className="text-sm md:text-lg font-semibold text-emerald-400">
                       {conditions?.sunrise || "N/A"}
@@ -473,7 +473,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="flex items-center justify-between">
                   <span className="text-xs md:text-sm text-white">Sunset</span>
                   {isLoading ? (
-                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-white/20" />
+                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                   ) : (
                     <span className="text-sm md:text-lg font-semibold text-emerald-400">
                       {conditions?.sunset || "N/A"}
@@ -490,7 +490,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <span className="text-xs md:text-sm text-white">UV Index</span>
                   </div>
                   {isLoading ? (
-                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-white/20" />
+                    <Skeleton className="h-3 w-12 md:h-4 md:w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                   ) : (
                     <div className="flex items-center space-x-1 md:space-x-2">
                       <span className="text-sm md:text-lg font-semibold text-emerald-400">{conditions?.uvIndex || 0}</span>
