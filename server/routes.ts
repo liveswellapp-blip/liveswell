@@ -1711,14 +1711,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               else groundswell = 1.8;
             }
             
-            // Local wind swell component
-            const windSwell = avgWindSpeed * 0.3;
-            const gustSwell = maxWindSpeed > 12 ? (maxWindSpeed - 12) * 0.2 : 0;
-            
-            // Combine components for total wave height
-            const totalWaveHeight = Math.max(2.0, groundswell + windSwell + gustSwell);
-            waveHeight = Math.min(8.0, totalWaveHeight);
-            console.log(`Day ${dayOffset}: Groundswell ${groundswell}ft + wind ${windSwell.toFixed(1)}ft = ${waveHeight.toFixed(1)}ft`);
+            // Use groundswell as the primary wave height source
+            waveHeight = Math.max(1.5, Math.min(8.0, groundswell));
+            console.log(`Day ${dayOffset}: Groundswell ${groundswell}ft = ${waveHeight.toFixed(1)}ft`);
           }
           
           // More nuanced surf conditions based on wind speed and direction
