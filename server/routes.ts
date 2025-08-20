@@ -1562,9 +1562,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return;
         }
         
-        const forecastResponse = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=imperial`
-        );
+        // Fetch both weather and marine wave data for accurate forecasting
+        const [forecastResponse, marineResponse] = await Promise.all([
+          fetch(
+            `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=imperial`
+          ),
+          fetch(
+            `https://api.open-meteo.com/v1/marine?latitude=${location.latitude}&longitude=${location.longitude}&daily=wave_height_max,wave_direction_dominant,wave_period_max&timezone=auto&forecast_days=7`
+          )
+        ]);
         
         if (!forecastResponse.ok) {
           console.log(`Forecast API error: ${forecastResponse.status}, using demo data`);
@@ -1614,6 +1620,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const forecastData = await forecastResponse.json();
         
+        // Parse marine data if available
+        let marineData = null;
+        if (marineResponse.ok) {
+          try {
+            marineData = await marineResponse.json();
+            console.log(`✅ Marine wave data available for ${location.name}:`, marineData.daily?.wave_height_max?.slice(0, 5));
+          } catch (error) {
+            console.log('Marine API response parse error:', error);
+          }
+        } else {
+          console.log(`Marine API error: ${marineResponse.status}, using wind-based calculation`);
+        }
+        
         // Process forecast data into daily summaries
         const dailyForecasts = [];
         
@@ -1646,27 +1665,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const avgWindDeg = dayItems.reduce((sum: number, item: any) => sum + (item.wind?.deg || 0), 0) / dayItems.length;
           const maxWindSpeed = Math.max(...dayItems.map((item: any) => item.wind?.speed || 0));
           
-          // More realistic wave height calculation including groundswell
-          const lat = parseFloat(location.latitude);
-          const lon = parseFloat(location.longitude);
+          // Use real marine wave data if available, otherwise fallback to wind-based calculation
+          let waveHeight;
           
-          // Base groundswell for coastal areas (simulates distant storm swells)
-          let groundswell = 1.5; // Base swell height
-          
-          // Atlantic Coast gets better groundswell from offshore storms
-          if (lat >= 25 && lat <= 35 && lon >= -85 && lon <= -75) {
-            groundswell = 2.5 + (dayOffset * 0.3); // Increasing swell over days
-          } else if (lat >= 35 && lat <= 45 && lon >= -80 && lon <= -70) {
-            groundswell = 2.0 + (dayOffset * 0.2);
+          if (marineData?.daily?.wave_height_max && marineData.daily.wave_height_max[dayOffset]) {
+            // Convert meters to feet and use real wave forecast data
+            const waveHeightMeters = marineData.daily.wave_height_max[dayOffset];
+            waveHeight = Math.max(1.0, waveHeightMeters * 3.28084); // meters to feet
+            console.log(`Day ${dayOffset}: Using real wave data - ${waveHeightMeters}m = ${waveHeight.toFixed(1)}ft`);
+          } else {
+            // Fallback to enhanced wind-based calculation
+            console.log(`Day ${dayOffset}: Using wind-based calculation (no marine data)`);
+            const lat = parseFloat(location.latitude);
+            const lon = parseFloat(location.longitude);
+            
+            // Base groundswell for coastal areas (simulates distant storm swells)
+            let groundswell = 1.5;
+            
+            // Atlantic Coast gets better groundswell from offshore storms
+            if (lat >= 25 && lat <= 35 && lon >= -85 && lon <= -75) {
+              groundswell = 2.5 + (dayOffset * 0.3);
+            } else if (lat >= 35 && lat <= 45 && lon >= -80 && lon <= -70) {
+              groundswell = 2.0 + (dayOffset * 0.2);
+            }
+            
+            // Local wind swell component
+            const windSwell = avgWindSpeed * 0.3;
+            const gustSwell = maxWindSpeed > 12 ? (maxWindSpeed - 12) * 0.2 : 0;
+            
+            // Combine components for total wave height
+            const totalWaveHeight = Math.max(2.0, groundswell + windSwell + gustSwell);
+            waveHeight = Math.min(8.0, totalWaveHeight);
           }
-          
-          // Local wind swell component
-          const windSwell = avgWindSpeed * 0.3;
-          const gustSwell = maxWindSpeed > 12 ? (maxWindSpeed - 12) * 0.2 : 0;
-          
-          // Combine components for total wave height
-          const totalWaveHeight = Math.max(2.0, groundswell + windSwell + gustSwell);
-          const waveHeight = Math.min(8.0, totalWaveHeight); // Cap at 8ft for safety
           
           // More nuanced surf conditions based on wind speed and direction
           let conditions;
