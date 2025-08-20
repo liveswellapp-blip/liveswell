@@ -1646,11 +1646,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const avgWindDeg = dayItems.reduce((sum: number, item: any) => sum + (item.wind?.deg || 0), 0) / dayItems.length;
           const maxWindSpeed = Math.max(...dayItems.map((item: any) => item.wind?.speed || 0));
           
-          // More realistic wave height calculation based on wind and location
-          // Base wave height on sustained wind with location-specific factors
-          const baseWaveHeight = Math.max(0.5, avgWindSpeed * 0.25);
-          const windSwell = maxWindSpeed > 15 ? (maxWindSpeed - 15) * 0.2 : 0;
-          const waveHeight = Math.max(1, baseWaveHeight + windSwell);
+          // More realistic wave height calculation including groundswell
+          const lat = parseFloat(location.latitude);
+          const lon = parseFloat(location.longitude);
+          
+          // Base groundswell for coastal areas (simulates distant storm swells)
+          let groundswell = 1.5; // Base swell height
+          
+          // Atlantic Coast gets better groundswell from offshore storms
+          if (lat >= 25 && lat <= 35 && lon >= -85 && lon <= -75) {
+            groundswell = 2.5 + (dayOffset * 0.3); // Increasing swell over days
+          } else if (lat >= 35 && lat <= 45 && lon >= -80 && lon <= -70) {
+            groundswell = 2.0 + (dayOffset * 0.2);
+          }
+          
+          // Local wind swell component
+          const windSwell = avgWindSpeed * 0.3;
+          const gustSwell = maxWindSpeed > 12 ? (maxWindSpeed - 12) * 0.2 : 0;
+          
+          // Combine components for total wave height
+          const totalWaveHeight = Math.max(2.0, groundswell + windSwell + gustSwell);
+          const waveHeight = Math.min(8.0, totalWaveHeight); // Cap at 8ft for safety
           
           // More nuanced surf conditions based on wind speed and direction
           let conditions;
