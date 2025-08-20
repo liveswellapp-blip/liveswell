@@ -288,8 +288,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="mb-1">
                       <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
                     </div>
-                    <div>
+                    <div className="mb-2">
                       <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
+                    </div>
+                    <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
+                      NOAA Buoy Network
                     </div>
                   </>
                 )}
@@ -333,8 +336,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="mb-1">
                       <span>Gusts: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windGusts ? Math.round(parseFloat(conditions.windGusts)) : "0"} mph</span></span>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="mb-2 flex items-center space-x-2">
                       <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
+                    </div>
+                    <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
+                      OpenWeatherMap API
                     </div>
                   </div>
                 )}
@@ -358,11 +364,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <span className="text-2xl md:text-2xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
                       <span className="text-lg md:text-lg mb-1 text-blue-900 dark:text-emerald-400">°F</span>
                     </div>
-                    <div className="flex items-end space-x-2">
+                    <div className="flex items-end space-x-2 mb-2">
                       <span className="text-lg md:text-lg text-blue-900 dark:text-emerald-400">
                         {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
                       </span>
                       <span className="text-base md:text-base mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
+                    </div>
+                    <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
+                      NOAA Sea Surface Temp
                     </div>
                   </div>
                 )}
@@ -425,6 +434,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           )}
                         </div>
                       ))}
+                      <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-2">
+                        NOAA Tides & Currents
+                      </div>
                     </div>
                   )}
                 </>
@@ -490,6 +502,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                   )}
                 </div>
+              </div>
+              
+              {/* Data Source Attribution */}
+              <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-1 md:mt-2">
+                OpenWeatherMap API
               </div>
             </div>
           </div>
