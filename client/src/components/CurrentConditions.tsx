@@ -371,29 +371,27 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
 
           {/* Tide Information */}
-          <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-2 md:mb-4">
+          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-sm md:text-base font-medium">Tide</span>
+                <span className="text-base font-medium">Tide</span>
               </div>
             </div>
             
-            <div className="space-y-2 md:space-y-3">
+            <div className="space-y-3">
               {isLoading || forecastLoading ? (
                 <Skeleton className="h-4 w-32 bg-white/20" />
               ) : (
                 <>
-                  {/* Today's Tide Chart - hidden on mobile to save space */}
+                  {/* Today's Tide Chart */}
                   {todayTides.length > 0 && (
-                    <div className="hidden md:block">
-                      <TideChart tides={todayTides} date="today" location={location} />
-                    </div>
+                    <TideChart tides={todayTides} date="today" location={location} />
                   )}
                   
-                  {/* High/Low Tide Times and Heights - Compact on mobile */}
+                  {/* High/Low Tide Times and Heights - List View */}
                   {todayTides.length > 0 && (
-                    <div className="space-y-1 md:space-y-2">
+                    <div className="space-y-2">
                       {todayTides
                         .filter(tide => tide.type === 'high' || tide.type === 'low')
                         .sort((a, b) => {
@@ -414,15 +412,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           
                           return parseTime(a.time) - parseTime(b.time);
                         })
-                        .slice(0, 2) // Show only next 2 tides on mobile to save space
                         .map((tide, index, sortedTides) => (
                         <div key={index}>
-                          <div className="flex items-center justify-between text-xs md:text-sm">
+                          <div className="flex items-center justify-between text-sm">
                             <span className="text-white capitalize">{tide.type} Tide</span>
                             <span className="text-emerald-400">{tide.time} - {tide.height.toFixed(1)} ft</span>
                           </div>
                           {index < sortedTides.length - 1 && (
-                            <div className="border-t border-gray-600/30 mt-1 md:mt-2"></div>
+                            <div className="border-t border-gray-600/30 mt-2"></div>
                           )}
                         </div>
                       ))}
