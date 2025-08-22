@@ -1,4 +1,5 @@
 import { TidePoint, Location } from "@/types/weather";
+import { useState, useRef } from "react";
 
 interface TideChartProps {
   tides: TidePoint[];
@@ -7,6 +8,10 @@ interface TideChartProps {
 }
 
 export default function TideChart({ tides, date, location }: TideChartProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedTimeX, setDraggedTimeX] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
   // Convert tide times to hours for interpolation
   const parseTimeToHours = (timeStr: string) => {
     const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -159,15 +164,99 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   // Only show time indicator for today's chart
   const isToday = date === "today" || date === "Today";
 
+  // Get coordinates from touch/mouse event
+  const getEventCoordinates = (e: TouchEvent | MouseEvent) => {
+    if ('touches' in e && e.touches.length > 0) {
+      return { clientX: e.touches[0].clientX };
+    }
+    return { clientX: e.clientX };
+  };
+
+  // Convert screen coordinates to chart position
+  const screenToChartPosition = (clientX: number) => {
+    if (!svgRef.current) return 0;
+    
+    const rect = svgRef.current.getBoundingClientRect();
+    const relativeX = clientX - rect.left;
+    const percentage = (relativeX / rect.width) * 100;
+    return Math.max(0, Math.min(100, percentage));
+  };
+
+  // Convert chart position to time and tide height
+  const getTimeAndHeightAtPosition = (positionX: number) => {
+    const hourOfDay = (positionX / 100) * 24;
+    
+    // Find the closest data point or interpolate
+    const closestDataPoint = hourlyData.reduce((closest, point) => {
+      const currentDistance = Math.abs(point.hour - hourOfDay);
+      const closestDistance = Math.abs(closest.hour - hourOfDay);
+      return currentDistance < closestDistance ? point : closest;
+    });
+
+    // Format time as 12-hour format
+    const formatTime = (hour: number) => {
+      const h = Math.floor(hour);
+      const m = Math.floor((hour % 1) * 60);
+      const period = h >= 12 ? 'PM' : 'AM';
+      const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      return `${displayHour}:${m.toString().padStart(2, '0')} ${period}`;
+    };
+
+    return {
+      time: formatTime(hourOfDay),
+      height: closestDataPoint.height,
+      hourOfDay
+    };
+  };
+
+  // Touch/mouse event handlers
+  const handleStart = (e: React.TouchEvent<SVGSVGElement> | React.MouseEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+    
+    const coords = getEventCoordinates(e.nativeEvent);
+    const position = screenToChartPosition(coords.clientX);
+    setDraggedTimeX(position);
+  };
+
+  const handleMove = (e: React.TouchEvent<SVGSVGElement> | React.MouseEvent<SVGSVGElement>) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const coords = getEventCoordinates(e.nativeEvent);
+    const position = screenToChartPosition(coords.clientX);
+    setDraggedTimeX(position);
+  };
+
+  const handleEnd = () => {
+    setIsDragging(false);
+    // Keep the dragged position visible for a moment, then fade out
+    setTimeout(() => setDraggedTimeX(null), 2000);
+  };
+
+  // Determine which time position to show
+  const activeTimeX = isDragging ? draggedTimeX : (draggedTimeX !== null ? draggedTimeX : currentTimeX);
+  const timeAndHeight = (isDragging || draggedTimeX !== null) && draggedTimeX !== null 
+    ? getTimeAndHeightAtPosition(draggedTimeX) 
+    : null;
+
   return (
     <div className="p-2 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg h-full flex flex-col justify-center">
       
       {/* Tide Chart SVG */}
       <div className="relative flex-1 h-16 md:h-auto">
         <svg 
+          ref={svgRef}
           viewBox="0 0 100 50" 
-          className="w-full h-full overflow-visible"
+          className="w-full h-full overflow-visible cursor-pointer"
           preserveAspectRatio="none"
+          onTouchStart={handleStart}
+          onTouchMove={handleMove}
+          onTouchEnd={handleEnd}
+          onMouseDown={handleStart}
+          onMouseMove={handleMove}
+          onMouseUp={handleEnd}
+          onMouseLeave={handleEnd}
         >
           <defs>
             <linearGradient id={`tideGradient-${date}`} x1="0%" y1="0%" x2="0%" y2="100%">
@@ -307,31 +396,49 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
             );
           })}
 
-          {/* Current time indicator line - only show for today */}
-          {isToday && (
+          {/* Interactive time indicator line */}
+          {(isToday || isDragging || draggedTimeX !== null) && (
             <>
               <line
-                x1={currentTimeX}
+                x1={activeTimeX}
                 y1="0"
-                x2={currentTimeX}
+                x2={activeTimeX}
                 y2="50"
-                stroke="#2563eb"
-                strokeWidth="0.8"
+                stroke={isDragging ? "#ef4444" : "#2563eb"}
+                strokeWidth={isDragging ? "1.2" : "0.8"}
                 opacity="0.8"
                 className="dark:hidden"
               />
               <line
-                x1={currentTimeX}
+                x1={activeTimeX}
                 y1="0"
-                x2={currentTimeX}
+                x2={activeTimeX}
                 y2="50"
-                stroke="#10b981"
-                strokeWidth="0.8"
+                stroke={isDragging ? "#ef4444" : "#10b981"}
+                strokeWidth={isDragging ? "1.2" : "0.8"}
                 opacity="0.8"
                 className="hidden dark:block"
               />
               
-
+              {/* Draggable handle circle */}
+              {(isDragging || draggedTimeX !== null) && (
+                <>
+                  <circle
+                    cx={activeTimeX}
+                    cy="25"
+                    r="2"
+                    fill={isDragging ? "#ef4444" : "#2563eb"}
+                    className="dark:hidden"
+                  />
+                  <circle
+                    cx={activeTimeX}
+                    cy="25"
+                    r="2"
+                    fill={isDragging ? "#ef4444" : "#10b981"}
+                    className="hidden dark:block"
+                  />
+                </>
+              )}
             </>
           )}
         </svg>
@@ -342,6 +449,29 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
           <span className="absolute" style={{ left: '50%', transform: 'translateX(-50%)' }}>12p</span>
           <span className="absolute" style={{ left: '100%', transform: 'translateX(-50%)' }}>12a</span>
         </div>
+
+        {/* Interactive tooltip */}
+        {timeAndHeight && (isDragging || draggedTimeX !== null) && (
+          <div 
+            className="absolute bg-black dark:bg-emerald-900 text-white dark:text-emerald-100 px-3 py-2 rounded-md text-sm font-medium shadow-lg pointer-events-none z-10 transition-all duration-150"
+            style={{ 
+              left: `${activeTimeX}%`, 
+              transform: 'translateX(-50%)',
+              top: '-45px',
+              opacity: isDragging ? 1 : 0.8
+            }}
+            data-testid="tide-tooltip"
+          >
+            <div className="text-center">
+              <div className="text-xs opacity-90">{timeAndHeight.time}</div>
+              <div className="font-bold">{timeAndHeight.height.toFixed(1)}ft</div>
+            </div>
+            {/* Tooltip arrow */}
+            <div 
+              className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black dark:border-t-emerald-900"
+            />
+          </div>
+        )}
       </div>
       
 
