@@ -694,7 +694,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               {/* Header */}
               <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-[11px] py-2 gap-2 pl-2.5">
                 <div className="w-14">Time</div>
-                <div className="w-20">Height</div>
+                <div className="w-16">Height</div>
                 <div className="w-16">Period</div>
                 <div className="flex-1">Direction</div>
               </div>
@@ -707,7 +707,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <div className="w-14 font-medium text-gray-900 dark:text-gray-100">
                         {dataPoint.time}
                       </div>
-                      <div className="w-20 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="w-16 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {dataPoint.waveHeight.toFixed(1)}ft
                       </div>
                       <div className="w-16 text-blue-600 dark:text-blue-400 font-medium">
