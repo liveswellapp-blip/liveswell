@@ -1789,6 +1789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return directions[index];
   }
 
+
   function getDayName(dayOffset: number): string {
     const date = new Date();
     date.setDate(date.getDate() + dayOffset);
@@ -1815,10 +1816,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timezone = getTimezone(lat, lon);
       
       try {
-        // Fetch hourly marine data from Open-Meteo
-        const marineResponse = await fetch(
-          `https://api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=auto&forecast_days=7`
-        );
+        // Try NOAA NWS wave forecast first, then fallback to Open-Meteo
+        let marineResponse;
+        let isNOAAData = false;
+        
+        try {
+          // Get NWS grid coordinates for this location
+          const pointResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+          if (pointResponse.ok) {
+            const pointData = await pointResponse.json();
+            const gridData = pointData.properties.forecastGridData;
+            
+            // Fetch NOAA wave forecast data
+            marineResponse = await fetch(gridData);
+            if (marineResponse.ok) {
+              isNOAAData = true;
+              console.log(`✅ Using NOAA wave forecast data for ${lat}, ${lon}`);
+            }
+          }
+        } catch (noaaError) {
+          console.log('NOAA forecast unavailable, trying Open-Meteo fallback');
+        }
+        
+        // Fallback to Open-Meteo if NOAA fails
+        if (!marineResponse || !marineResponse.ok) {
+          marineResponse = await fetch(
+            `https://api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=auto&forecast_days=7`
+          );
+          isNOAAData = false;
+        }
         
         // Fetch hourly wind data from existing endpoint (but get raw data)
         let windData = [];
@@ -1846,17 +1872,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const nextDay = new Date(targetDate);
           nextDay.setDate(targetDate.getDate() + 1);
           
-          // Create marine data lookup map
+          // Create marine data lookup map based on data source
           const marineDataMap = new Map();
-          marineData.hourly.time.forEach((time: string, index: number) => {
-            const dateTime = new Date(time);
-            const key = `${dateTime.getFullYear()}-${dateTime.getMonth()}-${dateTime.getDate()}-${dateTime.getHours()}`;
-            marineDataMap.set(key, {
-              waveHeight: marineData.hourly.wave_height[index],
-              wavePeriod: marineData.hourly.wave_period[index],
-              waveDirection: marineData.hourly.wave_direction[index]
+          
+          if (isNOAAData) {
+            // Parse NOAA NWS grid data format
+            const waveHeights = marineData.properties.waveHeight?.values || [];
+            const wavePeriods = marineData.properties.wavePeriod?.values || [];
+            const waveDirections = marineData.properties.waveDirection?.values || [];
+            
+            // Helper function to find NOAA value at a specific time from time range data
+            const findNOAAValueAtTime = (targetTime: Date, noaaValues: any[]): number | null => {
+              for (const item of noaaValues) {
+                const [startTime, duration] = item.validTime.split('/');
+                const start = new Date(startTime);
+                
+                // Parse duration (e.g., "PT3H" = 3 hours, "P1DT2H" = 1 day 2 hours)
+                let hours = 0;
+                if (duration.includes('PT') && duration.includes('H')) {
+                  const hourMatch = duration.match(/PT(\d+)H/);
+                  if (hourMatch) hours = parseInt(hourMatch[1]);
+                }
+                if (duration.includes('P') && duration.includes('DT')) {
+                  const dayMatch = duration.match(/P(\d+)DT/);
+                  const hourMatch = duration.match(/DT(\d+)H/);
+                  if (dayMatch) hours += parseInt(dayMatch[1]) * 24;
+                  if (hourMatch) hours += parseInt(hourMatch[1]);
+                }
+                
+                const end = new Date(start.getTime() + (hours * 60 * 60 * 1000));
+                
+                if (targetTime >= start && targetTime < end) {
+                  return item.value;
+                }
+              }
+              return null;
+            };
+            
+            // Create hourly interpolated data from NOAA time ranges
+            for (let hour = 0; hour < 24; hour++) {
+              const hourTime = new Date(targetDate);
+              hourTime.setHours(hour);
+              
+              const waveData = findNOAAValueAtTime(hourTime, waveHeights);
+              const periodData = findNOAAValueAtTime(hourTime, wavePeriods);
+              const directionData = findNOAAValueAtTime(hourTime, waveDirections);
+              
+              const key = `${hourTime.getFullYear()}-${hourTime.getMonth()}-${hourTime.getDate()}-${hour}`;
+              marineDataMap.set(key, {
+                waveHeight: waveData ? waveData * 3.28084 : null, // Convert meters to feet
+                wavePeriod: periodData,
+                waveDirection: directionData
+              });
+            }
+          } else {
+            // Parse Open-Meteo format (fallback)
+            marineData.hourly.time.forEach((time: string, index: number) => {
+              const dateTime = new Date(time);
+              const key = `${dateTime.getFullYear()}-${dateTime.getMonth()}-${dateTime.getDate()}-${dateTime.getHours()}`;
+              marineDataMap.set(key, {
+                waveHeight: marineData.hourly.wave_height[index],
+                wavePeriod: marineData.hourly.wave_period[index],
+                waveDirection: marineData.hourly.wave_direction[index]
+              });
             });
-          });
+          }
           
           // Generate 24 hours starting from midnight
           for (let hour = 0; hour < 24; hour++) {
@@ -1881,9 +1961,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             hourlyData.push({
               time: timeString,
               hour: hour,
-              waveHeight: marineInfo ? `~${(marineInfo.waveHeight * 3.28084).toFixed(1)} ft` : 'N/A',
-              wavePeriod: marineInfo ? `~${Math.round(marineInfo.wavePeriod)} sec` : 'N/A',
-              waveDirection: marineInfo ? degreesToCompass(marineInfo.waveDirection) : 'N/A',
+              waveHeight: marineInfo && marineInfo.waveHeight ? `${marineInfo.waveHeight.toFixed(1)} ft` : 'N/A',
+              wavePeriod: marineInfo && marineInfo.wavePeriod ? `${Math.round(marineInfo.wavePeriod)} sec` : 'N/A',
+              waveDirection: marineInfo && marineInfo.waveDirection ? degreesToCompass(marineInfo.waveDirection) : 'N/A',
               windSpeed: windItem ? `${windItem.windSpeed} mph` : 'N/A',
               windDirection: windItem ? windItem.windDirection : 'N/A'
             });
