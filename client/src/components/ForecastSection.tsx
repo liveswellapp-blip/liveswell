@@ -1,19 +1,55 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wind, Waves } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Wind, Waves, Clock } from "lucide-react";
 import { Location, ForecastDay } from "@/types/weather";
 import TideChart from "./TideChart";
+import { useState } from "react";
 
 interface ForecastSectionProps {
   location: Location;
 }
 
+interface DetailedForecastData {
+  location: string;
+  date: string;
+  dayOffset: number;
+  hourlyData: {
+    time: string;
+    hour: number;
+    waveHeight: string;
+    wavePeriod: string;
+    waveDirection: string;
+    windSpeed: string;
+    windDirection: string;
+  }[];
+}
+
 export default function ForecastSection({ location }: ForecastSectionProps) {
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
   const { data: forecast = [], isLoading, error } = useQuery<ForecastDay[]>({
     queryKey: [`/api/locations/${location.id}/forecast`],
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
+
+  const { data: detailedData, isLoading: detailedLoading } = useQuery<DetailedForecastData>({
+    queryKey: [`/api/locations/${location.id}/detailed-forecast/${selectedDay}`],
+    enabled: selectedDay !== null,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+  });
+
+  const handleCardClick = (dayIndex: number) => {
+    setSelectedDay(dayIndex + 1); // dayOffset starts from 1 (tomorrow)
+    setShowDetailModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowDetailModal(false);
+    setSelectedDay(null);
+  };
 
   if (error) {
     return (
@@ -72,7 +108,12 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] rounded-lg p-3 lg:p-4 hover:shadow-md transition-shadow bg-muted border border-border min-h-[140px] lg:min-h-[200px] flex flex-col snap-center" data-testid={`forecast-card-${index}`}>
+              <div 
+                key={index}
+                onClick={() => handleCardClick(index)}
+                className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] rounded-lg p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-muted border border-border min-h-[140px] lg:min-h-[200px] flex flex-col snap-center hover:bg-muted/80 active:scale-[0.98]" 
+                data-testid={`forecast-card-${index}`}
+              >
                 {/* Main Content - Side by side layout */}
                 <div className="flex-1 flex gap-3 lg:gap-4">
                   {/* Left side - Day name and wave/wind data */}
@@ -125,6 +166,79 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           </div>
         </div>
       </div>
+      
+      {/* Detailed Forecast Modal */}
+      <Dialog open={showDetailModal} onOpenChange={handleCloseModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-blue-900 dark:text-white">
+              {detailedData?.date} Detailed Forecast - {detailedData?.location}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {detailedLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 p-3 bg-muted rounded-lg">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          ) : detailedData ? (
+            <div className="space-y-3">
+              {/* Header */}
+              <div className="grid grid-cols-5 gap-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg font-semibold text-sm">
+                <div className="flex items-center space-x-1">
+                  <Clock className="h-4 w-4" />
+                  <span>Time</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Waves className="h-4 w-4" />
+                  <span>Waves</span>
+                </div>
+                <div>Period</div>
+                <div className="flex items-center space-x-1">
+                  <Wind className="h-4 w-4" />
+                  <span>Wind</span>
+                </div>
+                <div>Direction</div>
+              </div>
+              
+              {/* Hourly Data */}
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {detailedData.hourlyData.map((hour, index) => (
+                  <div key={index} className="grid grid-cols-5 gap-4 p-3 bg-muted/50 rounded-lg text-sm hover:bg-muted transition-colors">
+                    <div className="font-medium">{hour.time}</div>
+                    <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                      {hour.waveHeight}
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {hour.waveDirection}
+                      </div>
+                    </div>
+                    <div className="text-blue-600 dark:text-blue-400">
+                      {hour.wavePeriod}
+                    </div>
+                    <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                      {hour.windSpeed}
+                    </div>
+                    <div className="text-blue-600 dark:text-blue-400">
+                      {hour.windDirection}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No detailed data available for this day</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

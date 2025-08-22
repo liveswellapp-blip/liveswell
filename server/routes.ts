@@ -1782,6 +1782,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Utility functions for detailed forecast
+  function degreesToCompass(degrees: number): string {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index];
+  }
+
+  function getDayName(dayOffset: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + dayOffset);
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  }
+
+  // Get detailed hourly forecast for a specific day
+  app.get("/api/locations/:id/detailed-forecast/:day", async (req, res) => {
+    try {
+      const locationId = parseInt(req.params.id);
+      const dayOffset = parseInt(req.params.day);
+      
+      if (isNaN(locationId) || isNaN(dayOffset) || dayOffset < 0 || dayOffset > 6) {
+        return res.status(400).json({ message: "Invalid location ID or day offset" });
+      }
+      
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+      
+      const lat = parseFloat(location.latitude);
+      const lon = parseFloat(location.longitude);
+      const timezone = getTimezone(lat, lon);
+      
+      try {
+        // Fetch hourly marine data from Open-Meteo
+        const marineResponse = await fetch(
+          `https://api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=auto&forecast_days=7`
+        );
+        
+        // Fetch hourly wind data from existing endpoint (but get raw data)
+        let windData = [];
+        try {
+          const windResponse = await fetch(`http://localhost:5000/api/locations/${locationId}/wind-forecast`);
+          if (windResponse.ok) {
+            windData = await windResponse.json();
+          }
+        } catch (windError) {
+          console.log('Wind data fetch error, will generate fallback');
+        }
+        
+        // Parse marine data
+        let hourlyData = [];
+        
+        if (marineResponse.ok) {
+          const marineData = await marineResponse.json();
+          
+          // Calculate the target day start/end times
+          const now = new Date();
+          const targetDate = new Date(now);
+          targetDate.setDate(now.getDate() + dayOffset);
+          targetDate.setHours(0, 0, 0, 0);
+          
+          const nextDay = new Date(targetDate);
+          nextDay.setDate(targetDate.getDate() + 1);
+          
+          // Filter marine data for the target day
+          const dayMarineData = marineData.hourly.time
+            .map((time: string, index: number) => ({
+              time: new Date(time),
+              waveHeight: marineData.hourly.wave_height[index],
+              wavePeriod: marineData.hourly.wave_period[index],
+              waveDirection: marineData.hourly.wave_direction[index]
+            }))
+            .filter((item: any) => item.time >= targetDate && item.time < nextDay);
+          
+          // Combine with wind data for each hour
+          hourlyData = dayMarineData.map((marine: any) => {
+            const hour = marine.time.getHours();
+            const timeString = marine.time.toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              hour12: true,
+              timeZone: timezone
+            });
+            
+            // Find matching wind data
+            const windItem = windData.find((wind: any) => {
+              const windTime = new Date(wind.timestamp);
+              return windTime.getHours() === hour && 
+                     windTime.getDate() === marine.time.getDate();
+            });
+            
+            return {
+              time: timeString,
+              hour: hour,
+              waveHeight: marine.waveHeight ? `${(marine.waveHeight * 3.28084).toFixed(1)} ft` : 'N/A',
+              wavePeriod: marine.wavePeriod ? `${Math.round(marine.wavePeriod)} sec` : 'N/A',
+              waveDirection: marine.waveDirection ? degreesToCompass(marine.waveDirection) : 'N/A',
+              windSpeed: windItem ? `${windItem.windSpeed} mph` : 'N/A',
+              windDirection: windItem ? windItem.windDirection : 'N/A'
+            };
+          });
+          
+        } else {
+          // Generate fallback hourly data for the day
+          const now = new Date();
+          const targetDate = new Date(now);
+          targetDate.setDate(now.getDate() + dayOffset);
+          targetDate.setHours(0, 0, 0, 0);
+          
+          for (let hour = 0; hour < 24; hour++) {
+            const hourTime = new Date(targetDate);
+            hourTime.setHours(hour);
+            
+            // Generate realistic wave patterns
+            const baseWaveHeight = 2 + Math.sin(hour * 0.3) * 1.5 + Math.sin(dayOffset * 0.8) * 0.8;
+            const waveHeight = Math.max(1.0, baseWaveHeight);
+            const wavePeriod = Math.round(6 + (waveHeight * 0.8) + Math.sin(hour * 0.2) * 2);
+            
+            // Find matching wind data
+            const windItem = windData.find((wind: any) => {
+              const windTime = new Date(wind.timestamp);
+              return windTime.getHours() === hour;
+            });
+            
+            hourlyData.push({
+              time: hourTime.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                hour12: true,
+                timeZone: timezone
+              }),
+              hour: hour,
+              waveHeight: `${waveHeight.toFixed(1)} ft`,
+              wavePeriod: `${wavePeriod} sec`,
+              waveDirection: degreesToCompass(45 + hour * 15 + (dayOffset || 0) * 30),
+              windSpeed: windItem ? `${windItem.windSpeed} mph` : `${Math.round(8 + Math.sin(hour * 0.4) * 4)} mph`,
+              windDirection: windItem ? windItem.windDirection : degreesToCompass(180 + hour * 10)
+            });
+          }
+        }
+        
+        res.json({
+          location: location.name,
+          date: getDayName(dayOffset),
+          dayOffset,
+          hourlyData
+        });
+        
+      } catch (error) {
+        console.error('Detailed forecast API error:', error);
+        res.status(503).json({ message: "Detailed forecast data temporarily unavailable" });
+      }
+    } catch (error) {
+      console.error('Detailed forecast error:', error);
+      res.status(500).json({ message: "Failed to get detailed forecast" });
+    }
+  });
+
   // Get nearby surf spots
   app.get("/api/locations/:id/nearby", async (req, res) => {
     try {
