@@ -280,7 +280,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="space-y-4">
                   {/* Buoy Data - Side by Side Layout */}
                   {((conditions as any)?.primaryBuoy || (conditions as any)?.backupBuoy) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {/* Primary Buoy Data */}
                       {(conditions as any)?.primaryBuoy && (
                         <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10">
