@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, BarChart3, Wind, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield, Navigation } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MapPin, Waves, BarChart3, Wind, CloudSun, AlertCircle, ChevronDown, ChevronUp, Sun, Thermometer, Shield, Navigation, Clock, Activity, TrendingUp } from "lucide-react";
 import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -28,14 +29,48 @@ const getWindArrowRotation = (direction: string): number => {
   return (baseRotation - 45 + 180) % 360;
 };
 
+interface BuoyHistoricalData {
+  stationId: string;
+  historicalData: {
+    time: string;
+    hour: number;
+    date: string;
+    waveHeight: number;
+    wavePeriod: number;
+    waveDirection: string;
+    stationId: string;
+  }[];
+  dataSource: 'noaa' | 'simulated';
+}
+
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [isWindForecastExpanded, setIsWindForecastExpanded] = useState(false);
+  const [selectedBuoyStation, setSelectedBuoyStation] = useState<string | null>(null);
+  const [showBuoyHistoryModal, setShowBuoyHistoryModal] = useState(false);
   
   const { data: conditions, isLoading, error } = useQuery<SurfConditions>({
     queryKey: [`/api/locations/${location.id}/conditions`],
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
+
+  // Fetch buoy historical data when a buoy is selected
+  const { data: buoyHistoryData, isLoading: buoyHistoryLoading } = useQuery<BuoyHistoricalData>({
+    queryKey: [`/api/buoy/${selectedBuoyStation}/historical`],
+    enabled: selectedBuoyStation !== null && showBuoyHistoryModal,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+  });
+
+  // Handler functions for buoy historical data modal
+  const handleBuoyHistoryClick = (stationId: string, stationName: string) => {
+    setSelectedBuoyStation(stationId);
+    setShowBuoyHistoryModal(true);
+  };
+
+  const handleCloseBuoyModal = () => {
+    setShowBuoyHistoryModal(false);
+    setSelectedBuoyStation(null);
+  };
 
   // Fetch historical wave data when expanded
   const { data: historicalData, isLoading: historyLoading } = useQuery<HistoricalWaveData[]>({
@@ -294,21 +329,32 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                             <div>Period: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div className="leading-tight space-y-0">
-                            {(conditions as any).primaryBuoy.stationName ? (
-                              <>
+                          <div className="flex items-center justify-between">
+                            <div className="leading-tight space-y-0">
+                              {(conditions as any).primaryBuoy.stationName ? (
+                                <>
+                                  <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                    {(conditions as any).primaryBuoy.stationName}
+                                  </div>
+                                  <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                    Station {(conditions as any).primaryBuoy.stationId}
+                                  </div>
+                                </>
+                              ) : (
                                 <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                                  {(conditions as any).primaryBuoy.stationName}
+                                  Buoy {(conditions as any).primaryBuoy.stationId}
                                 </div>
-                                <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                                  Station {(conditions as any).primaryBuoy.stationId}
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                                Buoy {(conditions as any).primaryBuoy.stationId}
-                              </div>
-                            )}
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/20"
+                              onClick={() => handleBuoyHistoryClick((conditions as any).primaryBuoy.stationId, (conditions as any).primaryBuoy.stationName)}
+                              data-testid="primary-buoy-history-button"
+                            >
+                              <Clock className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -326,21 +372,32 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                             <div>Period: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div className="leading-tight space-y-0">
-                            {(conditions as any).backupBuoy.stationName ? (
-                              <>
+                          <div className="flex items-center justify-between">
+                            <div className="leading-tight space-y-0">
+                              {(conditions as any).backupBuoy.stationName ? (
+                                <>
+                                  <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                                    {(conditions as any).backupBuoy.stationName}
+                                  </div>
+                                  <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                                    Station {(conditions as any).backupBuoy.stationId}
+                                  </div>
+                                </>
+                              ) : (
                                 <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                                  {(conditions as any).backupBuoy.stationName}
+                                  Buoy {(conditions as any).backupBuoy.stationId}
                                 </div>
-                                <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                                  Station {(conditions as any).backupBuoy.stationId}
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                                Buoy {(conditions as any).backupBuoy.stationId}
-                              </div>
-                            )}
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                              onClick={() => handleBuoyHistoryClick((conditions as any).backupBuoy.stationId, (conditions as any).backupBuoy.stationName)}
+                              data-testid="backup-buoy-history-button"
+                            >
+                              <Clock className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -609,6 +666,132 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         </div>
 
       </div>
+
+      {/* Buoy Historical Data Modal */}
+      <Dialog open={showBuoyHistoryModal} onOpenChange={handleCloseBuoyModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Activity className="h-5 w-5 text-blue-600 dark:text-emerald-400" />
+              <span>24-Hour Buoy History</span>
+              {selectedBuoyStation && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  - Station {selectedBuoyStation}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {buoyHistoryLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 rounded-lg" />
+                  ))}
+                </div>
+              </div>
+            ) : buoyHistoryData ? (
+              <>
+                {/* Data Source Info */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      {buoyHistoryData.dataSource === 'noaa' ? 'Live NOAA Buoy Data' : 'Simulated Historical Data'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    {buoyHistoryData.dataSource === 'noaa' 
+                      ? 'Real-time data from NOAA National Data Buoy Center'
+                      : 'Generated based on current conditions and typical patterns'}
+                  </p>
+                </div>
+
+                {/* Hourly Data Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {buoyHistoryData.historicalData.map((dataPoint, index) => (
+                    <div 
+                      key={index}
+                      className="bg-muted border border-border rounded-lg p-3 hover:bg-muted/80 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-blue-900 dark:text-white">
+                          {dataPoint.time}
+                        </span>
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {/* Wave Height */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Height:</span>
+                          <div className="flex items-end space-x-1">
+                            <span className="text-lg font-bold text-blue-600 dark:text-emerald-400">
+                              {dataPoint.waveHeight.toFixed(1)}
+                            </span>
+                            <span className="text-xs text-blue-600 dark:text-emerald-400 mb-0.5">ft</span>
+                          </div>
+                        </div>
+
+                        {/* Wave Period */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Period:</span>
+                          <span className="text-sm font-medium text-blue-900 dark:text-white">
+                            {dataPoint.wavePeriod}s
+                          </span>
+                        </div>
+
+                        {/* Wave Direction */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Direction:</span>
+                          <span className="text-sm font-medium text-blue-900 dark:text-white">
+                            {dataPoint.waveDirection}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Summary Stats */}
+                {buoyHistoryData.historicalData.length > 0 && (
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">24-Hour Summary</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground">Avg Height</div>
+                        <div className="text-lg font-bold text-blue-600 dark:text-emerald-400">
+                          {(buoyHistoryData.historicalData.reduce((sum, d) => sum + d.waveHeight, 0) / buoyHistoryData.historicalData.length).toFixed(1)}ft
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground">Max Height</div>
+                        <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                          {Math.max(...buoyHistoryData.historicalData.map(d => d.waveHeight)).toFixed(1)}ft
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-muted-foreground">Avg Period</div>
+                        <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                          {Math.round(buoyHistoryData.historicalData.reduce((sum, d) => sum + d.wavePeriod, 0) / buoyHistoryData.historicalData.length)}s
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No historical data available</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
