@@ -90,7 +90,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                           <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
                         </div>
                         <div className="ml-[22px] lg:ml-[24px] text-[12px] lg:text-[13px] text-gray-600 dark:text-gray-400">
-                          {day.wavePeriod}
+                          Period: {day.wavePeriod}
                         </div>
                       </div>
                       
