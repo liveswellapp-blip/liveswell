@@ -35,12 +35,28 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
       <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4">
         <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
         
-        {/* Enhanced Forecast Cards for Desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
+        {/* Horizontal Scrolling Carousel */}
+        <div className="relative">
+          {/* Scroll indicator gradient - right side */}
+          <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 rounded-r-lg" />
+          
+          {/* Scroll instruction for mobile */}
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 md:hidden text-center">
+            ← Swipe to see more days →
+          </div>
+          
+          <div 
+            className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
           {isLoading ? (
             // Mobile optimized loading skeletons
             (Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="bg-muted rounded-lg p-3 lg:p-6 min-h-[180px] lg:min-h-[280px] flex flex-col">
+              <div key={index} className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] bg-muted rounded-lg p-3 lg:p-6 min-h-[180px] lg:min-h-[280px] flex flex-col snap-center">
                 <div className="space-y-2 lg:space-y-3">
                   <Skeleton className="h-5 lg:h-6 w-16 lg:w-20 border-b border-border/30 pb-1 lg:pb-2" />
                   <div className="space-y-1.5 lg:space-y-3">
@@ -61,7 +77,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             )))
           ) : forecast.length > 0 ? (
             forecast.map((day, index) => (
-              <div key={index} className="rounded-lg p-3 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[160px] lg:min-h-[280px] flex flex-col">
+              <div key={index} className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] rounded-lg p-3 lg:p-6 hover:shadow-md transition-shadow bg-muted border border-border min-h-[160px] lg:min-h-[280px] flex flex-col snap-center" data-testid={`forecast-card-${index}`}>
                 {/* Date Header */}
                 <div className="font-semibold mb-1 lg:mb-3 text-[20px] lg:text-[26px] text-blue-900 dark:text-white border-b border-border/30 pb-0.5 lg:pb-2">
                   {day.date}
@@ -94,10 +110,11 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center text-muted-foreground">
+            <div className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] text-center text-muted-foreground flex items-center justify-center">
               <p>No forecast data available</p>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
