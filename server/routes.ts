@@ -1553,8 +1553,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               waveHeight: `${waveMin}-${waveMax} ft`,
               wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
               conditions,
-              windSpeed: `${Math.round(windSpeed)} mph`,
-              windDirection: getWindDirection(45 + i * 60),
+              windSpeed: i > 2 ? "TBD" : `${Math.round(windSpeed)} mph`,
+              windDirection: i > 2 ? "TBD" : getWindDirection(45 + i * 60),
               icon: "🌊",
               tides
             });
@@ -1611,8 +1611,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               waveHeight: `${waveMin}-${waveMax} ft`,
               wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
               conditions,
-              windSpeed: `${Math.round(windSpeed)} mph`,
-              windDirection: getWindDirection(45 + i * 60),
+              windSpeed: i > 2 ? "TBD" : `${Math.round(windSpeed)} mph`,
+              windDirection: i > 2 ? "TBD" : getWindDirection(45 + i * 60),
               icon: "🌊",
               tides
             });
@@ -1762,8 +1762,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             waveHeight: `${waveMin}-${waveMax} ft`,
             wavePeriod: `${wavePeriod} sec`,
             conditions,
-            windSpeed: `${Math.round(avgWindSpeed)} mph`,
-            windDirection: getWindDirection(avgWindDeg),
+            windSpeed: dayOffset > 2 ? "TBD" : `${Math.round(avgWindSpeed)} mph`,
+            windDirection: dayOffset > 2 ? "TBD" : getWindDirection(avgWindDeg),
             icon: "🌊",
             tides
           });

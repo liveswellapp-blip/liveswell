@@ -156,16 +156,18 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   </div>
                 </div>
                 
-                {/* Details Button */}
-                <div className="mt-2 pt-2 border-t border-border/30">
-                  <button 
-                    onClick={() => handleCardClick(index)}
-                    className="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 px-3 rounded transition-colors"
-                    data-testid={`details-button-${index}`}
-                  >
-                    View Hourly Details
-                  </button>
-                </div>
+                {/* Details Button - Only show for first 2 days (accurate wind data) */}
+                {index < 2 && (
+                  <div className="mt-2 pt-2 border-t border-border/30">
+                    <button 
+                      onClick={() => handleCardClick(index)}
+                      className="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 px-3 rounded transition-colors"
+                      data-testid={`details-button-${index}`}
+                    >
+                      View Hourly Details
+                    </button>
+                  </div>
+                )}
               </div>
             ))
           ) : (
