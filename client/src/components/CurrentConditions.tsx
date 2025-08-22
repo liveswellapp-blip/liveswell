@@ -294,13 +294,21 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                             <div>Period: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div>
-                            <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                              {(conditions as any).primaryBuoy.stationName 
-                                ? `${(conditions as any).primaryBuoy.stationName} - Station ${(conditions as any).primaryBuoy.stationId}`
-                                : `Buoy ${(conditions as any).primaryBuoy.stationId}`
-                              }
-                            </span>
+                          <div className="leading-tight space-y-0">
+                            {(conditions as any).primaryBuoy.stationName ? (
+                              <>
+                                <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                  {(conditions as any).primaryBuoy.stationName}
+                                </div>
+                                <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                  Station {(conditions as any).primaryBuoy.stationId}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                Buoy {(conditions as any).primaryBuoy.stationId}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -318,13 +326,21 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                             <div>Period: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div>
-                            <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                              {(conditions as any).backupBuoy.stationName 
-                                ? `${(conditions as any).backupBuoy.stationName} - Station ${(conditions as any).backupBuoy.stationId}`
-                                : `Buoy ${(conditions as any).backupBuoy.stationId}`
-                              }
-                            </span>
+                          <div className="leading-tight space-y-0">
+                            {(conditions as any).backupBuoy.stationName ? (
+                              <>
+                                <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                                  {(conditions as any).backupBuoy.stationName}
+                                </div>
+                                <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                                  Station {(conditions as any).backupBuoy.stationId}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                                Buoy {(conditions as any).backupBuoy.stationId}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
