@@ -1837,11 +1837,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (marineResponse.ok) {
           const marineData = await marineResponse.json();
           
-          // Calculate the target day start/end times
+          // Calculate the target day start/end times (always start from midnight)
           const now = new Date();
           const targetDate = new Date(now);
           targetDate.setDate(now.getDate() + dayOffset);
-          targetDate.setHours(0, 0, 0, 0);
+          targetDate.setHours(0, 0, 0, 0); // Start from midnight
           
           const nextDay = new Date(targetDate);
           nextDay.setDate(targetDate.getDate() + 1);
@@ -1865,11 +1865,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               timeZone: timezone
             });
             
-            // Find matching wind data
+            // Find matching wind data for this specific hour
             const windItem = windData.find((wind: any) => {
               const windTime = new Date(wind.timestamp);
-              return windTime.getHours() === hour && 
-                     windTime.getDate() === marine.time.getDate();
+              return windTime.getHours() === hour;
             });
             
             return {
@@ -1884,11 +1883,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
         } else {
-          // Generate fallback hourly data for the day
+          // Generate fallback hourly data for the day (starting from midnight)
           const now = new Date();
           const targetDate = new Date(now);
           targetDate.setDate(now.getDate() + dayOffset);
-          targetDate.setHours(0, 0, 0, 0);
+          targetDate.setHours(0, 0, 0, 0); // Start from midnight
           
           for (let hour = 0; hour < 24; hour++) {
             const hourTime = new Date(targetDate);
@@ -1899,7 +1898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const waveHeight = Math.max(1.0, baseWaveHeight);
             const wavePeriod = Math.round(6 + (waveHeight * 0.8) + Math.sin(hour * 0.2) * 2);
             
-            // Find matching wind data
+            // Find matching wind data for this specific hour  
             const windItem = windData.find((wind: any) => {
               const windTime = new Date(wind.timestamp);
               return windTime.getHours() === hour;
