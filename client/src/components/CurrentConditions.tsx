@@ -671,7 +671,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       <Dialog open={showBuoyHistoryModal} onOpenChange={handleCloseBuoyModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-blue-900 dark:text-white">
+            <DialogTitle className="text-xl font-semibold text-blue-900 dark:text-white pr-8">
               {selectedBuoyStation && buoyHistoryData && (
                 `24-Hour Buoy History - Station ${selectedBuoyStation} (${buoyHistoryData.dataSource === 'noaa' ? 'NOAA Data' : 'Simulated'})`
               )}
