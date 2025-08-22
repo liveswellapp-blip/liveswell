@@ -169,7 +169,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
     if ('touches' in e && e.touches.length > 0) {
       return { clientX: e.touches[0].clientX };
     }
-    return { clientX: e.clientX };
+    return { clientX: (e as MouseEvent).clientX };
   };
 
   // Convert screen coordinates to chart position
@@ -235,7 +235,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   };
 
   // Determine which time position to show
-  const activeTimeX = isDragging ? draggedTimeX : (draggedTimeX !== null ? draggedTimeX : currentTimeX);
+  const activeTimeX = isDragging ? draggedTimeX ?? currentTimeX : (draggedTimeX !== null ? draggedTimeX : currentTimeX);
   const timeAndHeight = (isDragging || draggedTimeX !== null) && draggedTimeX !== null 
     ? getTimeAndHeightAtPosition(draggedTimeX) 
     : null;
