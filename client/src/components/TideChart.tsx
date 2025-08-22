@@ -446,7 +446,9 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
         {/* Simplified time labels for compact view */}
         <div className="relative text-[10px] text-gray-400 dark:text-emerald-500 mt-0.5">
           <span className="absolute" style={{ left: '0%', transform: 'translateX(-50%)' }}>12a</span>
+          <span className="absolute" style={{ left: '25%', transform: 'translateX(-50%)' }}>6am</span>
           <span className="absolute" style={{ left: '50%', transform: 'translateX(-50%)' }}>12p</span>
+          <span className="absolute" style={{ left: '75%', transform: 'translateX(-50%)' }}>6pm</span>
           <span className="absolute" style={{ left: '100%', transform: 'translateX(-50%)' }}>12a</span>
         </div>
 
