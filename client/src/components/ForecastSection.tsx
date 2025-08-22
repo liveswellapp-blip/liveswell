@@ -191,43 +191,48 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           ) : detailedData ? (
             <div className="space-y-3">
               {/* Header */}
-              <div className="grid grid-cols-5 gap-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg font-semibold text-sm">
+              <div className="grid grid-cols-5 gap-3 p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg font-semibold text-xs">
                 <div className="flex items-center space-x-1">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-3.5 w-3.5" />
                   <span>Time</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <Waves className="h-4 w-4" />
+                  <Waves className="h-3.5 w-3.5" />
                   <span>Waves</span>
                 </div>
                 <div>Period</div>
                 <div className="flex items-center space-x-1">
-                  <Wind className="h-4 w-4" />
+                  <Wind className="h-3.5 w-3.5" />
                   <span>Wind</span>
                 </div>
                 <div>Direction</div>
               </div>
               
               {/* Hourly Data */}
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="max-h-96 overflow-y-auto">
                 {detailedData.hourlyData.map((hour, index) => (
-                  <div key={index} className="grid grid-cols-5 gap-4 p-3 bg-muted/50 rounded-lg text-sm hover:bg-muted transition-colors">
-                    <div className="font-medium">{hour.time}</div>
-                    <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                      {hour.waveHeight}
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {hour.waveDirection}
+                  <div key={index}>
+                    <div className="grid grid-cols-5 gap-3 p-2.5 text-xs hover:bg-muted/30 transition-colors">
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{hour.time}</div>
+                      <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                        {hour.waveHeight}
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                          {hour.waveDirection}
+                        </div>
+                      </div>
+                      <div className="text-blue-600 dark:text-blue-400 font-medium">
+                        {hour.wavePeriod}
+                      </div>
+                      <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                        {hour.windSpeed}
+                      </div>
+                      <div className="text-blue-600 dark:text-blue-400 font-medium">
+                        {hour.windDirection}
                       </div>
                     </div>
-                    <div className="text-blue-600 dark:text-blue-400">
-                      {hour.wavePeriod}
-                    </div>
-                    <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                      {hour.windSpeed}
-                    </div>
-                    <div className="text-blue-600 dark:text-blue-400">
-                      {hour.windDirection}
-                    </div>
+                    {index < detailedData.hourlyData.length - 1 && (
+                      <div className="border-b border-emerald-200 dark:border-emerald-800 opacity-30"></div>
+                    )}
                   </div>
                 ))}
               </div>
