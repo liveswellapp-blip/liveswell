@@ -40,11 +40,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           {/* Scroll indicator gradient - right side */}
           <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 rounded-r-lg" />
           
-          {/* Scroll instruction for mobile */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 md:hidden text-center">
-            ← Swipe to see more days →
-          </div>
-          
           <div 
             className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
             style={{
@@ -114,6 +109,11 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               <p>No forecast data available</p>
             </div>
           )}
+          </div>
+          
+          {/* Scroll instruction for mobile */}
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 md:hidden text-center">
+            Swipe
           </div>
         </div>
       </div>
