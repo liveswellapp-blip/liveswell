@@ -319,11 +319,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       {/* Primary Buoy Data */}
                       {(conditions as any)?.primaryBuoy && (
                         <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10">
+                          <div className="flex items-end space-x-2 mb-2">
+                            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                              {(conditions as any).primaryBuoy.waveHeight ? parseFloat((conditions as any).primaryBuoy.waveHeight).toFixed(1) : "0.0"}ft @ {(conditions as any).primaryBuoy.wavePeriod || 0}s
+                            </span>
+                          </div>
                           <div className="space-y-1 text-xs mb-2">
-                            <div>Height: <span className="text-emerald-600 dark:text-emerald-400 text-2xl font-bold">
-                              {(conditions as any).primaryBuoy.waveHeight ? parseFloat((conditions as any).primaryBuoy.waveHeight).toFixed(1) : "0.0"}ft
-                            </span></div>
-                            <div>Period: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
                           </div>
                           <div className="leading-tight space-y-0 mb-2">
@@ -357,11 +358,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       {/* Backup Buoy Data */}
                       {(conditions as any)?.backupBuoy && (
                         <div className="border border-blue-300/30 rounded-lg p-3 bg-blue-50/20 dark:bg-blue-900/10">
+                          <div className="flex items-end space-x-2 mb-2">
+                            <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                              {(conditions as any).backupBuoy.waveHeight ? parseFloat((conditions as any).backupBuoy.waveHeight).toFixed(1) : "0.0"}ft @ {(conditions as any).backupBuoy.wavePeriod || 0}s
+                            </span>
+                          </div>
                           <div className="space-y-1 text-xs mb-2">
-                            <div>Height: <span className="text-blue-600 dark:text-blue-400 text-2xl font-bold">
-                              {(conditions as any).backupBuoy.waveHeight ? parseFloat((conditions as any).backupBuoy.waveHeight).toFixed(1) : "0.0"}ft
-                            </span></div>
-                            <div>Period: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
                           </div>
                           <div className="leading-tight space-y-0 mb-2">
