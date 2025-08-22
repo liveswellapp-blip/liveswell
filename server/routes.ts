@@ -1550,13 +1550,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             dailyForecasts.push({
               date: getDayName(i),
-              waveHeight: `${waveMin}-${waveMax} ft`,
-              wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
-              conditions,
+              waveHeight: `~${waveMin}-${waveMax} ft`,
+              wavePeriod: `~${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
+              conditions: `Est. ${conditions}`,
               windSpeed: i > 2 ? "TBD" : `${Math.round(windSpeed)} mph`,
               windDirection: i > 2 ? "TBD" : getWindDirection(45 + i * 60),
               icon: "🌊",
-              tides
+              tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` }))
             });
           }
           
@@ -1608,13 +1608,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             dailyForecasts.push({
               date: getDayName(i),
-              waveHeight: `${waveMin}-${waveMax} ft`,
-              wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
-              conditions,
+              waveHeight: `~${waveMin}-${waveMax} ft`,
+              wavePeriod: `~${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
+              conditions: `Est. ${conditions}`,
               windSpeed: i > 2 ? "TBD" : `${Math.round(windSpeed)} mph`,
               windDirection: i > 2 ? "TBD" : getWindDirection(45 + i * 60),
               icon: "🌊",
-              tides
+              tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` }))
             });
           }
           
@@ -1759,13 +1759,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           dailyForecasts.push({
             date: getDayName(dayOffset),
-            waveHeight: `${waveMin}-${waveMax} ft`,
-            wavePeriod: `${wavePeriod} sec`,
-            conditions,
+            waveHeight: `~${waveMin}-${waveMax} ft`,
+            wavePeriod: `~${wavePeriod} sec`,
+            conditions: `Est. ${conditions}`,
             windSpeed: dayOffset > 2 ? "TBD" : `${Math.round(avgWindSpeed)} mph`,
             windDirection: dayOffset > 2 ? "TBD" : getWindDirection(avgWindDeg),
             icon: "🌊",
-            tides
+            tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` }))
           });
           
           dayOffset++;
@@ -1881,8 +1881,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             hourlyData.push({
               time: timeString,
               hour: hour,
-              waveHeight: marineInfo ? `${(marineInfo.waveHeight * 3.28084).toFixed(1)} ft` : 'N/A',
-              wavePeriod: marineInfo ? `${Math.round(marineInfo.wavePeriod)} sec` : 'N/A',
+              waveHeight: marineInfo ? `~${(marineInfo.waveHeight * 3.28084).toFixed(1)} ft` : 'N/A',
+              wavePeriod: marineInfo ? `~${Math.round(marineInfo.wavePeriod)} sec` : 'N/A',
               waveDirection: marineInfo ? degreesToCompass(marineInfo.waveDirection) : 'N/A',
               windSpeed: windItem ? `${windItem.windSpeed} mph` : 'N/A',
               windDirection: windItem ? windItem.windDirection : 'N/A'
@@ -1918,8 +1918,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 hour12: true
               }),
               hour: hour,
-              waveHeight: `${waveHeight.toFixed(1)} ft`,
-              wavePeriod: `${wavePeriod} sec`,
+              waveHeight: `~${waveHeight.toFixed(1)} ft`,
+              wavePeriod: `~${wavePeriod} sec`,
               waveDirection: degreesToCompass(45 + hour * 15 + (dayOffset || 0) * 30),
               windSpeed: windItem ? `${windItem.windSpeed} mph` : `${Math.round(8 + Math.sin(hour * 0.4) * 4)} mph`,
               windDirection: windItem ? windItem.windDirection : degreesToCompass(180 + hour * 10)
