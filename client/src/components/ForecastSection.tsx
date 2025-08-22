@@ -75,26 +75,31 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               <div key={index} className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] rounded-lg p-3 lg:p-4 hover:shadow-md transition-shadow bg-muted border border-border min-h-[140px] lg:min-h-[200px] flex flex-col snap-center" data-testid={`forecast-card-${index}`}>
                 {/* Main Content - Side by side layout */}
                 <div className="flex-1 flex gap-3 lg:gap-4">
-                  {/* Wave and Wind Data - Left side */}
-                  <div className="flex-[0.8] space-y-2 lg:space-y-3 flex flex-col justify-center">
-                    <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[18px] lg:text-[22px] text-blue-900 dark:text-white">
-                      <Waves className="h-[18px] w-[18px] lg:h-[22px] lg:w-[22px] text-blue-900 dark:text-white flex-shrink-0" />
-                      <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 lg:space-x-3 text-[14px] lg:text-[16px] text-blue-900 dark:text-white">
-                      <Wind className="h-[14px] w-[14px] lg:h-[16px] lg:w-[16px] text-blue-900 dark:text-white flex-shrink-0" />
-                      <span className="text-emerald-600 dark:text-emerald-400">{day.wind}</span>
-                    </div>
-                  </div>
-                  
-                  {/* Date Header + Tide Chart - Right side */}
-                  <div className="flex-[1.2] flex flex-col">
+                  {/* Left side - Day name and wave/wind data */}
+                  <div className="flex-[0.8] flex flex-col">
+                    {/* Day name at top */}
                     <div className="font-semibold mb-2 text-[16px] lg:text-[18px] text-blue-900 dark:text-white text-center">
                       {day.date}
                     </div>
+                    
+                    {/* Wave and Wind Data below */}
+                    <div className="space-y-2 lg:space-y-3 flex flex-col justify-center flex-1">
+                      <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[18px] lg:text-[22px] text-blue-900 dark:text-white">
+                        <Waves className="h-[18px] w-[18px] lg:h-[22px] lg:w-[22px] text-blue-900 dark:text-white flex-shrink-0" />
+                        <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 lg:space-x-3 text-[14px] lg:text-[16px] text-blue-900 dark:text-white">
+                        <Wind className="h-[14px] w-[14px] lg:h-[16px] lg:w-[16px] text-blue-900 dark:text-white flex-shrink-0" />
+                        <span className="text-emerald-600 dark:text-emerald-400">{day.wind}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Tide Chart - Right side */}
+                  <div className="flex-[1.2] flex items-center">
                     {day.tides && day.tides.length > 0 && (
-                      <div className="flex-1">
+                      <div className="w-full h-20 lg:h-24">
                         <TideChart tides={day.tides} date={day.date} location={location} />
                       </div>
                     )}
