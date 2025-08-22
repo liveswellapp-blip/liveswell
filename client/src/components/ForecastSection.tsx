@@ -189,20 +189,18 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               ))}
             </div>
           ) : detailedData ? (
-            <div className="space-y-3">
+            <div className="space-y-0">
               {/* Header */}
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                <div className="grid grid-cols-5 gap-3 p-2.5 font-semibold text-xs">
-                  <div>Time</div>
-                  <div>Waves</div>
-                  <div>Period</div>
-                  <div>Wind</div>
-                  <div>Direction</div>
-                </div>
+              <div className="grid grid-cols-5 gap-3 p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-xs">
+                <div>Time</div>
+                <div>Waves</div>
+                <div>Period</div>
+                <div>Wind</div>
+                <div>Direction</div>
               </div>
               
               {/* Hourly Data */}
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {detailedData.hourlyData.map((hour, index) => (
                   <div key={index}>
                     <div className="grid grid-cols-5 gap-3 p-2.5 text-xs hover:bg-muted/30 transition-colors">
