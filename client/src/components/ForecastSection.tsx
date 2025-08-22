@@ -191,33 +191,33 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           ) : detailedData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="grid grid-cols-5 gap-3 p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-xs">
-                <div>Time</div>
-                <div>Waves</div>
-                <div>Period</div>
-                <div>Wind</div>
-                <div>Direction</div>
+              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-xs">
+                <div className="w-16 p-2.5">Time</div>
+                <div className="w-20 p-2.5">Waves</div>
+                <div className="w-16 p-2.5">Period</div>
+                <div className="w-16 p-2.5">Wind</div>
+                <div className="flex-1 p-2.5">Direction</div>
               </div>
               
               {/* Hourly Data */}
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {detailedData.hourlyData.map((hour, index) => (
                   <div key={index}>
-                    <div className="grid grid-cols-5 gap-3 p-2.5 text-xs hover:bg-muted/30 transition-colors">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">{hour.time}</div>
-                      <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <div className="flex text-xs hover:bg-muted/30 transition-colors">
+                      <div className="w-16 p-2.5 font-medium text-gray-900 dark:text-gray-100">{hour.time}</div>
+                      <div className="w-20 p-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {hour.waveHeight}
                         <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                           {hour.waveDirection}
                         </div>
                       </div>
-                      <div className="text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="w-16 p-2.5 text-blue-600 dark:text-blue-400 font-medium">
                         {hour.wavePeriod}
                       </div>
-                      <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="w-16 p-2.5 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {hour.windSpeed}
                       </div>
-                      <div className="text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 p-2.5 text-blue-600 dark:text-blue-400 font-medium">
                         {hour.windDirection}
                       </div>
                     </div>
