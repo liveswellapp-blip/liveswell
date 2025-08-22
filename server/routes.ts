@@ -1846,24 +1846,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const nextDay = new Date(targetDate);
           nextDay.setDate(targetDate.getDate() + 1);
           
-          // Filter marine data for the target day
-          const dayMarineData = marineData.hourly.time
-            .map((time: string, index: number) => ({
-              time: new Date(time),
+          // Create marine data lookup map
+          const marineDataMap = new Map();
+          marineData.hourly.time.forEach((time: string, index: number) => {
+            const dateTime = new Date(time);
+            const key = `${dateTime.getFullYear()}-${dateTime.getMonth()}-${dateTime.getDate()}-${dateTime.getHours()}`;
+            marineDataMap.set(key, {
               waveHeight: marineData.hourly.wave_height[index],
               wavePeriod: marineData.hourly.wave_period[index],
               waveDirection: marineData.hourly.wave_direction[index]
-            }))
-            .filter((item: any) => item.time >= targetDate && item.time < nextDay);
+            });
+          });
           
-          // Combine with wind data for each hour
-          hourlyData = dayMarineData.map((marine: any) => {
-            const hour = marine.time.getHours();
-            const timeString = marine.time.toLocaleTimeString('en-US', { 
+          // Generate 24 hours starting from midnight
+          for (let hour = 0; hour < 24; hour++) {
+            const hourTime = new Date(targetDate);
+            hourTime.setHours(hour);
+            
+            const timeString = hourTime.toLocaleTimeString('en-US', { 
               hour: 'numeric', 
               hour12: true,
               timeZone: timezone
             });
+            
+            // Look up marine data for this specific hour
+            const marineKey = `${hourTime.getFullYear()}-${hourTime.getMonth()}-${hourTime.getDate()}-${hour}`;
+            const marineInfo = marineDataMap.get(marineKey);
             
             // Find matching wind data for this specific hour
             const windItem = windData.find((wind: any) => {
@@ -1871,16 +1879,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return windTime.getHours() === hour;
             });
             
-            return {
+            hourlyData.push({
               time: timeString,
               hour: hour,
-              waveHeight: marine.waveHeight ? `${(marine.waveHeight * 3.28084).toFixed(1)} ft` : 'N/A',
-              wavePeriod: marine.wavePeriod ? `${Math.round(marine.wavePeriod)} sec` : 'N/A',
-              waveDirection: marine.waveDirection ? degreesToCompass(marine.waveDirection) : 'N/A',
+              waveHeight: marineInfo ? `${(marineInfo.waveHeight * 3.28084).toFixed(1)} ft` : 'N/A',
+              wavePeriod: marineInfo ? `${Math.round(marineInfo.wavePeriod)} sec` : 'N/A',
+              waveDirection: marineInfo ? degreesToCompass(marineInfo.waveDirection) : 'N/A',
               windSpeed: windItem ? `${windItem.windSpeed} mph` : 'N/A',
               windDirection: windItem ? windItem.windDirection : 'N/A'
-            };
-          });
+            });
+          }
           
         } else {
           // Generate fallback hourly data for the day (starting from midnight)
