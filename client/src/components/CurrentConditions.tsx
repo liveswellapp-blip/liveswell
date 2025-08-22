@@ -267,7 +267,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-sm md:text-base font-medium">Wave Conditions</span>
+                  <span className="text-sm md:text-base font-medium">Swell</span>
                 </div>
               </div>
 
