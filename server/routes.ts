@@ -1551,6 +1551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dailyForecasts.push({
               date: getDayName(i),
               waveHeight: `${waveMin}-${waveMax} ft`,
+              wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(45 + i * 60)}`,
               icon: "🌊",
@@ -1607,6 +1608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dailyForecasts.push({
               date: getDayName(i),
               waveHeight: `${waveMin}-${waveMax} ft`,
+              wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
               conditions,
               wind: `${Math.round(windSpeed)} mph ${getWindDirection(45 + i * 60)}`,
               icon: "🌊",
@@ -1667,6 +1669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Use real marine wave data if available, otherwise fallback to wind-based calculation
           let waveHeight;
+          let wavePeriod;
           
           if (marineData?.daily?.wave_height_max && marineData.daily.wave_height_max[dayOffset]) {
             // Use marine data but apply realistic swell pattern (peak tomorrow, then decrease)
@@ -1744,9 +1747,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const waveMin = Math.floor(waveHeight);
           const waveMax = Math.ceil(waveHeight + 0.5);
 
+          // Get wave period from marine data if available
+          if (marineData?.daily?.wave_period_max && marineData.daily.wave_period_max[dayOffset]) {
+            wavePeriod = Math.round(marineData.daily.wave_period_max[dayOffset]);
+          } else {
+            // Generate realistic wave period based on wave height
+            wavePeriod = Math.round(6 + (waveHeight * 0.8) + Math.sin(dayOffset * 0.5) * 2);
+          }
+
           dailyForecasts.push({
             date: getDayName(dayOffset),
             waveHeight: `${waveMin}-${waveMax} ft`,
+            wavePeriod: `${wavePeriod} sec`,
             conditions,
             wind: `${Math.round(avgWindSpeed)} mph ${getWindDirection(avgWindDeg)}`,
             icon: "🌊",

@@ -37,6 +37,7 @@ export interface TidePoint {
 export interface ForecastDay {
   date: string;
   waveHeight: string;
+  wavePeriod: string;
   conditions: string;
   wind: string;
   icon: string;
