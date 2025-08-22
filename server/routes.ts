@@ -138,6 +138,13 @@ async function fetchMarineData(lat: number, lon: number) {
     const regionalConfig = getRegionalConfig(lat, lon);
     const marineData = await getComprehensiveMarineData(lat, lon);
     
+    console.log('🔍 Marine data structure:', {
+      hasPrimary: !!marineData.primary,
+      backupCount: marineData.backup?.length || 0,
+      primaryStationId: marineData.primary?.stationId,
+      backupStationIds: marineData.backup?.map(b => b.stationId) || []
+    });
+    
     if (marineData.primary) {
       return {
         waveHeight: marineData.primary.waveHeight,
@@ -152,7 +159,7 @@ async function fetchMarineData(lat: number, lon: number) {
           waveDirection: marineData.primary.waveDirection,
           lastUpdate: marineData.primary.lastUpdate
         },
-        backupBuoy: marineData.backup.length > 0 ? {
+        backupBuoy: marineData.backup && marineData.backup.length > 0 ? {
           stationId: marineData.backup[0].stationId,
           waveHeight: marineData.backup[0].waveHeight,
           wavePeriod: marineData.backup[0].wavePeriod,
