@@ -468,6 +468,9 @@ async function generateDemoWeatherData(lat: number, lon: number) {
       hour12: true,
       timeZone: timezone 
     }),
+    // Include detailed buoy information from fetchMarineData
+    primaryBuoy: marineData.primaryBuoy || null,
+    backupBuoy: marineData.backupBuoy || null,
   };
 }
 
@@ -540,6 +543,9 @@ async function fetchWeatherData(lat: number, lon: number) {
       uvIndex: uvData?.value ? Math.round(uvData.value) : Math.round(Math.random() * 10),
       sunrise: formatTime(weatherData.sys.sunrise, timezone),
       sunset: formatTime(weatherData.sys.sunset, timezone),
+      // Include detailed buoy information from fetchMarineData
+      primaryBuoy: marineData.primaryBuoy || null,
+      backupBuoy: marineData.backupBuoy || null,
     };
   } catch (error) {
     console.error('Error fetching weather data:', error);
