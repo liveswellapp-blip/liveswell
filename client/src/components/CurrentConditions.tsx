@@ -329,33 +329,31 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                             <div>Period: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <div className="leading-tight space-y-0">
-                              {(conditions as any).primaryBuoy.stationName ? (
-                                <>
-                                  <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                                    {(conditions as any).primaryBuoy.stationName}
-                                  </div>
-                                  <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                                    Station {(conditions as any).primaryBuoy.stationId}
-                                  </div>
-                                </>
-                              ) : (
+                          <div className="leading-tight space-y-0 mb-2">
+                            {(conditions as any).primaryBuoy.stationName ? (
+                              <>
                                 <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                                  Buoy {(conditions as any).primaryBuoy.stationId}
+                                  {(conditions as any).primaryBuoy.stationName}
                                 </div>
-                              )}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/20"
-                              onClick={() => handleBuoyHistoryClick((conditions as any).primaryBuoy.stationId, (conditions as any).primaryBuoy.stationName)}
-                              data-testid="primary-buoy-history-button"
-                            >
-                              <Clock className="h-3 w-3" />
-                            </Button>
+                                <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                  Station {(conditions as any).primaryBuoy.stationId}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                                Buoy {(conditions as any).primaryBuoy.stationId}
+                              </div>
+                            )}
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-6 text-[10px] font-medium border-emerald-300 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                            onClick={() => handleBuoyHistoryClick((conditions as any).primaryBuoy.stationId, (conditions as any).primaryBuoy.stationName)}
+                            data-testid="primary-buoy-history-button"
+                          >
+                            Historical Data
+                          </Button>
                         </div>
                       )}
 
@@ -372,33 +370,31 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                             <div>Period: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.wavePeriod || 0}s</span></div>
                             <div>Direction: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <div className="leading-tight space-y-0">
-                              {(conditions as any).backupBuoy.stationName ? (
-                                <>
-                                  <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                                    {(conditions as any).backupBuoy.stationName}
-                                  </div>
-                                  <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                                    Station {(conditions as any).backupBuoy.stationId}
-                                  </div>
-                                </>
-                              ) : (
+                          <div className="leading-tight space-y-0 mb-2">
+                            {(conditions as any).backupBuoy.stationName ? (
+                              <>
                                 <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                                  Buoy {(conditions as any).backupBuoy.stationId}
+                                  {(conditions as any).backupBuoy.stationName}
                                 </div>
-                              )}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/20"
-                              onClick={() => handleBuoyHistoryClick((conditions as any).backupBuoy.stationId, (conditions as any).backupBuoy.stationName)}
-                              data-testid="backup-buoy-history-button"
-                            >
-                              <Clock className="h-3 w-3" />
-                            </Button>
+                                <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                                  Station {(conditions as any).backupBuoy.stationId}
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                                Buoy {(conditions as any).backupBuoy.stationId}
+                              </div>
+                            )}
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-6 text-[10px] font-medium border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            onClick={() => handleBuoyHistoryClick((conditions as any).backupBuoy.stationId, (conditions as any).backupBuoy.stationName)}
+                            data-testid="backup-buoy-history-button"
+                          >
+                            Historical Data
+                          </Button>
                         </div>
                       )}
                     </div>
