@@ -258,49 +258,91 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         
 
 
-        {/* Enhanced Current Conditions Grid for Desktop */}
+        {/* Enhanced Current Conditions Grid - New Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
-          {/* Swell, Wind & Water Temperature - Top Row */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-3 grid grid-cols-3 gap-2 md:gap-4">
-            {/* Wave Conditions */}
-            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center justify-between mb-2">
+          {/* Top Row: Expanded Swell Card + Wind */}
+          <div className="col-span-1 md:col-span-2 lg:col-span-4 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Expanded Wave Conditions Card */}
+            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border col-span-1 md:col-span-1 lg:col-span-1">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-sm md:text-base font-medium">Swell</span>
+                  <span className="text-sm md:text-base font-medium">Wave Conditions</span>
                 </div>
               </div>
-              <div className="flex items-end space-x-2">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
-                ) : (
-                  <>
-                    <span className="text-3xl md:text-3xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}</span>
-                    <span className="text-lg md:text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
-                  </>
-                )}
-              </div>
-              <div className="text-xs md:text-sm mt-2">
-                {isLoading ? (
-                  <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
-                ) : (
-                  <>
-                    <div className="mb-1">
-                      <span>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></span>
+
+              {isLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full bg-gray-300 dark:bg-gray-600 rounded" />
+                  <Skeleton className="h-16 w-full bg-gray-300 dark:bg-gray-600 rounded" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Primary Buoy Data */}
+                  {(conditions as any)?.primaryBuoy && (
+                    <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Primary Buoy {(conditions as any).primaryBuoy.stationId}</span>
+                        <span className="text-[10px] text-gray-500">Live Data</span>
+                      </div>
+                      <div className="flex items-end space-x-2 mb-2">
+                        <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">
+                          {(conditions as any).primaryBuoy.waveHeight ? parseFloat((conditions as any).primaryBuoy.waveHeight).toFixed(1) : "0.0"}
+                        </span>
+                        <span className="text-base mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>Period: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.wavePeriod || 0}s</span></div>
+                        <div>Dir: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
+                      </div>
                     </div>
-                    <div className="mb-2">
-                      <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></span>
+                  )}
+
+                  {/* Backup Buoy Data */}
+                  {(conditions as any)?.backupBuoy && (
+                    <div className="border border-blue-300/30 rounded-lg p-3 bg-blue-50/20 dark:bg-blue-900/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Backup Buoy {(conditions as any).backupBuoy.stationId}</span>
+                        <span className="text-[10px] text-gray-500">Live Data</span>
+                      </div>
+                      <div className="flex items-end space-x-2 mb-2">
+                        <span className="text-2xl font-bold text-blue-900 dark:text-blue-400">
+                          {(conditions as any).backupBuoy.waveHeight ? parseFloat((conditions as any).backupBuoy.waveHeight).toFixed(1) : "0.0"}
+                        </span>
+                        <span className="text-base mb-1 text-blue-900 dark:text-blue-400">ft</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>Period: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.wavePeriod || 0}s</span></div>
+                        <div>Dir: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
+                      </div>
                     </div>
-                    <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
-                      NOAA Buoy Network
+                  )}
+
+                  {/* Fallback single data display if no detailed buoy data */}
+                  {!(conditions as any)?.primaryBuoy && (
+                    <div>
+                      <div className="flex items-end space-x-2 mb-2">
+                        <span className="text-3xl font-bold text-blue-900 dark:text-emerald-400">
+                          {conditions?.waveHeight ? parseFloat(conditions.waveHeight).toFixed(1) : "0.0"}
+                        </span>
+                        <span className="text-lg mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                      </div>
+                      <div className="text-xs space-y-1">
+                        <div>Period: <span className="text-blue-900 dark:text-emerald-400">{conditions?.wavePeriod || 0}s</span></div>
+                        <div>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.waveDirection || "N/A"}</span></div>
+                      </div>
                     </div>
-                  </>
-                )}
-              </div>
+                  )}
+
+                  <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-2">
+                    NOAA Buoy Network
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Wind Conditions */}
-            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            {/* Wind Conditions - Moved to right side */}
+            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Wind className="h-5 w-5 text-blue-900 dark:text-white" />
@@ -347,12 +389,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
             </div>
 
-            {/* Water Temperature - moved next to wind */}
-            <div className="rounded-lg p-2 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+          </div>
+
+          {/* Water Temperature - Now in its own row below Swell */}
+          <div className="col-span-1 md:col-span-1 lg:col-span-2 xl:col-span-2">
+            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-sm md:text-base font-medium">Water</span>
+                  <span className="text-sm md:text-base font-medium">Water Temperature</span>
                 </div>
               </div>
               <div>

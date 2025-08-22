@@ -143,16 +143,45 @@ async function fetchMarineData(lat: number, lon: number) {
         waveHeight: marineData.primary.waveHeight,
         wavePeriod: marineData.primary.wavePeriod,
         waveDirection: marineData.primary.waveDirection,
-        waterTemp: marineData.primary.waterTemp
+        waterTemp: marineData.primary.waterTemp,
+        // Include detailed buoy information for UI
+        primaryBuoy: {
+          stationId: marineData.primary.stationId,
+          waveHeight: marineData.primary.waveHeight,
+          wavePeriod: marineData.primary.wavePeriod,
+          waveDirection: marineData.primary.waveDirection,
+          lastUpdate: marineData.primary.lastUpdate
+        },
+        backupBuoy: marineData.backup.length > 0 ? {
+          stationId: marineData.backup[0].stationId,
+          waveHeight: marineData.backup[0].waveHeight,
+          wavePeriod: marineData.backup[0].wavePeriod,
+          waveDirection: marineData.backup[0].waveDirection,
+          lastUpdate: marineData.backup[0].lastUpdate
+        } : null
       };
     }
     
     // No nearby stations found
-    return { waveHeight: null, wavePeriod: null, waveDirection: null, waterTemp: null };
+    return { 
+      waveHeight: null, 
+      wavePeriod: null, 
+      waveDirection: null, 
+      waterTemp: null,
+      primaryBuoy: null,
+      backupBuoy: null
+    };
     
   } catch (error) {
     console.warn('Error fetching comprehensive marine data:', error);
-    return { waveHeight: null, wavePeriod: null, waveDirection: null, waterTemp: null };
+    return { 
+      waveHeight: null, 
+      wavePeriod: null, 
+      waveDirection: null, 
+      waterTemp: null,
+      primaryBuoy: null,
+      backupBuoy: null
+    };
   }
 }
 
