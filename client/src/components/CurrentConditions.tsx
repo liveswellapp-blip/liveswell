@@ -278,43 +278,46 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Primary Buoy Data */}
-                  {(conditions as any)?.primaryBuoy && (
-                    <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Primary Buoy {(conditions as any).primaryBuoy.stationId}</span>
-                        <span className="text-[10px] text-gray-500">Live Data</span>
-                      </div>
-                      <div className="flex items-end space-x-2 mb-2">
-                        <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">
-                          {(conditions as any).primaryBuoy.waveHeight ? parseFloat((conditions as any).primaryBuoy.waveHeight).toFixed(1) : "0.0"}
-                        </span>
-                        <span className="text-base mb-1 text-blue-900 dark:text-emerald-400">ft</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>Period: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.wavePeriod || 0}s</span></div>
-                        <div>Dir: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Buoy Data - Side by Side Layout */}
+                  {((conditions as any)?.primaryBuoy || (conditions as any)?.backupBuoy) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Primary Buoy Data */}
+                      {(conditions as any)?.primaryBuoy && (
+                        <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10">
+                          <div className="mb-2">
+                            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">Primary Buoy {(conditions as any).primaryBuoy.stationId}</span>
+                          </div>
+                          <div className="flex items-end space-x-2 mb-2">
+                            <span className="text-2xl font-bold text-blue-900 dark:text-emerald-400">
+                              {(conditions as any).primaryBuoy.waveHeight ? parseFloat((conditions as any).primaryBuoy.waveHeight).toFixed(1) : "0.0"}
+                            </span>
+                            <span className="text-base mb-1 text-blue-900 dark:text-emerald-400">ft</span>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div>Period: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.wavePeriod || 0}s</span></div>
+                            <div>Direction: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Backup Buoy Data */}
-                  {(conditions as any)?.backupBuoy && (
-                    <div className="border border-blue-300/30 rounded-lg p-3 bg-blue-50/20 dark:bg-blue-900/10">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Backup Buoy {(conditions as any).backupBuoy.stationId}</span>
-                        <span className="text-[10px] text-gray-500">Live Data</span>
-                      </div>
-                      <div className="flex items-end space-x-2 mb-2">
-                        <span className="text-2xl font-bold text-blue-900 dark:text-blue-400">
-                          {(conditions as any).backupBuoy.waveHeight ? parseFloat((conditions as any).backupBuoy.waveHeight).toFixed(1) : "0.0"}
-                        </span>
-                        <span className="text-base mb-1 text-blue-900 dark:text-blue-400">ft</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>Period: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.wavePeriod || 0}s</span></div>
-                        <div>Dir: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
-                      </div>
+                      {/* Backup Buoy Data */}
+                      {(conditions as any)?.backupBuoy && (
+                        <div className="border border-blue-300/30 rounded-lg p-3 bg-blue-50/20 dark:bg-blue-900/10">
+                          <div className="mb-2">
+                            <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Backup Buoy {(conditions as any).backupBuoy.stationId}</span>
+                          </div>
+                          <div className="flex items-end space-x-2 mb-2">
+                            <span className="text-2xl font-bold text-blue-900 dark:text-blue-400">
+                              {(conditions as any).backupBuoy.waveHeight ? parseFloat((conditions as any).backupBuoy.waveHeight).toFixed(1) : "0.0"}
+                            </span>
+                            <span className="text-base mb-1 text-blue-900 dark:text-blue-400">ft</span>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div>Period: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.wavePeriod || 0}s</span></div>
+                            <div>Direction: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
