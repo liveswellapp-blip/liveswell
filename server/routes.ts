@@ -1865,8 +1865,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             const timeString = hourTime.toLocaleTimeString('en-US', { 
               hour: 'numeric', 
-              hour12: true,
-              timeZone: timezone
+              hour12: true
             });
             
             // Look up marine data for this specific hour
@@ -1897,9 +1896,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           targetDate.setDate(now.getDate() + dayOffset);
           targetDate.setHours(0, 0, 0, 0); // Start from midnight
           
+          // Always generate exactly 24 hours starting from hour 0 (12 AM)
           for (let hour = 0; hour < 24; hour++) {
             const hourTime = new Date(targetDate);
-            hourTime.setHours(hour);
+            hourTime.setHours(hour, 0, 0, 0); // Set exact hour with no minutes/seconds
             
             // Generate realistic wave patterns
             const baseWaveHeight = 2 + Math.sin(hour * 0.3) * 1.5 + Math.sin(dayOffset * 0.8) * 0.8;
@@ -1915,8 +1915,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             hourlyData.push({
               time: hourTime.toLocaleTimeString('en-US', { 
                 hour: 'numeric', 
-                hour12: true,
-                timeZone: timezone
+                hour12: true
               }),
               hour: hour,
               waveHeight: `${waveHeight.toFixed(1)} ft`,
