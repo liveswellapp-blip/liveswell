@@ -26,6 +26,7 @@ interface BuoyData {
   windDirection: string | null;
   waterTemp: number | null;
   stationId: string;
+  stationName?: string;
   lastUpdate: Date | null;
 }
 
@@ -270,7 +271,12 @@ export async function getComprehensiveMarineData(lat: number, lon: number): Prom
   }
 
   // Fetch data from all nearby stations in parallel
-  const dataPromises = nearbyStations.map(station => fetchBuoyData(station.id));
+  const dataPromises = nearbyStations.map(station => 
+    fetchBuoyData(station.id).then(data => ({
+      ...data,
+      stationName: station.name
+    }))
+  );
   const allData = await Promise.all(dataPromises);
 
   // Find the best primary data source (closest with valid data)

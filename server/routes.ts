@@ -147,6 +147,7 @@ async function fetchMarineData(lat: number, lon: number) {
     
     const primaryBuoyData = marineData.primary ? {
       stationId: marineData.primary.stationId,
+      stationName: marineData.primary.stationName || `Station ${marineData.primary.stationId}`,
       waveHeight: marineData.primary.waveHeight,
       wavePeriod: marineData.primary.wavePeriod,
       waveDirection: marineData.primary.waveDirection,
@@ -155,6 +156,7 @@ async function fetchMarineData(lat: number, lon: number) {
     
     const backupBuoyData = marineData.backup && marineData.backup.length > 0 ? {
       stationId: marineData.backup[0].stationId,
+      stationName: marineData.backup[0].stationName || `Station ${marineData.backup[0].stationId}`,
       waveHeight: marineData.backup[0].waveHeight,
       wavePeriod: marineData.backup[0].wavePeriod,
       waveDirection: marineData.backup[0].waveDirection,
