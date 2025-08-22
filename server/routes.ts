@@ -145,6 +145,27 @@ async function fetchMarineData(lat: number, lon: number) {
       backupStationIds: marineData.backup?.map(b => b.stationId) || []
     });
     
+    const primaryBuoyData = marineData.primary ? {
+      stationId: marineData.primary.stationId,
+      waveHeight: marineData.primary.waveHeight,
+      wavePeriod: marineData.primary.wavePeriod,
+      waveDirection: marineData.primary.waveDirection,
+      lastUpdate: marineData.primary.lastUpdate
+    } : null;
+    
+    const backupBuoyData = marineData.backup && marineData.backup.length > 0 ? {
+      stationId: marineData.backup[0].stationId,
+      waveHeight: marineData.backup[0].waveHeight,
+      wavePeriod: marineData.backup[0].wavePeriod,
+      waveDirection: marineData.backup[0].waveDirection,
+      lastUpdate: marineData.backup[0].lastUpdate
+    } : null;
+    
+    console.log('🚀 Returning buoy data:', {
+      primaryBuoy: primaryBuoyData,
+      backupBuoy: backupBuoyData
+    });
+    
     if (marineData.primary) {
       return {
         waveHeight: marineData.primary.waveHeight,
@@ -152,20 +173,8 @@ async function fetchMarineData(lat: number, lon: number) {
         waveDirection: marineData.primary.waveDirection,
         waterTemp: marineData.primary.waterTemp,
         // Include detailed buoy information for UI
-        primaryBuoy: {
-          stationId: marineData.primary.stationId,
-          waveHeight: marineData.primary.waveHeight,
-          wavePeriod: marineData.primary.wavePeriod,
-          waveDirection: marineData.primary.waveDirection,
-          lastUpdate: marineData.primary.lastUpdate
-        },
-        backupBuoy: marineData.backup && marineData.backup.length > 0 ? {
-          stationId: marineData.backup[0].stationId,
-          waveHeight: marineData.backup[0].waveHeight,
-          wavePeriod: marineData.backup[0].wavePeriod,
-          waveDirection: marineData.backup[0].waveDirection,
-          lastUpdate: marineData.backup[0].lastUpdate
-        } : null
+        primaryBuoy: primaryBuoyData,
+        backupBuoy: backupBuoyData
       };
     }
     
@@ -1520,7 +1529,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json(conditions);
+      // Add live buoy data to the response (not stored in DB)
+      try {
+        const marineData = await fetchMarineData(
+          parseFloat(location.latitude),
+          parseFloat(location.longitude)
+        );
+        
+        res.json({
+          ...conditions,
+          primaryBuoy: marineData.primaryBuoy,
+          backupBuoy: marineData.backupBuoy
+        });
+      } catch (buoyError) {
+        console.warn('Buoy data error:', buoyError);
+        res.json(conditions);
+      }
     } catch (error) {
       console.error('Conditions error:', error);
       res.status(500).json({ message: "Failed to get surf conditions" });
