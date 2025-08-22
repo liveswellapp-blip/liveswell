@@ -192,19 +192,10 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             <div className="space-y-3">
               {/* Header */}
               <div className="grid grid-cols-5 gap-3 p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg font-semibold text-xs">
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>Time</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Waves className="h-3.5 w-3.5" />
-                  <span>Waves</span>
-                </div>
+                <div>Time</div>
+                <div>Waves</div>
                 <div>Period</div>
-                <div className="flex items-center space-x-1">
-                  <Wind className="h-3.5 w-3.5" />
-                  <span>Wind</span>
-                </div>
+                <div>Wind</div>
                 <div>Direction</div>
               </div>
               
