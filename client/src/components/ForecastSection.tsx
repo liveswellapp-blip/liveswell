@@ -110,8 +110,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             forecast.map((day, index) => (
               <div 
                 key={index}
-                onClick={() => handleCardClick(index)}
-                className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] rounded-lg p-3 lg:p-4 hover:shadow-lg transition-all cursor-pointer bg-muted border border-border min-h-[140px] lg:min-h-[200px] flex flex-col snap-center hover:bg-muted/80 active:scale-[0.98]" 
+                className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] rounded-lg p-3 lg:p-4 hover:shadow-md transition-shadow bg-muted border border-border min-h-[140px] lg:min-h-[200px] flex flex-col snap-center" 
                 data-testid={`forecast-card-${index}`}
               >
                 {/* Main Content - Side by side layout */}
@@ -155,6 +154,17 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                       </div>
                     )}
                   </div>
+                </div>
+                
+                {/* Details Button */}
+                <div className="mt-2 pt-2 border-t border-border/30">
+                  <button 
+                    onClick={() => handleCardClick(index)}
+                    className="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 px-3 rounded transition-colors"
+                    data-testid={`details-button-${index}`}
+                  >
+                    View Hourly Details
+                  </button>
                 </div>
               </div>
             ))
