@@ -39,7 +39,8 @@ export interface ForecastDay {
   waveHeight: string;
   wavePeriod: string;
   conditions: string;
-  wind: string;
+  windSpeed: string;
+  windDirection: string;
   icon: string;
   tides: TidePoint[];
 }

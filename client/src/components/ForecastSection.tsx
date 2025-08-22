@@ -94,9 +94,14 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                         </div>
                       </div>
                       
-                      <div className="flex items-center space-x-2 lg:space-x-3 text-[14px] lg:text-[16px] text-blue-900 dark:text-white">
-                        <Wind className="h-[14px] w-[14px] lg:h-[16px] lg:w-[16px] text-blue-900 dark:text-white flex-shrink-0" />
-                        <span className="text-emerald-600 dark:text-emerald-400">{day.wind}</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2 lg:space-x-3 text-[14px] lg:text-[16px] text-blue-900 dark:text-white">
+                          <Wind className="h-[14px] w-[14px] lg:h-[16px] lg:w-[16px] text-blue-900 dark:text-white flex-shrink-0" />
+                          <span className="text-emerald-600 dark:text-emerald-400">{day.windSpeed}</span>
+                        </div>
+                        <div className="text-[12px] lg:text-[13px] text-gray-600 dark:text-gray-400">
+                          Direction: {day.windDirection}
+                        </div>
                       </div>
                     </div>
                   </div>

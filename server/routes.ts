@@ -1553,7 +1553,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               waveHeight: `${waveMin}-${waveMax} ft`,
               wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
               conditions,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(45 + i * 60)}`,
+              windSpeed: `${Math.round(windSpeed)} mph`,
+              windDirection: getWindDirection(45 + i * 60),
               icon: "🌊",
               tides
             });
@@ -1610,7 +1611,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               waveHeight: `${waveMin}-${waveMax} ft`,
               wavePeriod: `${8 + Math.floor(Math.sin(i * 0.7) * 3)} sec`,
               conditions,
-              wind: `${Math.round(windSpeed)} mph ${getWindDirection(45 + i * 60)}`,
+              windSpeed: `${Math.round(windSpeed)} mph`,
+              windDirection: getWindDirection(45 + i * 60),
               icon: "🌊",
               tides
             });
@@ -1760,7 +1762,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             waveHeight: `${waveMin}-${waveMax} ft`,
             wavePeriod: `${wavePeriod} sec`,
             conditions,
-            wind: `${Math.round(avgWindSpeed)} mph ${getWindDirection(avgWindDeg)}`,
+            windSpeed: `${Math.round(avgWindSpeed)} mph`,
+            windDirection: getWindDirection(avgWindDeg),
             icon: "🌊",
             tides
           });
