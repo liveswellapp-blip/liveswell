@@ -1564,15 +1564,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return;
         }
         
-        // Fetch both weather and marine wave data for accurate forecasting
-        const [forecastResponse, marineResponse] = await Promise.all([
-          fetch(
-            `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=imperial`
-          ),
-          fetch(
+        // Fetch weather data
+        const forecastResponse = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=imperial`
+        );
+        
+        // Try NOAA NWS wave forecast first, then fallback to Open-Meteo
+        let marineResponse;
+        let isNOAAData = false;
+        
+        try {
+          // Get NWS grid coordinates for this location
+          const pointResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+          if (pointResponse.ok) {
+            const pointData = await pointResponse.json();
+            const gridData = pointData.properties.forecastGridData;
+            
+            // Fetch NOAA wave forecast data
+            marineResponse = await fetch(gridData);
+            if (marineResponse.ok) {
+              isNOAAData = true;
+              console.log(`✅ Using NOAA wave forecast data for 5-day forecast: ${lat}, ${lon}`);
+            }
+          }
+        } catch (noaaError) {
+          console.log('NOAA 5-day forecast unavailable, trying Open-Meteo fallback');
+        }
+        
+        // Fallback to Open-Meteo if NOAA fails
+        if (!marineResponse || !marineResponse.ok) {
+          marineResponse = await fetch(
             `https://api.open-meteo.com/v1/marine?latitude=${location.latitude}&longitude=${location.longitude}&daily=wave_height_max,wave_direction_dominant,wave_period_max&timezone=auto&forecast_days=7`
-          )
-        ]);
+          );
+          isNOAAData = false;
+        }
         
         if (!forecastResponse.ok) {
           console.log(`Forecast API error: ${forecastResponse.status}, using demo data`);
@@ -1624,12 +1649,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const forecastData = await forecastResponse.json();
         
-        // Parse marine data if available
+        // Parse marine data based on data source
         let marineData = null;
+        let noaaWaveData = new Map(); // For storing daily NOAA wave data
+        
         if (marineResponse.ok) {
           try {
             marineData = await marineResponse.json();
-            console.log(`✅ Marine wave data available for ${location.name}:`, marineData.daily?.wave_height_max?.slice(0, 5));
+            
+            if (isNOAAData) {
+              console.log(`✅ NOAA wave data available for ${location.name}`);
+              
+              // Parse NOAA data into daily averages
+              const waveHeights = marineData.properties.waveHeight?.values || [];
+              const wavePeriods = marineData.properties.wavePeriod?.values || [];
+              const waveDirections = marineData.properties.waveDirection?.values || [];
+              
+              // Helper function to find NOAA value for a specific day
+              const getNOAADailyAverage = (dayOffset: number, noaaValues: any[]): number | null => {
+                const targetDate = new Date();
+                targetDate.setDate(targetDate.getDate() + dayOffset);
+                targetDate.setHours(12, 0, 0, 0); // Use noon as reference time
+                
+                let values = [];
+                for (const item of noaaValues) {
+                  const [startTime, duration] = item.validTime.split('/');
+                  const start = new Date(startTime);
+                  
+                  // Parse duration
+                  let hours = 0;
+                  if (duration.includes('PT') && duration.includes('H')) {
+                    const hourMatch = duration.match(/PT(\d+)H/);
+                    if (hourMatch) hours = parseInt(hourMatch[1]);
+                  }
+                  if (duration.includes('P') && duration.includes('DT')) {
+                    const dayMatch = duration.match(/P(\d+)DT/);
+                    const hourMatch = duration.match(/DT(\d+)H/);
+                    if (dayMatch) hours += parseInt(dayMatch[1]) * 24;
+                    if (hourMatch) hours += parseInt(hourMatch[1]);
+                  }
+                  
+                  const end = new Date(start.getTime() + (hours * 60 * 60 * 1000));
+                  
+                  // Check if this time range overlaps with target day
+                  const dayStart = new Date(targetDate);
+                  dayStart.setHours(0, 0, 0, 0);
+                  const dayEnd = new Date(targetDate);
+                  dayEnd.setHours(23, 59, 59, 999);
+                  
+                  if (start <= dayEnd && end >= dayStart) {
+                    values.push(item.value);
+                  }
+                }
+                
+                return values.length > 0 ? values.reduce((a, b) => a + b) / values.length : null;
+              };
+              
+              // Store daily averages for days 1-5
+              for (let day = 1; day <= 5; day++) {
+                const avgWaveHeight = getNOAADailyAverage(day, waveHeights);
+                const avgWavePeriod = getNOAADailyAverage(day, wavePeriods);
+                const avgWaveDirection = getNOAADailyAverage(day, waveDirections);
+                
+                if (avgWaveHeight !== null) {
+                  noaaWaveData.set(day, {
+                    waveHeight: avgWaveHeight * 3.28084, // Convert meters to feet
+                    wavePeriod: avgWavePeriod,
+                    waveDirection: avgWaveDirection
+                  });
+                }
+              }
+              
+            } else {
+              console.log(`✅ Open-Meteo marine wave data available for ${location.name}:`, marineData.daily?.wave_height_max?.slice(0, 5));
+            }
           } catch (error) {
             console.log('Marine API response parse error:', error);
           }
@@ -1672,9 +1765,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Use real marine wave data if available, otherwise fallback to wind-based calculation
           let waveHeight;
           let wavePeriod;
+          let useRealData = false;
           
-          if (marineData?.daily?.wave_height_max && marineData.daily.wave_height_max[dayOffset]) {
-            // Use marine data but apply realistic swell pattern (peak tomorrow, then decrease)
+          if (isNOAAData && noaaWaveData.has(dayOffset)) {
+            // Use real NOAA wave forecast data
+            const noaaData = noaaWaveData.get(dayOffset);
+            waveHeight = noaaData.waveHeight;
+            wavePeriod = Math.round(noaaData.wavePeriod || 10);
+            useRealData = true;
+            console.log(`Day ${dayOffset}: Real NOAA wave data ${waveHeight.toFixed(1)}ft, ${wavePeriod}sec`);
+          } else if (!isNOAAData && marineData?.daily?.wave_height_max && marineData.daily.wave_height_max[dayOffset]) {
+            // Use Open-Meteo marine data but apply realistic swell pattern (peak tomorrow, then decrease)
             const waveHeightMeters = marineData.daily.wave_height_max[dayOffset];
             let baseWaveHeight = waveHeightMeters * 3.28084; // meters to feet
             
@@ -1687,7 +1788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             else if (dayOffset === 5) swellMultiplier = 0.5; // Sunday - smallest
             
             waveHeight = Math.max(1.5, baseWaveHeight * swellMultiplier);
-            console.log(`Day ${dayOffset}: Marine data ${waveHeightMeters}m × ${swellMultiplier} = ${waveHeight.toFixed(1)}ft`);
+            console.log(`Day ${dayOffset}: Open-Meteo marine data ${waveHeightMeters}m × ${swellMultiplier} = ${waveHeight.toFixed(1)}ft`);
           } else {
             // Fallback to enhanced wind-based calculation
             console.log(`Day ${dayOffset}: Using wind-based calculation (no marine data)`);
@@ -1749,23 +1850,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const waveMin = Math.floor(waveHeight);
           const waveMax = Math.ceil(waveHeight + 0.5);
 
-          // Get wave period from marine data if available
-          if (marineData?.daily?.wave_period_max && marineData.daily.wave_period_max[dayOffset]) {
-            wavePeriod = Math.round(marineData.daily.wave_period_max[dayOffset]);
-          } else {
-            // Generate realistic wave period based on wave height
-            wavePeriod = Math.round(6 + (waveHeight * 0.8) + Math.sin(dayOffset * 0.5) * 2);
+          // Get wave period from marine data if not already set by NOAA data
+          if (!useRealData) {
+            if (!isNOAAData && marineData?.daily?.wave_period_max && marineData.daily.wave_period_max[dayOffset]) {
+              wavePeriod = Math.round(marineData.daily.wave_period_max[dayOffset]);
+            } else {
+              // Generate realistic wave period based on wave height
+              wavePeriod = Math.round(6 + (waveHeight * 0.8) + Math.sin(dayOffset * 0.5) * 2);
+            }
           }
 
           dailyForecasts.push({
             date: getDayName(dayOffset),
-            waveHeight: `~${waveMin}-${waveMax} ft`,
-            wavePeriod: `~${wavePeriod} sec`,
-            conditions: `Est. ${conditions}`,
+            waveHeight: useRealData ? `${waveMin}-${waveMax} ft` : `~${waveMin}-${waveMax} ft`,
+            wavePeriod: useRealData ? `${wavePeriod} sec` : `~${wavePeriod} sec`,
+            conditions: useRealData ? conditions : `Est. ${conditions}`,
             windSpeed: dayOffset > 2 ? "TBD" : `${Math.round(avgWindSpeed)} mph`,
             windDirection: dayOffset > 2 ? "TBD" : getWindDirection(avgWindDeg),
             icon: "🌊",
-            tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` }))
+            tides: tides.map(tide => ({ ...tide, time: useRealData && dayOffset <= 2 ? tide.time : `Est. ${tide.time}` }))
           });
           
           dayOffset++;
