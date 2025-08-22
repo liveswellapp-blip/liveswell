@@ -191,7 +191,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           ) : detailedData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-[10px] py-2 gap-2 pl-2.5">
+              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-[11px] py-2 gap-2 pl-2.5">
                 <div className="w-14">Time</div>
                 <div className="w-16">Waves</div>
                 <div className="w-16">Period</div>
@@ -203,7 +203,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {detailedData.hourlyData.map((hour, index) => (
                   <div key={index}>
-                    <div className="flex text-[10px] hover:bg-muted/30 transition-colors py-2 gap-2 pl-2.5">
+                    <div className="flex text-[11px] hover:bg-muted/30 transition-colors py-2 gap-2 pl-2.5">
                       <div className="w-14 font-medium text-gray-900 dark:text-gray-100">{hour.time}</div>
                       <div className="w-16 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {hour.waveHeight}
