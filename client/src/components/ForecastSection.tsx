@@ -192,11 +192,11 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             <div className="space-y-3">
               {/* Header */}
               <div className="grid grid-cols-5 gap-3 p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg font-semibold text-xs">
-                <div>Time</div>
-                <div>Waves</div>
-                <div>Period</div>
-                <div>Wind</div>
-                <div>Direction</div>
+                <div className="text-left">Time</div>
+                <div className="text-left">Waves</div>
+                <div className="text-left">Period</div>
+                <div className="text-left">Wind</div>
+                <div className="text-left">Direction</div>
               </div>
               
               {/* Hourly Data */}
