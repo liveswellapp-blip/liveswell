@@ -110,11 +110,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             </div>
           )}
           </div>
-          
-          {/* Scroll instruction for mobile */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 md:hidden text-center">
-            Swipe
-          </div>
         </div>
       </div>
     </div>
