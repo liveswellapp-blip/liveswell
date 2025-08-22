@@ -509,9 +509,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           )}
                         </div>
                       ))}
-                      <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-2">
-                        NOAA Tides & Currents
-                      </div>
                     </div>
                   )}
                   
@@ -569,7 +566,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     
                     {/* Combined Data Source Attribution */}
                     <div className="text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-2">
-                      OpenWeatherMap API
+                      NOAA Tides & Currents and OpenWeatherMap API
                     </div>
                   </div>
                 </>
