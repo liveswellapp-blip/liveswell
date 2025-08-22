@@ -78,7 +78,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   {/* Left side - Day name and wave/wind data */}
                   <div className="flex-[0.8] flex flex-col">
                     {/* Day name at top */}
-                    <div className="font-semibold mb-2 text-[16px] lg:text-[18px] text-blue-900 dark:text-white text-center">
+                    <div className="font-semibold mb-2 text-[16px] lg:text-[18px] text-blue-900 dark:text-white text-left">
                       {day.date}
                     </div>
                     
