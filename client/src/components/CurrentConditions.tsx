@@ -425,7 +425,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
-                  <span className="text-sm md:text-base font-medium">Water Temperature</span>
+                  <span className="text-sm md:text-base font-medium">Water</span>
                 </div>
               </div>
               <div>
