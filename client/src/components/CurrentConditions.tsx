@@ -286,7 +286,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10">
                           <div className="mb-2">
                             <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                              {(conditions as any).primaryBuoy.stationName || `Buoy ${(conditions as any).primaryBuoy.stationId}`}
+                              {(conditions as any).primaryBuoy.stationName 
+                                ? `${(conditions as any).primaryBuoy.stationName} - Station ${(conditions as any).primaryBuoy.stationId}`
+                                : `Buoy ${(conditions as any).primaryBuoy.stationId}`
+                              }
                             </span>
                           </div>
                           <div className="flex items-end space-x-2 mb-2">
@@ -307,7 +310,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <div className="border border-blue-300/30 rounded-lg p-3 bg-blue-50/20 dark:bg-blue-900/10">
                           <div className="mb-2">
                             <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                              {(conditions as any).backupBuoy.stationName || `Buoy ${(conditions as any).backupBuoy.stationId}`}
+                              {(conditions as any).backupBuoy.stationName 
+                                ? `${(conditions as any).backupBuoy.stationName} - Station ${(conditions as any).backupBuoy.stationId}`
+                                : `Buoy ${(conditions as any).backupBuoy.stationId}`
+                              }
                             </span>
                           </div>
                           <div className="flex items-end space-x-2 mb-2">
