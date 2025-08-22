@@ -46,7 +46,7 @@ export default function WindyWeatherMap({ location }: WindyWeatherMapProps) {
         <h3 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Wind Forecast</h3>
         {/* Interactive Windy Map */}
         <div className="relative">
-          <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+          <div className="aspect-[3/2] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
             <iframe
               src={generateWindyUrl()}
               width="100%"
