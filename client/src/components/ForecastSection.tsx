@@ -156,8 +156,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   </div>
                 </div>
                 
-                {/* Details Button - Only show for first 2 days (accurate wind data) */}
-                {index < 2 && (
+                {/* Details Button - Show for all days (NOAA wave data available) */}
+                {(
                   <div className="mt-2 pt-2 border-t border-border/30">
                     <button 
                       onClick={() => handleCardClick(index)}
