@@ -370,7 +370,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               )}
             </div>
 
-            {/* Wind Conditions - Moved to right side */}
+            {/* Wind and Water Temperature - Side by side on mobile */}
+          <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-3 md:gap-0">
+            {/* Wind Conditions */}
             <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
@@ -418,10 +420,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
             </div>
 
-          </div>
-
-          {/* Water Temperature - Now in its own row below Swell */}
-          <div className="col-span-1 md:col-span-1 lg:col-span-2 xl:col-span-2">
+            {/* Water Temperature */}
             <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
@@ -451,6 +450,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 )}
               </div>
             </div>
+          </div>
+
           </div>
 
           {/* Tide Information */}
