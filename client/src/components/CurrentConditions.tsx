@@ -804,10 +804,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         {dataPoint.time}
                       </div>
                       <div className="w-16 text-emerald-600 dark:text-emerald-400 font-semibold">
-                        {dataPoint.windSpeed}mph
+                        {dataPoint.windSpeed} mph
                       </div>
                       <div className="w-16 text-blue-600 dark:text-blue-400 font-medium">
-                        {dataPoint.windGusts}mph
+                        {dataPoint.windGusts} mph
                       </div>
                       <div className="flex-1 text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.windDirection}
