@@ -28,7 +28,7 @@ Preferred communication style: Simple, everyday language.
 ### Core Features
 - **Data Flow**: Location selection, external weather API integration (OpenWeatherMap), server-side data processing, real-time updates (client polling), client-side caching.
 - **API Endpoints**: Location search, current conditions, nearby locations, forecast data, nearby spots.
-- **Integration**: Windy.com interactive weather maps for comprehensive marine forecasting with multiple data overlays (waves, wind, wind gusts, sea surface temperature).
+- **Integration**: Real-time NOAA marine data and comprehensive surf forecasting with multiple data overlays.
 
 ## External Dependencies
 
@@ -39,7 +39,6 @@ Preferred communication style: Simple, everyday language.
 - **NOAA National Data Buoy Center (NDBC) API**: Real-time wave and marine data.
 - **Tides and Currents API**: Authentic tide information.
 - **Capacitor**: Hybrid mobile app development for iOS and Android.
-- **Windy.com**: Interactive weather map integration.
 
 ### Frontend Libraries
 - **React Query**: Server state management and caching.
