@@ -2340,12 +2340,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isNOAAData = false;
         }
         
-        // Fetch hourly wind data from existing endpoint (but get raw data)
+        // Fetch hourly wind data from wind-details endpoint (with interpolation)
         let windData = [];
         try {
-          const windResponse = await fetch(`http://localhost:5000/api/locations/${locationId}/wind-forecast`);
+          const windResponse = await fetch(`http://localhost:5000/api/locations/${locationId}/wind-details`);
           if (windResponse.ok) {
-            windData = await windResponse.json();
+            const windDetailsResponse = await windResponse.json();
+            windData = windDetailsResponse.forecastData || [];
           }
         } catch (windError) {
           console.log('Wind data fetch error, will generate fallback');
@@ -2448,8 +2449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Find matching wind data for this specific hour
             const windItem = windData.find((wind: any) => {
-              const windTime = new Date(wind.timestamp);
-              return windTime.getHours() === hour;
+              return wind.hour === hour;
             });
             
             hourlyData.push({
@@ -2482,8 +2482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             // Find matching wind data for this specific hour  
             const windItem = windData.find((wind: any) => {
-              const windTime = new Date(wind.timestamp);
-              return windTime.getHours() === hour;
+              return wind.hour === hour;
             });
             
             hourlyData.push({
