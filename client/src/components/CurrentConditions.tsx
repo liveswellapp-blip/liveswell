@@ -43,11 +43,24 @@ interface BuoyHistoricalData {
   dataSource: 'noaa' | 'simulated';
 }
 
+interface WindForecastData {
+  locationId: number;
+  forecastData: {
+    time: string;
+    hour: number;
+    windSpeed: number;
+    windDirection: string;
+    windGusts: number;
+  }[];
+  dataSource: 'openweather';
+}
+
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [isWindForecastExpanded, setIsWindForecastExpanded] = useState(false);
   const [selectedBuoyStation, setSelectedBuoyStation] = useState<string | null>(null);
   const [showBuoyHistoryModal, setShowBuoyHistoryModal] = useState(false);
+  const [showWindDetailsModal, setShowWindDetailsModal] = useState(false);
   
   const { data: conditions, isLoading, error } = useQuery<SurfConditions>({
     queryKey: [`/api/locations/${location.id}/conditions`],
@@ -61,6 +74,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
 
+  // Fetch 48-hour wind forecast data when modal is opened
+  const { data: windDetailsData, isLoading: windDetailsLoading } = useQuery<WindForecastData>({
+    queryKey: [`/api/locations/${location.id}/wind-details`],
+    enabled: showWindDetailsModal,
+    staleTime: 30 * 60 * 1000, // 30 minutes
+  });
+
   // Handler functions for buoy historical data modal
   const handleBuoyHistoryClick = (stationId: string, stationName: string) => {
     setSelectedBuoyStation(stationId);
@@ -70,6 +90,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   const handleCloseBuoyModal = () => {
     setShowBuoyHistoryModal(false);
     setSelectedBuoyStation(null);
+  };
+
+  // Handler functions for wind details modal
+  const handleWindDetailsClick = () => {
+    setShowWindDetailsModal(true);
+  };
+
+  const handleCloseWindModal = () => {
+    setShowWindDetailsModal(false);
   };
 
   // Fetch historical wave data when expanded
@@ -461,6 +490,18 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="mb-2 flex items-center space-x-2">
                       <span>Direction: <span className="text-blue-900 dark:text-emerald-400">{conditions?.windDirection || "N/A"}</span></span>
                     </div>
+                    
+                    {/* View Details Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-6 text-[10px] font-medium border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 mb-2"
+                      onClick={handleWindDetailsClick}
+                      data-testid="wind-details-button"
+                    >
+                      View Details
+                    </Button>
+                    
                     <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
                       OpenWeatherMap API
                     </div>
@@ -719,6 +760,69 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <p>No historical data available for this buoy</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Wind Details Modal */}
+      <Dialog open={showWindDetailsModal} onOpenChange={handleCloseWindModal}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-blue-900 dark:text-white pr-8">
+              48-Hour Wind Forecast - {location.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {windDetailsLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 p-3 bg-muted rounded-lg">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : windDetailsData ? (
+            <div className="space-y-0">
+              {/* Header */}
+              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-[11px] py-2 gap-2 pl-2.5">
+                <div className="w-16">Time</div>
+                <div className="w-16">Speed</div>
+                <div className="w-16">Gusts</div>
+                <div className="flex-1">Direction</div>
+              </div>
+              
+              {/* Hourly Data */}
+              <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
+                {windDetailsData.forecastData.map((dataPoint, index) => (
+                  <div key={index}>
+                    <div className="flex text-[11px] hover:bg-muted/30 transition-colors py-2 gap-2 pl-2.5">
+                      <div className="w-16 font-medium text-gray-900 dark:text-gray-100">
+                        {dataPoint.time}
+                      </div>
+                      <div className="w-16 text-emerald-600 dark:text-emerald-400 font-semibold">
+                        {dataPoint.windSpeed}mph
+                      </div>
+                      <div className="w-16 text-blue-600 dark:text-blue-400 font-medium">
+                        {dataPoint.windGusts}mph
+                      </div>
+                      <div className="flex-1 text-blue-600 dark:text-blue-400 font-medium">
+                        {dataPoint.windDirection}
+                      </div>
+                    </div>
+                    {index < windDetailsData.forecastData.length - 1 && (
+                      <div className="border-b border-emerald-200 dark:border-emerald-800 opacity-30"></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No wind forecast data available</p>
             </div>
           )}
         </DialogContent>

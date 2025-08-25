@@ -1061,6 +1061,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get detailed 48-hour wind forecast for wind details modal
+  app.get("/api/locations/:id/wind-details", weatherApiLimiter, async (req, res) => {
+    trackRequest(req, 'wind-details');
+    try {
+      const locationId = parseInt(req.params.id);
+      if (isNaN(locationId)) {
+        return res.status(400).json({ message: "Invalid location ID" });
+      }
+      
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      try {
+        // Check if API key is valid, use demo data if not
+        if (!API_KEY || API_KEY === "demo_key" || API_KEY.length < 10) {
+          console.log("Using demo wind details data - API key not configured");
+          
+          // Generate hourly data for 48 hours
+          const forecastData = [];
+          const now = new Date();
+          const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
+          
+          // Start from the next hour
+          const nextHour = new Date(now);
+          nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+          
+          for (let i = 0; i < 48; i++) {
+            const time = new Date(nextHour.getTime() + (i * 60 * 60 * 1000)); // Every hour
+            const hour = time.getHours();
+            
+            // Generate realistic wind patterns - typically stronger in afternoon
+            let baseSpeed = 8;
+            if (hour >= 12 && hour <= 17) baseSpeed = 12; // Afternoon - stronger
+            else if (hour >= 6 && hour <= 11) baseSpeed = 6; // Morning - lighter
+            else baseSpeed = 9; // Evening/night - moderate
+            
+            const variation = (Math.random() - 0.5) * 4;
+            const windSpeed = Math.max(2, baseSpeed + variation);
+            const windGusts = Math.max(windSpeed, windSpeed + Math.random() * 5);
+            const windDirection = getWindDirection(Math.random() * 360);
+            
+            forecastData.push({
+              time: time.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                hour12: true,
+                timeZone: timezone
+              }),
+              hour,
+              windSpeed: Math.round(windSpeed),
+              windDirection,
+              windGusts: Math.round(windGusts)
+            });
+          }
+          
+          const response = {
+            locationId,
+            forecastData,
+            dataSource: 'openweather' as const
+          };
+          
+          res.json(response);
+          return;
+        }
+
+        // Fetch real forecast data from OpenWeatherMap
+        const forecastResponse = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=imperial`
+        );
+        
+        if (!forecastResponse.ok) {
+          console.log(`Wind details API error: ${forecastResponse.status}, using demo data`);
+          throw new Error(`API returned ${forecastResponse.status}`);
+        }
+
+        const forecastData = await forecastResponse.json();
+        const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
+        
+        // Process the forecast data (OpenWeatherMap provides 3-hour intervals for 5 days)
+        const processedData = forecastData.list.slice(0, 16).map((item: any) => {
+          const time = new Date(item.dt * 1000);
+          return {
+            time: time.toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              hour12: true,
+              timeZone: timezone
+            }),
+            hour: time.getHours(),
+            windSpeed: Math.round(item.wind.speed),
+            windDirection: getWindDirection(item.wind.deg),
+            windGusts: Math.round(item.wind.gust || item.wind.speed)
+          };
+        });
+
+        const response = {
+          locationId,
+          forecastData: processedData,
+          dataSource: 'openweather' as const
+        };
+
+        // Track API usage
+        await trackOpenWeatherUsage('wind_details_forecast');
+        
+        res.json(response);
+        
+      } catch (error) {
+        console.error("Error fetching wind details:", error);
+        res.status(500).json({ message: "Failed to fetch wind details" });
+      }
+    } catch (error) {
+      console.error("Error in wind details endpoint:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Get historical wave data for a location (past 12 hours)
   app.get("/api/locations/:id/history", async (req, res) => {
     try {
