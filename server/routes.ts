@@ -1139,25 +1139,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const forecastData = await forecastResponse.json();
         const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
         
-        // Process the forecast data (OpenWeatherMap provides 3-hour intervals for 5 days)
-        const processedData = forecastData.list.slice(0, 16).map((item: any) => {
-          const time = new Date(item.dt * 1000);
-          return {
-            time: time.toLocaleTimeString('en-US', { 
+        // Process and interpolate the forecast data to create hourly intervals
+        // OpenWeatherMap provides 3-hour intervals, we'll interpolate to get hourly data
+        const threeHourData = forecastData.list.slice(0, 16); // 48 hours of 3-hour intervals
+        const processedData = [];
+        
+        for (let i = 0; i < threeHourData.length - 1; i++) {
+          const current = threeHourData[i];
+          const next = threeHourData[i + 1];
+          
+          // Add the current 3-hour data point
+          const currentTime = new Date(current.dt * 1000);
+          processedData.push({
+            time: currentTime.toLocaleTimeString('en-US', { 
               hour: 'numeric', 
               hour12: true,
               timeZone: timezone
             }),
-            hour: time.getHours(),
-            windSpeed: Math.round(item.wind.speed),
-            windDirection: getWindDirection(item.wind.deg),
-            windGusts: Math.round(item.wind.gust || item.wind.speed)
-          };
-        });
+            hour: currentTime.getHours(),
+            windSpeed: Math.round(current.wind.speed),
+            windDirection: getWindDirection(current.wind.deg),
+            windGusts: Math.round(current.wind.gust || current.wind.speed)
+          });
+          
+          // Interpolate 2 hourly points between current and next
+          for (let h = 1; h <= 2; h++) {
+            const interpolatedTime = new Date(current.dt * 1000 + (h * 60 * 60 * 1000));
+            const factor = h / 3; // 0.33, 0.66 for interpolation
+            
+            // Linear interpolation for wind speed
+            const interpolatedSpeed = current.wind.speed + (next.wind.speed - current.wind.speed) * factor;
+            const interpolatedGusts = (current.wind.gust || current.wind.speed) + 
+              ((next.wind.gust || next.wind.speed) - (current.wind.gust || current.wind.speed)) * factor;
+            
+            // Use current wind direction (wind direction changes are less predictable to interpolate)
+            const windDirection = getWindDirection(current.wind.deg);
+            
+            processedData.push({
+              time: interpolatedTime.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                hour12: true,
+                timeZone: timezone
+              }),
+              hour: interpolatedTime.getHours(),
+              windSpeed: Math.round(interpolatedSpeed),
+              windDirection,
+              windGusts: Math.round(interpolatedGusts)
+            });
+          }
+        }
+        
+        // Add the final data point
+        if (threeHourData.length > 0) {
+          const lastItem = threeHourData[threeHourData.length - 1];
+          const lastTime = new Date(lastItem.dt * 1000);
+          processedData.push({
+            time: lastTime.toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              hour12: true,
+              timeZone: timezone
+            }),
+            hour: lastTime.getHours(),
+            windSpeed: Math.round(lastItem.wind.speed),
+            windDirection: getWindDirection(lastItem.wind.deg),
+            windGusts: Math.round(lastItem.wind.gust || lastItem.wind.speed)
+          });
+        }
+        
+        // Ensure we have exactly 48 hours of data
+        const hourlyData = processedData.slice(0, 48);
 
         const response = {
           locationId,
-          forecastData: processedData,
+          forecastData: hourlyData,
           dataSource: 'openweather' as const
         };
 
