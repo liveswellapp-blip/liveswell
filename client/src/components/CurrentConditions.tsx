@@ -495,7 +495,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full h-6 text-[10px] font-medium border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 mb-2"
+                      className="w-full h-6 text-[10px] font-medium border-emerald-300 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 mb-2"
                       onClick={handleWindDetailsClick}
                       data-testid="wind-details-button"
                     >
