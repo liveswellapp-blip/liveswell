@@ -808,7 +808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/search", searchApiLimiter);
   
   // Track OpenWeather API usage for weather-related endpoints
-  app.use(["/api/conditions", "/api/locations/:id/conditions", "/api/weather"], trackOpenWeatherUsage);
+  app.use(["/api/conditions", "/api/locations/:id/conditions", "/api/weather", "/api/locations/:id/wind-details"], trackOpenWeatherUsage);
   
   // Search locations
   app.get("/api/locations/search", async (req, res) => {
@@ -1063,7 +1063,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get detailed 48-hour wind forecast for wind details modal
   app.get("/api/locations/:id/wind-details", weatherApiLimiter, async (req, res) => {
-    trackRequest(req, 'wind-details');
     try {
       const locationId = parseInt(req.params.id);
       if (isNaN(locationId)) {
@@ -1162,9 +1161,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dataSource: 'openweather' as const
         };
 
-        // Track API usage
-        await trackOpenWeatherUsage('wind_details_forecast');
-        
         res.json(response);
         
       } catch (error) {
