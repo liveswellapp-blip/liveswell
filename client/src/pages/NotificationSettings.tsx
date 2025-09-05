@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, MessageSquare, Clock, MapPin, Send } from "lucide-react";
+import { Bell, MessageSquare, Clock, MapPin, Send, ArrowLeft } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location, NotificationSettings as NotificationSettingsType } from "@/types/weather";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Link } from "wouter";
 
 // Generate time options for notification time
 const generateTimeOptions = () => {
@@ -159,10 +160,23 @@ export default function NotificationSettings() {
       
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-2 flex items-center">
-            <Bell className="mr-3 h-6 w-6 text-emerald-400" />
-            Notification Settings
-          </h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-2xl font-bold text-white flex items-center">
+              <Bell className="mr-3 h-6 w-6 text-emerald-400" />
+              Notification Settings
+            </h1>
+            <Link href="/profile">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-400 hover:bg-slate-800 hover:text-white"
+                data-testid="back-to-profile-button"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Profile
+              </Button>
+            </Link>
+          </div>
           <p className="text-gray-400">
             Configure your daily surf condition notifications
           </p>
