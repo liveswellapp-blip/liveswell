@@ -162,9 +162,8 @@ export default function NotificationSettings() {
         <div className="mb-6">
           <Link href="/profile">
             <Button
-              variant="outline"
-              size="sm"
-              className="mb-4 border-slate-600 text-slate-400 hover:bg-slate-800 hover:text-white"
+              variant="ghost"
+              className="mb-4 text-emerald-400"
               data-testid="back-to-profile-button"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
