@@ -141,9 +141,9 @@ export default function NotificationSettings() {
 
   if (settingsLoading) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-[hsl(155,50%,8%)]">
         <Header />
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="container mx-auto px-6 py-8 max-w-2xl">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-300 rounded w-1/3"></div>
             <div className="h-32 bg-gray-300 rounded"></div>
@@ -155,10 +155,10 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[hsl(155,50%,8%)]">
       <Header />
       
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-6 py-8 max-w-2xl">
         <div className="mb-6">
           <Link href="/profile">
             <Button
@@ -170,19 +170,19 @@ export default function NotificationSettings() {
               Back to Profile
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-white mb-2 flex items-center">
+          <h1 className="text-3xl font-bold text-emerald-400 mb-2 flex items-center">
             <Bell className="mr-3 h-6 w-6 text-emerald-400" />
             Notification Settings
           </h1>
-          <p className="text-gray-400">
+          <p className="text-slate-300">
             Configure your daily surf condition notifications
           </p>
         </div>
 
-        <Card className="bg-gray-900 border-gray-700">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <MessageSquare className="mr-2 h-5 w-5 text-emerald-400" />
+            <CardTitle className="flex items-center text-emerald-400">
+              <MessageSquare className="mr-2 h-5 w-5" />
               SMS Notifications
             </CardTitle>
           </CardHeader>
@@ -190,8 +190,8 @@ export default function NotificationSettings() {
             {/* SMS Enable Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <Label className="text-white text-base">Enable Daily SMS</Label>
-                <p className="text-sm text-gray-400">
+                <Label className="text-slate-300 text-base">Enable Daily SMS</Label>
+                <p className="text-sm text-slate-400">
                   Get daily surf condition updates via text message
                 </p>
               </div>
@@ -203,10 +203,10 @@ export default function NotificationSettings() {
             </div>
 
             {smsEnabled && (
-              <div className="space-y-4 pt-4 border-t border-gray-700">
+              <div className="space-y-4 pt-4 border-t border-slate-700">
                 {/* Phone Number Input */}
                 <div>
-                  <Label htmlFor="phone" className="text-white">
+                  <Label htmlFor="phone" className="text-slate-300">
                     Phone Number
                   </Label>
                   <Input
@@ -215,22 +215,22 @@ export default function NotificationSettings() {
                     placeholder="+1 (555) 123-4567"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="mt-2 bg-gray-800 border-gray-600 text-white"
+                    className="mt-2 bg-slate-800 border-slate-700 text-white"
                     data-testid="phone-input"
                   />
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     Enter your phone number with country code (e.g., +1 for US)
                   </p>
                 </div>
 
                 {/* Notification Time */}
                 <div>
-                  <Label className="text-white flex items-center mb-2">
+                  <Label className="text-slate-300 flex items-center mb-2">
                     <Clock className="mr-2 h-4 w-4 text-emerald-400" />
                     Notification Time
                   </Label>
                   <Select value={selectedTime} onValueChange={setSelectedTime}>
-                    <SelectTrigger className="bg-gray-800 border-gray-600 text-white" data-testid="time-select">
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="time-select">
                       <SelectValue placeholder="Select time" />
                     </SelectTrigger>
                     <SelectContent>
@@ -245,12 +245,12 @@ export default function NotificationSettings() {
 
                 {/* Timezone Selection */}
                 <div>
-                  <Label className="text-white flex items-center mb-2">
+                  <Label className="text-slate-300 flex items-center mb-2">
                     <Clock className="mr-2 h-4 w-4 text-emerald-400" />
                     Timezone
                   </Label>
                   <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
-                    <SelectTrigger className="bg-gray-800 border-gray-600 text-white" data-testid="timezone-select">
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="timezone-select">
                       <SelectValue placeholder="Select timezone" />
                     </SelectTrigger>
                     <SelectContent>
@@ -261,19 +261,19 @@ export default function NotificationSettings() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     Choose your local timezone for accurate notification delivery
                   </p>
                 </div>
 
                 {/* Location Selection */}
                 <div>
-                  <Label className="text-white flex items-center mb-2">
+                  <Label className="text-slate-300 flex items-center mb-2">
                     <MapPin className="mr-2 h-4 w-4 text-emerald-400" />
                     Location for Conditions
                   </Label>
                   <Select value={selectedLocation?.toString()} onValueChange={(value) => setSelectedLocation(parseInt(value))}>
-                    <SelectTrigger className="bg-gray-800 border-gray-600 text-white" data-testid="location-select">
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="location-select">
                       <SelectValue placeholder="Select your surf spot" />
                     </SelectTrigger>
                     <SelectContent>
@@ -284,17 +284,17 @@ export default function NotificationSettings() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     Choose the surf spot you want to receive conditions for
                   </p>
                 </div>
 
                 {/* Preview */}
-                <div className="bg-gray-800 p-4 rounded-lg">
-                  <p className="text-sm text-gray-300 mb-2">
+                <div className="bg-slate-800 p-4 rounded-lg">
+                  <p className="text-sm text-slate-300 mb-2">
                     <strong>SMS Preview:</strong>
                   </p>
-                  <div className="bg-gray-700 p-3 rounded text-sm text-white">
+                  <div className="bg-slate-700 p-3 rounded text-sm text-white">
                     🌊 <strong>Live Conditions</strong> (2:43 PM)<br/>
                     Waves: 3.2ft @ 14s ENE<br/>
                     Wind: 8mph WNW<br/>
