@@ -312,13 +312,15 @@ export default function NotificationSettings() {
                     <strong>SMS Preview:</strong>
                   </p>
                   <div className="bg-gray-700 p-3 rounded text-sm text-white">
-                    🌊 Jacksonville Beach Surf Report<br/>
+                    🌊 <strong>Live Conditions</strong> (2:43 PM)<br/>
                     Waves: 3.2ft @ 14s ENE<br/>
                     Wind: 8mph WNW<br/>
-                    Water: 84°F | Tide: 5.4ft Rising<br/>
-                    Sunrise: 7:04 AM | UV: 9 (High)<br/>
+                    Water: 84°F<br/>
                     <br/>
-                    🏄‍♂️ Good conditions for surfing!
+                    🌅 <strong>Tides & Sun</strong><br/>
+                    High: 6:45 AM (5.8ft), 7:12 PM (5.4ft)<br/>
+                    Low: 1:23 PM (0.9ft)<br/>
+                    Sunrise: 7:04 AM | Sunset: 6:31 PM
                   </div>
                 </div>
               </div>
