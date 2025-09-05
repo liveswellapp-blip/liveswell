@@ -14,6 +14,7 @@ import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin";
+import NotificationSettings from "@/pages/NotificationSettings";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -28,6 +29,7 @@ function Router() {
           <Route path="/conditions" component={Home} />
           <Route path="/favorites" component={Favorites} />
           <Route path="/settings" component={Settings} />
+          <Route path="/notifications" component={NotificationSettings} />
           <Route path="/profile" component={Profile} />
           <Route path="/monitoring" component={Monitoring} />
         </>

@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeSurfSpots } from "./storage";
+import { NotificationScheduler } from "./notification-scheduler";
 
 // Validate required environment variables for production
 function validateEnvironment() {
@@ -106,6 +107,9 @@ app.use((req, res, next) => {
     
     // Initialize surf spots database on startup
     await initializeSurfSpots();
+    
+    // Initialize notification scheduler
+    await NotificationScheduler.initialize();
     
     const server = await registerRoutes(app);
 

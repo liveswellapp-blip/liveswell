@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql } from "drizzle-orm";
 
@@ -75,6 +75,9 @@ export interface IStorage {
   getUserProfile(userId: string): Promise<UserProfile | undefined>;
   createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
   updateUserProfile(userId: string, profile: UpdateUserProfile): Promise<UserProfile | undefined>;
+  
+  getNotificationSettings(userId: string): Promise<NotificationSettings | undefined>;
+  upsertNotificationSettings(userId: string, settings: InsertNotificationSettings | UpdateNotificationSettings): Promise<NotificationSettings>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -539,6 +542,22 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.update(userProfiles)
       .set({ ...profile, updatedAt: new Date() })
       .where(eq(userProfiles.userId, userId))
+      .returning();
+    return result;
+  }
+
+  async getNotificationSettings(userId: string): Promise<NotificationSettings | undefined> {
+    const [result] = await db.select().from(notificationSettings).where(eq(notificationSettings.userId, userId));
+    return result;
+  }
+
+  async upsertNotificationSettings(userId: string, settings: InsertNotificationSettings | UpdateNotificationSettings): Promise<NotificationSettings> {
+    const [result] = await db.insert(notificationSettings)
+      .values({ ...settings, userId, updatedAt: new Date() } as InsertNotificationSettings)
+      .onConflictDoUpdate({
+        target: notificationSettings.userId,
+        set: { ...settings, updatedAt: new Date() },
+      })
       .returning();
     return result;
   }

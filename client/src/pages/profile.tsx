@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, Shield, LogOut } from "lucide-react";
+import { ArrowLeft, User, Shield, LogOut, Bell } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -64,12 +64,33 @@ export default function Profile() {
                 </CardContent>
               </Card>
 
-
-
-
-
-
-
+              {/* Notification Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-emerald-400">
+                    <Bell className="h-5 w-5 mr-2" />
+                    Notification Preferences
+                  </CardTitle>
+                  <CardDescription>
+                    Configure your SMS and email notification settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-slate-300 mb-4">
+                    Get daily surf condition reports sent directly to your phone or email
+                  </p>
+                  <Link href="/notifications">
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
+                      data-testid="button-notification-settings"
+                    >
+                      <Bell className="h-4 w-4 mr-2" />
+                      Manage Notifications
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
 
               {/* Account Actions */}
               <Card>

@@ -3135,6 +3135,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notification Settings routes
+  app.get("/api/notification-settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const settings = await storage.getNotificationSettings(userId);
+      
+      if (!settings) {
+        return res.json({
+          id: 0,
+          userId,
+          smsEnabled: false,
+          phoneNumber: null,
+          notificationTime: "08:00",
+          locationId: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching notification settings:", error);
+      res.status(500).json({ message: "Failed to fetch notification settings" });
+    }
+  });
+
+  app.post("/api/notification-settings", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { smsEnabled, phoneNumber, notificationTime, locationId } = req.body;
+
+      const settings = await storage.upsertNotificationSettings(userId, {
+        smsEnabled: Boolean(smsEnabled),
+        phoneNumber: smsEnabled ? phoneNumber : null,
+        notificationTime: notificationTime || "08:00",
+        locationId: smsEnabled ? locationId : null,
+      });
+
+      res.json(settings);
+    } catch (error) {
+      console.error("Error saving notification settings:", error);
+      res.status(500).json({ message: "Failed to save notification settings" });
+    }
+  });
+
+  // Test notification endpoint
+  app.post("/api/test-notification", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { NotificationScheduler } = await import('./notification-scheduler');
+      
+      const success = await NotificationScheduler.sendTestNotification(userId);
+      
+      if (success) {
+        res.json({ message: "Test notification sent successfully!" });
+      } else {
+        res.status(400).json({ message: "Failed to send test notification. Please check your settings." });
+      }
+    } catch (error) {
+      console.error("Error sending test notification:", error);
+      res.status(500).json({ message: "Failed to send test notification" });
+    }
+  });
+
   // Add error handling middleware (should be last)
   app.use(errorTrackingMiddleware);
   

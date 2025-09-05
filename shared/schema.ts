@@ -75,6 +75,17 @@ export const userProfiles = pgTable("user_profiles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const notificationSettings = pgTable("notification_settings", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  smsEnabled: boolean("sms_enabled").default(false),
+  phoneNumber: varchar("phone_number"),
+  notificationTime: text("notification_time").default("08:00"), // HH:MM format
+  locationId: integer("location_id").references(() => locations.id), // Location to get conditions for
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
@@ -113,6 +124,19 @@ export const updateUserProfileSchema = createInsertSchema(userProfiles).omit({
   updatedAt: true,
 }).partial();
 
+export const insertNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
+
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -125,3 +149,6 @@ export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
+export type NotificationSettings = typeof notificationSettings.$inferSelect;
+export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
+export type UpdateNotificationSettings = z.infer<typeof updateNotificationSettingsSchema>;

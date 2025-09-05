@@ -63,3 +63,14 @@ export interface FutureWindData {
   windDirection: string;
   timestamp: string;
 }
+
+export interface NotificationSettings {
+  id: number;
+  userId: string;
+  smsEnabled: boolean;
+  phoneNumber?: string;
+  notificationTime: string;
+  locationId?: number;
+  createdAt: string;
+  updatedAt: string;
+}
