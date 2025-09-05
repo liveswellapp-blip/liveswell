@@ -25,6 +25,7 @@ interface SurfConditionsData {
   uvIndex: number;
   sunrise: string;
   sunset: string;
+  dataTimestamp: string;
 }
 
 export class SMSService {
@@ -51,6 +52,13 @@ export class SMSService {
       }
 
       // Format conditions for SMS
+      const now = new Date();
+      const timestamp = now.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      
       const conditions = {
         waveHeight: `${weatherData.waveHeight}`,
         wavePeriod: weatherData.wavePeriod || 8,
@@ -69,6 +77,7 @@ export class SMSService {
         uvIndex: weatherData.uvIndex || 5,
         sunrise: weatherData.sunrise || '6:30 AM',
         sunset: weatherData.sunset || '6:30 PM',
+        dataTimestamp: timestamp,
       };
 
       // Format the SMS message
@@ -107,7 +116,7 @@ export class SMSService {
 
     return `🌊 ${location.name} Surf Report
 
-Live Conditions:
+Live Conditions (${conditions.dataTimestamp}):
 Waves: ${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}
 Wind: ${conditions.windSpeed}mph ${conditions.windDirection}
 Water: ${conditions.waterTemp}°F
