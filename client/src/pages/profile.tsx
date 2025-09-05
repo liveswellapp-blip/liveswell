@@ -76,9 +76,7 @@ export default function Profile() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-slate-300 mb-4">
-                    Get daily surf condition reports sent directly to your phone or email
-                  </p>
+                  
                   <Link href="/notifications">
                     <Button 
                       variant="outline" 
