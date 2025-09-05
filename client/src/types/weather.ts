@@ -70,6 +70,7 @@ export interface NotificationSettings {
   smsEnabled: boolean;
   phoneNumber?: string;
   notificationTime: string;
+  timezone: string;
   locationId?: number;
   createdAt: string;
   updatedAt: string;

@@ -83,10 +83,7 @@ export default function NotificationSettings() {
     }) => {
       return await apiRequest("/api/notification-settings", {
         method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        body: data,
       });
     },
     onSuccess: () => {
@@ -111,9 +108,6 @@ export default function NotificationSettings() {
     mutationFn: async () => {
       return await apiRequest("/api/test-notification", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
       });
     },
     onSuccess: () => {
