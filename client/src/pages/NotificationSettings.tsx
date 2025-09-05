@@ -32,10 +32,21 @@ const generateTimeOptions = () => {
 
 const timeOptions = generateTimeOptions();
 
+// Common US timezone options
+const timezoneOptions = [
+  { value: "America/New_York", label: "Eastern Time (ET)" },
+  { value: "America/Chicago", label: "Central Time (CT)" },
+  { value: "America/Denver", label: "Mountain Time (MT)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+  { value: "America/Anchorage", label: "Alaska Time (AKT)" },
+  { value: "Pacific/Honolulu", label: "Hawaii Time (HST)" },
+];
+
 export default function NotificationSettings() {
   const { toast } = useToast();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedTime, setSelectedTime] = useState("08:00");
+  const [selectedTimezone, setSelectedTimezone] = useState("America/New_York");
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
   const [smsEnabled, setSmsEnabled] = useState(false);
 
@@ -56,6 +67,7 @@ export default function NotificationSettings() {
       setSmsEnabled(settings.smsEnabled);
       setPhoneNumber(settings.phoneNumber || "");
       setSelectedTime(settings.notificationTime || "08:00");
+      setSelectedTimezone(settings.timezone || "America/New_York");
       setSelectedLocation(settings.locationId || null);
     }
   }, [settings]);
@@ -66,6 +78,7 @@ export default function NotificationSettings() {
       smsEnabled: boolean;
       phoneNumber?: string;
       notificationTime: string;
+      timezone: string;
       locationId?: number;
     }) => {
       return await apiRequest("/api/notification-settings", {
@@ -148,6 +161,7 @@ export default function NotificationSettings() {
       smsEnabled,
       phoneNumber: smsEnabled ? formattedPhone : undefined,
       notificationTime: selectedTime,
+      timezone: selectedTimezone,
       locationId: smsEnabled ? selectedLocation || undefined : undefined,
     });
   };
@@ -244,6 +258,29 @@ export default function NotificationSettings() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Timezone Selection */}
+                <div>
+                  <Label className="text-white flex items-center mb-2">
+                    <Clock className="mr-2 h-4 w-4 text-emerald-400" />
+                    Timezone
+                  </Label>
+                  <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+                    <SelectTrigger className="bg-gray-800 border-gray-600 text-white" data-testid="timezone-select">
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timezoneOptions.map((timezone) => (
+                        <SelectItem key={timezone.value} value={timezone.value}>
+                          {timezone.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Choose your local timezone for accurate notification delivery
+                  </p>
                 </div>
 
                 {/* Location Selection */}

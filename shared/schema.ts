@@ -81,6 +81,7 @@ export const notificationSettings = pgTable("notification_settings", {
   smsEnabled: boolean("sms_enabled").default(false),
   phoneNumber: varchar("phone_number"),
   notificationTime: text("notification_time").default("08:00"), // HH:MM format
+  timezone: text("timezone").default("America/New_York"), // IANA timezone identifier
   locationId: integer("location_id").references(() => locations.id), // Location to get conditions for
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

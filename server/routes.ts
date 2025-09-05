@@ -3148,6 +3148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           smsEnabled: false,
           phoneNumber: null,
           notificationTime: "08:00",
+          timezone: "America/New_York",
           locationId: null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -3164,12 +3165,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notification-settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { smsEnabled, phoneNumber, notificationTime, locationId } = req.body;
+      const { smsEnabled, phoneNumber, notificationTime, timezone, locationId } = req.body;
 
       const settings = await storage.upsertNotificationSettings(userId, {
         smsEnabled: Boolean(smsEnabled),
         phoneNumber: smsEnabled ? phoneNumber : null,
         notificationTime: notificationTime || "08:00",
+        timezone: timezone || "America/New_York",
         locationId: smsEnabled ? locationId : null,
       });
 
