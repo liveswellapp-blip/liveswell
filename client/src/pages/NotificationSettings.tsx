@@ -103,28 +103,6 @@ export default function NotificationSettings() {
     },
   });
 
-  // Test notification mutation
-  const testNotificationMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/test-notification", {
-        method: "POST",
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Test notification sent!",
-        description: "Check your phone for the test SMS message.",
-        variant: "default",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Test notification failed",
-        description: error.message || "Failed to send test notification",
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleSave = () => {
     if (smsEnabled && (!phoneNumber || !selectedLocation)) {
@@ -330,19 +308,6 @@ export default function NotificationSettings() {
               >
                 {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
               </Button>
-              
-              {smsEnabled && phoneNumber && selectedLocation && (
-                <Button
-                  onClick={() => testNotificationMutation.mutate()}
-                  disabled={testNotificationMutation.isPending}
-                  variant="outline"
-                  className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
-                  data-testid="test-notification-button"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {testNotificationMutation.isPending ? "Sending Test..." : "Send Test SMS"}
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
