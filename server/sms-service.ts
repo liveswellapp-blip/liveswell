@@ -20,8 +20,8 @@ interface SurfConditionsData {
   windSpeed: string;
   windDirection: string;
   waterTemp: string;
-  tideHeight: string;
-  tideStatus: string;
+  tideHigh: Array<{ time: string; height: string }>;
+  tideLow: Array<{ time: string; height: string }>;
   uvIndex: number;
   sunrise: string;
   sunset: string;
@@ -58,8 +58,14 @@ export class SMSService {
         windSpeed: `${weatherData.windSpeed}`,
         windDirection: weatherData.windDirection || 'W',
         waterTemp: `${Math.round(weatherData.waterTemp)}`,
-        tideHeight: `${weatherData.tideHeight?.toFixed(1) || '2.0'}`,
-        tideStatus: weatherData.tideStatus || 'rising',
+        tideHigh: weatherData.tideHigh || [
+          { time: '5:30 AM', height: '5.4' },
+          { time: '6:15 PM', height: '4.8' }
+        ],
+        tideLow: weatherData.tideLow || [
+          { time: '11:45 AM', height: '0.8' },
+          { time: '11:30 PM', height: '1.2' }
+        ],
         uvIndex: weatherData.uvIndex || 5,
         sunrise: weatherData.sunrise || '6:30 AM',
         sunset: weatherData.sunset || '6:30 PM',
@@ -93,12 +99,23 @@ export class SMSService {
       return 'Very High';
     };
 
+    // Format high tides
+    const highTides = conditions.tideHigh.map(tide => `${tide.time} (${tide.height}ft)`).join(', ');
+    
+    // Format low tides
+    const lowTides = conditions.tideLow.map(tide => `${tide.time} (${tide.height}ft)`).join(', ');
+
     return `🌊 ${location.name} Surf Report
 
+Live Conditions:
 Waves: ${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}
 Wind: ${conditions.windSpeed}mph ${conditions.windDirection}
-Water: ${conditions.waterTemp}°F | Tide: ${conditions.tideHeight}ft ${conditions.tideStatus}
-Sunrise: ${conditions.sunrise} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})`;
+Water: ${conditions.waterTemp}°F
+
+Tides & Sun:
+High: ${highTides}
+Low: ${lowTides}
+Sunrise: ${conditions.sunrise} | Sunset: ${conditions.sunset} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})`;
   }
 
   static async testSMSConfiguration(): Promise<boolean> {
