@@ -93,34 +93,12 @@ export class SMSService {
       return 'Very High';
     };
 
-    // Generate conditions assessment
-    const getConditionsAssessment = (waveHeight: string, windSpeed: string): string => {
-      const waveHeightNum = parseFloat(waveHeight);
-      const windSpeedNum = parseFloat(windSpeed);
-      
-      if (waveHeightNum >= 3 && windSpeedNum <= 10) {
-        return '🏄‍♂️ Good conditions for surfing!';
-      } else if (waveHeightNum >= 2 && windSpeedNum <= 15) {
-        return '🌊 Fair conditions - decent surf';
-      } else if (waveHeightNum < 2) {
-        return '😴 Small waves - better for beginners';
-      } else if (windSpeedNum > 15) {
-        return '💨 Windy conditions - may be choppy';
-      } else {
-        return '🌊 Check current conditions';
-      }
-    };
-
-    const assessment = getConditionsAssessment(conditions.waveHeight, conditions.windSpeed);
-
     return `🌊 ${location.name} Surf Report
 
 Waves: ${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}
 Wind: ${conditions.windSpeed}mph ${conditions.windDirection}
 Water: ${conditions.waterTemp}°F | Tide: ${conditions.tideHeight}ft ${conditions.tideStatus}
-Sunrise: ${conditions.sunrise} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})
-
-${assessment}`;
+Sunrise: ${conditions.sunrise} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})`;
   }
 
   static async testSMSConfiguration(): Promise<boolean> {
