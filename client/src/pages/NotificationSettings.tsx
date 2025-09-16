@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, MessageSquare, Clock, MapPin, Send, ArrowLeft } from "lucide-react";
+import { Bell, MessageSquare, Clock, MapPin, Send, ArrowLeft, Smartphone } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location, NotificationSettings as NotificationSettingsType } from "@/types/weather";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
+import { pushNotifications } from "@/lib/push-notifications";
 
 // Generate time options for notification time
 const generateTimeOptions = () => {
@@ -50,6 +51,10 @@ export default function NotificationSettings() {
   const [selectedTimezone, setSelectedTimezone] = useState("America/New_York");
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
   const [smsEnabled, setSmsEnabled] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>("default");
 
   // Fetch current notification settings
   const { data: settings, isLoading: settingsLoading } = useQuery<NotificationSettingsType>({
@@ -62,10 +67,32 @@ export default function NotificationSettings() {
     queryKey: ['/api/favorites'],
   });
 
+  // Initialize push notifications on mount
+  useEffect(() => {
+    const initializePush = async () => {
+      const supported = pushNotifications.isSupported();
+      setPushSupported(supported);
+      
+      if (supported) {
+        const permission = await pushNotifications.getPermissionStatus();
+        setPushPermission(permission);
+        
+        const initialized = await pushNotifications.initialize();
+        if (initialized) {
+          const subscribed = await pushNotifications.isSubscribed();
+          setPushSubscribed(subscribed);
+        }
+      }
+    };
+    
+    initializePush();
+  }, []);
+
   // Update form when settings are loaded
   useEffect(() => {
     if (settings) {
       setSmsEnabled(settings.smsEnabled);
+      setPushEnabled(settings.pushEnabled || false);
       setPhoneNumber(settings.phoneNumber || "");
       setSelectedTime(settings.notificationTime || "08:00");
       setSelectedTimezone(settings.timezone || "America/New_York");
@@ -77,6 +104,7 @@ export default function NotificationSettings() {
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: {
       smsEnabled: boolean;
+      pushEnabled: boolean;
       phoneNumber?: string;
       notificationTime: string;
       timezone: string;
@@ -128,6 +156,31 @@ export default function NotificationSettings() {
     },
   });
 
+  // Test push notification mutation
+  const testPushMutation = useMutation({
+    mutationFn: async () => {
+      const result = await pushNotifications.sendTestNotification();
+      if (!result) {
+        throw new Error("Failed to send test push notification");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test Push Sent!",
+        description: "You should see the test notification on this device.",
+      });
+    },
+    onError: (error) => {
+      console.error("Test push error:", error);
+      toast({
+        title: "Test Failed",
+        description: "Failed to send test push notification. Make sure notifications are enabled.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTestSms = () => {
     if (!smsEnabled || !phoneNumber || !selectedLocation) {
       toast({
@@ -141,11 +194,76 @@ export default function NotificationSettings() {
     testSmsMutation.mutate();
   };
 
+  const handlePushToggle = async (enabled: boolean) => {
+    if (enabled) {
+      if (!pushSupported) {
+        toast({
+          title: "Not Supported",
+          description: "Push notifications are not supported on this browser/device.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        const subscriptionData = await pushNotifications.subscribe();
+        if (subscriptionData) {
+          setPushEnabled(true);
+          setPushSubscribed(true);
+          setPushPermission("granted");
+        } else {
+          toast({
+            title: "Permission Denied",
+            description: "Please allow notifications in your browser to enable push notifications.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Push subscription error:", error);
+        toast({
+          title: "Subscription Failed",
+          description: "Failed to enable push notifications. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      try {
+        await pushNotifications.unsubscribe();
+        setPushEnabled(false);
+        setPushSubscribed(false);
+      } catch (error) {
+        console.error("Push unsubscription error:", error);
+      }
+    }
+  };
+
+  const handleTestPush = () => {
+    if (!pushEnabled || !pushSubscribed || !selectedLocation) {
+      toast({
+        title: "Complete Settings Required",
+        description: "Please enable push notifications, select a location, then save settings before testing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    testPushMutation.mutate();
+  };
+
   const handleSave = () => {
     if (smsEnabled && (!phoneNumber || !selectedLocation)) {
       toast({
         title: "Missing Information",
         description: "Phone number and location are required for SMS notifications.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if ((pushEnabled || smsEnabled) && !selectedLocation) {
+      toast({
+        title: "Missing Location",
+        description: "Location is required for notifications.",
         variant: "destructive",
       });
       return;
@@ -168,10 +286,11 @@ export default function NotificationSettings() {
 
     saveSettingsMutation.mutate({
       smsEnabled,
+      pushEnabled: pushEnabled && pushSubscribed,
       phoneNumber: smsEnabled ? formattedPhone : undefined,
       notificationTime: selectedTime,
       timezone: selectedTimezone,
-      locationId: smsEnabled ? selectedLocation || undefined : undefined,
+      locationId: (smsEnabled || pushEnabled) ? selectedLocation || undefined : undefined,
     });
   };
 
@@ -371,6 +490,166 @@ export default function NotificationSettings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Push Notifications Card */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center text-emerald-400">
+              <Smartphone className="mr-2 h-5 w-5" />
+              Push Notifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Push Enable Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-slate-300 text-base">Enable Browser Push Notifications</Label>
+                <p className="text-sm text-slate-400">
+                  {pushSupported 
+                    ? "Get instant surf condition updates directly in your browser"
+                    : "Push notifications are not supported on this browser"
+                  }
+                </p>
+                {pushPermission === "denied" && (
+                  <p className="text-xs text-red-400 mt-1">
+                    Notifications blocked. Please allow in browser settings.
+                  </p>
+                )}
+              </div>
+              <Switch
+                checked={pushEnabled}
+                onCheckedChange={handlePushToggle}
+                disabled={!pushSupported || pushPermission === "denied"}
+                data-testid="push-toggle"
+              />
+            </div>
+
+            {pushEnabled && (
+              <div className="space-y-4 pt-4 border-t border-slate-700">
+                {/* Push Status */}
+                <div className="bg-slate-800 p-4 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${pushSubscribed ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                    <span className="text-sm text-slate-300">
+                      {pushSubscribed ? "✅ Push notifications are active" : "⚠️ Push notifications pending setup"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">
+                    {pushSubscribed 
+                      ? "You'll receive push notifications when conditions change"
+                      : "Please save settings to activate push notifications"
+                    }
+                  </p>
+                </div>
+
+                {/* Notification Time (shared with SMS) */}
+                <div>
+                  <Label className="text-slate-300 flex items-center mb-2">
+                    <Clock className="mr-2 h-4 w-4 text-emerald-400" />
+                    Notification Time
+                  </Label>
+                  <Select value={selectedTime} onValueChange={setSelectedTime}>
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time.value} value={time.value}>
+                          {time.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Same time will be used for both SMS and push notifications
+                  </p>
+                </div>
+
+                {/* Location (shared with SMS) */}
+                <div>
+                  <Label className="text-slate-300 flex items-center mb-2">
+                    <MapPin className="mr-2 h-4 w-4 text-emerald-400" />
+                    Location for Conditions
+                  </Label>
+                  <Select value={selectedLocation?.toString()} onValueChange={(value) => setSelectedLocation(parseInt(value))}>
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                      <SelectValue placeholder="Select your surf spot" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations?.map((location) => (
+                        <SelectItem key={location.id} value={location.id.toString()}>
+                          {location.name}, {location.city}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Push Test Button */}
+                <div className="pt-2">
+                  <Button
+                    onClick={handleTestPush}
+                    disabled={testPushMutation.isPending || !pushSubscribed || !selectedLocation}
+                    variant="outline"
+                    className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
+                    data-testid="test-push-button"
+                  >
+                    <Bell className="mr-2 h-4 w-4" />
+                    {testPushMutation.isPending ? "Sending Test..." : "Send Test Push Notification"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Shared Settings Card */}
+        {(smsEnabled || pushEnabled) && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center text-emerald-400">
+                <Clock className="mr-2 h-5 w-5" />
+                Shared Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Timezone Selection */}
+              <div>
+                <Label className="text-slate-300 flex items-center mb-2">
+                  <Clock className="mr-2 h-4 w-4 text-emerald-400" />
+                  Timezone
+                </Label>
+                <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="timezone-select">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timezoneOptions.map((timezone) => (
+                      <SelectItem key={timezone.value} value={timezone.value}>
+                        {timezone.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-400 mt-1">
+                  Choose your local timezone for accurate notification delivery
+                </p>
+              </div>
+
+              {/* Save Settings Button */}
+              <div className="pt-4">
+                <Button
+                  onClick={handleSave}
+                  disabled={saveSettingsMutation.isPending}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  data-testid="save-settings-button"
+                >
+                  {saveSettingsMutation.isPending ? "Saving..." : "Save All Settings"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Footer />
