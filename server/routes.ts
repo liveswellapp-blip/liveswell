@@ -31,6 +31,8 @@ import {
   getCoastalSwellDirection,
   getRealisticWaterTemperature
 } from "./weather-service";
+import { pushNotificationService } from "./push-service";
+import { insertPushSubscriptionSchema } from "@shared/schema";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -2706,14 +2708,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notification-settings", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { smsEnabled, phoneNumber, notificationTime, timezone, locationId } = req.body;
+      const { smsEnabled, pushEnabled, phoneNumber, notificationTime, timezone, locationId } = req.body;
 
       const settings = await storage.upsertNotificationSettings(userId, {
         smsEnabled: Boolean(smsEnabled),
+        pushEnabled: Boolean(pushEnabled),
         phoneNumber: smsEnabled ? phoneNumber : null,
         notificationTime: notificationTime || "08:00",
         timezone: timezone || "America/New_York",
-        locationId: smsEnabled ? locationId : null,
+        locationId: (smsEnabled || pushEnabled) ? locationId : null,
       });
 
       res.json(settings);
@@ -2739,6 +2742,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending test notification:", error);
       res.status(500).json({ message: "Failed to send test notification" });
+    }
+  });
+
+  // Push notification endpoints
+  
+  // Get VAPID public key for client-side subscription
+  app.get("/api/push/vapid-key", generalApiLimiter, (req, res) => {
+    try {
+      const publicKey = pushNotificationService.getVapidPublicKey();
+      res.json({ publicKey });
+    } catch (error) {
+      console.error("Error getting VAPID key:", error);
+      res.status(500).json({ message: "Failed to get VAPID key" });
+    }
+  });
+
+  // Subscribe to push notifications
+  app.post("/api/push/subscribe", generalApiLimiter, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const subscriptionData = insertPushSubscriptionSchema.parse({
+        ...req.body,
+        userId  // Server-side userId override - prevent client tampering
+      });
+
+      const subscription = await storage.addPushSubscription(subscriptionData);
+      res.json(subscription);
+    } catch (error) {
+      console.error("Error subscribing to push notifications:", error);
+      res.status(500).json({ message: "Failed to subscribe to push notifications" });
+    }
+  });
+
+  // Unsubscribe from push notifications
+  app.delete("/api/push/unsubscribe", generalApiLimiter, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { endpoint } = req.body;
+
+      if (!endpoint) {
+        return res.status(400).json({ message: "Endpoint is required" });
+      }
+
+      const removed = await storage.removePushSubscription(userId, endpoint);
+      res.json({ success: removed });
+    } catch (error) {
+      console.error("Error unsubscribing from push notifications:", error);
+      res.status(500).json({ message: "Failed to unsubscribe from push notifications" });
+    }
+  });
+
+  // Get user's push subscriptions
+  app.get("/api/push/subscriptions", generalApiLimiter, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const subscriptions = await storage.getPushSubscriptions(userId);
+      res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching push subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch push subscriptions" });
+    }
+  });
+
+  // Send test push notification
+  app.post("/api/push/test", generalApiLimiter, isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const success = await pushNotificationService.sendTestNotificationToUser(userId);
+      
+      if (success) {
+        res.json({ success: true, message: "Test push notification sent" });
+      } else {
+        res.status(400).json({ success: false, message: "No active push subscriptions found or sending failed" });
+      }
+    } catch (error) {
+      console.error("Error sending test push notification:", error);
+      res.status(500).json({ message: "Failed to send test push notification" });
     }
   });
 
