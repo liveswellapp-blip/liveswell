@@ -1,6 +1,7 @@
 import twilio from 'twilio';
 import { storage } from './storage';
 import type { Location } from '@shared/schema';
+import { fetchWeatherData } from './weather-service';
 
 // Initialize Twilio client
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -44,7 +45,6 @@ export class SMSService {
       }
 
       // Fetch current conditions - use the weather service to get real-time data
-      const { fetchWeatherData } = await import('./routes');
       const weatherData = await fetchWeatherData(parseFloat(location.latitude), parseFloat(location.longitude));
       if (!weatherData) {
         console.error(`No conditions found for location ${locationId}`);

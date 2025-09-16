@@ -20,6 +20,17 @@ import {
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
 import { findNearbyStations } from "./noaa-integration";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { 
+  fetchWeatherData,
+  generateDemoWeatherData,
+  fetchMarineData,
+  fetchTideData,
+  getWindDirection,
+  formatTime,
+  getTimezone,
+  getCoastalSwellDirection,
+  getRealisticWaterTemperature
+} from "./weather-service";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -49,159 +60,8 @@ interface OpenWeatherUVResponse {
   value: number;
 }
 
-function getWindDirection(degrees: number): string {
-  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  const index = Math.round(degrees / 22.5) % 16;
-  return directions[index];
-}
 
-function formatTime(timestamp: number, timezone: string = 'UTC'): string {
-  return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZone: timezone
-  });
-}
 
-function getTimezone(lat: number, lon: number): string {
-  // US timezone mapping based on coordinates
-  
-  // Pacific Time Zone (West Coast)
-  if (lon >= -125 && lon <= -114 && lat >= 32 && lat <= 49) {
-    return 'America/Los_Angeles';
-  }
-  
-  // Mountain Time Zone
-  if (lon >= -115 && lon <= -102 && lat >= 31 && lat <= 49) {
-    return 'America/Denver';
-  }
-  
-  // Central Time Zone
-  if (lon >= -104 && lon <= -87 && lat >= 25 && lat <= 49) {
-    return 'America/Chicago';
-  }
-  
-  // Eastern Time Zone (East Coast and Gulf)
-  if (lon >= -88 && lon <= -66 && lat >= 25 && lat <= 47) {
-    return 'America/New_York';
-  }
-  
-  // Default to UTC for international locations
-  return 'UTC';
-}
-
-function getCoastalSwellDirection(lat: number, lon: number): string {
-  // Determine predominant swell direction based on coastal geography
-  
-  // East Coast of United States (Atlantic Ocean)
-  if (lon > -85 && lon < -65 && lat > 25 && lat < 45) {
-    // Atlantic coast from Florida to Maine
-    // Primary swells come from ESE to SE (hurricanes and low pressure systems)
-    const directions = ['ESE', 'SE', 'ESE', 'E'];
-    return directions[Math.floor(Math.random() * directions.length)];
-  }
-  
-  // West Coast of United States (Pacific Ocean)
-  if (lon > -125 && lon < -115 && lat > 32 && lat < 48) {
-    // Pacific coast from Southern California to Washington
-    // Primary swells come from W to NW (Pacific storms and swells)
-    const directions = ['W', 'WNW', 'NW', 'WSW'];
-    return directions[Math.floor(Math.random() * directions.length)];
-  }
-  
-  // Gulf of Mexico
-  if (lon > -98 && lon < -80 && lat > 25 && lat < 31) {
-    // Gulf coast
-    // Swells typically from S to SE
-    const directions = ['S', 'SE', 'SSE', 'SSW'];
-    return directions[Math.floor(Math.random() * directions.length)];
-  }
-  
-  // Hawaii (Pacific Ocean)
-  if (lon > -162 && lon < -154 && lat > 18 && lat < 23) {
-    // Hawaiian Islands
-    // North Pacific swells predominant
-    const directions = ['N', 'NW', 'NNW', 'W'];
-    return directions[Math.floor(Math.random() * directions.length)];
-  }
-  
-  // Default for other locations - use wind-based calculation as fallback
-  return 'ESE';
-}
-
-async function fetchMarineData(lat: number, lon: number) {
-  // Import the comprehensive NOAA integration
-  const { getComprehensiveMarineData, getRegionalConfig } = await import('./noaa-integration');
-  
-  try {
-    const regionalConfig = getRegionalConfig(lat, lon);
-    const marineData = await getComprehensiveMarineData(lat, lon);
-    
-    console.log('🔍 Marine data structure:', {
-      hasPrimary: !!marineData.primary,
-      backupCount: marineData.backup?.length || 0,
-      primaryStationId: marineData.primary?.stationId,
-      backupStationIds: marineData.backup?.map(b => b.stationId) || []
-    });
-    
-    const primaryBuoyData = marineData.primary ? {
-      stationId: marineData.primary.stationId,
-      stationName: marineData.primary.stationName || `Station ${marineData.primary.stationId}`,
-      waveHeight: marineData.primary.waveHeight,
-      wavePeriod: marineData.primary.wavePeriod,
-      waveDirection: marineData.primary.waveDirection,
-      lastUpdate: marineData.primary.lastUpdate
-    } : null;
-    
-    const backupBuoyData = marineData.backup && marineData.backup.length > 0 ? {
-      stationId: marineData.backup[0].stationId,
-      stationName: marineData.backup[0].stationName || `Station ${marineData.backup[0].stationId}`,
-      waveHeight: marineData.backup[0].waveHeight,
-      wavePeriod: marineData.backup[0].wavePeriod,
-      waveDirection: marineData.backup[0].waveDirection,
-      lastUpdate: marineData.backup[0].lastUpdate
-    } : null;
-    
-    console.log('🚀 Returning buoy data:', {
-      primaryBuoy: primaryBuoyData,
-      backupBuoy: backupBuoyData
-    });
-    
-    if (marineData.primary) {
-      return {
-        waveHeight: marineData.primary.waveHeight,
-        wavePeriod: marineData.primary.wavePeriod,
-        waveDirection: marineData.primary.waveDirection,
-        waterTemp: marineData.primary.waterTemp,
-        // Include detailed buoy information for UI
-        primaryBuoy: primaryBuoyData,
-        backupBuoy: backupBuoyData
-      };
-    }
-    
-    // No nearby stations found
-    return { 
-      waveHeight: null, 
-      wavePeriod: null, 
-      waveDirection: null, 
-      waterTemp: null,
-      primaryBuoy: null,
-      backupBuoy: null
-    };
-    
-  } catch (error) {
-    console.warn('Error fetching comprehensive marine data:', error);
-    return { 
-      waveHeight: null, 
-      wavePeriod: null, 
-      waveDirection: null, 
-      waterTemp: null,
-      primaryBuoy: null,
-      backupBuoy: null
-    };
-  }
-}
 
 async function fetchTideData(lat: number, lon: number) {
   // Map of coastal areas to their nearest NOAA tide stations
