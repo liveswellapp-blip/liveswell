@@ -141,14 +141,14 @@ export async function fetchMarineData(lat: number, lon: number) {
     const regionalConfig = getRegionalConfig(lat, lon);
     const marineData = await getComprehensiveMarineData(lat, lon);
     
-    if (marineData.primaryBuoy) {
+    if (marineData.primary) {
       return {
-        waveHeight: marineData.primaryBuoy.waveHeight || 2.0,
-        wavePeriod: marineData.primaryBuoy.wavePeriod || 8,
-        waveDirection: marineData.primaryBuoy.waveDirection || getCoastalSwellDirection(lat, lon),
-        waterTemp: marineData.primaryBuoy.waterTemp || getRealisticWaterTemperature(lat, lon),
-        primaryBuoy: marineData.primaryBuoy,
-        backupBuoy: marineData.backupBuoy || null
+        waveHeight: marineData.primary.waveHeight || 2.0,
+        wavePeriod: marineData.primary.wavePeriod || 8,
+        waveDirection: marineData.primary.waveDirection || getCoastalSwellDirection(lat, lon),
+        waterTemp: marineData.primary.waterTemp || getRealisticWaterTemperature(lat, lon),
+        primaryBuoy: marineData.primary,
+        backupBuoy: marineData.backup && marineData.backup.length > 0 ? marineData.backup[0] : null
       };
     }
     
