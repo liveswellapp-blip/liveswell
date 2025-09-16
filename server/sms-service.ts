@@ -96,6 +96,22 @@ export class SMSService {
       console.log(`From: ${result.from}, To: ${result.to}`);
       console.log(`Error code: ${result.errorCode || 'none'}`);
       console.log(`Error message: ${result.errorMessage || 'none'}`);
+      
+      // Check delivery status after a few seconds
+      setTimeout(async () => {
+        try {
+          const message = await client.messages(result.sid).fetch();
+          console.log(`📱 Delivery status update for ${result.sid}:`);
+          console.log(`Final status: ${message.status}`);
+          console.log(`Price: ${message.price} ${message.priceUnit}`);
+          if (message.errorCode) {
+            console.log(`Delivery error: ${message.errorCode} - ${message.errorMessage}`);
+          }
+        } catch (error) {
+          console.log(`Could not fetch delivery status: ${error}`);
+        }
+      }, 10000); // Check after 10 seconds
+      
       return true;
 
     } catch (error) {
