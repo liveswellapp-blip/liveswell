@@ -44,8 +44,8 @@ export class SMSService {
       }
 
       // Fetch current conditions - use the weather service to get real-time data
-      const { WeatherService } = await import('./weather');
-      const weatherData = await WeatherService.getCurrentConditions(location.lat, location.lng);
+      const { fetchWeatherData } = await import('./routes');
+      const weatherData = await fetchWeatherData(parseFloat(location.latitude), parseFloat(location.longitude));
       if (!weatherData) {
         console.error(`No conditions found for location ${locationId}`);
         return false;
