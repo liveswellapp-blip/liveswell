@@ -104,6 +104,42 @@ export default function NotificationSettings() {
     },
   });
 
+  // Test SMS mutation
+  const testSmsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("/api/test-notification", {
+        method: "POST",
+        body: {},
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Test SMS Sent!",
+        description: "Check your phone for the test surf conditions message.",
+      });
+    },
+    onError: (error) => {
+      console.error("Test SMS error:", error);
+      toast({
+        title: "Test Failed",
+        description: "Failed to send test SMS. Make sure your settings are saved and complete.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleTestSms = () => {
+    if (!smsEnabled || !phoneNumber || !selectedLocation) {
+      toast({
+        title: "Complete Settings Required",
+        description: "Please enable SMS, add phone number and location, then save settings before testing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    testSmsMutation.mutate();
+  };
 
   const handleSave = () => {
     if (smsEnabled && (!phoneNumber || !selectedLocation)) {
@@ -319,6 +355,19 @@ export default function NotificationSettings() {
               >
                 {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
               </Button>
+              
+              {smsEnabled && (
+                <Button
+                  onClick={handleTestSms}
+                  disabled={testSmsMutation.isPending || !phoneNumber || !selectedLocation || saveSettingsMutation.isPending}
+                  variant="outline"
+                  className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
+                  data-testid="test-sms-button"
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {testSmsMutation.isPending ? "Sending Test..." : "Send Test SMS"}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
