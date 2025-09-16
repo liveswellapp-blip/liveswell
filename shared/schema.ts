@@ -80,9 +80,21 @@ export const notificationSettings = pgTable("notification_settings", {
   userId: varchar("user_id").references(() => users.id).notNull().unique(),
   smsEnabled: boolean("sms_enabled").default(false),
   phoneNumber: varchar("phone_number"),
+  pushEnabled: boolean("push_enabled").default(false),
   notificationTime: text("notification_time").default("08:00"), // HH:MM format
   timezone: text("timezone").default("America/New_York"), // IANA timezone identifier
   locationId: integer("location_id").references(() => locations.id), // Location to get conditions for
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dhKey: text("p256dh_key").notNull(),
+  authKey: text("auth_key").notNull(),
+  userAgent: text("user_agent"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -138,6 +150,12 @@ export const updateNotificationSettingsSchema = createInsertSchema(notificationS
   updatedAt: true,
 }).partial();
 
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type UpsertUser = z.infer<typeof upsertUserSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -153,3 +171,5 @@ export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
 export type NotificationSettings = typeof notificationSettings.$inferSelect;
 export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
 export type UpdateNotificationSettings = z.infer<typeof updateNotificationSettingsSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;

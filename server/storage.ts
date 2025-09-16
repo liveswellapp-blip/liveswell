@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql } from "drizzle-orm";
 
@@ -78,6 +78,11 @@ export interface IStorage {
   
   getNotificationSettings(userId: string): Promise<NotificationSettings | undefined>;
   upsertNotificationSettings(userId: string, settings: InsertNotificationSettings | UpdateNotificationSettings): Promise<NotificationSettings>;
+  
+  getPushSubscriptions(userId: string): Promise<PushSubscription[]>;
+  addPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
+  removePushSubscription(userId: string, endpoint: string): Promise<boolean>;
+  removeAllUserPushSubscriptions(userId: string): Promise<boolean>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -560,6 +565,41 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return result;
+  }
+
+  async getPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    const results = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+    return results;
+  }
+
+  async addPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
+    // First, remove any existing subscription with the same endpoint for this user
+    await db.delete(pushSubscriptions)
+      .where(and(
+        eq(pushSubscriptions.userId, subscription.userId),
+        eq(pushSubscriptions.endpoint, subscription.endpoint)
+      ));
+
+    // Then insert the new subscription
+    const [result] = await db.insert(pushSubscriptions)
+      .values({ ...subscription, updatedAt: new Date() })
+      .returning();
+    return result;
+  }
+
+  async removePushSubscription(userId: string, endpoint: string): Promise<boolean> {
+    const result = await db.delete(pushSubscriptions)
+      .where(and(
+        eq(pushSubscriptions.userId, userId),
+        eq(pushSubscriptions.endpoint, endpoint)
+      ));
+    return result.rowCount > 0;
+  }
+
+  async removeAllUserPushSubscriptions(userId: string): Promise<boolean> {
+    const result = await db.delete(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    return result.rowCount > 0;
   }
 }
 
