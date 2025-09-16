@@ -91,6 +91,11 @@ export class SMSService {
       });
 
       console.log(`SMS sent successfully: ${result.sid} to ${phoneNumber}`);
+      console.log(`Message status: ${result.status}`);
+      console.log(`Message direction: ${result.direction}`);
+      console.log(`From: ${result.from}, To: ${result.to}`);
+      console.log(`Error code: ${result.errorCode || 'none'}`);
+      console.log(`Error message: ${result.errorMessage || 'none'}`);
       return true;
 
     } catch (error) {
