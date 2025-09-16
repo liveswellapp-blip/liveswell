@@ -1,7 +1,8 @@
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import { storage } from './storage';
 import { SMSService } from './sms-service';
-import { eq, and, ne } from 'drizzle-orm';
+import { pushNotificationService } from './push-service';
+import { eq, and, ne, or } from 'drizzle-orm';
 import { notificationSettings, locations } from '@shared/schema';
 
 export class NotificationScheduler {
@@ -36,22 +37,47 @@ export class NotificationScheduler {
       const now = new Date();
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-      // Get all users with SMS notifications enabled for this time
+      // Get all users with notifications (SMS or push) enabled for this time
       const usersToNotify = await this.getUsersForNotification(currentTime);
 
       for (const user of usersToNotify) {
-        console.log(`📱 Sending notification to ${user.phoneNumber} for ${user.locationName}`);
+        const promises: Promise<boolean>[] = [];
         
-        const success = await SMSService.sendDailyConditions(
-          user.userId,
-          user.phoneNumber,
-          user.locationId
-        );
+        // Send SMS notification if enabled and configured
+        if (user.smsEnabled && user.phoneNumber) {
+          console.log(`📱 Sending SMS notification to ${user.phoneNumber} for ${user.locationName}`);
+          promises.push(
+            SMSService.sendDailyConditions(user.userId, user.phoneNumber, user.locationId)
+              .then(success => {
+                if (success) {
+                  console.log(`✅ SMS sent to ${user.phoneNumber}`);
+                } else {
+                  console.error(`❌ Failed to send SMS to ${user.phoneNumber}`);
+                }
+                return success;
+              })
+          );
+        }
 
-        if (success) {
-          console.log(`✅ SMS sent to ${user.phoneNumber}`);
-        } else {
-          console.error(`❌ Failed to send SMS to ${user.phoneNumber}`);
+        // Send push notification if enabled
+        if (user.pushEnabled) {
+          console.log(`🔔 Sending push notification to user ${user.userId} for ${user.locationName}`);
+          promises.push(
+            this.sendPushConditions(user.userId, user.locationId, user.locationName)
+              .then(success => {
+                if (success) {
+                  console.log(`✅ Push notification sent to user ${user.userId}`);
+                } else {
+                  console.error(`❌ Failed to send push notification to user ${user.userId}`);
+                }
+                return success;
+              })
+          );
+        }
+
+        // Wait for all notifications to complete
+        if (promises.length > 0) {
+          await Promise.all(promises);
         }
       }
 
@@ -62,7 +88,9 @@ export class NotificationScheduler {
 
   private static async getUsersForNotification(currentTime: string): Promise<Array<{
     userId: string;
-    phoneNumber: string;
+    smsEnabled: boolean;
+    pushEnabled: boolean;
+    phoneNumber: string | null;
     locationId: number;
     locationName: string;
   }>> {
@@ -73,6 +101,8 @@ export class NotificationScheduler {
       const result = await db
         .select({
           userId: notificationSettings.userId,
+          smsEnabled: notificationSettings.smsEnabled,
+          pushEnabled: notificationSettings.pushEnabled,
           phoneNumber: notificationSettings.phoneNumber,
           locationId: notificationSettings.locationId,
           locationName: locations.name,
@@ -81,16 +111,19 @@ export class NotificationScheduler {
         .innerJoin(locations, eq(locations.id, notificationSettings.locationId))
         .where(
           and(
-            eq(notificationSettings.smsEnabled, true),
-            eq(notificationSettings.notificationTime, currentTime),
-            ne(notificationSettings.phoneNumber, null),
-            ne(notificationSettings.locationId, null)
+            or(
+              eq(notificationSettings.smsEnabled, true),
+              eq(notificationSettings.pushEnabled, true)
+            ),
+            eq(notificationSettings.notificationTime, currentTime)
           )
         );
 
-      return result.filter(r => r.phoneNumber && r.locationId) as Array<{
+      return result.filter(r => r.locationId && (r.smsEnabled || r.pushEnabled)) as Array<{
         userId: string;
-        phoneNumber: string;
+        smsEnabled: boolean;
+        pushEnabled: boolean;
+        phoneNumber: string | null;
         locationId: number;
         locationName: string;
       }>;
@@ -101,29 +134,94 @@ export class NotificationScheduler {
     }
   }
 
-  static async sendTestNotification(userId: string): Promise<boolean> {
+  private static async sendPushConditions(userId: string, locationId: number, locationName: string): Promise<boolean> {
     try {
-      const settings = await storage.getNotificationSettings(userId);
-      if (!settings?.smsEnabled || !settings.phoneNumber || !settings.locationId) {
-        console.log('User does not have complete SMS settings');
+      // Get current conditions for the location
+      const conditions = await storage.getSurfConditions(locationId);
+      if (!conditions) {
+        console.error(`No conditions found for location ${locationId}`);
         return false;
       }
 
-      console.log(`📱 Sending test notification to ${settings.phoneNumber}`);
-      
-      const success = await SMSService.sendDailyConditions(
+      const success = await pushNotificationService.sendSurfConditionNotification(
         userId,
-        settings.phoneNumber,
-        settings.locationId
+        locationName,
+        {
+          waveHeight: conditions.waveHeight || '0',
+          wavePeriod: conditions.wavePeriod || 0,
+          waveDirection: conditions.waveDirection || 'N/A',
+          windSpeed: conditions.windSpeed || '0',
+          windDirection: conditions.windDirection || 'N/A',
+          waterTemp: conditions.waterTemp || 'N/A',
+          tideHeight: conditions.tideHeight || '0',
+          tideStatus: conditions.tideStatus || 'Unknown',
+          uvIndex: conditions.uvIndex || 0,
+          sunrise: conditions.sunrise || 'N/A',
+          sunset: conditions.sunset || 'N/A',
+        }
       );
 
-      if (success) {
-        console.log(`✅ Test SMS sent to ${settings.phoneNumber}`);
-      } else {
-        console.error(`❌ Failed to send test SMS to ${settings.phoneNumber}`);
+      return success;
+    } catch (error) {
+      console.error('Error sending push conditions:', error);
+      return false;
+    }
+  }
+
+  static async sendTestNotification(userId: string): Promise<boolean> {
+    try {
+      const settings = await storage.getNotificationSettings(userId);
+      if (!settings || !settings.locationId) {
+        console.log('User does not have complete notification settings');
+        return false;
       }
 
-      return success;
+      const promises: Promise<boolean>[] = [];
+      let hasAnySettings = false;
+
+      // Send test SMS if enabled
+      if (settings.smsEnabled && settings.phoneNumber) {
+        hasAnySettings = true;
+        console.log(`📱 Sending test SMS to ${settings.phoneNumber}`);
+        promises.push(
+          SMSService.sendDailyConditions(userId, settings.phoneNumber, settings.locationId)
+            .then(success => {
+              if (success) {
+                console.log(`✅ Test SMS sent to ${settings.phoneNumber}`);
+              } else {
+                console.error(`❌ Failed to send test SMS to ${settings.phoneNumber}`);
+              }
+              return success;
+            })
+        );
+      }
+
+      // Send test push notification if enabled
+      if (settings.pushEnabled) {
+        hasAnySettings = true;
+        console.log(`🔔 Sending test push notification to user ${userId}`);
+        promises.push(
+          pushNotificationService.sendTestNotificationToUser(userId)
+            .then(success => {
+              if (success) {
+                console.log(`✅ Test push notification sent to user ${userId}`);
+              } else {
+                console.error(`❌ Failed to send test push notification to user ${userId}`);
+              }
+              return success;
+            })
+        );
+      }
+
+      if (!hasAnySettings) {
+        console.log('User does not have SMS or push notifications enabled');
+        return false;
+      }
+
+      // Wait for all test notifications and return true if any succeeded
+      const results = await Promise.all(promises);
+      return results.some(result => result);
+
     } catch (error) {
       console.error('Error sending test notification:', error);
       return false;
