@@ -187,7 +187,9 @@ export async function fetchBuoyData(stationId: string): Promise<BuoyData> {
     const dataLine = lines[2].split(/\s+/);
     
     // NOAA format: YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD PRES ATMP WTMP DEWP VIS TIDE
-    const year = parseInt('20' + dataLine[0]);
+    // Note: NOAA now uses 4-digit years (YYYY) instead of 2-digit (YY)
+    const yearStr = dataLine[0];
+    const year = yearStr.length === 4 ? parseInt(yearStr) : parseInt('20' + yearStr);
     const month = parseInt(dataLine[1]);
     const day = parseInt(dataLine[2]);
     const hour = parseInt(dataLine[3]);
