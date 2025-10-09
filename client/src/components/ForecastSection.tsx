@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Wind, Waves, Clock } from "lucide-react";
+import { Wind, Waves, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Location, ForecastDay } from "@/types/weather";
 import TideChart from "./TideChart";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface ForecastSectionProps {
   location: Location;
@@ -29,6 +29,7 @@ interface DetailedForecastData {
 export default function ForecastSection({ location }: ForecastSectionProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: forecast = [], isLoading, error } = useQuery<ForecastDay[]>({
     queryKey: [`/api/locations/${location.id}/forecast`],
@@ -49,6 +50,20 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
   const handleCloseModal = () => {
     setShowDetailModal(false);
     setSelectedDay(null);
+  };
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      const cardWidth = 300; // Approximate card width with gap
+      scrollContainerRef.current.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      const cardWidth = 300; // Approximate card width with gap
+      scrollContainerRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
+    }
   };
 
   if (error) {
@@ -77,6 +92,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 rounded-r-lg" />
           
           <div 
+            ref={scrollContainerRef}
             className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
             style={{
               scrollbarWidth: 'none',
@@ -176,6 +192,26 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             </div>
           )}
           </div>
+        </div>
+        
+        {/* Navigation Arrows */}
+        <div className="flex justify-center gap-4 mt-4">
+          <button
+            onClick={scrollLeft}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-md"
+            aria-label="Scroll left"
+            data-testid="scroll-left-button"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={scrollRight}
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors shadow-md"
+            aria-label="Scroll right"
+            data-testid="scroll-right-button"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
         </div>
       </div>
       
