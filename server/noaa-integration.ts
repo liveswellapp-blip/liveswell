@@ -196,7 +196,8 @@ export async function fetchBuoyData(stationId: string): Promise<BuoyData> {
     const windDir = parseInt(dataLine[5]);
     const windSpeed = parseFloat(dataLine[6]); // meters/second
     const waveHeightM = parseFloat(dataLine[8]); // meters
-    const dominantPeriod = parseInt(dataLine[9]); // seconds
+    const dominantPeriod = parseInt(dataLine[9]); // seconds (DPD)
+    const averagePeriod = parseFloat(dataLine[10]); // seconds (APD) - fallback if DPD is missing
     const meanWaveDir = parseInt(dataLine[11]); // degrees
     const waterTempC = parseFloat(dataLine[14]); // water temperature in Celsius
 
@@ -206,12 +207,15 @@ export async function fetchBuoyData(stationId: string): Promise<BuoyData> {
     const windSpeedMph = !isNaN(windSpeed) ? windSpeed * 2.237 : null;
     const waterTempF = !isNaN(waterTempC) ? waterTempC * 9/5 + 32 : null; // Convert Celsius to Fahrenheit
     
+    // Use dominant period if available, otherwise fall back to average period
+    const wavePeriod = !isNaN(dominantPeriod) ? dominantPeriod : (!isNaN(averagePeriod) ? averagePeriod : null);
+    
     const windDirectionStr = !isNaN(windDir) ? degreesToCompass(windDir) : null;
     const waveDirectionStr = !isNaN(meanWaveDir) ? degreesToCompass(meanWaveDir) : null;
 
     return {
       waveHeight: waveHeightFt,
-      wavePeriod: !isNaN(dominantPeriod) ? dominantPeriod : null,
+      wavePeriod,
       waveDirection: waveDirectionStr,
       windSpeed: windSpeedMph,
       windDirection: windDirectionStr,
