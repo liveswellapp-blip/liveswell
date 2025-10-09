@@ -285,11 +285,14 @@ export async function getComprehensiveMarineData(lat: number, lon: number): Prom
   );
   const allData = await Promise.all(dataPromises);
 
-  // Find the best primary data source (closest with valid data)
-  const validData = allData.filter(data => 
+  // Find the best primary data source - prioritize buoys with wave data
+  const buoysWithWaveData = allData.filter(data => data.waveHeight !== null);
+  const buoysWithAnyData = allData.filter(data => 
     data.waveHeight !== null || data.windSpeed !== null
   );
 
+  // Prefer buoys with wave data, fall back to any data
+  const validData = buoysWithWaveData.length > 0 ? buoysWithWaveData : buoysWithAnyData;
   const primary = validData.length > 0 ? validData[0] : null;
   const backup = validData.slice(1, 5); // Up to 4 backup sources
 
