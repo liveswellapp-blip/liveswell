@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, MessageSquare, Clock, MapPin, Send, ArrowLeft, Smartphone } from "lucide-react";
+import { Bell, Clock, MapPin, ArrowLeft, Smartphone } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location, NotificationSettings as NotificationSettingsType } from "@/types/weather";
 import Header from "@/components/Header";
@@ -46,11 +46,9 @@ const timezoneOptions = [
 
 export default function NotificationSettings() {
   const { toast } = useToast();
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedTime, setSelectedTime] = useState("08:00");
   const [selectedTimezone, setSelectedTimezone] = useState("America/New_York");
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
-  const [smsEnabled, setSmsEnabled] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
@@ -91,9 +89,7 @@ export default function NotificationSettings() {
   // Update form when settings are loaded
   useEffect(() => {
     if (settings) {
-      setSmsEnabled(settings.smsEnabled);
       setPushEnabled(settings.pushEnabled || false);
-      setPhoneNumber(settings.phoneNumber || "");
       setSelectedTime(settings.notificationTime || "08:00");
       setSelectedTimezone(settings.timezone || "America/New_York");
       setSelectedLocation(settings.locationId || null);
@@ -103,9 +99,7 @@ export default function NotificationSettings() {
   // Save notification settings mutation
   const saveSettingsMutation = useMutation({
     mutationFn: async (data: {
-      smsEnabled: boolean;
       pushEnabled: boolean;
-      phoneNumber?: string;
       notificationTime: string;
       timezone: string;
       locationId?: number;
@@ -129,30 +123,6 @@ export default function NotificationSettings() {
         variant: "destructive",
       });
       console.error("Save settings error:", error);
-    },
-  });
-
-  // Test SMS mutation
-  const testSmsMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("/api/test-notification", {
-        method: "POST",
-        body: {},
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Test SMS Sent!",
-        description: "Check your phone for the test surf conditions message.",
-      });
-    },
-    onError: (error) => {
-      console.error("Test SMS error:", error);
-      toast({
-        title: "Test Failed",
-        description: "Failed to send test SMS. Make sure your settings are saved and complete.",
-        variant: "destructive",
-      });
     },
   });
 
@@ -180,19 +150,6 @@ export default function NotificationSettings() {
       });
     },
   });
-
-  const handleTestSms = () => {
-    if (!smsEnabled || !phoneNumber || !selectedLocation) {
-      toast({
-        title: "Complete Settings Required",
-        description: "Please enable SMS, add phone number and location, then save settings before testing.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    testSmsMutation.mutate();
-  };
 
   const handlePushToggle = async (enabled: boolean) => {
     if (enabled) {
@@ -251,16 +208,7 @@ export default function NotificationSettings() {
   };
 
   const handleSave = () => {
-    if (smsEnabled && (!phoneNumber || !selectedLocation)) {
-      toast({
-        title: "Missing Information",
-        description: "Phone number and location are required for SMS notifications.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if ((pushEnabled || smsEnabled) && !selectedLocation) {
+    if (pushEnabled && !selectedLocation) {
       toast({
         title: "Missing Location",
         description: "Location is required for notifications.",
@@ -269,28 +217,11 @@ export default function NotificationSettings() {
       return;
     }
 
-    // Format phone number (basic validation)
-    let formattedPhone = phoneNumber;
-    if (smsEnabled && phoneNumber) {
-      // Remove non-digits
-      formattedPhone = phoneNumber.replace(/\D/g, '');
-      // Add +1 if it's a 10-digit US number
-      if (formattedPhone.length === 10) {
-        formattedPhone = '+1' + formattedPhone;
-      } else if (formattedPhone.length === 11 && formattedPhone.startsWith('1')) {
-        formattedPhone = '+' + formattedPhone;
-      } else if (!formattedPhone.startsWith('+')) {
-        formattedPhone = '+' + formattedPhone;
-      }
-    }
-
     saveSettingsMutation.mutate({
-      smsEnabled,
       pushEnabled: pushEnabled && pushSubscribed,
-      phoneNumber: smsEnabled ? formattedPhone : undefined,
       notificationTime: selectedTime,
       timezone: selectedTimezone,
-      locationId: (smsEnabled || pushEnabled) ? selectedLocation || undefined : undefined,
+      locationId: pushEnabled ? selectedLocation || undefined : undefined,
     });
   };
 
@@ -334,165 +265,8 @@ export default function NotificationSettings() {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-emerald-400">
-              <MessageSquare className="mr-2 h-5 w-5" />
-              SMS Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* SMS Enable Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-slate-300 text-base">Enable Daily SMS</Label>
-                <p className="text-sm text-slate-400">
-                  Get daily surf condition updates via text message
-                </p>
-              </div>
-              <Switch
-                checked={smsEnabled}
-                onCheckedChange={setSmsEnabled}
-                data-testid="sms-toggle"
-              />
-            </div>
-
-            {smsEnabled && (
-              <div className="space-y-4 pt-4 border-t border-slate-700">
-                {/* Phone Number Input */}
-                <div>
-                  <Label htmlFor="phone" className="text-slate-300">
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="mt-2 bg-slate-800 border-slate-700 text-white"
-                    data-testid="phone-input"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">
-                    Enter your phone number with country code (e.g., +1 for US)
-                  </p>
-                </div>
-
-                {/* Notification Time */}
-                <div>
-                  <Label className="text-slate-300 flex items-center mb-2">
-                    <Clock className="mr-2 h-4 w-4 text-emerald-400" />
-                    Notification Time
-                  </Label>
-                  <Select value={selectedTime} onValueChange={setSelectedTime}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="time-select">
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptions.map((time) => (
-                        <SelectItem key={time.value} value={time.value}>
-                          {time.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Timezone Selection */}
-                <div>
-                  <Label className="text-slate-300 flex items-center mb-2">
-                    <Clock className="mr-2 h-4 w-4 text-emerald-400" />
-                    Timezone
-                  </Label>
-                  <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="timezone-select">
-                      <SelectValue placeholder="Select timezone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timezoneOptions.map((timezone) => (
-                        <SelectItem key={timezone.value} value={timezone.value}>
-                          {timezone.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Choose your local timezone for accurate notification delivery
-                  </p>
-                </div>
-
-                {/* Location Selection */}
-                <div>
-                  <Label className="text-slate-300 flex items-center mb-2">
-                    <MapPin className="mr-2 h-4 w-4 text-emerald-400" />
-                    Location for Conditions
-                  </Label>
-                  <Select value={selectedLocation?.toString()} onValueChange={(value) => setSelectedLocation(parseInt(value))}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="location-select">
-                      <SelectValue placeholder="Select your surf spot" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations?.map((location) => (
-                        <SelectItem key={location.id} value={location.id.toString()}>
-                          {location.name}, {location.city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Choose the surf spot you want to receive conditions for
-                  </p>
-                </div>
-
-                {/* Preview */}
-                <div className="bg-slate-800 p-4 rounded-lg">
-                  <p className="text-sm text-slate-300 mb-2">
-                    <strong>SMS Preview:</strong>
-                  </p>
-                  <div className="bg-slate-700 p-3 rounded text-sm text-white">
-                    🌊 <strong>Live Conditions</strong> (2:43 PM)<br/>
-                    Waves: 3.2ft @ 14s ENE<br/>
-                    Wind: 8mph WNW<br/>
-                    Water: 84°F<br/>
-                    <br/>
-                    🌅 <strong>Tides & Sun</strong><br/>
-                    High: 6:45 AM (5.8ft), 7:12 PM (5.4ft)<br/>
-                    Low: 1:23 PM (0.9ft)<br/>
-                    Sunrise: 7:04 AM | Sunset: 6:31 PM
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="pt-4 space-y-2">
-              <Button
-                onClick={handleSave}
-                disabled={saveSettingsMutation.isPending}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                data-testid="save-settings-button"
-              >
-                {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
-              </Button>
-              
-              {smsEnabled && (
-                <Button
-                  onClick={handleTestSms}
-                  disabled={testSmsMutation.isPending || !phoneNumber || !selectedLocation || saveSettingsMutation.isPending}
-                  variant="outline"
-                  className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
-                  data-testid="test-sms-button"
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {testSmsMutation.isPending ? "Sending Test..." : "Send Test SMS"}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Push Notifications Card */}
-        <Card className="mt-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center text-emerald-400">
               <Smartphone className="mr-2 h-5 w-5" />
@@ -561,11 +335,11 @@ export default function NotificationSettings() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-400 mt-1">
-                    Same time will be used for both SMS and push notifications
+                    Choose when you want to receive your daily surf conditions
                   </p>
                 </div>
 
-                {/* Location (shared with SMS) */}
+                {/* Location */}
                 <div>
                   <Label className="text-slate-300 flex items-center mb-2">
                     <MapPin className="mr-2 h-4 w-4 text-emerald-400" />
@@ -583,6 +357,41 @@ export default function NotificationSettings() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Timezone Selection */}
+                <div>
+                  <Label className="text-slate-300 flex items-center mb-2">
+                    <Clock className="mr-2 h-4 w-4 text-emerald-400" />
+                    Timezone
+                  </Label>
+                  <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="timezone-select">
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timezoneOptions.map((timezone) => (
+                        <SelectItem key={timezone.value} value={timezone.value}>
+                          {timezone.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Choose your local timezone for accurate notification delivery
+                  </p>
+                </div>
+
+                {/* Save Settings Button */}
+                <div className="pt-4">
+                  <Button
+                    onClick={handleSave}
+                    disabled={saveSettingsMutation.isPending}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                    data-testid="save-settings-button"
+                  >
+                    {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+                  </Button>
                 </div>
 
                 {/* Push Test Button */}
@@ -603,53 +412,6 @@ export default function NotificationSettings() {
           </CardContent>
         </Card>
 
-        {/* Shared Settings Card */}
-        {(smsEnabled || pushEnabled) && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center text-emerald-400">
-                <Clock className="mr-2 h-5 w-5" />
-                Shared Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Timezone Selection */}
-              <div>
-                <Label className="text-slate-300 flex items-center mb-2">
-                  <Clock className="mr-2 h-4 w-4 text-emerald-400" />
-                  Timezone
-                </Label>
-                <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="timezone-select">
-                    <SelectValue placeholder="Select timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timezoneOptions.map((timezone) => (
-                      <SelectItem key={timezone.value} value={timezone.value}>
-                        {timezone.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-slate-400 mt-1">
-                  Choose your local timezone for accurate notification delivery
-                </p>
-              </div>
-
-              {/* Save Settings Button */}
-              <div className="pt-4">
-                <Button
-                  onClick={handleSave}
-                  disabled={saveSettingsMutation.isPending}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  data-testid="save-settings-button"
-                >
-                  {saveSettingsMutation.isPending ? "Saving..." : "Save All Settings"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       <Footer />

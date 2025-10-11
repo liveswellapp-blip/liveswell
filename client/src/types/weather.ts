@@ -69,6 +69,7 @@ export interface NotificationSettings {
   userId: string;
   smsEnabled: boolean;
   phoneNumber?: string;
+  pushEnabled?: boolean;
   notificationTime: string;
   timezone: string;
   locationId?: number;
