@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Favorites from "@/pages/favorites";
@@ -12,39 +11,20 @@ import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
-import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin";
 import NotificationSettings from "@/pages/NotificationSettings";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
-
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={SurfSpots} />
-          <Route path="/conditions" component={Home} />
-          <Route path="/favorites" component={Favorites} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/notifications" component={NotificationSettings} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/monitoring" component={Monitoring} />
-        </>
-      )}
-      
-      {/* Admin route - accessible regardless of auth status */}
+      <Route path="/" component={SurfSpots} />
+      <Route path="/conditions" component={Home} />
+      <Route path="/favorites" component={Favorites} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/notifications" component={NotificationSettings} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/monitoring" component={Monitoring} />
       <Route path="/admin" component={AdminDashboard} />
-      
-      {/* Catch-all route */}
-      {(isLoading || !isAuthenticated) ? (
-        <Route component={Landing} />
-      ) : (
-        <>
-        </>
-      )}
       <Route component={NotFound} />
     </Switch>
   );
