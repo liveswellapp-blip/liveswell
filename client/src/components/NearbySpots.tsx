@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Waves, Wind } from "lucide-react";
+import { Waves } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Location, NearbySpot } from "@/types/weather";
 
@@ -58,16 +58,12 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
             // Loading skeletons
             Array.from({ length: 3 }).map((_, index) => (
               <div key={index} className="bg-muted rounded-lg p-4">
-                <div className="flex items-center space-x-3 mb-3">
+                <div className="flex items-center space-x-3">
                   <Skeleton className="w-12 h-12 rounded-full" />
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-3 w-16" />
                   </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-12" />
                 </div>
               </div>
             ))
@@ -76,26 +72,16 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
               <div 
                 key={spot.id} 
                 onClick={() => handleSpotClick(spot.id)}
-                className="bg-muted rounded-lg p-4 lg:p-6 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border min-h-[120px] lg:min-h-[140px]" 
+                className="bg-muted rounded-lg p-4 lg:p-6 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border" 
                 data-testid={`card-nearby-spot-${spot.id}`}
               >
-                <div className="flex items-center space-x-3 mb-3">
+                <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
                     <Waves className="h-6 w-6 text-emerald-600 dark:text-white" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-blue-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" data-testid={`text-spot-name-${spot.id}`}>{spot.name}</h4>
                     <p className="text-sm text-blue-900 dark:text-white" data-testid={`text-spot-distance-${spot.id}`}>{spot.distance} miles away</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Waves className="text-blue-900 dark:text-white h-4 w-4" />
-                    <span className="font-medium text-blue-900 dark:text-emerald-400" data-testid={`text-wave-height-${spot.id}`}>{spot.waveHeight}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Wind className="text-blue-900 dark:text-white h-4 w-4" />
-                    <span className="text-sm text-blue-900 dark:text-emerald-400" data-testid={`text-wind-speed-${spot.id}`}>{spot.wind}</span>
                   </div>
                 </div>
               </div>
