@@ -499,7 +499,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       onClick={handleWindDetailsClick}
                       data-testid="wind-details-button"
                     >
-                      View Details
+                      Future Data
                     </Button>
                     
                     <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
