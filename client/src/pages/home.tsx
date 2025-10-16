@@ -177,14 +177,14 @@ export default function Home() {
       <Header onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (
-        <div className="space-y-4">
+        <div className="w-full">
           <CurrentConditions location={currentLocation} />
           <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
           <NearbySpots location={currentLocation} />
         </div>
       ) : (
-        <div className="container mx-auto px-4 py-12 space-y-8">
+        <div className="container mx-auto px-4 py-12 space-y-8 max-w-7xl">
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-blue-900 dark:text-white mb-4">
               Welcome to LiveSwell

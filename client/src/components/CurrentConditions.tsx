@@ -253,7 +253,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 pt-8">
+      <div className="container mx-auto px-4 md:px-6 pt-8 max-w-7xl">
         <Card className="bg-card rounded-xl shadow-lg p-6 mb-6 border border-border">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-blue-900 dark:text-white">
@@ -291,7 +291,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <div className="w-full">
       {/* Enhanced Location Header for Desktop */}
-      <div className="container mx-auto px-6 pt-6">
+      <div className="container mx-auto px-4 md:px-6 pt-6 max-w-7xl">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 space-y-2 lg:space-y-0">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
@@ -312,7 +312,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       {/* Thin emerald separator line */}
       <div className="w-full border-b border-emerald-500/30 mb-4"></div>
 
-      <div className="px-6 mb-4 md:mx-auto md:max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 mb-6 max-w-7xl">
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {/* AI Surf Summary - appears below Live Conditions heading */}
