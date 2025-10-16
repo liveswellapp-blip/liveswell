@@ -2777,6 +2777,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const forecast = forecastResponse.ok ? await forecastResponse.json() : null;
 
       // Create a comprehensive data summary for the AI
+      const primaryBuoy = conditions.primaryBuoy;
+      const backupBuoy = conditions.backupBuoy;
+      
+      // Calculate wave height range from both buoys
+      let waveHeightRange = conditions.waveHeight;
+      if (primaryBuoy && backupBuoy) {
+        const minHeight = Math.min(primaryBuoy.waveHeight, backupBuoy.waveHeight).toFixed(1);
+        const maxHeight = Math.max(primaryBuoy.waveHeight, backupBuoy.waveHeight).toFixed(1);
+        waveHeightRange = `${minHeight}-${maxHeight}ft`;
+      }
+
+      // Get tide data
+      const todayTides = forecast?.[0]?.tides || [];
+      const currentTide = {
+        height: conditions.tideHeight,
+        status: conditions.tideStatus,
+        schedule: todayTides.slice(0, 4).map((t: any) => `${t.type} ${t.height}ft at ${t.time}`).join(', ')
+      };
+
       const surfDataSummary = {
         location: {
           name: location.name,
@@ -2785,6 +2804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         current: {
           waveHeight: conditions.waveHeight,
+          waveHeightRange: waveHeightRange,
           wavePeriod: conditions.wavePeriod,
           waveDirection: conditions.waveDirection,
           windSpeed: conditions.windSpeed,
@@ -2796,6 +2816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           conditions: conditions.conditions,
           lastUpdated: conditions.lastUpdated,
         },
+        tide: currentTide,
         forecast: forecast ? forecast.slice(0, 3).map((day: any) => ({
           date: day.date,
           waveHeightRange: `${day.minWaveHeight}-${day.maxWaveHeight}`,
@@ -2803,13 +2824,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           avgWindSpeed: day.avgWindSpeed,
           maxWindSpeed: day.maxWindSpeed,
         })) : null,
-        realTimeData: conditions.realTimeWaveData ? {
-          source: conditions.realTimeWaveData.dataSource,
-          stationId: conditions.realTimeWaveData.stationId,
-          stationName: conditions.realTimeWaveData.stationName,
-          waveHeight: conditions.realTimeWaveData.waveHeight,
-          dominantPeriod: conditions.realTimeWaveData.dominantPeriod,
-          direction: conditions.realTimeWaveData.direction,
+        primaryBuoy: primaryBuoy ? {
+          stationId: primaryBuoy.stationId,
+          stationName: primaryBuoy.stationName,
+          waveHeight: primaryBuoy.waveHeight.toFixed(1),
+          wavePeriod: primaryBuoy.wavePeriod,
+          direction: primaryBuoy.waveDirection,
+          waterTemp: primaryBuoy.waterTemp,
+        } : null,
+        backupBuoy: backupBuoy ? {
+          stationId: backupBuoy.stationId,
+          stationName: backupBuoy.stationName,
+          waveHeight: backupBuoy.waveHeight.toFixed(1),
+          wavePeriod: backupBuoy.wavePeriod,
+          direction: backupBuoy.waveDirection,
+          waterTemp: backupBuoy.waterTemp,
         } : null,
       };
 
@@ -2819,22 +2848,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 Location: ${surfDataSummary.location.name}, ${surfDataSummary.location.region}, ${surfDataSummary.location.country}
 
 Current Conditions:
-- Wave Height: ${surfDataSummary.current.waveHeight}ft
+- Wave Height Range: ${surfDataSummary.current.waveHeightRange}
 - Wave Period: ${surfDataSummary.current.wavePeriod}s
 - Wave Direction: ${surfDataSummary.current.waveDirection}
 - Wind: ${surfDataSummary.current.windSpeed}mph ${surfDataSummary.current.windDirection}
 - Water Temp: ${surfDataSummary.current.waterTemp}°F
-${surfDataSummary.realTimeData ? `- Real-time NOAA Buoy Data: Station ${surfDataSummary.realTimeData.stationId} (${surfDataSummary.realTimeData.stationName})` : ''}
+- Tide: ${surfDataSummary.tide.height}ft ${surfDataSummary.tide.status}
+${surfDataSummary.tide.schedule ? `- Today's Tides: ${surfDataSummary.tide.schedule}` : ''}
+
+NOAA Buoy Data:
+${surfDataSummary.primaryBuoy ? `- Primary: Station ${surfDataSummary.primaryBuoy.stationId} (${surfDataSummary.primaryBuoy.stationName}) - ${surfDataSummary.primaryBuoy.waveHeight}ft @ ${surfDataSummary.primaryBuoy.wavePeriod}s ${surfDataSummary.primaryBuoy.direction}` : ''}
+${surfDataSummary.backupBuoy ? `- Backup: Station ${surfDataSummary.backupBuoy.stationId} (${surfDataSummary.backupBuoy.stationName}) - ${surfDataSummary.backupBuoy.waveHeight}ft @ ${surfDataSummary.backupBuoy.wavePeriod}s ${surfDataSummary.backupBuoy.direction}` : ''}
 ${surfDataSummary.forecast ? `
-- 3-Day Trend: ${surfDataSummary.forecast[0].waveHeightRange}ft → ${surfDataSummary.forecast[2].waveHeightRange}ft` : ''}
+3-Day Trend: ${surfDataSummary.forecast[0].waveHeightRange}ft → ${surfDataSummary.forecast[2].waveHeightRange}ft` : ''}
 
 Write a technical surf assessment that:
 1. Analyzes wave quality based on period and direction
 2. Evaluates wind impact (clean/choppy conditions)
-3. ${surfDataSummary.forecast ? 'Notes forecast trend' : 'Describes current setup'}
-4. Uses technical terminology and factual analysis
-5. Avoid marketing language, enthusiasm, or phrases like "enjoy the session" or "keep your stoke high"
-6. Keep it analytical and informative - maximum 1-2 brief paragraphs`;
+3. Notes tide timing impact on surf quality
+4. ${surfDataSummary.forecast ? 'Mentions forecast trend' : 'Describes current setup'}
+5. Uses technical terminology and factual analysis
+6. Avoid marketing language, enthusiasm, or phrases like "enjoy the session" or "keep your stoke high"
+7. Keep it analytical and informative - maximum 1-2 brief paragraphs`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
