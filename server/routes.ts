@@ -2814,7 +2814,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Generate AI summary with casual-technical tone
-      const prompt = `You are a knowledgeable surf forecaster analyzing current conditions. Generate a brief, conversational surf report (2-3 paragraphs) that balances casual tone with technical accuracy.
+      const prompt = `You are a knowledgeable surf forecaster. Write a VERY brief surf report (1-2 short paragraphs max).
 
 Location: ${surfDataSummary.location.name}, ${surfDataSummary.location.region}, ${surfDataSummary.location.country}
 
@@ -2824,30 +2824,22 @@ Current Conditions:
 - Wave Direction: ${surfDataSummary.current.waveDirection}
 - Wind: ${surfDataSummary.current.windSpeed}mph ${surfDataSummary.current.windDirection}
 - Water Temp: ${surfDataSummary.current.waterTemp}°F
-- Air Temp: ${surfDataSummary.current.airTemp}°F
-- Conditions: ${surfDataSummary.current.conditions}
 ${surfDataSummary.realTimeData ? `- Real-time NOAA Buoy Data: Station ${surfDataSummary.realTimeData.stationId} (${surfDataSummary.realTimeData.stationName})` : ''}
 ${surfDataSummary.forecast ? `
+- 3-Day Trend: ${surfDataSummary.forecast[0].waveHeightRange}ft → ${surfDataSummary.forecast[2].waveHeightRange}ft` : ''}
 
-3-Day Outlook:
-${surfDataSummary.forecast.map((day: any, i: number) => `Day ${i + 1} (${day.date}): ${day.waveHeightRange}ft waves, ${day.avgWindSpeed}mph winds`).join('\n')}` : ''}
-
-Write a surf report that:
-1. Opens with an engaging assessment of current surfability
-2. Explains the wave conditions (quality, period, direction impact)
-3. Notes wind conditions and their effect on wave quality
-4. Mentions water/air temps if notable${surfDataSummary.forecast ? '\n5. Briefly touches on the short-term forecast trend' : ''}
-${surfDataSummary.forecast ? '6' : '5'}. Uses surfer lingo naturally but explains technical terms
-${surfDataSummary.forecast ? '7' : '6'}. Keeps it concise (2-3 short paragraphs max)
-
-Be conversational but informative. Think "knowledgeable surf buddy" not "weather robot."`;
+Write a concise surf report that:
+1. Opens with surfability assessment (good/fair/poor)
+2. Quickly mentions wave quality, wind effect, and ${surfDataSummary.forecast ? 'forecast trend' : 'current setup'}
+3. Uses casual surfer tone but stays technical
+4. Keep it SHORT - maximum 1-2 brief paragraphs`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: "You are an experienced surf forecaster who writes engaging, informative surf reports that blend casual surfer language with technical accuracy."
+            content: "You are a surf forecaster who writes brief, punchy surf reports. Keep them short and direct."
           },
           {
             role: "user",
@@ -2855,7 +2847,7 @@ Be conversational but informative. Think "knowledgeable surf buddy" not "weather
           }
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 250,
       });
 
       const summary = completion.choices[0]?.message?.content || "Unable to generate surf summary at this time.";
