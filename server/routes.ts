@@ -2868,22 +2868,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Today:
 Waves are at ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are [onshore/offshore] at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection} with a ${surfDataSummary.today.tideStatus.toLowerCase()} tide${surfDataSummary.today.nextTide ? ` to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
-${surfDataSummary.tomorrow ? `
-Tomorrow:
-There is a [rising/falling/steady] swell in the water and waves will be ${surfDataSummary.tomorrow.waveHeightRange} ft at a ${surfDataSummary.tomorrow.avgWavePeriod} sec out of the ${surfDataSummary.tomorrow.waveDirection}. Winds will be [onshore/offshore] all day${surfDataSummary.tomorrow.morningWind ? `, light in the morning at ${surfDataSummary.tomorrow.morningWind} mph out of the ${surfDataSummary.tomorrow.morningWindDir}` : ''}${surfDataSummary.tomorrow.afternoonWind ? `, and stronger at ${surfDataSummary.tomorrow.afternoonWind} mph out of the ${surfDataSummary.tomorrow.afternoonWindDir} into the afternoon` : ''}. ${surfDataSummary.tomorrow.tides.length > 0 ? 'It will be a [falling/rising] tide in the morning and [rising/falling] tide starting at [time] into the afternoon.' : ''}` : ''}
 
 IMPORTANT INSTRUCTIONS:
 1. Replace [onshore/offshore] based on wind direction relative to the coast
-2. Replace [rising/falling/steady] by comparing today's wave height to tomorrow's
-3. Replace tide descriptions [falling/rising] based on the tide schedule data
-4. Use the exact sentence structure shown above
-5. Keep factual and concise - no extra commentary
-6. Do not add any additional analysis or paragraphs
+2. Use the exact sentence structure shown above
+3. Keep factual and concise - no extra commentary
+4. Do not add any additional analysis or paragraphs
 
 REFERENCE DATA:
 ${surfDataSummary.buoys.primary ? `- Primary Buoy ${surfDataSummary.buoys.primary.stationId}: ${surfDataSummary.buoys.primary.waveHeight}ft @ ${surfDataSummary.buoys.primary.wavePeriod}s` : ''}
-${surfDataSummary.buoys.backup ? `- Backup Buoy ${surfDataSummary.buoys.backup.stationId}: ${surfDataSummary.buoys.backup.waveHeight}ft @ ${surfDataSummary.buoys.backup.wavePeriod}s` : ''}
-${surfDataSummary.tomorrow?.tides ? `- Tomorrow's Tides: ${surfDataSummary.tomorrow.tides.map((t: any) => `${t.type} ${t.height}ft at ${t.time}`).join(', ')}` : ''}`;
+${surfDataSummary.buoys.backup ? `- Backup Buoy ${surfDataSummary.buoys.backup.stationId}: ${surfDataSummary.buoys.backup.waveHeight}ft @ ${surfDataSummary.buoys.backup.wavePeriod}s` : ''}`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
