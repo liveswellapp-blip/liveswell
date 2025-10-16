@@ -33,6 +33,7 @@ import {
 } from "./weather-service";
 import { pushNotificationService } from "./push-service";
 import { insertPushSubscriptionSchema } from "@shared/schema";
+import OpenAI from "openai";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -43,6 +44,14 @@ if (API_KEY === "demo_key" || !API_KEY || API_KEY.length < 10) {
 } else {
   console.log("✅ OpenWeather API key configured - real weather data available");
 }
+
+// Initialize OpenAI client with Replit AI Integrations
+const openai = new OpenAI({
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+});
+
+console.log("✅ OpenAI integration configured via Replit AI Integrations");
 
 interface OpenWeatherMarineResponse {
   coord: { lat: number; lon: number };
@@ -2742,6 +2751,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending test notification:", error);
       res.status(500).json({ message: "Failed to send test notification" });
+    }
+  });
+
+  // AI Surf Summary endpoint
+  app.get("/api/locations/:id/ai-summary", generalApiLimiter, async (req, res) => {
+    try {
+      const locationId = parseInt(req.params.id);
+      
+      // Fetch current conditions for this location
+      const location = await storage.getLocation(locationId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      // Fetch current surf conditions
+      const conditionsResponse = await fetch(`${req.protocol}://${req.get('host')}/api/locations/${locationId}/conditions`);
+      if (!conditionsResponse.ok) {
+        return res.status(500).json({ message: "Failed to fetch surf conditions" });
+      }
+      const conditions = await conditionsResponse.json();
+
+      // Fetch 5-day forecast
+      const forecastResponse = await fetch(`${req.protocol}://${req.get('host')}/api/locations/${locationId}/forecast`);
+      const forecast = forecastResponse.ok ? await forecastResponse.json() : null;
+
+      // Create a comprehensive data summary for the AI
+      const surfDataSummary = {
+        location: {
+          name: location.name,
+          region: location.region,
+          country: location.country,
+        },
+        current: {
+          waveHeight: conditions.waveHeight,
+          wavePeriod: conditions.wavePeriod,
+          waveDirection: conditions.waveDirection,
+          windSpeed: conditions.windSpeed,
+          windDirection: conditions.windDirection,
+          waterTemp: conditions.waterTemp,
+          airTemp: conditions.airTemp,
+          uvIndex: conditions.uvIndex,
+          visibility: conditions.visibility,
+          conditions: conditions.conditions,
+          lastUpdated: conditions.lastUpdated,
+        },
+        forecast: forecast ? forecast.slice(0, 3).map((day: any) => ({
+          date: day.date,
+          waveHeightRange: `${day.minWaveHeight}-${day.maxWaveHeight}`,
+          avgWaveHeight: day.avgWaveHeight,
+          avgWindSpeed: day.avgWindSpeed,
+          maxWindSpeed: day.maxWindSpeed,
+        })) : null,
+        realTimeData: conditions.realTimeWaveData ? {
+          source: conditions.realTimeWaveData.dataSource,
+          stationId: conditions.realTimeWaveData.stationId,
+          stationName: conditions.realTimeWaveData.stationName,
+          waveHeight: conditions.realTimeWaveData.waveHeight,
+          dominantPeriod: conditions.realTimeWaveData.dominantPeriod,
+          direction: conditions.realTimeWaveData.direction,
+        } : null,
+      };
+
+      // Generate AI summary with casual-technical tone
+      const prompt = `You are a knowledgeable surf forecaster analyzing current conditions. Generate a brief, conversational surf report (2-3 paragraphs) that balances casual tone with technical accuracy.
+
+Location: ${surfDataSummary.location.name}, ${surfDataSummary.location.region}, ${surfDataSummary.location.country}
+
+Current Conditions:
+- Wave Height: ${surfDataSummary.current.waveHeight}ft
+- Wave Period: ${surfDataSummary.current.wavePeriod}s
+- Wave Direction: ${surfDataSummary.current.waveDirection}
+- Wind: ${surfDataSummary.current.windSpeed}mph ${surfDataSummary.current.windDirection}
+- Water Temp: ${surfDataSummary.current.waterTemp}°F
+- Air Temp: ${surfDataSummary.current.airTemp}°F
+- Conditions: ${surfDataSummary.current.conditions}
+${surfDataSummary.realTimeData ? `- Real-time NOAA Buoy Data: Station ${surfDataSummary.realTimeData.stationId} (${surfDataSummary.realTimeData.stationName})` : ''}
+${surfDataSummary.forecast ? `
+
+3-Day Outlook:
+${surfDataSummary.forecast.map((day: any, i: number) => `Day ${i + 1} (${day.date}): ${day.waveHeightRange}ft waves, ${day.avgWindSpeed}mph winds`).join('\n')}` : ''}
+
+Write a surf report that:
+1. Opens with an engaging assessment of current surfability
+2. Explains the wave conditions (quality, period, direction impact)
+3. Notes wind conditions and their effect on wave quality
+4. Mentions water/air temps if notable${surfDataSummary.forecast ? '\n5. Briefly touches on the short-term forecast trend' : ''}
+${surfDataSummary.forecast ? '6' : '5'}. Uses surfer lingo naturally but explains technical terms
+${surfDataSummary.forecast ? '7' : '6'}. Keeps it concise (2-3 short paragraphs max)
+
+Be conversational but informative. Think "knowledgeable surf buddy" not "weather robot."`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are an experienced surf forecaster who writes engaging, informative surf reports that blend casual surfer language with technical accuracy."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      const summary = completion.choices[0]?.message?.content || "Unable to generate surf summary at this time.";
+
+      console.log(`✅ AI surf summary generated for location ${locationId} (${location.name})`);
+
+      res.json({
+        summary,
+        location: surfDataSummary.location,
+        generatedAt: new Date().toISOString(),
+      });
+
+    } catch (error) {
+      console.error("❌ Error generating AI surf summary:", {
+        locationId,
+        locationName: location?.name,
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      res.status(500).json({ 
+        message: "Failed to generate surf summary",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

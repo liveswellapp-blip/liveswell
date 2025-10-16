@@ -6,6 +6,7 @@ import { MapPin, Waves, BarChart3, Wind, CloudSun, AlertCircle, ChevronDown, Che
 import { Location, SurfConditions, ForecastDay, HistoricalWaveData, FutureWindData } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
+import AISurfSummary from "@/components/AISurfSummary";
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -312,6 +313,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       <div className="w-full border-b border-emerald-500/30 mb-4"></div>
 
       <div className="px-6 mb-4 md:mx-auto md:max-w-7xl">
+        {/* AI Surf Summary - appears above Live Conditions */}
+        <AISurfSummary location={location} />
+        
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {conditions?.warning && (
