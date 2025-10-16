@@ -240,13 +240,13 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="max-h-96 overflow-y-auto">
                 <table className="w-full text-xs sm:text-sm md:text-base lg:text-lg">
-                  <thead className="bg-emerald-50 dark:bg-emerald-900/20 sticky top-0">
+                  <thead className="bg-emerald-50 dark:bg-emerald-900 sticky top-0 z-10">
                     <tr className="font-semibold">
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Time</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Waves</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Period</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Wind</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 whitespace-nowrap">Direction</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Time</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Waves</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Period</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Wind</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Direction</th>
                     </tr>
                   </thead>
                   <tbody className="bg-background">

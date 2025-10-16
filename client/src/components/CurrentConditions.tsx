@@ -695,12 +695,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="max-h-96 overflow-y-auto">
                 <table className="w-full text-sm sm:text-base md:text-lg">
-                  <thead className="bg-emerald-50 dark:bg-emerald-900/20 sticky top-0">
+                  <thead className="bg-emerald-50 dark:bg-emerald-900 sticky top-0 z-10">
                     <tr className="font-semibold">
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Time</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Height</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Period</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Direction</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900">Time</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900">Height</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900">Period</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 bg-emerald-50 dark:bg-emerald-900">Direction</th>
                     </tr>
                   </thead>
                   <tbody className="bg-background">
@@ -756,12 +756,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="max-h-96 overflow-y-auto">
                 <table className="w-full text-sm sm:text-base md:text-lg">
-                  <thead className="bg-emerald-50 dark:bg-emerald-900/20 sticky top-0">
+                  <thead className="bg-emerald-50 dark:bg-emerald-900 sticky top-0 z-10">
                     <tr className="font-semibold">
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Time</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Speed</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Gusts</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Direction</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900">Time</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900">Speed</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600 bg-emerald-50 dark:bg-emerald-900">Gusts</th>
+                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 bg-emerald-50 dark:bg-emerald-900">Direction</th>
                     </tr>
                   </thead>
                   <tbody className="bg-background">
