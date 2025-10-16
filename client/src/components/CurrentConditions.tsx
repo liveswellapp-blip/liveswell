@@ -694,28 +694,28 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           ) : buoyHistoryData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
-                <div className="w-16 sm:w-20 md:w-24">Time</div>
-                <div className="w-16 sm:w-20 md:w-24">Height</div>
-                <div className="w-16 sm:w-20 md:w-24">Period</div>
-                <div className="flex-1">Direction</div>
+              <div className="flex justify-between bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
+                <div className="flex-1 text-left">Time</div>
+                <div className="flex-1 text-center">Height</div>
+                <div className="flex-1 text-center">Period</div>
+                <div className="flex-1 text-right">Direction</div>
               </div>
               
               {/* Hourly Data */}
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {buoyHistoryData.historicalData.map((dataPoint, index) => (
                   <div key={index}>
-                    <div className="flex text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
-                      <div className="w-16 sm:w-20 md:w-24 font-medium text-gray-900 dark:text-gray-100">
+                    <div className="flex justify-between text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 px-4 sm:px-6">
+                      <div className="flex-1 text-left font-medium text-gray-900 dark:text-gray-100">
                         {dataPoint.time}
                       </div>
-                      <div className="w-16 sm:w-20 md:w-24 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="flex-1 text-center text-emerald-600 dark:text-emerald-400 font-semibold">
                         {dataPoint.waveHeight.toFixed(1)}ft
                       </div>
-                      <div className="w-16 sm:w-20 md:w-24 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-center text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.wavePeriod}s
                       </div>
-                      <div className="flex-1 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-right text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.waveDirection}
                       </div>
                     </div>
