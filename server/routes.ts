@@ -2912,7 +2912,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate AI summary in structured format
       const prompt = `Generate a surf report for ${surfDataSummary.location.name} in this EXACT format:
 
-Today:
 Waves are at ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are ${windType} at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection} with a ${surfDataSummary.today.tideStatus.toLowerCase()} tide${surfDataSummary.today.nextTide ? ` to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
 
 IMPORTANT INSTRUCTIONS:
