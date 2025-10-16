@@ -351,7 +351,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="grid grid-cols-2 gap-3">
                       {/* Primary Buoy Data */}
                       {(conditions as any)?.primaryBuoy && (
-                        <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10">
+                        <div className="border border-emerald-500/30 rounded-lg p-3 bg-emerald-50/20 dark:bg-emerald-900/10 flex flex-col">
                           <div className="flex items-end space-x-2 mb-2">
                             <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                               {(conditions as any).primaryBuoy.waveHeight ? parseFloat((conditions as any).primaryBuoy.waveHeight).toFixed(1) : "0.0"}<span className="text-sm">ft</span> <span className="text-sm">@</span> {(conditions as any).primaryBuoy.wavePeriod || 0}<span className="text-sm">s</span>
@@ -360,7 +360,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           <div className="space-y-1 text-xs mb-2">
                             <div>Direction: <span className="text-emerald-600 dark:text-emerald-400">{(conditions as any).primaryBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div className="leading-tight space-y-0 mb-2">
+                          <div className="leading-tight space-y-0 mb-2 flex-grow">
                             {(conditions as any).primaryBuoy.stationName ? (
                               <>
                                 <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
@@ -379,7 +379,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full h-6 text-[10px] font-medium border-emerald-300 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                            className="w-full h-6 text-[10px] font-medium border-emerald-300 dark:border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 mt-auto"
                             onClick={() => handleBuoyHistoryClick((conditions as any).primaryBuoy.stationId, (conditions as any).primaryBuoy.stationName)}
                             data-testid="primary-buoy-history-button"
                           >
@@ -390,7 +390,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
                       {/* Backup Buoy Data */}
                       {(conditions as any)?.backupBuoy && (
-                        <div className="border border-blue-300/30 rounded-lg p-3 bg-blue-50/20 dark:bg-blue-900/10">
+                        <div className="border border-blue-300/30 rounded-lg p-3 bg-blue-50/20 dark:bg-blue-900/10 flex flex-col">
                           <div className="flex items-end space-x-2 mb-2">
                             <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                               {(conditions as any).backupBuoy.waveHeight ? parseFloat((conditions as any).backupBuoy.waveHeight).toFixed(1) : "0.0"}<span className="text-sm">ft</span> <span className="text-sm">@</span> {(conditions as any).backupBuoy.wavePeriod || 0}<span className="text-sm">s</span>
@@ -399,7 +399,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           <div className="space-y-1 text-xs mb-2">
                             <div>Direction: <span className="text-blue-600 dark:text-blue-400">{(conditions as any).backupBuoy.waveDirection || "N/A"}</span></div>
                           </div>
-                          <div className="leading-tight space-y-0 mb-2">
+                          <div className="leading-tight space-y-0 mb-2 flex-grow">
                             {(conditions as any).backupBuoy.stationName ? (
                               <>
                                 <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
@@ -418,7 +418,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full h-6 text-[10px] font-medium border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            className="w-full h-6 text-[10px] font-medium border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 mt-auto"
                             onClick={() => handleBuoyHistoryClick((conditions as any).backupBuoy.stationId, (conditions as any).backupBuoy.stationName)}
                             data-testid="backup-buoy-history-button"
                           >
