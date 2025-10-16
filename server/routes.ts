@@ -2788,13 +2788,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         waveHeightRange = `${minHeight}-${maxHeight}ft`;
       }
 
-      // Get tide data
+      // Get today's tide data
       const todayTides = forecast?.[0]?.tides || [];
-      const currentTide = {
-        height: conditions.tideHeight,
-        status: conditions.tideStatus,
-        schedule: todayTides.slice(0, 4).map((t: any) => `${t.type} ${t.height}ft at ${t.time}`).join(', ')
-      };
+      const nextTide = todayTides.find((t: any) => {
+        const tideTime = new Date(`${forecast[0].date} ${t.time}`);
+        return tideTime > new Date();
+      });
+
+      // Get tomorrow's data
+      const tomorrowForecast = forecast?.[1];
+      const tomorrowTides = tomorrowForecast?.tides || [];
+      const tomorrowHourly = tomorrowForecast?.hourly || [];
+
+      // Calculate tomorrow's morning and afternoon winds
+      const morningHours = tomorrowHourly.slice(6, 12); // 6am-12pm
+      const afternoonHours = tomorrowHourly.slice(12, 18); // 12pm-6pm
+      
+      const avgMorningWind = morningHours.length > 0
+        ? Math.round(morningHours.reduce((sum: number, h: any) => sum + h.windSpeed, 0) / morningHours.length)
+        : null;
+      
+      const avgAfternoonWind = afternoonHours.length > 0
+        ? Math.round(afternoonHours.reduce((sum: number, h: any) => sum + h.windSpeed, 0) / afternoonHours.length)
+        : null;
+
+      const morningWindDir = morningHours[0]?.windDirection || conditions.windDirection;
+      const afternoonWindDir = afternoonHours[0]?.windDirection || conditions.windDirection;
 
       const surfDataSummary = {
         location: {
@@ -2802,89 +2821,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
           region: location.region,
           country: location.country,
         },
-        current: {
-          waveHeight: conditions.waveHeight,
+        today: {
           waveHeightRange: waveHeightRange,
           wavePeriod: conditions.wavePeriod,
           waveDirection: conditions.waveDirection,
           windSpeed: conditions.windSpeed,
           windDirection: conditions.windDirection,
-          waterTemp: conditions.waterTemp,
-          airTemp: conditions.airTemp,
-          uvIndex: conditions.uvIndex,
-          visibility: conditions.visibility,
-          conditions: conditions.conditions,
-          lastUpdated: conditions.lastUpdated,
+          tideHeight: conditions.tideHeight,
+          tideStatus: conditions.tideStatus,
+          nextTide: nextTide ? {
+            type: nextTide.type,
+            time: nextTide.time,
+            height: nextTide.height
+          } : null,
         },
-        tide: currentTide,
-        forecast: forecast ? forecast.slice(0, 3).map((day: any) => ({
-          date: day.date,
-          waveHeightRange: `${day.minWaveHeight}-${day.maxWaveHeight}`,
-          avgWaveHeight: day.avgWaveHeight,
-          avgWindSpeed: day.avgWindSpeed,
-          maxWindSpeed: day.maxWindSpeed,
-        })) : null,
-        primaryBuoy: primaryBuoy ? {
-          stationId: primaryBuoy.stationId,
-          stationName: primaryBuoy.stationName,
-          waveHeight: primaryBuoy.waveHeight.toFixed(1),
-          wavePeriod: primaryBuoy.wavePeriod,
-          direction: primaryBuoy.waveDirection,
-          waterTemp: primaryBuoy.waterTemp,
+        tomorrow: tomorrowForecast ? {
+          waveHeightRange: `${tomorrowForecast.minWaveHeight}-${tomorrowForecast.maxWaveHeight}`,
+          avgWavePeriod: Math.round(tomorrowForecast.avgWavePeriod || conditions.wavePeriod),
+          waveDirection: tomorrowForecast.dominantWaveDirection || conditions.waveDirection,
+          morningWind: avgMorningWind,
+          morningWindDir: morningWindDir,
+          afternoonWind: avgAfternoonWind,
+          afternoonWindDir: afternoonWindDir,
+          tides: tomorrowTides,
         } : null,
-        backupBuoy: backupBuoy ? {
-          stationId: backupBuoy.stationId,
-          stationName: backupBuoy.stationName,
-          waveHeight: backupBuoy.waveHeight.toFixed(1),
-          wavePeriod: backupBuoy.wavePeriod,
-          direction: backupBuoy.waveDirection,
-          waterTemp: backupBuoy.waterTemp,
-        } : null,
+        buoys: {
+          primary: primaryBuoy ? {
+            stationId: primaryBuoy.stationId,
+            stationName: primaryBuoy.stationName,
+            waveHeight: primaryBuoy.waveHeight.toFixed(1),
+            wavePeriod: primaryBuoy.wavePeriod,
+            direction: primaryBuoy.waveDirection,
+          } : null,
+          backup: backupBuoy ? {
+            stationId: backupBuoy.stationId,
+            stationName: backupBuoy.stationName,
+            waveHeight: backupBuoy.waveHeight.toFixed(1),
+            wavePeriod: backupBuoy.wavePeriod,
+            direction: backupBuoy.waveDirection,
+          } : null,
+        }
       };
 
-      // Generate AI summary with technical tone
-      const prompt = `You are a surf forecaster providing technical analysis. Write a VERY brief surf report (1-2 short paragraphs max).
+      // Generate AI summary in structured format
+      const prompt = `Generate a surf report for ${surfDataSummary.location.name} in this EXACT format:
 
-Location: ${surfDataSummary.location.name}, ${surfDataSummary.location.region}, ${surfDataSummary.location.country}
+Today:
+Waves are at ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are [onshore/offshore] at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection}${surfDataSummary.today.nextTide ? ` with a ${surfDataSummary.today.tideStatus} tide to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
+${surfDataSummary.tomorrow ? `
+Tomorrow:
+There is a [rising/falling/steady] swell in the water and waves will be ${surfDataSummary.tomorrow.waveHeightRange} ft at a ${surfDataSummary.tomorrow.avgWavePeriod} sec out of the ${surfDataSummary.tomorrow.waveDirection}. Winds will be [onshore/offshore] all day${surfDataSummary.tomorrow.morningWind ? `, light in the morning at ${surfDataSummary.tomorrow.morningWind} mph out of the ${surfDataSummary.tomorrow.morningWindDir}` : ''}${surfDataSummary.tomorrow.afternoonWind ? `, and stronger at ${surfDataSummary.tomorrow.afternoonWind} mph out of the ${surfDataSummary.tomorrow.afternoonWindDir} into the afternoon` : ''}. ${surfDataSummary.tomorrow.tides.length > 0 ? 'It will be a [falling/rising] tide in the morning and [rising/falling] tide starting at [time] into the afternoon.' : ''}` : ''}
 
-Current Conditions:
-- Wave Height Range: ${surfDataSummary.current.waveHeightRange}
-- Wave Period: ${surfDataSummary.current.wavePeriod}s
-- Wave Direction: ${surfDataSummary.current.waveDirection}
-- Wind: ${surfDataSummary.current.windSpeed}mph ${surfDataSummary.current.windDirection}
-- Water Temp: ${surfDataSummary.current.waterTemp}°F
-- Tide: ${surfDataSummary.tide.height}ft ${surfDataSummary.tide.status}
-${surfDataSummary.tide.schedule ? `- Today's Tides: ${surfDataSummary.tide.schedule}` : ''}
+IMPORTANT INSTRUCTIONS:
+1. Replace [onshore/offshore] based on wind direction relative to the coast
+2. Replace [rising/falling/steady] by comparing today's wave height to tomorrow's
+3. Replace tide descriptions [falling/rising] based on the tide schedule data
+4. Use the exact sentence structure shown above
+5. Keep factual and concise - no extra commentary
+6. Do not add any additional analysis or paragraphs
 
-NOAA Buoy Data:
-${surfDataSummary.primaryBuoy ? `- Primary: Station ${surfDataSummary.primaryBuoy.stationId} (${surfDataSummary.primaryBuoy.stationName}) - ${surfDataSummary.primaryBuoy.waveHeight}ft @ ${surfDataSummary.primaryBuoy.wavePeriod}s ${surfDataSummary.primaryBuoy.direction}` : ''}
-${surfDataSummary.backupBuoy ? `- Backup: Station ${surfDataSummary.backupBuoy.stationId} (${surfDataSummary.backupBuoy.stationName}) - ${surfDataSummary.backupBuoy.waveHeight}ft @ ${surfDataSummary.backupBuoy.wavePeriod}s ${surfDataSummary.backupBuoy.direction}` : ''}
-${surfDataSummary.forecast ? `
-3-Day Trend: ${surfDataSummary.forecast[0].waveHeightRange}ft → ${surfDataSummary.forecast[2].waveHeightRange}ft` : ''}
-
-Write a technical surf assessment that:
-1. Analyzes wave quality based on period and direction
-2. Evaluates wind impact (clean/choppy conditions)
-3. Notes tide timing impact on surf quality
-4. ${surfDataSummary.forecast ? 'Mentions forecast trend' : 'Describes current setup'}
-5. Uses technical terminology and factual analysis
-6. Avoid marketing language, enthusiasm, or phrases like "enjoy the session" or "keep your stoke high"
-7. Keep it analytical and informative - maximum 1-2 brief paragraphs`;
+REFERENCE DATA:
+${surfDataSummary.buoys.primary ? `- Primary Buoy ${surfDataSummary.buoys.primary.stationId}: ${surfDataSummary.buoys.primary.waveHeight}ft @ ${surfDataSummary.buoys.primary.wavePeriod}s` : ''}
+${surfDataSummary.buoys.backup ? `- Backup Buoy ${surfDataSummary.buoys.backup.stationId}: ${surfDataSummary.buoys.backup.waveHeight}ft @ ${surfDataSummary.buoys.backup.wavePeriod}s` : ''}
+${surfDataSummary.tomorrow?.tides ? `- Tomorrow's Tides: ${surfDataSummary.tomorrow.tides.map((t: any) => `${t.type} ${t.height}ft at ${t.time}`).join(', ')}` : ''}`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: "You are a technical surf forecaster providing analytical assessments. Use technical terminology and avoid marketing language or enthusiasm. Focus on factual analysis of wave quality, wind conditions, and surfability."
+            content: "You are a surf forecaster. Generate reports using ONLY the exact format provided. Fill in bracketed placeholders with appropriate values based on the data. Do not add extra commentary or deviate from the format."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        temperature: 0.6,
-        max_tokens: 250,
+        temperature: 0.3,
+        max_tokens: 300,
       });
 
       const summary = completion.choices[0]?.message?.content || "Unable to generate surf summary at this time.";
