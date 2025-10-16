@@ -552,19 +552,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             {isLoading || forecastLoading ? (
               <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
             ) : (
-              <div className="flex flex-col lg:flex-row gap-6 items-start">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Tide Chart */}
                 {todayTides.length > 0 && (
-                  <div className="flex-1 max-w-xs">
-                    <div className="h-28">
-                      <TideChart tides={todayTides} date="today" location={location} />
-                    </div>
+                  <div className="lg:col-span-3">
+                    <TideChart tides={todayTides} date="today" location={location} />
                   </div>
                 )}
                 
                 {/* Tide Times Data */}
                 {todayTides.length > 0 && (
-                  <div className="flex-1 space-y-2">
+                  <div className="lg:col-span-2 space-y-2">
                     {todayTides
                       .filter(tide => tide.type === 'high' || tide.type === 'low')
                       .sort((a, b) => {
@@ -599,7 +597,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 )}
                 
                 {/* Sun Data */}
-                <div className="flex-1 space-y-2">
+                <div className="lg:col-span-1 space-y-2">
                   <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-800/50">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-white">Sunrise</span>

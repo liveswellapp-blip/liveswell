@@ -248,7 +248,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
         <svg 
           ref={svgRef}
           viewBox="0 0 100 50" 
-          className="w-full h-full overflow-hidden cursor-pointer"
+          className="w-full h-full overflow-visible cursor-pointer"
           preserveAspectRatio="none"
           onTouchStart={handleStart}
           onTouchMove={handleMove}
