@@ -2813,8 +2813,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } : null,
       };
 
-      // Generate AI summary with casual-technical tone
-      const prompt = `You are a knowledgeable surf forecaster. Write a VERY brief surf report (1-2 short paragraphs max).
+      // Generate AI summary with technical tone
+      const prompt = `You are a surf forecaster providing technical analysis. Write a VERY brief surf report (1-2 short paragraphs max).
 
 Location: ${surfDataSummary.location.name}, ${surfDataSummary.location.region}, ${surfDataSummary.location.country}
 
@@ -2828,25 +2828,27 @@ ${surfDataSummary.realTimeData ? `- Real-time NOAA Buoy Data: Station ${surfData
 ${surfDataSummary.forecast ? `
 - 3-Day Trend: ${surfDataSummary.forecast[0].waveHeightRange}ft → ${surfDataSummary.forecast[2].waveHeightRange}ft` : ''}
 
-Write a concise surf report that:
-1. Opens with surfability assessment (good/fair/poor)
-2. Quickly mentions wave quality, wind effect, and ${surfDataSummary.forecast ? 'forecast trend' : 'current setup'}
-3. Uses casual surfer tone but stays technical
-4. Keep it SHORT - maximum 1-2 brief paragraphs`;
+Write a technical surf assessment that:
+1. Analyzes wave quality based on period and direction
+2. Evaluates wind impact (clean/choppy conditions)
+3. ${surfDataSummary.forecast ? 'Notes forecast trend' : 'Describes current setup'}
+4. Uses technical terminology and factual analysis
+5. Avoid marketing language, enthusiasm, or phrases like "enjoy the session" or "keep your stoke high"
+6. Keep it analytical and informative - maximum 1-2 brief paragraphs`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: "You are a surf forecaster who writes brief, punchy surf reports. Keep them short and direct."
+            content: "You are a technical surf forecaster providing analytical assessments. Use technical terminology and avoid marketing language or enthusiasm. Focus on factual analysis of wave quality, wind conditions, and surfability."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        temperature: 0.7,
+        temperature: 0.6,
         max_tokens: 250,
       });
 
