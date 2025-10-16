@@ -695,10 +695,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="space-y-0">
               {/* Header */}
               <div className="flex justify-between bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
-                <div className="flex-1 text-left">Time</div>
-                <div className="flex-1 text-left">Height</div>
-                <div className="flex-1 text-left">Period</div>
-                <div className="flex-1 text-left">Direction</div>
+                <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pr-3">Time</div>
+                <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Height</div>
+                <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Period</div>
+                <div className="flex-1 text-left pl-3">Direction</div>
               </div>
               
               {/* Hourly Data */}
@@ -706,16 +706,16 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 {buoyHistoryData.historicalData.map((dataPoint, index) => (
                   <div key={index}>
                     <div className="flex justify-between text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 px-4 sm:px-6">
-                      <div className="flex-1 text-left font-medium text-gray-900 dark:text-gray-100">
+                      <div className="flex-1 text-left font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600 pr-3">
                         {dataPoint.time}
                       </div>
-                      <div className="flex-1 text-left text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="flex-1 text-left text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">
                         {dataPoint.waveHeight.toFixed(1)}ft
                       </div>
-                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">
                         {dataPoint.wavePeriod}s
                       </div>
-                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium pl-3">
                         {dataPoint.waveDirection}
                       </div>
                     </div>
@@ -757,28 +757,28 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           ) : windDetailsData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
-                <div className="w-16 sm:w-20 md:w-24">Time</div>
-                <div className="w-16 sm:w-20 md:w-24">Speed</div>
-                <div className="w-16 sm:w-20 md:w-24">Gusts</div>
-                <div className="flex-1">Direction</div>
+              <div className="flex justify-between bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
+                <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pr-3">Time</div>
+                <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Speed</div>
+                <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Gusts</div>
+                <div className="flex-1 text-left pl-3">Direction</div>
               </div>
               
               {/* Hourly Data */}
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {windDetailsData.forecastData.map((dataPoint, index) => (
                   <div key={index}>
-                    <div className="flex text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
-                      <div className="w-16 sm:w-20 md:w-24 font-medium text-gray-900 dark:text-gray-100">
+                    <div className="flex justify-between text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 px-4 sm:px-6">
+                      <div className="flex-1 text-left font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600 pr-3">
                         {dataPoint.time}
                       </div>
-                      <div className="w-16 sm:w-20 md:w-24 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="flex-1 text-left text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">
                         {dataPoint.windSpeed} mph
                       </div>
-                      <div className="w-16 sm:w-20 md:w-24 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">
                         {dataPoint.windGusts} mph
                       </div>
-                      <div className="flex-1 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium pl-3">
                         {dataPoint.windDirection}
                       </div>
                     </div>
