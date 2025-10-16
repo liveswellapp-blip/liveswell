@@ -2788,28 +2788,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         waveHeightRange = `${minHeight}-${maxHeight} ft`;
       }
 
-      // Get next tide from forecast data
-      // The first forecast item contains today's remaining tides
+      // Get next tide from forecast data based on tide direction
+      // If tide is rising, find next HIGH tide. If falling, find next LOW tide.
       let nextTide = null;
       
       if (forecast?.[0]?.tides?.length > 0) {
-        const currentHour = new Date().getHours();
-        const currentMinutes = new Date().getMinutes();
+        const tideStatus = conditions.tideStatus?.toLowerCase();
+        const targetType = tideStatus === 'rising' ? 'high' : 'low';
         
-        // Find the next upcoming tide from today's tides
-        nextTide = forecast[0].tides.find((t: any) => {
-          const [time, period] = t.time.split(' ');
-          const [hours, minutes] = time.split(':').map(Number);
-          let tideHour = hours;
-          
-          if (period?.toLowerCase() === 'pm' && hours !== 12) {
-            tideHour = hours + 12;
-          } else if (period?.toLowerCase() === 'am' && hours === 12) {
-            tideHour = 0;
-          }
-          
-          return tideHour > currentHour || (tideHour === currentHour && minutes > currentMinutes);
-        });
+        // Find the next tide of the appropriate type
+        nextTide = forecast[0].tides.find((t: any) => t.type.toLowerCase() === targetType);
       }
 
       // Get tomorrow's data
