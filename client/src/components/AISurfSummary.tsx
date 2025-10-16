@@ -28,13 +28,7 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
   if (isLoading) {
     return (
       <Card className="mb-8 bg-gradient-to-br from-emerald-50/50 to-blue-50/50 dark:from-emerald-950/20 dark:to-blue-950/20 border-emerald-200 dark:border-emerald-800" data-testid="card-ai-summary-loading">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-            <Sparkles className="w-5 h-5" />
-            AI Surf Report
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="pt-6 space-y-2">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
@@ -48,14 +42,9 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
   if (error) {
     return (
       <Card className="mb-8 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20 border-red-200 dark:border-red-800" data-testid="card-ai-summary-error">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
-            <AlertCircle className="w-5 h-5" />
-            AI Surf Report
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-red-600 dark:text-red-400">
+        <CardContent className="pt-6">
+          <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
             Unable to generate AI surf summary at this time. Please try again later.
           </p>
         </CardContent>
@@ -69,13 +58,7 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
 
   return (
     <Card className="mb-8 bg-gradient-to-br from-emerald-50/50 to-blue-50/50 dark:from-emerald-950/20 dark:to-blue-950/20 border-emerald-200 dark:border-emerald-800" data-testid="card-ai-summary">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base text-emerald-700 dark:text-emerald-300">
-          <Sparkles className="w-4 h-4" data-testid="icon-sparkles" />
-          AI Surf Report
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div 
           className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 whitespace-pre-line"
           data-testid="text-ai-summary-content"
