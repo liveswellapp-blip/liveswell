@@ -313,10 +313,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       <div className="w-full border-b border-emerald-500/30 mb-4"></div>
 
       <div className="px-6 mb-4 md:mx-auto md:max-w-7xl">
-        {/* AI Surf Summary - appears above Live Conditions */}
-        <AISurfSummary location={location} />
-        
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
+        
+        {/* AI Surf Summary - appears below Live Conditions heading */}
+        <AISurfSummary location={location} />
         
         {conditions?.warning && (
           <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">

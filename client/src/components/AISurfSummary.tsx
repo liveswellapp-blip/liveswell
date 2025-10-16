@@ -77,7 +77,7 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
       </CardHeader>
       <CardContent>
         <div 
-          className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 whitespace-pre-line"
+          className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 whitespace-pre-line"
           data-testid="text-ai-summary-content"
         >
           {data.summary}
