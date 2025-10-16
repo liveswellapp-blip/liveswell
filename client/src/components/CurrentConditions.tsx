@@ -328,7 +328,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
 
         {/* Enhanced Current Conditions Grid - Simplified Responsive Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           {/* Expanded Wave Conditions Card */}
           <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-3">
@@ -451,10 +451,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               )}
             </div>
 
-            {/* Wind and Water Temperature - Side by side on mobile */}
-          <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-3 md:gap-0">
-            {/* Wind Conditions */}
-            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+          {/* Wind Conditions */}
+          <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Wind className="h-5 w-5 text-blue-900 dark:text-white" />
@@ -543,7 +541,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 )}
               </div>
             </div>
-          </div>
 
           {/* Tide Information */}
           <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
