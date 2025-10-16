@@ -29,6 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **Data Flow**: Location selection, external weather API integration (OpenWeatherMap), server-side data processing, real-time updates (client polling), client-side caching.
 - **API Endpoints**: Location search, current conditions, nearby locations, forecast data, nearby spots.
 - **Integration**: Real-time NOAA marine data and comprehensive surf forecasting with multiple data overlays.
+- **AI Surf Summary**: Intelligent wind classification system that accurately determines onshore/offshore/sideshore conditions based on coastline orientation (East Coast, West Coast, Gulf Coast) and real-time wind direction.
 
 ## External Dependencies
 

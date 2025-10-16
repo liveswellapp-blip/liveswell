@@ -2754,6 +2754,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to determine wind type based on coastline orientation
+  const getWindType = (lat: number, lon: number, windDir: string): string => {
+    const dir = windDir.toUpperCase();
+    
+    // East Coast (Atlantic) - ocean to the EAST
+    if (lon > -85 && lon < -65 && lat > 25 && lat < 45) {
+      if (['E', 'ENE', 'ESE'].includes(dir)) return 'onshore';
+      if (['W', 'WNW', 'WSW'].includes(dir)) return 'offshore';
+      if (['NE', 'SE'].includes(dir)) return 'side-onshore';
+      if (['NW', 'SW'].includes(dir)) return 'side-offshore';
+      return 'sideshore';
+    }
+    
+    // West Coast (Pacific) - ocean to the WEST
+    if (lon > -125 && lon < -117 && lat > 32 && lat < 48) {
+      if (['W', 'WNW', 'WSW'].includes(dir)) return 'onshore';
+      if (['E', 'ENE', 'ESE'].includes(dir)) return 'offshore';
+      if (['NW', 'SW'].includes(dir)) return 'side-onshore';
+      if (['NE', 'SE'].includes(dir)) return 'side-offshore';
+      return 'sideshore';
+    }
+    
+    // Gulf Coast - ocean to the SOUTH
+    if (lon > -98 && lon < -80 && lat > 25 && lat < 31) {
+      if (['S', 'SSE', 'SSW', 'SE', 'SW'].includes(dir)) return 'onshore';
+      if (['N', 'NNE', 'NNW', 'NE', 'NW'].includes(dir)) return 'offshore';
+      return 'sideshore';
+    }
+    
+    // Default fallback
+    return 'offshore';
+  };
+
   // AI Surf Summary endpoint
   app.get("/api/locations/:id/ai-summary", generalApiLimiter, async (req, res) => {
     try {
@@ -2869,17 +2902,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
+      // Determine wind type based on coastline orientation
+      const windType = getWindType(
+        parseFloat(location.latitude),
+        parseFloat(location.longitude),
+        surfDataSummary.today.windDirection
+      );
+
       // Generate AI summary in structured format
       const prompt = `Generate a surf report for ${surfDataSummary.location.name} in this EXACT format:
 
 Today:
-Waves are at ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are [onshore/offshore] at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection} with a ${surfDataSummary.today.tideStatus.toLowerCase()} tide${surfDataSummary.today.nextTide ? ` to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
+Waves are at ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are ${windType} at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection} with a ${surfDataSummary.today.tideStatus.toLowerCase()} tide${surfDataSummary.today.nextTide ? ` to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
 
 IMPORTANT INSTRUCTIONS:
-1. Replace [onshore/offshore] based on wind direction relative to the coast
-2. Use the exact sentence structure shown above
-3. Keep factual and concise - no extra commentary
-4. Do not add any additional analysis or paragraphs
+1. Use the EXACT sentence structure shown above with all the provided values
+2. Keep factual and concise - no extra commentary
+3. Do not add any additional analysis or paragraphs
 
 REFERENCE DATA:
 ${surfDataSummary.buoys.primary ? `- Primary Buoy ${surfDataSummary.buoys.primary.stationId}: ${surfDataSummary.buoys.primary.waveHeight}ft @ ${surfDataSummary.buoys.primary.wavePeriod}s` : ''}
