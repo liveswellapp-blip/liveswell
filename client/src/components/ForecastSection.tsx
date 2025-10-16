@@ -239,35 +239,35 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           ) : detailedData ? (
             <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="max-h-96 overflow-y-auto">
-                <table className="w-full text-sm sm:text-base md:text-lg">
+                <table className="w-full text-xs sm:text-sm md:text-base lg:text-lg">
                   <thead className="bg-emerald-50 dark:bg-emerald-900/20 sticky top-0">
                     <tr className="font-semibold">
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Time</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Waves</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Period</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Wind</th>
-                      <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Direction</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Time</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Waves</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Period</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">Wind</th>
+                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 whitespace-nowrap">Direction</th>
                     </tr>
                   </thead>
                   <tbody className="bg-background">
                     {detailedData.hourlyData.map((hour, index) => (
                       <tr key={index} className="hover:bg-muted/30 transition-colors border-b border-emerald-200 dark:border-emerald-800 last:border-b-0">
-                        <td className="text-left py-2.5 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600">
+                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
                           {hour.time}
                         </td>
-                        <td className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600">
-                          {hour.waveHeight}
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600">
+                          <div className="whitespace-nowrap">{hour.waveHeight}</div>
+                          <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                             {hour.waveDirection}
                           </div>
                         </td>
-                        <td className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium border-r border-gray-300 dark:border-gray-600">
+                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-blue-600 dark:text-blue-400 font-medium border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
                           {hour.wavePeriod}
                         </td>
-                        <td className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600">
+                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
                           {hour.windSpeed}
                         </td>
-                        <td className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium">
+                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">
                           {hour.windDirection}
                         </td>
                       </tr>
