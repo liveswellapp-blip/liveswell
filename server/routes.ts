@@ -2861,9 +2861,9 @@ Write a concise surf report that:
       });
 
     } catch (error) {
+      const locationId = parseInt(req.params.id);
       console.error("❌ Error generating AI surf summary:", {
         locationId,
-        locationName: location?.name,
         error: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined
       });
