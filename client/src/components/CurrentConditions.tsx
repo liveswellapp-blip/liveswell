@@ -692,27 +692,35 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               ))}
             </div>
           ) : buoyHistoryData ? (
-            <div className="space-y-0">
+            <div className="space-y-0 relative">
+              {/* Vertical Separators - Fixed Position */}
+              <div className="absolute inset-0 grid grid-cols-4 pointer-events-none">
+                <div></div>
+                <div className="border-l border-gray-300 dark:border-gray-600"></div>
+                <div className="border-l border-gray-300 dark:border-gray-600"></div>
+                <div className="border-l border-gray-300 dark:border-gray-600"></div>
+              </div>
+              
               {/* Header */}
-              <div className="grid grid-cols-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg">
-                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Time</div>
-                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Height</div>
-                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Period</div>
+              <div className="grid grid-cols-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg relative">
+                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Time</div>
+                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Height</div>
+                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Period</div>
                 <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Direction</div>
               </div>
               
               {/* Hourly Data */}
-              <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
+              <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg relative">
                 {buoyHistoryData.historicalData.map((dataPoint, index) => (
                   <div key={index}>
                     <div className="grid grid-cols-4 text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors">
-                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600">
+                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 dark:text-gray-100">
                         {dataPoint.time}
                       </div>
-                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600">
+                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {dataPoint.waveHeight.toFixed(1)}ft
                       </div>
-                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium border-r border-gray-300 dark:border-gray-600">
+                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.wavePeriod}s
                       </div>
                       <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium">
@@ -755,27 +763,35 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               ))}
             </div>
           ) : windDetailsData ? (
-            <div className="space-y-0">
+            <div className="space-y-0 relative">
+              {/* Vertical Separators - Fixed Position */}
+              <div className="absolute inset-0 grid grid-cols-4 pointer-events-none">
+                <div></div>
+                <div className="border-l border-gray-300 dark:border-gray-600"></div>
+                <div className="border-l border-gray-300 dark:border-gray-600"></div>
+                <div className="border-l border-gray-300 dark:border-gray-600"></div>
+              </div>
+              
               {/* Header */}
-              <div className="grid grid-cols-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg">
-                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Time</div>
-                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Speed</div>
-                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 border-r border-gray-300 dark:border-gray-600">Gusts</div>
+              <div className="grid grid-cols-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg relative">
+                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Time</div>
+                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Speed</div>
+                <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Gusts</div>
                 <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4">Direction</div>
               </div>
               
               {/* Hourly Data */}
-              <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
+              <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg relative">
                 {windDetailsData.forecastData.map((dataPoint, index) => (
                   <div key={index}>
                     <div className="grid grid-cols-4 text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors">
-                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600">
+                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 dark:text-gray-100">
                         {dataPoint.time}
                       </div>
-                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600">
+                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {dataPoint.windSpeed} mph
                       </div>
-                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium border-r border-gray-300 dark:border-gray-600">
+                      <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.windGusts} mph
                       </div>
                       <div className="text-left py-2.5 sm:py-3 px-3 sm:px-4 text-blue-600 dark:text-blue-400 font-medium">
