@@ -2788,24 +2788,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         waveHeightRange = `${minHeight}-${maxHeight} ft`;
       }
 
-      // Get today's tide data - check if we have real tide times or use simulation
+      // Get next tide from forecast data
+      // The first forecast item contains today's remaining tides
       let nextTide = null;
       
-      // Try to find next tide from today (forecast may start with tomorrow)
-      const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-      const todayForecastIndex = forecast?.findIndex((f: any) => f.date === todayDate || f.date === 'Today') ?? -1;
-      
-      if (todayForecastIndex >= 0 && forecast[todayForecastIndex]?.tides) {
-        const todayTides = forecast[todayForecastIndex].tides;
-        nextTide = todayTides.find((t: any) => {
-          const tideTime = new Date(`${forecast[todayForecastIndex].date} ${t.time}`);
-          return tideTime > new Date();
+      if (forecast?.[0]?.tides?.length > 0) {
+        const currentHour = new Date().getHours();
+        const currentMinutes = new Date().getMinutes();
+        
+        // Find the next upcoming tide from today's tides
+        nextTide = forecast[0].tides.find((t: any) => {
+          const [time, period] = t.time.split(' ');
+          const [hours, minutes] = time.split(':').map(Number);
+          let tideHour = hours;
+          
+          if (period?.toLowerCase() === 'pm' && hours !== 12) {
+            tideHour = hours + 12;
+          } else if (period?.toLowerCase() === 'am' && hours === 12) {
+            tideHour = 0;
+          }
+          
+          return tideHour > currentHour || (tideHour === currentHour && minutes > currentMinutes);
         });
-      }
-      
-      // If no next tide found and we have tomorrow's tides, use the first tide from tomorrow
-      if (!nextTide && forecast?.[0]?.tides?.length > 0) {
-        nextTide = forecast[0].tides[0];
       }
 
       // Get tomorrow's data
