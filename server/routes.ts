@@ -2788,12 +2788,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         waveHeightRange = `${minHeight}-${maxHeight} ft`;
       }
 
-      // Get today's tide data
-      const todayTides = forecast?.[0]?.tides || [];
-      const nextTide = todayTides.find((t: any) => {
-        const tideTime = new Date(`${forecast[0].date} ${t.time}`);
-        return tideTime > new Date();
-      });
+      // Get today's tide data - check if we have real tide times or use simulation
+      let nextTide = null;
+      
+      // Try to find next tide from today (forecast may start with tomorrow)
+      const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      const todayForecastIndex = forecast?.findIndex((f: any) => f.date === todayDate || f.date === 'Today') ?? -1;
+      
+      if (todayForecastIndex >= 0 && forecast[todayForecastIndex]?.tides) {
+        const todayTides = forecast[todayForecastIndex].tides;
+        nextTide = todayTides.find((t: any) => {
+          const tideTime = new Date(`${forecast[todayForecastIndex].date} ${t.time}`);
+          return tideTime > new Date();
+        });
+      }
+      
+      // If no next tide found and we have tomorrow's tides, use the first tide from tomorrow
+      if (!nextTide && forecast?.[0]?.tides?.length > 0) {
+        nextTide = forecast[0].tides[0];
+      }
 
       // Get tomorrow's data
       const tomorrowForecast = forecast?.[1];
@@ -2825,7 +2838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           waveHeightRange: waveHeightRange,
           wavePeriod: conditions.wavePeriod,
           waveDirection: conditions.waveDirection,
-          windSpeed: conditions.windSpeed,
+          windSpeed: Math.round(parseFloat(conditions.windSpeed)),
           windDirection: conditions.windDirection,
           tideHeight: conditions.tideHeight,
           tideStatus: conditions.tideStatus,
