@@ -2795,9 +2795,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (forecast?.[0]?.tides?.length > 0) {
         const tideStatus = conditions.tideStatus?.toLowerCase();
         const targetType = tideStatus === 'rising' ? 'high' : 'low';
+        const currentTime = new Date();
+        const currentHour = currentTime.getHours();
+        const currentMinutes = currentTime.getMinutes();
         
-        // Find the next tide of the appropriate type
-        nextTide = forecast[0].tides.find((t: any) => t.type.toLowerCase() === targetType);
+        // Find the next tide of the appropriate type that's after current time
+        nextTide = forecast[0].tides.find((t: any) => {
+          if (t.type.toLowerCase() !== targetType) return false;
+          
+          const [time, period] = t.time.split(' ');
+          const [hours, minutes] = time.split(':').map(Number);
+          let tideHour = hours;
+          
+          if (period?.toLowerCase() === 'pm' && hours !== 12) {
+            tideHour = hours + 12;
+          } else if (period?.toLowerCase() === 'am' && hours === 12) {
+            tideHour = 0;
+          }
+          
+          // Check if this tide is in the future
+          return tideHour > currentHour || (tideHour === currentHour && minutes > currentMinutes);
+        });
       }
 
       // Get tomorrow's data
