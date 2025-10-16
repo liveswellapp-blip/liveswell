@@ -327,8 +327,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         
 
 
-        {/* Enhanced Current Conditions Grid - Simplified Responsive Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {/* Enhanced Current Conditions Grid - Desktop: 3 cards in row, Tide below */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Expanded Wave Conditions Card */}
           <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-3">
@@ -542,124 +542,115 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
             </div>
 
-          {/* Tide Information */}
-          <div className="rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
-                <span className="text-base font-medium">Tide & Sun</span>
-              </div>
+          {/* Tide & Sun - Horizontal Layout - Spans full width below */}
+          <div className="lg:col-span-3 rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center space-x-2 mb-4">
+              <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
+              <span className="text-base font-medium">Tide & Sun</span>
             </div>
             
-            <div className="space-y-3">
-              {isLoading || forecastLoading ? (
-                <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
-              ) : (
-                <>
-                  {/* Today's Tide Chart */}
-                  {todayTides.length > 0 && (
-                    <div className="h-20 md:h-auto">
-                      <TideChart tides={todayTides} date="today" location={location} />
-                    </div>
-                  )}
-                  
-                  {/* High/Low Tide Times and Heights - List View */}
-                  {todayTides.length > 0 && (
-                    <div className="space-y-2">
-                      {todayTides
-                        .filter(tide => tide.type === 'high' || tide.type === 'low')
-                        .sort((a, b) => {
-                          // Parse time strings to compare chronologically
-                          const parseTime = (timeStr: string) => {
-                            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-                            if (!match) return 0;
-                            
-                            let hours = parseInt(match[1]);
-                            const minutes = parseInt(match[2]);
-                            const isPM = match[3].toUpperCase() === 'PM';
-                            
-                            if (isPM && hours !== 12) hours += 12;
-                            if (!isPM && hours === 12) hours = 0;
-                            
-                            return hours * 60 + minutes; // Convert to minutes for easy comparison
-                          };
+            {isLoading || forecastLoading ? (
+              <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Tide Chart */}
+                {todayTides.length > 0 && (
+                  <div className="lg:col-span-1">
+                    <TideChart tides={todayTides} date="today" location={location} />
+                  </div>
+                )}
+                
+                {/* Tide Times Data */}
+                {todayTides.length > 0 && (
+                  <div className="lg:col-span-1 space-y-2">
+                    {todayTides
+                      .filter(tide => tide.type === 'high' || tide.type === 'low')
+                      .sort((a, b) => {
+                        const parseTime = (timeStr: string) => {
+                          const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                          if (!match) return 0;
                           
-                          return parseTime(a.time) - parseTime(b.time);
-                        })
-                        .map((tide, index, sortedTides) => (
-                        <div key={index}>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-white capitalize">{tide.type} Tide</span>
-                            <span className="text-emerald-400">{tide.time} - {tide.height.toFixed(1)} ft</span>
-                          </div>
-                          {index < sortedTides.length - 1 && (
-                            <div className="border-t border-gray-600/30 mt-2"></div>
-                          )}
+                          let hours = parseInt(match[1]);
+                          const minutes = parseInt(match[2]);
+                          const isPM = match[3].toUpperCase() === 'PM';
+                          
+                          if (isPM && hours !== 12) hours += 12;
+                          if (!isPM && hours === 12) hours = 0;
+                          
+                          return hours * 60 + minutes;
+                        };
+                        
+                        return parseTime(a.time) - parseTime(b.time);
+                      })
+                      .map((tide, index, sortedTides) => (
+                      <div key={index}>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-white capitalize">{tide.type} Tide</span>
+                          <span className="text-emerald-400">{tide.time} - {tide.height.toFixed(1)} ft</span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Sun Data - moved from Sun card */}
-                  <div className="mt-4 space-y-2 border-t border-gray-300 dark:border-gray-600 pt-3">
-                    {/* Sunrise */}
-                    <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-800/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-white">Sunrise</span>
-                        {isLoading ? (
-                          <Skeleton className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
-                        ) : (
-                          <span className="text-sm font-semibold text-emerald-400">
-                            {conditions?.sunrise || "N/A"}
-                          </span>
+                        {index < sortedTides.length - 1 && (
+                          <div className="border-t border-gray-600/30 mt-2"></div>
                         )}
                       </div>
-                    </div>
-                    
-                    {/* Sunset */}
-                    <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-800/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-white">Sunset</span>
-                        {isLoading ? (
-                          <Skeleton className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
-                        ) : (
-                          <span className="text-sm font-semibold text-emerald-400">
-                            {conditions?.sunset || "N/A"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* UV Index */}
-                    <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-800/50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <Shield className="h-3 w-3 text-white" />
-                          <span className="text-xs text-white">UV Index</span>
-                        </div>
-                        {isLoading ? (
-                          <Skeleton className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
-                        ) : (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-sm font-semibold text-emerald-400">{conditions?.uvIndex || 0}</span>
-                            <span className="text-xs text-emerald-400">
-                              {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
-                               conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
-                               conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Combined Data Source Attribution */}
-                    <div className="text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-2">
-                      NOAA Tides & Currents and OpenWeatherMap API
+                    ))}
+                  </div>
+                )}
+                
+                {/* Sun Data */}
+                <div className="lg:col-span-1 space-y-2">
+                  <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-800/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white">Sunrise</span>
+                      {isLoading ? (
+                        <Skeleton className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
+                      ) : (
+                        <span className="text-sm font-semibold text-emerald-400">
+                          {conditions?.sunrise || "N/A"}
+                        </span>
+                      )}
                     </div>
                   </div>
-                </>
-              )}
-            </div>
+                  
+                  <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-800/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-white">Sunset</span>
+                      {isLoading ? (
+                        <Skeleton className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
+                      ) : (
+                        <span className="text-sm font-semibold text-emerald-400">
+                          {conditions?.sunset || "N/A"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-900/30 rounded-lg p-2 border border-emerald-800/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <Shield className="h-3 w-3 text-white" />
+                        <span className="text-xs text-white">UV Index</span>
+                      </div>
+                      {isLoading ? (
+                        <Skeleton className="h-3 w-12 bg-gray-300 dark:bg-gray-600 rounded" />
+                      ) : (
+                        <div className="flex items-center space-x-1">
+                          <span className="text-sm font-semibold text-emerald-400">{conditions?.uvIndex || 0}</span>
+                          <span className="text-xs text-emerald-400">
+                            {conditions?.uvIndex && conditions.uvIndex > 7 ? "High" : 
+                             conditions?.uvIndex && conditions.uvIndex > 5 ? "Med" : 
+                             conditions?.uvIndex && conditions.uvIndex > 2 ? "Low" : "Min"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-2">
+                    NOAA Tides & Currents / OpenWeatherMap
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
