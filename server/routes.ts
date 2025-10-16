@@ -2849,9 +2849,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const tideStatus = conditions.tideStatus?.toLowerCase();
         const targetType = tideStatus === 'rising' ? 'high' : 'low';
         
-        // Find the last tide of the appropriate type from today's forecast
-        const tidesOfType = forecast[0].tides.filter((t: any) => t.type.toLowerCase() === targetType);
-        nextTide = tidesOfType.length > 0 ? tidesOfType[tidesOfType.length - 1] : null;
+        // Get timezone for location
+        const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
+        const now = new Date();
+        const nowInLocationTz = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+        
+        // Parse tide times and find the next upcoming tide of the target type
+        const tidesWithDates = forecast[0].tides.map((tide: any) => {
+          const [time, period] = tide.time.split(' ');
+          const [hours, minutes] = time.split(':');
+          let hour24 = parseInt(hours);
+          
+          if (period === 'PM' && hour24 !== 12) {
+            hour24 += 12;
+          } else if (period === 'AM' && hour24 === 12) {
+            hour24 = 0;
+          }
+          
+          // Create date in location's timezone
+          const tideDate = new Date(
+            nowInLocationTz.getFullYear(),
+            nowInLocationTz.getMonth(),
+            nowInLocationTz.getDate(),
+            hour24,
+            parseInt(minutes)
+          );
+          
+          return {
+            ...tide,
+            dateTime: tideDate
+          };
+        });
+        
+        // Filter for future tides of the target type and select the first one
+        const futureTides = tidesWithDates
+          .filter((tide: any) => 
+            tide.type.toLowerCase() === targetType && 
+            tide.dateTime > nowInLocationTz
+          )
+          .sort((a: any, b: any) => a.dateTime.getTime() - b.dateTime.getTime());
+        
+        nextTide = futureTides.length > 0 ? futureTides[0] : null;
       }
 
       // Get tomorrow's data
