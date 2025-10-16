@@ -1,11 +1,21 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, User, Shield, LogOut, Bell } from "lucide-react";
 import { Link } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Profile() {
+  const { user } = useAuth();
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
   return (
       <div className="min-h-screen bg-[hsl(155,50%,8%)]">
         <Header />
@@ -28,25 +38,86 @@ export default function Profile() {
           </div>
 
           <div className="grid gap-6 max-w-4xl">
+              {/* Account Information */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center text-emerald-400">
                     <User className="h-5 w-5 mr-2" />
-                    Profile Not Available
+                    Account Information
                   </CardTitle>
                   <CardDescription>
-                    User authentication is currently disabled
+                    Your account details and basic information
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-slate-300">
-                    Profile features require user authentication. The app is currently configured to work without login.
-                  </p>
-                  <p className="text-slate-400 text-sm">
-                    You can still access all surf condition data and features from the home page.
-                  </p>
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Email Address</Label>
+                    <Input
+                      value={(user as any)?.email || ""}
+                      disabled
+                      className="bg-slate-800 border-slate-700 text-slate-400"
+                    />
+                    <p className="text-sm text-slate-500">Email cannot be changed</p>
+                  </div>
                 </CardContent>
               </Card>
+
+              {/* Notification Preferences */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-emerald-400">
+                    <Bell className="h-5 w-5 mr-2" />
+                    Notification Preferences
+                  </CardTitle>
+                  <CardDescription>
+                    Configure your SMS and email notification settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Link href="/notifications">
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
+                      data-testid="button-notification-settings"
+                    >
+                      <Bell className="h-4 w-4 mr-2" />
+                      Manage Notifications
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Account Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-emerald-400">
+                    <Shield className="h-5 w-5 mr-2" />
+                    Account Actions
+                  </CardTitle>
+                  <CardDescription>
+                    Manage your account and session
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button 
+                    onClick={handleLogout}
+                    variant="outline" 
+                    className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out of Account
+                  </Button>
+                  
+                  <Separator className="bg-slate-700" />
+                  
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-300">App Version</Label>
+                    <p className="text-sm text-slate-400">LiveSwell v1.0.0</p>
+                  </div>
+                </CardContent>
+              </Card>
+
           </div>
         </div>
         

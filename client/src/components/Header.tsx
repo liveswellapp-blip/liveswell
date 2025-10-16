@@ -1,6 +1,7 @@
-import { Search, Waves } from "lucide-react";
+import { User, LogIn, Search, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import SearchModal from "./SearchModal";
 import logoImageDark from "@assets/LiveSwell logo (6)_1753469985642.png";
@@ -10,6 +11,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onLocationSelect }: HeaderProps) {
+  const { user, isAuthenticated } = useAuth();
   const [location] = useLocation();
   const [showSearchModal, setShowSearchModal] = useState(false);
 
@@ -57,6 +59,26 @@ export default function Header({ onLocationSelect }: HeaderProps) {
                   </Button>
                 </Link>
               </>
+            )}
+            
+            {/* User account section */}
+            {isAuthenticated ? (
+              <Link href="/profile">
+                <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="User Account" data-testid="button-profile">
+                  <User className="h-6 w-6" />
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-white border-white hover:bg-white hover:text-gray-900"
+                data-testid="button-open-auth"
+                onClick={() => window.location.href = "/api/login"}
+              >
+                <LogIn className="h-4 w-4 mr-1" />
+                Sign In
+              </Button>
             )}
           </div>
         </div>
