@@ -261,10 +261,10 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                             {hour.waveDirection}
                           </div>
                         </td>
-                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-blue-600 dark:text-blue-400 font-medium border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
+                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-emerald-600 dark:text-emerald-400 font-medium border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
                           {hour.wavePeriod}
                         </td>
-                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
+                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-blue-600 dark:text-blue-400 font-semibold border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
                           {hour.windSpeed}
                         </td>
                         <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">
