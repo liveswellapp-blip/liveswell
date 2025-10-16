@@ -70,14 +70,14 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
   return (
     <Card className="mb-8 bg-gradient-to-br from-emerald-50/50 to-blue-50/50 dark:from-emerald-950/20 dark:to-blue-950/20 border-emerald-200 dark:border-emerald-800" data-testid="card-ai-summary">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-          <Sparkles className="w-5 h-5" data-testid="icon-sparkles" />
+        <CardTitle className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
+          <Sparkles className="w-4 h-4" data-testid="icon-sparkles" />
           AI Surf Report
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div 
-          className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 whitespace-pre-line"
+          className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 whitespace-pre-line"
           data-testid="text-ai-summary-content"
         >
           {data.summary}
