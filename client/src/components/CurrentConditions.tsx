@@ -48,6 +48,7 @@ interface WindForecastData {
   locationId: number;
   forecastData: {
     time: string;
+    date: string;
     hour: number;
     windSpeed: number;
     windDirection: string;
@@ -326,12 +327,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         
 
 
-        {/* Enhanced Current Conditions Grid - New Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 lg:gap-6">
-          {/* Top Row: Expanded Swell Card + Wind */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-4 xl:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Expanded Wave Conditions Card */}
-            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border col-span-1 md:col-span-1 lg:col-span-1">
+        {/* Enhanced Current Conditions Grid - Simplified Responsive Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+          {/* Expanded Wave Conditions Card */}
+          <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
@@ -544,8 +543,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 )}
               </div>
             </div>
-          </div>
-
           </div>
 
           {/* Tide Information */}
