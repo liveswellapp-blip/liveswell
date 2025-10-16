@@ -2796,7 +2796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const tideStatus = conditions.tideStatus?.toLowerCase();
         const targetType = tideStatus === 'rising' ? 'high' : 'low';
         
-        // Find the LAST tide of the appropriate type (handles today's remaining tides)
+        // Find the last tide of the appropriate type from today's forecast
         const tidesOfType = forecast[0].tides.filter((t: any) => t.type.toLowerCase() === targetType);
         nextTide = tidesOfType.length > 0 ? tidesOfType[tidesOfType.length - 1] : null;
       }
