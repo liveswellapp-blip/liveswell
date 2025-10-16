@@ -661,6 +661,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 hour12: true,
                 timeZone: timezone
               }),
+              date: time.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                timeZone: timezone
+              }),
               hour,
               windSpeed: Math.round(windSpeed),
               windDirection,
@@ -708,6 +713,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               hour12: true,
               timeZone: timezone
             }),
+            date: currentTime.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric',
+              timeZone: timezone
+            }),
             hour: currentTime.getHours(),
             windSpeed: Math.round(current.wind.speed),
             windDirection: getWindDirection(current.wind.deg),
@@ -733,6 +743,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 hour12: true,
                 timeZone: timezone
               }),
+              date: interpolatedTime.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                timeZone: timezone
+              }),
               hour: interpolatedTime.getHours(),
               windSpeed: Math.round(interpolatedSpeed),
               windDirection,
@@ -749,6 +764,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             time: lastTime.toLocaleTimeString('en-US', { 
               hour: 'numeric', 
               hour12: true,
+              timeZone: timezone
+            }),
+            date: lastTime.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric',
               timeZone: timezone
             }),
             hour: lastTime.getHours(),
