@@ -2783,9 +2783,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate wave height range from both buoys
       let waveHeightRange = conditions.waveHeight;
       if (primaryBuoy && backupBuoy) {
-        const minHeight = Math.min(primaryBuoy.waveHeight, backupBuoy.waveHeight).toFixed(1);
-        const maxHeight = Math.max(primaryBuoy.waveHeight, backupBuoy.waveHeight).toFixed(1);
-        waveHeightRange = `${minHeight}-${maxHeight}ft`;
+        const minHeight = Math.round(Math.min(primaryBuoy.waveHeight, backupBuoy.waveHeight));
+        const maxHeight = Math.round(Math.max(primaryBuoy.waveHeight, backupBuoy.waveHeight));
+        waveHeightRange = `${minHeight}-${maxHeight} ft`;
       }
 
       // Get today's tide data
@@ -2849,14 +2849,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           primary: primaryBuoy ? {
             stationId: primaryBuoy.stationId,
             stationName: primaryBuoy.stationName,
-            waveHeight: primaryBuoy.waveHeight.toFixed(1),
+            waveHeight: Math.round(primaryBuoy.waveHeight),
             wavePeriod: primaryBuoy.wavePeriod,
             direction: primaryBuoy.waveDirection,
           } : null,
           backup: backupBuoy ? {
             stationId: backupBuoy.stationId,
             stationName: backupBuoy.stationName,
-            waveHeight: backupBuoy.waveHeight.toFixed(1),
+            waveHeight: Math.round(backupBuoy.waveHeight),
             wavePeriod: backupBuoy.wavePeriod,
             direction: backupBuoy.waveDirection,
           } : null,
