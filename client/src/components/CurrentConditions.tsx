@@ -328,9 +328,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
 
         {/* Enhanced Current Conditions Grid - Desktop: 3 cards in row, Tide below */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Expanded Wave Conditions Card */}
-          <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+          <div className="col-span-2 lg:col-span-1 rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
@@ -543,7 +543,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
           {/* Tide & Sun - Horizontal Layout - Spans full width below */}
-          <div className="lg:col-span-3 rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+          <div className="col-span-2 lg:col-span-3 rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
             <div className="flex items-center space-x-2 mb-4">
               <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
               <span className="text-base font-medium">Tide & Sun</span>
