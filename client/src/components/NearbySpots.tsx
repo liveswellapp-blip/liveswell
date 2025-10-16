@@ -35,7 +35,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
   if (error) {
     return (
       <div className="w-full">
-        <div className="px-6 md:mx-auto md:max-w-7xl border-b border-emerald-500/30 pb-4 mb-4">
+        <div className="container mx-auto px-4 md:px-6 max-w-7xl border-b border-emerald-500/30 pb-4 mb-4">
           <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
           <div className="text-center text-red-600">
             <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
@@ -50,7 +50,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
       {/* Emerald separator line with spacing above */}
       <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
       
-      <div className="px-6 md:mx-auto md:max-w-7xl pb-4 mb-4">
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-6 mb-6">
         <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
