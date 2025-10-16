@@ -694,10 +694,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           ) : buoyHistoryData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-[11px] py-2 gap-2 pl-2.5">
-                <div className="w-16">Time</div>
-                <div className="w-16">Height</div>
-                <div className="w-16">Period</div>
+              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
+                <div className="w-16 sm:w-20 md:w-24">Time</div>
+                <div className="w-16 sm:w-20 md:w-24">Height</div>
+                <div className="w-16 sm:w-20 md:w-24">Period</div>
                 <div className="flex-1">Direction</div>
               </div>
               
@@ -705,14 +705,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {buoyHistoryData.historicalData.map((dataPoint, index) => (
                   <div key={index}>
-                    <div className="flex text-[11px] hover:bg-muted/30 transition-colors py-2 gap-2 pl-2.5">
-                      <div className="w-16 font-medium text-gray-900 dark:text-gray-100">
+                    <div className="flex text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
+                      <div className="w-16 sm:w-20 md:w-24 font-medium text-gray-900 dark:text-gray-100">
                         {dataPoint.time}
                       </div>
-                      <div className="w-16 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="w-16 sm:w-20 md:w-24 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {dataPoint.waveHeight.toFixed(1)}ft
                       </div>
-                      <div className="w-16 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="w-16 sm:w-20 md:w-24 text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.wavePeriod}s
                       </div>
                       <div className="flex-1 text-blue-600 dark:text-blue-400 font-medium">
@@ -757,10 +757,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           ) : windDetailsData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-[11px] py-2 gap-2 pl-2.5">
-                <div className="w-16">Time</div>
-                <div className="w-16">Speed</div>
-                <div className="w-16">Gusts</div>
+              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
+                <div className="w-16 sm:w-20 md:w-24">Time</div>
+                <div className="w-16 sm:w-20 md:w-24">Speed</div>
+                <div className="w-16 sm:w-20 md:w-24">Gusts</div>
                 <div className="flex-1">Direction</div>
               </div>
               
@@ -768,14 +768,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {windDetailsData.forecastData.map((dataPoint, index) => (
                   <div key={index}>
-                    <div className="flex text-[11px] hover:bg-muted/30 transition-colors py-2 gap-2 pl-2.5">
-                      <div className="w-16 font-medium text-gray-900 dark:text-gray-100">
+                    <div className="flex text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 gap-2 sm:gap-3 md:gap-4 pl-3 sm:pl-4">
+                      <div className="w-16 sm:w-20 md:w-24 font-medium text-gray-900 dark:text-gray-100">
                         {dataPoint.time}
                       </div>
-                      <div className="w-16 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="w-16 sm:w-20 md:w-24 text-emerald-600 dark:text-emerald-400 font-semibold">
                         {dataPoint.windSpeed} mph
                       </div>
-                      <div className="w-16 text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="w-16 sm:w-20 md:w-24 text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.windGusts} mph
                       </div>
                       <div className="flex-1 text-blue-600 dark:text-blue-400 font-medium">
