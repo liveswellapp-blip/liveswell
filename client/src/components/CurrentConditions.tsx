@@ -696,9 +696,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               {/* Header */}
               <div className="flex justify-between bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
                 <div className="flex-1 text-left">Time</div>
-                <div className="flex-1 text-center">Height</div>
-                <div className="flex-1 text-center">Period</div>
-                <div className="flex-1 text-right">Direction</div>
+                <div className="flex-1 text-left">Height</div>
+                <div className="flex-1 text-left">Period</div>
+                <div className="flex-1 text-left">Direction</div>
               </div>
               
               {/* Hourly Data */}
@@ -709,13 +709,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <div className="flex-1 text-left font-medium text-gray-900 dark:text-gray-100">
                         {dataPoint.time}
                       </div>
-                      <div className="flex-1 text-center text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <div className="flex-1 text-left text-emerald-600 dark:text-emerald-400 font-semibold">
                         {dataPoint.waveHeight.toFixed(1)}ft
                       </div>
-                      <div className="flex-1 text-center text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.wavePeriod}s
                       </div>
-                      <div className="flex-1 text-right text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="flex-1 text-left text-blue-600 dark:text-blue-400 font-medium">
                         {dataPoint.waveDirection}
                       </div>
                     </div>
