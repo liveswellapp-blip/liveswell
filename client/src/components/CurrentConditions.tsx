@@ -694,7 +694,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           ) : buoyHistoryData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="flex justify-between bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
+              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
                 <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pr-3">Time</div>
                 <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Height</div>
                 <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Period</div>
@@ -705,7 +705,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {buoyHistoryData.historicalData.map((dataPoint, index) => (
                   <div key={index}>
-                    <div className="flex justify-between text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 px-4 sm:px-6">
+                    <div className="flex text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 px-4 sm:px-6">
                       <div className="flex-1 text-left font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600 pr-3">
                         {dataPoint.time}
                       </div>
@@ -757,7 +757,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           ) : windDetailsData ? (
             <div className="space-y-0">
               {/* Header */}
-              <div className="flex justify-between bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
+              <div className="flex bg-emerald-50 dark:bg-emerald-900/20 rounded-t-lg font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 px-4 sm:px-6">
                 <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pr-3">Time</div>
                 <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Speed</div>
                 <div className="flex-1 text-left border-r border-gray-300 dark:border-gray-600 pl-3 pr-3">Gusts</div>
@@ -768,7 +768,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="max-h-96 overflow-y-auto bg-background rounded-b-lg">
                 {windDetailsData.forecastData.map((dataPoint, index) => (
                   <div key={index}>
-                    <div className="flex justify-between text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 px-4 sm:px-6">
+                    <div className="flex text-sm sm:text-base md:text-lg hover:bg-muted/30 transition-colors py-2.5 sm:py-3 px-4 sm:px-6">
                       <div className="flex-1 text-left font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600 pr-3">
                         {dataPoint.time}
                       </div>
