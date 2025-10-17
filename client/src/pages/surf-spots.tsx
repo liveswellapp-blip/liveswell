@@ -397,16 +397,41 @@ function SpotConditions({ locationId }: { locationId: number }) {
   const windDir = conditions.windDirection || "N/A";
   const windDisplay = `${windSpeed} mph ${windDir}`;
 
-  // Get next tide
+  // Get next tide based on local time
   let tideDisplay = "N/A";
   if (forecast?.[0]?.tides?.length > 0) {
     const tideStatus = conditions.tideStatus?.toLowerCase();
     const targetType = tideStatus === 'rising' ? 'high' : 'low';
     
-    // Find next tide of target type
-    const tidesOfType = forecast[0].tides.filter((t: any) => t.type.toLowerCase() === targetType);
-    if (tidesOfType.length > 0) {
-      const nextTide = tidesOfType[0];
+    // Get current time (browser's local time is fine for filtering)
+    const now = new Date();
+    
+    // Parse tide times and find future tides
+    const tidesWithDates = forecast[0].tides
+      .filter((t: any) => t.type.toLowerCase() === targetType)
+      .map((tide: any) => {
+        const [time, period] = tide.time.split(' ');
+        const [hours, minutes] = time.split(':');
+        let hour24 = parseInt(hours);
+        
+        if (period === 'PM' && hour24 !== 12) {
+          hour24 += 12;
+        } else if (period === 'AM' && hour24 === 12) {
+          hour24 = 0;
+        }
+        
+        const tideDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour24, parseInt(minutes));
+        
+        return {
+          ...tide,
+          dateTime: tideDate
+        };
+      })
+      .filter((tide: any) => tide.dateTime > now)
+      .sort((a: any, b: any) => a.dateTime.getTime() - b.dateTime.getTime());
+    
+    if (tidesWithDates.length > 0) {
+      const nextTide = tidesWithDates[0];
       const tideType = nextTide.type.charAt(0).toUpperCase() + nextTide.type.slice(1);
       tideDisplay = `${tideType} ${nextTide.time}`;
     }
