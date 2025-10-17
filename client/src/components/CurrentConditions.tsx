@@ -544,18 +544,18 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
           {/* Tide & Sun - Horizontal Layout - Spans full width below */}
           <div className="col-span-2 lg:col-span-3 rounded-lg p-4 lg:p-2 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center space-x-2 mb-4 lg:mb-2">
-              <BarChart3 className="h-5 w-5 lg:h-4 lg:w-4 text-blue-900 dark:text-white" />
-              <span className="text-base lg:text-sm font-medium">Tide & Sun</span>
+            <div className="flex items-center space-x-2 mb-4 lg:mb-1">
+              <BarChart3 className="h-5 w-5 lg:h-3 lg:w-3 text-blue-900 dark:text-white" />
+              <span className="text-base lg:text-xs font-medium">Tide & Sun</span>
             </div>
             
             {isLoading || forecastLoading ? (
               <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-2">
                 {/* Tide Chart */}
                 {todayTides.length > 0 && (
-                  <div className="lg:col-span-3">
+                  <div className="lg:col-span-3 lg:max-h-12">
                     <TideChart tides={todayTides} date="today" location={location} />
                   </div>
                 )}

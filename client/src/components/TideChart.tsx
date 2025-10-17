@@ -244,7 +244,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
     <div className="p-2 lg:p-1 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg h-full flex flex-col justify-center">
       
       {/* Tide Chart SVG */}
-      <div className="relative flex-1 h-16 md:h-auto lg:h-12">
+      <div className="relative flex-1 h-16 md:h-auto lg:h-8">
         <svg 
           ref={svgRef}
           viewBox="0 0 100 50" 
