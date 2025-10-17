@@ -9,17 +9,24 @@ import { Button } from "@/components/ui/button";
 
 // Component to fetch and display conditions for a single spot
 function SpotConditions({ locationId }: { locationId: number }) {
-  const { data: conditions, isLoading } = useQuery<any>({
+  const { data: conditions, isLoading: conditionsLoading } = useQuery<any>({
     queryKey: [`/api/locations/${locationId}/conditions`],
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 1,
   });
 
-  if (isLoading) {
+  const { data: forecast, isLoading: forecastLoading } = useQuery<any>({
+    queryKey: [`/api/locations/${locationId}/forecast`],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 1,
+  });
+
+  if (conditionsLoading || forecastLoading) {
     return (
       <div className="flex items-center gap-3 text-xs">
         <Skeleton className="h-3 w-16" />
         <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-24" />
       </div>
     );
   }
@@ -45,10 +52,28 @@ function SpotConditions({ locationId }: { locationId: number }) {
   const windDir = conditions.windDirection || "N/A";
   const windDisplay = `${windSpeed} mph ${windDir}`;
 
+  // Get next tide
+  let tideDisplay = "N/A";
+  if (forecast?.[0]?.tides?.length > 0) {
+    const tideStatus = conditions.tideStatus?.toLowerCase();
+    const targetType = tideStatus === 'rising' ? 'high' : 'low';
+    
+    // Find next tide of target type
+    const tidesOfType = forecast[0].tides.filter((t: any) => t.type.toLowerCase() === targetType);
+    if (tidesOfType.length > 0) {
+      const nextTide = tidesOfType[0];
+      const tideType = nextTide.type.charAt(0).toUpperCase() + nextTide.type.slice(1);
+      tideDisplay = `${tideType} Tide ${nextTide.time}`;
+    }
+  }
+
   return (
-    <div className="flex items-center gap-4 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+    <div className="flex items-center gap-3 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
       <span>{waveDisplay}</span>
+      <span className="text-muted-foreground">|</span>
       <span>{windDisplay}</span>
+      <span className="text-muted-foreground">|</span>
+      <span>{tideDisplay}</span>
     </div>
   );
 }
