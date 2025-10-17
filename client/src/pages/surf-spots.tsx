@@ -385,7 +385,9 @@ function SpotConditions({ locationId }: { locationId: number }) {
   if (conditions.primaryBuoy && conditions.backupBuoy) {
     const minHeight = Math.round(Math.min(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
     const maxHeight = Math.round(Math.max(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
-    waveDisplay = `${minHeight}-${maxHeight} ft ${waveDirection} @ ${wavePeriod} sec`;
+    waveDisplay = minHeight === maxHeight 
+      ? `${minHeight} ft ${waveDirection} @ ${wavePeriod} sec`
+      : `${minHeight}-${maxHeight} ft ${waveDirection} @ ${wavePeriod} sec`;
   } else if (conditions.primaryBuoy) {
     waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft ${waveDirection} @ ${wavePeriod} sec`;
   } else if (conditions.waveHeight) {
