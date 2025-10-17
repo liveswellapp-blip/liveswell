@@ -46,15 +46,9 @@ function SpotConditions({ locationId }: { locationId: number }) {
   const windDisplay = `${windSpeed} mph ${windDir}`;
 
   return (
-    <div className="flex items-center justify-center gap-4 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
-      <div className="flex items-center gap-1.5">
-        <Waves className="h-4 w-4" />
-        <span>{waveDisplay}</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <Wind className="h-4 w-4" />
-        <span>{windDisplay}</span>
-      </div>
+    <div className="flex items-center gap-4 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+      <span>{waveDisplay}</span>
+      <span>{windDisplay}</span>
     </div>
   );
 }
