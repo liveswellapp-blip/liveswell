@@ -241,10 +241,10 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
     : null;
 
   return (
-    <div className="p-2 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg h-full flex flex-col justify-center">
+    <div className="p-2 lg:p-1 bg-gradient-to-b from-blue-50 to-blue-100 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-lg h-full flex flex-col justify-center">
       
       {/* Tide Chart SVG */}
-      <div className="relative flex-1 h-16 md:h-auto">
+      <div className="relative flex-1 h-16 md:h-auto lg:h-12">
         <svg 
           ref={svgRef}
           viewBox="0 0 100 50" 
@@ -444,7 +444,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
         </svg>
         
         {/* Simplified time labels for compact view */}
-        <div className="relative text-[10px] text-gray-400 dark:text-emerald-500 mt-0.5">
+        <div className="relative text-[10px] lg:text-[8px] text-gray-400 dark:text-emerald-500 mt-0.5 lg:mt-0">
           <span className="absolute" style={{ left: '0%', transform: 'translateX(-50%)' }}>12a</span>
           <span className="absolute" style={{ left: '25%', transform: 'translateX(-50%)' }}>6a</span>
           <span className="absolute" style={{ left: '50%', transform: 'translateX(-50%)' }}>12p</span>
