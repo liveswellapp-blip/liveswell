@@ -480,7 +480,7 @@ function SavedSpotsCard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="space-y-3 lg:space-y-2">
             {Array.from({ length: 2 }).map((_, index) => (
               <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border">
                 <Skeleton className="h-12 w-12 rounded-full" />
@@ -528,7 +528,7 @@ function SavedSpotsCard() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-3 lg:space-y-2">
           {favorites.map((location) => (
             <div
               key={location.id}
@@ -712,12 +712,12 @@ export default function SurfSpots() {
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)] flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8 max-w-6xl flex-1">
-        <div className="space-y-6">
+      <main className="container mx-auto px-4 py-8 lg:py-6 max-w-6xl flex-1">
+        <div className="space-y-6 lg:space-y-4">
           {/* Header */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:space-y-3">
             <div>
-              <h1 className="text-3xl font-bold text-blue-900 dark:text-white">
+              <h1 className="text-3xl lg:text-2xl font-bold text-blue-900 dark:text-white">
                 Global Surf Spots
               </h1>
             </div>
@@ -746,8 +746,8 @@ export default function SurfSpots() {
             )}
 
             {/* Hierarchical Filters */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-blue-900 dark:text-white">Filter by Location</h3>
+            <div className="space-y-3 lg:space-y-2">
+              <h3 className="text-lg lg:text-base font-semibold text-blue-900 dark:text-white">Filter by Location</h3>
               <div className="flex flex-col sm:flex-row gap-4">
               <Select value={selectedContinent} onValueChange={(value) => {
                 setSelectedContinent(value);
@@ -820,13 +820,13 @@ export default function SurfSpots() {
           {/* Results - only show when filters are active */}
           {(searchQuery.trim() || selectedContinent || selectedCountry || selectedState) && (
             filteredSpots.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-3">
                 {filteredSpots.map((spot) => (
                   <Card 
                     key={spot.id} 
                     className="hover:shadow-lg transition-shadow border-border dark:bg-muted"
                   >
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-3 lg:pb-2 lg:pt-4">
                       <div className="flex justify-between items-start">
                         <div className="space-y-1 flex-1 cursor-pointer" onClick={() => handleSpotSelect(spot.id)}>
                           <CardTitle className="text-lg text-blue-900 dark:text-white">
@@ -859,7 +859,7 @@ export default function SurfSpots() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3" onClick={() => handleSpotSelect(spot.id)}>
+                    <CardContent className="space-y-3 lg:space-y-2 lg:pt-2" onClick={() => handleSpotSelect(spot.id)}>
                       {spot.break_type && (
                         <div className="flex items-center text-sm">
                           <Waves className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
