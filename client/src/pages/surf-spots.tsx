@@ -413,7 +413,7 @@ function SpotConditions({ locationId }: { locationId: number }) {
   }
 
   return (
-    <div className="flex flex-col gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+    <div className="flex flex-col gap-1 text-sm text-emerald-600 dark:text-emerald-400 font-medium items-center">
       <div className="flex items-center gap-2">
         <span>{waveDisplay}</span>
         <span className="text-muted-foreground">|</span>
