@@ -439,9 +439,18 @@ function SpotConditions({ locationId }: { locationId: number }) {
 
   return (
     <div className="flex flex-col gap-0.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium items-end">
-      <div>{waveDisplay}</div>
-      <div>{windDisplay}</div>
-      <div>{tideDisplay}</div>
+      <div className="flex items-center gap-1.5">
+        <Waves className="h-3 w-3" />
+        <span>{waveDisplay}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Wind className="h-3 w-3" />
+        <span>{windDisplay}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Navigation className="h-3 w-3" />
+        <span>{tideDisplay}</span>
+      </div>
     </div>
   );
 }
