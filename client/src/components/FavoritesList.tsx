@@ -71,12 +71,9 @@ function SpotConditions({ locationId }: { locationId: number }) {
   }
 
   return (
-    <div className="flex flex-col gap-1 text-sm text-emerald-600 dark:text-emerald-400 font-medium items-center">
-      <div className="flex items-center gap-2">
-        <span>{waveDisplay}</span>
-        <span className="text-muted-foreground">|</span>
-        <span>{windDisplay}</span>
-      </div>
+    <div className="flex flex-col gap-0.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium items-end">
+      <div>{waveDisplay}</div>
+      <div>{windDisplay}</div>
       <div>{tideDisplay}</div>
     </div>
   );
@@ -198,28 +195,25 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
           {favorites.map((location) => (
             <div
               key={location.id}
-              className="flex flex-col space-y-2 p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
+              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
               onClick={() => onLocationSelect?.(location)}
             >
-              <div className="flex items-center space-x-3">
-                <div className="flex-shrink-0 w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                  <Waves className="h-6 w-6 text-blue-900 dark:text-emerald-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-blue-900 dark:text-white truncate">{location.name}</h3>
-                  <p className="text-sm text-blue-900 dark:text-white truncate">
-                    {location.city}, {location.country}
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <FavoriteButton
-                    locationId={location.id}
-                    locationName={location.name}
-                    size="sm"
-                  />
-                </div>
+              <div className="flex-shrink-0">
+                <FavoriteButton
+                  locationId={location.id}
+                  locationName={location.name}
+                  size="sm"
+                />
               </div>
-              <SpotConditions locationId={location.id} />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-blue-900 dark:text-white truncate">{location.name}</h3>
+                <p className="text-sm text-blue-900 dark:text-white truncate">
+                  {location.city}, {location.country}
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <SpotConditions locationId={location.id} />
+              </div>
             </div>
           ))}
         </div>
