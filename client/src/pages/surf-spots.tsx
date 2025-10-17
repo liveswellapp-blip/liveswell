@@ -349,6 +349,58 @@ const DIFFICULTY_COLORS = {
 
 
 
+// Component to fetch and display conditions for a single spot
+function SpotConditions({ locationId }: { locationId: number }) {
+  const { data: conditions, isLoading } = useQuery<any>({
+    queryKey: [`/api/locations/${locationId}/conditions`],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 text-xs mt-1">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+    );
+  }
+
+  if (!conditions) {
+    return null;
+  }
+
+  // Calculate wave height range from buoys
+  let waveDisplay = "N/A";
+  if (conditions.primaryBuoy && conditions.backupBuoy) {
+    const minHeight = Math.round(Math.min(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+    const maxHeight = Math.round(Math.max(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+    waveDisplay = `${minHeight}-${maxHeight} ft`;
+  } else if (conditions.primaryBuoy) {
+    waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft`;
+  } else if (conditions.waveHeight) {
+    waveDisplay = `${Math.round(parseFloat(conditions.waveHeight))} ft`;
+  }
+
+  // Format wind data
+  const windSpeed = Math.round(parseFloat(conditions.windSpeed || "0"));
+  const windDir = conditions.windDirection || "N/A";
+  const windDisplay = `${windSpeed} mph ${windDir}`;
+
+  return (
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div className="flex items-center gap-1">
+        <Waves className="h-3 w-3" />
+        <span>{waveDisplay}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <Wind className="h-3 w-3" />
+        <span>{windDisplay}</span>
+      </div>
+    </div>
+  );
+}
+
 function SavedSpotsCard() {
   const [, setLocation] = useLocation();
   const { data: favorites, isLoading } = useQuery<Location[]>({
@@ -450,6 +502,7 @@ function SavedSpotsCard() {
                 <p className="text-xs text-muted-foreground truncate">
                   {location.city}, {location.country}
                 </p>
+                <SpotConditions locationId={location.id} />
               </div>
               <div className="flex-shrink-0">
                 <FavoriteButton

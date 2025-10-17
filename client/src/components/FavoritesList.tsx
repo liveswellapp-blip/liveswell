@@ -1,11 +1,63 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Waves, MapPin, Heart, LogIn } from "lucide-react";
+import { Waves, MapPin, Heart, LogIn, Wind } from "lucide-react";
 import { Location } from "@/types/weather";
 import FavoriteButton from "./FavoriteButton";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+
+// Component to fetch and display conditions for a single spot
+function SpotConditions({ locationId }: { locationId: number }) {
+  const { data: conditions, isLoading } = useQuery<any>({
+    queryKey: [`/api/locations/${locationId}/conditions`],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 text-xs">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+    );
+  }
+
+  if (!conditions) {
+    return null;
+  }
+
+  // Calculate wave height range from buoys
+  let waveDisplay = "N/A";
+  if (conditions.primaryBuoy && conditions.backupBuoy) {
+    const minHeight = Math.round(Math.min(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+    const maxHeight = Math.round(Math.max(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+    waveDisplay = `${minHeight}-${maxHeight} ft`;
+  } else if (conditions.primaryBuoy) {
+    waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft`;
+  } else if (conditions.waveHeight) {
+    waveDisplay = `${Math.round(parseFloat(conditions.waveHeight))} ft`;
+  }
+
+  // Format wind data
+  const windSpeed = Math.round(parseFloat(conditions.windSpeed || "0"));
+  const windDir = conditions.windDirection || "N/A";
+  const windDisplay = `${windSpeed} mph ${windDir}`;
+
+  return (
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div className="flex items-center gap-1">
+        <Waves className="h-3 w-3" />
+        <span>{waveDisplay}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <Wind className="h-3 w-3" />
+        <span>{windDisplay}</span>
+      </div>
+    </div>
+  );
+}
 
 interface FavoritesListProps {
   onLocationSelect?: (location: Location) => void;
@@ -127,13 +179,14 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
               onClick={() => onLocationSelect?.(location)}
             >
               <div className="flex-shrink-0 w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                <MapPin className="h-6 w-6 text-blue-900 dark:text-emerald-400" />
+                <Waves className="h-6 w-6 text-blue-900 dark:text-emerald-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-blue-900 dark:text-white truncate">{location.name}</h3>
-                <p className="text-sm text-blue-900 dark:text-white truncate">
+                <p className="text-sm text-blue-900 dark:text-white truncate mb-1">
                   {location.city}, {location.country}
                 </p>
+                <SpotConditions locationId={location.id} />
               </div>
               <div className="flex-shrink-0">
                 <FavoriteButton
