@@ -733,9 +733,6 @@ export default function SurfSpots() {
               <h1 className="text-3xl font-bold text-blue-900 dark:text-white">
                 Global Surf Spots
               </h1>
-              <p className="text-muted-foreground mt-2">
-                Discover global surf spots across 6 continents with real-time conditions
-              </p>
             </div>
 
             {/* Universal Search Bar */}
