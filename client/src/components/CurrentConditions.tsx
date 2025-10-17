@@ -555,7 +555,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-2">
                 {/* Tide Chart */}
                 {todayTides.length > 0 && (
-                  <div className="lg:col-span-3 lg:max-h-12">
+                  <div className="lg:col-span-3">
                     <TideChart tides={todayTides} date="today" location={location} />
                   </div>
                 )}
