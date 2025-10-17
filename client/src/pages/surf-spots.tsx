@@ -379,14 +379,17 @@ function SpotConditions({ locationId }: { locationId: number }) {
 
   // Calculate wave height range from buoys
   let waveDisplay = "N/A";
+  const waveDirection = conditions.waveDirection || "N/A";
+  const wavePeriod = conditions.wavePeriod || "0";
+  
   if (conditions.primaryBuoy && conditions.backupBuoy) {
     const minHeight = Math.round(Math.min(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
     const maxHeight = Math.round(Math.max(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
-    waveDisplay = `${minHeight}-${maxHeight} ft`;
+    waveDisplay = `${minHeight}-${maxHeight} ft ${waveDirection} @ ${wavePeriod} sec`;
   } else if (conditions.primaryBuoy) {
-    waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft`;
+    waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft ${waveDirection} @ ${wavePeriod} sec`;
   } else if (conditions.waveHeight) {
-    waveDisplay = `${Math.round(parseFloat(conditions.waveHeight))} ft`;
+    waveDisplay = `${Math.round(parseFloat(conditions.waveHeight))} ft ${waveDirection} @ ${wavePeriod} sec`;
   }
 
   // Format wind data
