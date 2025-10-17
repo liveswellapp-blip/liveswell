@@ -227,11 +227,11 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-3 lg:space-y-2">
           {favorites.map((location) => (
             <div
               key={location.id}
-              className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
+              className="flex items-center justify-between p-3 lg:p-2 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
               onClick={() => onLocationSelect?.(location)}
             >
               <div className="flex-1 min-w-0">

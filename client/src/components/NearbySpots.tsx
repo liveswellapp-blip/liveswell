@@ -48,12 +48,12 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
   return (
     <div className="w-full">
       {/* Emerald separator line with spacing above */}
-      <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
+      <div className="w-full border-b border-emerald-500/30 mt-8 lg:mt-5 mb-4 lg:mb-3"></div>
       
-      <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-6 mb-6">
-        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl lg:max-w-5xl pb-6 lg:pb-4 mb-6 lg:mb-4">
+        <h3 className="text-xl lg:text-lg font-semibold mb-4 lg:mb-3 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-3">
           {isLoading ? (
             // Loading skeletons
             Array.from({ length: 3 }).map((_, index) => (
@@ -72,7 +72,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
               <div 
                 key={spot.id} 
                 onClick={() => handleSpotClick(spot.id)}
-                className="bg-muted rounded-lg p-4 lg:p-6 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border" 
+                className="bg-muted rounded-lg p-4 lg:p-3 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border" 
                 data-testid={`card-nearby-spot-${spot.id}`}
               >
                 <div className="flex items-center space-x-3">

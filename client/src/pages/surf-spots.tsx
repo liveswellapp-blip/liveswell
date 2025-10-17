@@ -712,12 +712,12 @@ export default function SurfSpots() {
   return (
     <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)] flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8 lg:py-6 max-w-6xl flex-1">
-        <div className="space-y-6 lg:space-y-4">
+      <main className="container mx-auto px-4 py-8 lg:py-4 max-w-6xl lg:max-w-5xl flex-1">
+        <div className="space-y-6 lg:space-y-3">
           {/* Header */}
-          <div className="space-y-4 lg:space-y-3">
+          <div className="space-y-4 lg:space-y-2">
             <div>
-              <h1 className="text-3xl lg:text-2xl font-bold text-blue-900 dark:text-white">
+              <h1 className="text-3xl lg:text-xl font-bold text-blue-900 dark:text-white">
                 Global Surf Spots
               </h1>
             </div>
@@ -746,8 +746,8 @@ export default function SurfSpots() {
             )}
 
             {/* Hierarchical Filters */}
-            <div className="space-y-3 lg:space-y-2">
-              <h3 className="text-lg lg:text-base font-semibold text-blue-900 dark:text-white">Filter by Location</h3>
+            <div className="space-y-3 lg:space-y-1">
+              <h3 className="text-lg lg:text-sm font-semibold text-blue-900 dark:text-white">Filter by Location</h3>
               <div className="flex flex-col sm:flex-row gap-4">
               <Select value={selectedContinent} onValueChange={(value) => {
                 setSelectedContinent(value);

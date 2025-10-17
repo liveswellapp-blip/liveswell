@@ -83,8 +83,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
       {/* Emerald separator line with spacing above */}
       <div className="w-full border-b border-emerald-500/30 mt-8 lg:mt-6 mb-4 lg:mb-3"></div>
       
-      <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-4 lg:pb-3 mb-6 lg:mb-4">
-        <h3 className="text-xl lg:text-lg font-semibold mb-4 lg:mb-3 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl lg:max-w-5xl pb-4 lg:pb-3 mb-6 lg:mb-4">
+        <h3 className="text-xl lg:text-base font-semibold mb-4 lg:mb-2 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
         
         {/* Horizontal Scrolling Carousel */}
         <div className="relative">

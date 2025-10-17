@@ -292,17 +292,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <div className="w-full">
       {/* Enhanced Location Header for Desktop */}
-      <div className="container mx-auto px-4 md:px-6 pt-6 lg:pt-4 max-w-7xl">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 lg:mb-3 space-y-2 lg:space-y-0">
+      <div className="container mx-auto px-4 md:px-6 pt-6 lg:pt-3 max-w-7xl lg:max-w-5xl">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 lg:mb-2 space-y-2 lg:space-y-0">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
               locationId={location.id} 
               locationName={location.name}
               size="sm"
             />
-            <h1 className="text-2xl lg:text-3xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
+            <h1 className="text-2xl lg:text-xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
           </div>
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+          <div className="flex items-center space-x-4 text-sm lg:text-xs text-muted-foreground">
             <span>{location.city}</span>
             <span>•</span>
             <span>Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
@@ -311,10 +311,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </div>
 
       {/* Thin emerald separator line */}
-      <div className="w-full border-b border-emerald-500/30 mb-4 lg:mb-3"></div>
+      <div className="w-full border-b border-emerald-500/30 mb-4 lg:mb-2"></div>
 
-      <div className="container mx-auto px-4 md:px-6 mb-6 lg:mb-4 max-w-7xl">
-        <h2 className="text-xl lg:text-lg font-semibold text-blue-900 dark:text-white mb-4 lg:mb-3">Live Conditions</h2>
+      <div className="container mx-auto px-4 md:px-6 mb-6 lg:mb-3 max-w-7xl lg:max-w-5xl">
+        <h2 className="text-xl lg:text-base font-semibold text-blue-900 dark:text-white mb-4 lg:mb-2">Live Conditions</h2>
         
         {/* AI Surf Summary - appears below Live Conditions heading */}
         <AISurfSummary location={location} />
