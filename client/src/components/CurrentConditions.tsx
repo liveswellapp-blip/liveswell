@@ -292,17 +292,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   return (
     <div className="w-full">
       {/* Enhanced Location Header for Desktop */}
-      <div className="container mx-auto px-4 md:px-6 pt-6 lg:pt-3 max-w-7xl lg:max-w-5xl">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4 lg:mb-2 space-y-2 lg:space-y-0">
+      <div className="container mx-auto px-4 md:px-6 pt-6 max-w-7xl">
+        <div className="flex flex-col mb-4 space-y-2">
           <div className="flex items-center space-x-3">
             <FavoriteButton 
               locationId={location.id} 
               locationName={location.name}
               size="sm"
             />
-            <h1 className="text-2xl lg:text-xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
+            <h1 className="text-2xl font-bold text-blue-900 dark:text-white">{location.name}</h1>
           </div>
-          <div className="flex items-center space-x-4 text-sm lg:text-xs text-muted-foreground">
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
             <span>{location.city}</span>
             <span>•</span>
             <span>Last Updated: {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
@@ -311,10 +311,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </div>
 
       {/* Thin emerald separator line */}
-      <div className="w-full border-b border-emerald-500/30 mb-4 lg:mb-2"></div>
+      <div className="w-full border-b border-emerald-500/30 mb-4"></div>
 
-      <div className="container mx-auto px-4 md:px-6 mb-6 lg:mb-3 max-w-7xl lg:max-w-5xl">
-        <h2 className="text-xl lg:text-base font-semibold text-blue-900 dark:text-white mb-4 lg:mb-2">Live Conditions</h2>
+      <div className="container mx-auto px-4 md:px-6 mb-6 max-w-7xl">
+        <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
         {/* AI Surf Summary - appears below Live Conditions heading */}
         <AISurfSummary location={location} />
@@ -328,10 +328,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
 
         {/* Enhanced Current Conditions Grid - Desktop: 3 cards in row, Tide below */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Expanded Wave Conditions Card */}
-          <div className="col-span-2 lg:col-span-1 rounded-lg p-3 md:p-4 lg:p-3 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center justify-between mb-3 lg:mb-2">
+          <div className="col-span-2 lg:col-span-1 rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <Waves className="h-5 w-5 text-blue-900 dark:text-white" />
                   <span className="text-sm md:text-base font-medium">Swell</span>
@@ -452,8 +452,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
           {/* Wind Conditions */}
-          <div className="rounded-lg p-3 md:p-4 lg:p-3 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center justify-between mb-2 lg:mb-2">
+          <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Wind className="h-5 w-5 text-blue-900 dark:text-white" />
                   <span className="text-sm md:text-base font-medium">Wind</span>
@@ -512,8 +512,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
             {/* Water Temperature */}
-            <div className="rounded-lg p-3 md:p-4 lg:p-3 bg-muted text-blue-900 dark:text-white border border-border">
-              <div className="flex items-center justify-between mb-2 lg:mb-2">
+            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
                   <span className="text-sm md:text-base font-medium">Water</span>
@@ -543,16 +543,16 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
           {/* Tide & Sun - Horizontal Layout - Spans full width below */}
-          <div className="col-span-2 lg:col-span-3 rounded-lg p-4 lg:p-2 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center space-x-2 mb-4 lg:mb-1">
-              <BarChart3 className="h-5 w-5 lg:h-3 lg:w-3 text-blue-900 dark:text-white" />
-              <span className="text-base lg:text-xs font-medium">Tide & Sun</span>
+          <div className="col-span-2 lg:col-span-3 rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="flex items-center space-x-2 mb-4">
+              <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
+              <span className="text-base font-medium">Tide & Sun</span>
             </div>
             
             {isLoading || forecastLoading ? (
               <Skeleton className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded" />
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-2">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Tide Chart */}
                 {todayTides.length > 0 && (
                   <div className="lg:col-span-3">

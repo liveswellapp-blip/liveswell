@@ -81,10 +81,10 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
   return (
     <div className="w-full">
       {/* Emerald separator line with spacing above */}
-      <div className="w-full border-b border-emerald-500/30 mt-8 lg:mt-6 mb-4 lg:mb-3"></div>
+      <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
       
-      <div className="container mx-auto px-4 md:px-6 max-w-7xl lg:max-w-5xl pb-4 lg:pb-3 mb-6 lg:mb-4">
-        <h3 className="text-xl lg:text-base font-semibold mb-4 lg:mb-2 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-4 mb-6">
+        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">5-Day Surf Forecast</h3>
         
         {/* Horizontal Scrolling Carousel */}
         <div className="relative">
@@ -103,21 +103,21 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           {isLoading ? (
             // Mobile optimized loading skeletons
             (Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] bg-muted rounded-lg p-3 lg:p-6 min-h-[180px] lg:min-h-[280px] flex flex-col snap-center">
-                <div className="space-y-2 lg:space-y-3">
-                  <Skeleton className="h-5 lg:h-6 w-16 lg:w-20 border-b border-border/30 pb-1 lg:pb-2" />
-                  <div className="space-y-1.5 lg:space-y-3">
-                    <div className="flex items-center space-x-2 lg:space-x-3">
-                      <Skeleton className="h-5 w-5 lg:h-8 lg:w-8 rounded-full" />
-                      <Skeleton className="h-6 lg:h-8 w-12 lg:w-16" />
+              <div key={index} className="flex-shrink-0 w-[280px] sm:w-[320px] bg-muted rounded-lg p-3 min-h-[180px] flex flex-col snap-center">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-16 border-b border-border/30 pb-1" />
+                  <div className="space-y-1.5">
+                    <div className="flex items-center space-x-2">
+                      <Skeleton className="h-5 w-5 rounded-full" />
+                      <Skeleton className="h-6 w-12" />
                     </div>
-                    <div className="flex items-center space-x-2 lg:space-x-3">
-                      <Skeleton className="h-4 w-4 lg:h-6 lg:w-6 rounded-full" />
-                      <Skeleton className="h-5 lg:h-6 w-10 lg:w-12" />
+                    <div className="flex items-center space-x-2">
+                      <Skeleton className="h-4 w-4 rounded-full" />
+                      <Skeleton className="h-5 w-10" />
                     </div>
                   </div>
-                  <div className="mt-2 lg:mt-3 pt-1.5 lg:pt-2 border-t border-border/30">
-                    <Skeleton className="h-12 lg:h-16 w-full" />
+                  <div className="mt-2 pt-1.5 border-t border-border/30">
+                    <Skeleton className="h-12 w-full" />
                   </div>
                 </div>
               </div>
@@ -126,36 +126,36 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
             forecast.map((day, index) => (
               <div 
                 key={index}
-                className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] rounded-lg p-3 lg:p-4 hover:shadow-md transition-shadow bg-muted border border-border min-h-[140px] lg:min-h-[200px] flex flex-col snap-center" 
+                className="flex-shrink-0 w-[280px] sm:w-[320px] rounded-lg p-3 hover:shadow-md transition-shadow bg-muted border border-border min-h-[140px] flex flex-col snap-center" 
                 data-testid={`forecast-card-${index}`}
               >
                 {/* Main Content - Side by side layout */}
-                <div className="flex-1 flex gap-3 lg:gap-4">
+                <div className="flex-1 flex gap-3">
                   {/* Left side - Day name and wave/wind data */}
                   <div className="flex-[0.8] flex flex-col">
                     {/* Day name at top */}
-                    <div className="font-semibold mb-2 text-[16px] lg:text-[18px] text-blue-900 dark:text-white text-left">
+                    <div className="font-semibold mb-2 text-[16px] text-blue-900 dark:text-white text-left">
                       {day.date}
                     </div>
                     
                     {/* Wave and Wind Data below */}
-                    <div className="space-y-2 lg:space-y-3 flex flex-col justify-center flex-1">
+                    <div className="space-y-2 flex flex-col justify-center flex-1">
                       <div className="space-y-1">
-                        <div className="flex items-center space-x-2 lg:space-x-3 font-semibold text-[14px] lg:text-[16px] text-blue-900 dark:text-white">
-                          <Waves className="h-[14px] w-[14px] lg:h-[16px] lg:w-[16px] text-blue-900 dark:text-white flex-shrink-0" />
+                        <div className="flex items-center space-x-2 font-semibold text-[14px] text-blue-900 dark:text-white">
+                          <Waves className="h-[14px] w-[14px] text-blue-900 dark:text-white flex-shrink-0" />
                           <span className="text-emerald-600 dark:text-emerald-400">{day.waveHeight}</span>
                         </div>
-                        <div className="text-[12px] lg:text-[13px] text-gray-600 dark:text-gray-400">
+                        <div className="text-[12px] text-gray-600 dark:text-gray-400">
                           Period: {day.wavePeriod}
                         </div>
                       </div>
                       
                       <div className="space-y-1">
-                        <div className="flex items-center space-x-2 lg:space-x-3 text-[14px] lg:text-[16px] text-blue-900 dark:text-white">
-                          <Wind className="h-[14px] w-[14px] lg:h-[16px] lg:w-[16px] text-blue-900 dark:text-white flex-shrink-0" />
+                        <div className="flex items-center space-x-2 text-[14px] text-blue-900 dark:text-white">
+                          <Wind className="h-[14px] w-[14px] text-blue-900 dark:text-white flex-shrink-0" />
                           <span className="text-emerald-600 dark:text-emerald-400">{day.windSpeed}</span>
                         </div>
-                        <div className="text-[12px] lg:text-[13px] text-gray-600 dark:text-gray-400">
+                        <div className="text-[12px] text-gray-600 dark:text-gray-400">
                           Direction: {day.windDirection}
                         </div>
                       </div>
@@ -165,7 +165,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   {/* Tide Chart - Right side */}
                   <div className="flex-[1.2] flex items-center">
                     {day.tides && day.tides.length > 0 && (
-                      <div className="w-full h-20 lg:h-24">
+                      <div className="w-full h-20">
                         <TideChart tides={day.tides} date={day.date} location={location} />
                       </div>
                     )}
@@ -187,7 +187,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
               </div>
             ))
           ) : (
-            <div className="flex-shrink-0 w-[280px] sm:w-[320px] lg:w-[300px] text-center text-muted-foreground flex items-center justify-center">
+            <div className="flex-shrink-0 w-[280px] sm:w-[320px] text-center text-muted-foreground flex items-center justify-center">
               <p>No forecast data available</p>
             </div>
           )}
@@ -239,7 +239,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           ) : detailedData ? (
             <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="max-h-96 overflow-y-auto">
-                <table className="w-full text-xs sm:text-sm md:text-base lg:text-lg">
+                <table className="w-full text-xs sm:text-sm md:text-base">
                   <thead className="bg-emerald-50 dark:bg-emerald-900 sticky top-0 z-10">
                     <tr className="font-semibold">
                       <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Time</th>
