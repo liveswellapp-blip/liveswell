@@ -536,16 +536,9 @@ function SavedSpotsCard() {
           {displayFavorites.map((location) => (
             <div
               key={location.id}
-              className="flex items-center space-x-3 p-3 rounded-lg border bg-white dark:bg-muted hover:bg-gray-50 dark:hover:bg-muted/80 transition-colors cursor-pointer"
+              className="flex items-center justify-between p-3 rounded-lg border bg-white dark:bg-muted hover:bg-gray-50 dark:hover:bg-muted/80 transition-colors cursor-pointer"
               onClick={() => handleLocationSelect(location)}
             >
-              <div className="flex-shrink-0">
-                <FavoriteButton
-                  locationId={location.id}
-                  locationName={location.name}
-                  size="sm"
-                />
-              </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-blue-900 dark:text-white text-sm">{location.name}</h3>
                 <p className="text-xs text-muted-foreground truncate">

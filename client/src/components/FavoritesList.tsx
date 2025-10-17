@@ -220,16 +220,9 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
           {favorites.map((location) => (
             <div
               key={location.id}
-              className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
+              className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
               onClick={() => onLocationSelect?.(location)}
             >
-              <div className="flex-shrink-0">
-                <FavoriteButton
-                  locationId={location.id}
-                  locationName={location.name}
-                  size="sm"
-                />
-              </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-blue-900 dark:text-white">{location.name}</h3>
                 <p className="text-sm text-blue-900 dark:text-white truncate">
