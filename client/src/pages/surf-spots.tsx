@@ -517,32 +517,17 @@ function SavedSpotsCard() {
     );
   }
 
-  // Show up to 3 favorites with a "View All" option
-  const displayFavorites = favorites.slice(0, 3);
-
   return (
     <Card className="bg-muted dark:bg-black">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between text-blue-900 dark:text-white">
-          <div className="flex items-center space-x-2">
-            <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
-            <span>Saved Spots</span>
-          </div>
-          {favorites.length > 3 && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.location.href = '/favorites'}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              View All ({favorites.length})
-            </Button>
-          )}
+        <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
+          <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
+          <span>Saved Spots</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {displayFavorites.map((location) => (
+          {favorites.map((location) => (
             <div
               key={location.id}
               className="flex items-center justify-between p-3 rounded-lg border bg-white dark:bg-muted hover:bg-gray-50 dark:hover:bg-muted/80 transition-colors cursor-pointer"
