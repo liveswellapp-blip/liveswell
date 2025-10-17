@@ -66,7 +66,7 @@ function SpotConditions({ locationId }: { locationId: number }) {
     if (tidesOfType.length > 0) {
       const nextTide = tidesOfType[0];
       const tideType = nextTide.type.charAt(0).toUpperCase() + nextTide.type.slice(1);
-      tideDisplay = `${tideType} Tide ${nextTide.time}`;
+      tideDisplay = `${tideType} ${nextTide.time}`;
     }
   }
 
