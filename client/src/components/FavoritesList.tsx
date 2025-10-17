@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Waves, MapPin, Heart, LogIn, Wind, Navigation } from "lucide-react";
+import { Waves, MapPin, Heart, LogIn, Wind, BarChart3 } from "lucide-react";
 import { Location } from "@/types/weather";
 import FavoriteButton from "./FavoriteButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -106,7 +106,7 @@ function SpotConditions({ locationId }: { locationId: number }) {
         <span>{windDisplay}</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <Navigation className="h-3 w-3" />
+        <BarChart3 className="h-3 w-3" />
         <span>{tideDisplay}</span>
       </div>
     </div>

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, Wind, Navigation, Star, Heart, Search } from "lucide-react";
+import { MapPin, Waves, Wind, Navigation, Star, Heart, Search, BarChart3 } from "lucide-react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -448,7 +448,7 @@ function SpotConditions({ locationId }: { locationId: number }) {
         <span>{windDisplay}</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <Navigation className="h-3 w-3" />
+        <BarChart3 className="h-3 w-3" />
         <span>{tideDisplay}</span>
       </div>
     </div>
