@@ -2838,7 +2838,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (primaryBuoy && backupBuoy) {
         const minHeight = Math.round(Math.min(primaryBuoy.waveHeight, backupBuoy.waveHeight));
         const maxHeight = Math.round(Math.max(primaryBuoy.waveHeight, backupBuoy.waveHeight));
-        waveHeightRange = `${minHeight}-${maxHeight} ft`;
+        waveHeightRange = minHeight === maxHeight ? `${minHeight} ft` : `${minHeight}-${maxHeight} ft`;
+      } else if (primaryBuoy) {
+        waveHeightRange = `${Math.round(primaryBuoy.waveHeight)} ft`;
       }
 
       // Get next tide from forecast data based on tide direction
@@ -2970,7 +2972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate AI summary in structured format
       const prompt = `Generate a surf report for ${surfDataSummary.location.name} in this EXACT format:
 
-Waves are at ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are ${windType} at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection} with a ${surfDataSummary.today.tideStatus.toLowerCase()} tide${surfDataSummary.today.nextTide ? ` to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
+Waves are around ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are ${windType} at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection} with a ${surfDataSummary.today.tideStatus.toLowerCase()} tide${surfDataSummary.today.nextTide ? ` to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
 
 IMPORTANT INSTRUCTIONS:
 1. Use the EXACT sentence structure shown above with all the provided values
