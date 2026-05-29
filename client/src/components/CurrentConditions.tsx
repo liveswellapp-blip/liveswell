@@ -309,10 +309,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
         </div>
       </div>
-
       {/* Thin emerald separator line */}
       <div className="w-full border-b border-emerald-500/30 mb-4"></div>
-
       <div className="container mx-auto px-4 md:px-6 mb-6 max-w-7xl">
         <h2 className="text-xl font-semibold text-blue-900 dark:text-white mb-4">Live Conditions</h2>
         
@@ -524,7 +522,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <Skeleton className="h-8 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                 ) : (
                   <div>
-                    <div className="flex items-end space-x-2">
+                    <div className="flex items-end space-x-2 text-[14px]">
                       <span className="text-3xl md:text-4xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
                       <span className="text-xl md:text-2xl mb-1 text-blue-900 dark:text-emerald-400">°F</span>
                     </div>
@@ -675,7 +673,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         
 
       </div>
-
       {/* Buoy Historical Data Modal */}
       <Dialog open={showBuoyHistoryModal} onOpenChange={handleCloseBuoyModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -738,7 +735,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           )}
         </DialogContent>
       </Dialog>
-
       {/* Wind Details Modal */}
       <Dialog open={showWindDetailsModal} onOpenChange={handleCloseWindModal}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -807,7 +803,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           )}
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
