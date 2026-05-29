@@ -512,14 +512,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             </div>
 
             {/* Water Temperature */}
-            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border">
+            <div className="rounded-lg p-3 md:p-4 bg-muted text-blue-900 dark:text-white border border-border flex flex-col">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <Thermometer className="h-5 w-5 text-blue-900 dark:text-white" />
                   <span className="text-sm md:text-base font-medium">Water</span>
                 </div>
               </div>
-              <div>
+              <div className="flex-1">
                 {isLoading ? (
                   <Skeleton className="h-8 w-16 bg-gray-300 dark:bg-gray-600 rounded" />
                 ) : (
@@ -528,17 +528,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <span className="text-3xl md:text-4xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
                       <span className="text-xl md:text-2xl mb-1 text-blue-900 dark:text-emerald-400">°F</span>
                     </div>
-                    <div className="flex items-end space-x-2 mb-2">
+                    <div className="flex items-end space-x-2">
                       <span className="text-2xl md:text-3xl text-blue-900 dark:text-emerald-400">
                         {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
                       </span>
                       <span className="text-lg md:text-xl mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
                     </div>
-                    <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1">
-                      NOAA Sea Surface Temp
-                    </div>
                   </div>
                 )}
+              </div>
+              <div className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 pt-1 mt-2">
+                NOAA Sea Surface Temp
               </div>
             </div>
 
