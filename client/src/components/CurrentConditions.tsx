@@ -523,28 +523,28 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 ) : (
                   <div>
                     <div className="flex items-end space-x-2">
-                      <span className="text-2xl md:text-4xl font-bold text-blue-900 dark:text-emerald-400">{conditions?.waterTemp || "0"}</span>
-                      <span className="text-base md:text-2xl mb-1 text-blue-900 dark:text-emerald-400">°F</span>
+                      <span className="text-2xl md:text-4xl font-bold text-blue-600 dark:text-blue-400">{conditions?.waterTemp || "0"}</span>
+                      <span className="text-base md:text-2xl mb-1 text-blue-600 dark:text-blue-400">°F</span>
                     </div>
                     <div className="flex items-end space-x-2 mb-2">
-                      <span className="text-xl md:text-3xl text-blue-900 dark:text-emerald-400">
+                      <span className="text-xl md:text-3xl text-blue-600 dark:text-blue-400">
                         {conditions?.waterTemp ? (((parseFloat(conditions.waterTemp) - 32) * 5/9)).toFixed(1) : "0.0"}
                       </span>
-                      <span className="text-sm md:text-xl mb-0.5 text-blue-900 dark:text-emerald-400">°C</span>
+                      <span className="text-sm md:text-xl mb-0.5 text-blue-600 dark:text-blue-400">°C</span>
                     </div>
                     {(conditions as any)?.primaryBuoy && (
                       <div className="leading-tight space-y-0">
                         {(conditions as any).primaryBuoy.stationName ? (
                           <>
-                            <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                            <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
                               {(conditions as any).primaryBuoy.stationName}
                             </div>
-                            <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                            <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
                               Station {(conditions as any).primaryBuoy.stationId}
                             </div>
                           </>
                         ) : (
-                          <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                          <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
                             Buoy {(conditions as any).primaryBuoy.stationId}
                           </div>
                         )}
