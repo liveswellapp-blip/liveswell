@@ -165,7 +165,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   {/* Tide Chart - Right side */}
                   <div className="flex-[1.2] flex items-center">
                     {day.tides && day.tides.length > 0 && (
-                      <div className="w-full h-20">
+                      <div className="w-full">
                         <TideChart tides={day.tides} date={day.date} location={location} />
                       </div>
                     )}

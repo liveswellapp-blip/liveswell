@@ -164,7 +164,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   return (
     <div className="w-full rounded-xl overflow-hidden flex flex-col bg-gradient-to-br from-slate-900/95 to-slate-950/95 border border-white/5 shadow-xl">
       {/* Chart area */}
-      <div className="flex-1 relative" style={{ height: "120px" }}>
+      <div className="relative" style={{ height: "120px" }}>
         <svg
           ref={svgRef}
           viewBox={`0 0 ${VW} ${VH}`}
