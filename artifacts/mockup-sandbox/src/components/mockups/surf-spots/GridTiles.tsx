@@ -8,32 +8,21 @@ const SAVED = [
 ];
 
 const SPOTS = [
-  { id: 4, name: "Steamer Lane", city: "Santa Cruz, CA", difficulty: "Advanced", type: "Reef", wave: "5–8 ft", wind: "15 mph W" },
-  { id: 5, name: "Rincon", city: "Carpinteria, CA", difficulty: "Beginner", type: "Point", wave: "4–6 ft", wind: "5 mph N" },
-  { id: 6, name: "Huntington", city: "Huntington Beach, CA", difficulty: "Beginner", type: "Beach", wave: "3–4 ft", wind: "6 mph SW" },
-  { id: 7, name: "Cocoa Beach", city: "Cocoa Beach, FL", difficulty: "Beginner", type: "Beach", wave: "2–3 ft", wind: "10 mph SE" },
-  { id: 8, name: "Sebastian Inlet", city: "Sebastian, FL", difficulty: "Intermediate", type: "Jetty", wave: "3–4 ft", wind: "8 mph NE" },
-  { id: 9, name: "Tofino", city: "British Columbia", difficulty: "Advanced", type: "Beach", wave: "6–9 ft", wind: "18 mph W" },
-  { id: 10, name: "Uluwatu", city: "Bali, Indonesia", difficulty: "Expert", type: "Reef", wave: "6–10 ft", wind: "10 mph SE" },
-  { id: 11, name: "Nazaré", city: "Leiria, Portugal", difficulty: "Expert", type: "Beach", wave: "12–20 ft", wind: "20 mph N" },
+  { id: 4, name: "Steamer Lane", city: "Santa Cruz, CA", wave: "5–8 ft", wind: "15 mph W" },
+  { id: 5, name: "Rincon", city: "Carpinteria, CA", wave: "4–6 ft", wind: "5 mph N" },
+  { id: 6, name: "Huntington", city: "Huntington Beach, CA", wave: "3–4 ft", wind: "6 mph SW" },
+  { id: 7, name: "Cocoa Beach", city: "Cocoa Beach, FL", wave: "2–3 ft", wind: "10 mph SE" },
+  { id: 8, name: "Sebastian Inlet", city: "Sebastian, FL", wave: "3–4 ft", wind: "8 mph NE" },
+  { id: 9, name: "Tofino", city: "British Columbia", wave: "6–9 ft", wind: "18 mph W" },
+  { id: 10, name: "Uluwatu", city: "Bali, Indonesia", wave: "6–10 ft", wind: "10 mph SE" },
+  { id: 11, name: "Nazaré", city: "Leiria, Portugal", wave: "12–20 ft", wind: "20 mph N" },
 ];
-
-const DIFF_STYLE: Record<string, { text: string; bg: string; border: string }> = {
-  Beginner:     { text: "text-emerald-400", bg: "bg-emerald-500/10",  border: "border-emerald-500/25" },
-  Intermediate: { text: "text-amber-400",   bg: "bg-amber-500/10",    border: "border-amber-500/25" },
-  Advanced:     { text: "text-orange-400",  bg: "bg-orange-500/10",   border: "border-orange-500/25" },
-  Expert:       { text: "text-red-400",     bg: "bg-red-500/10",      border: "border-red-500/25" },
-};
-
-const FILTERS = ["All", "Beginner", "Intermediate", "Advanced", "Expert"];
 
 export default function GridTiles() {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
 
   const filtered = SPOTS.filter(s =>
-    (filter === "All" || s.difficulty === filter) &&
-    (!search || s.name.toLowerCase().includes(search.toLowerCase()) || s.city.toLowerCase().includes(search.toLowerCase()))
+    !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.city.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -93,56 +82,31 @@ export default function GridTiles() {
           </div>
         </div>
 
-        {/* ── Difficulty filter pills ── */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {FILTERS.map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              className="flex-shrink-0 text-[10px] font-semibold px-2.5 py-1 rounded-full transition-all"
-              style={{
-                background: filter === f ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.05)",
-                border: filter === f ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                color: filter === f ? "#34d399" : "#64748b",
-              }}>
-              {f}
-            </button>
-          ))}
-        </div>
-
         {/* ── 2-col grid ── */}
         <div className="grid grid-cols-2 gap-2">
-          {filtered.map(spot => {
-            const d = DIFF_STYLE[spot.difficulty];
-            return (
-              <div key={spot.id}
-                className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
-                style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                {/* Name + location */}
-                <div>
-                  <p className="text-white text-[12px] font-bold leading-tight">{spot.name}</p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <MapPin size={8} className="text-slate-600 flex-shrink-0" />
-                    <p className="text-slate-600 text-[9px] leading-tight truncate">{spot.city}</p>
-                  </div>
-                </div>
-                {/* Wave + wind */}
-                <div>
-                  <div className="flex items-center gap-1">
-                    <Waves size={9} className="text-emerald-500" />
-                    <span className="text-emerald-400 text-[11px] font-bold">{spot.wave}</span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Wind size={9} className="text-cyan-600" />
-                    <span className="text-cyan-500 text-[9px]">{spot.wind}</span>
-                  </div>
-                </div>
-                {/* Tags */}
-                <div className="flex items-center gap-1 flex-wrap">
-                  <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded border ${d.text} ${d.bg} ${d.border}`}>{spot.difficulty}</span>
-                  <span className="text-slate-600 text-[8px] px-1.5 py-0.5 rounded border border-white/8">{spot.type}</span>
+          {filtered.map(spot => (
+            <div key={spot.id}
+              className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
+              style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div>
+                <p className="text-white text-[12px] font-bold leading-tight">{spot.name}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <MapPin size={8} className="text-slate-600 flex-shrink-0" />
+                  <p className="text-slate-600 text-[9px] leading-tight truncate">{spot.city}</p>
                 </div>
               </div>
-            );
-          })}
+              <div>
+                <div className="flex items-center gap-1">
+                  <Waves size={9} className="text-emerald-500" />
+                  <span className="text-emerald-400 text-[11px] font-bold">{spot.wave}</span>
+                </div>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Wind size={9} className="text-cyan-600" />
+                  <span className="text-cyan-500 text-[9px]">{spot.wind}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
