@@ -357,7 +357,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
         {/* ── Tide chart card ───────────────────────────────────────── */}
         {(todayTides.length > 0 || isLoading) && (
-          <div className="rounded-xl border border-white/8 overflow-hidden" style={{ background: "#0f172a" }}>
+          <div className="rounded-xl border border-emerald-500/15 overflow-hidden" style={{ background: "#0f172a" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <div className="flex items-center gap-1.5">
                 <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
