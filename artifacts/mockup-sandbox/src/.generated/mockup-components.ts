@@ -7,6 +7,7 @@ export const modules: ModuleMap = {
   "./components/mockups/conditions-redesign/TimelineStory.tsx": () => import("../components/mockups/conditions-redesign/TimelineStory.tsx"),
   "./components/mockups/forecast-section/ForecastSection.tsx": () => import("../components/mockups/forecast-section/ForecastSection.tsx"),
   "./components/mockups/nearby-spots/NearbySpots.tsx": () => import("../components/mockups/nearby-spots/NearbySpots.tsx"),
+  "./components/mockups/refresh-button/RefreshButton.tsx": () => import("../components/mockups/refresh-button/RefreshButton.tsx"),
   "./components/mockups/saved-spots/AccentStrip.tsx": () => import("../components/mockups/saved-spots/AccentStrip.tsx"),
   "./components/mockups/saved-spots/DataChips.tsx": () => import("../components/mockups/saved-spots/DataChips.tsx"),
   "./components/mockups/saved-spots/OceanDark.tsx": () => import("../components/mockups/saved-spots/OceanDark.tsx"),
