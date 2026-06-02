@@ -180,20 +180,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10",
     },
     {
-      icon: Wind, label: "Wind", value: `${windSpd} ${windDir}`.trim(),
-      sub: windGusts || "OpenWeatherMap",
-      color: "text-sky-400", border: "border-sky-500/20", bg: "bg-sky-500/10",
-      onClick: () => setShowWindDetailsModal(true),
-    },
-    {
       icon: Waves, label: "Wave Period", value: wavePeriodVal,
       sub: "Long-period groundswell",
       color: "text-teal-400", border: "border-teal-500/20", bg: "bg-teal-500/10",
-    },
-    {
-      icon: BarChart3, label: "Tide", value: tideStatus,
-      sub: tideH ? `${tideH} · Next ${todayTides.find(t => t.type !== (tideStatus.toLowerCase().includes("high") ? "high" : "low"))?.time ?? ""}` : "NOAA Tides",
-      color: "text-cyan-400", border: "border-cyan-500/20", bg: "bg-cyan-500/10",
     },
     {
       icon: Droplets, label: "Water Temp", value: waterF,
