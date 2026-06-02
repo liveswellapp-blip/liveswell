@@ -1,22 +1,63 @@
 import { useState } from "react";
-import { MapPin, Waves, Wind, Search, Heart, SlidersHorizontal } from "lucide-react";
+import { MapPin, Waves, Wind, Search, Heart, SlidersHorizontal, TrendingUp, TrendingDown } from "lucide-react";
 
-const SAVED = [
-  { id: 1, name: "Mavericks", city: "Half Moon Bay", wave: "8–12 ft" },
-  { id: 2, name: "Pipeline", city: "Haleiwa, HI", wave: "6–10 ft" },
-  { id: 3, name: "Trestles", city: "San Clemente", wave: "3–5 ft" },
+interface Spot {
+  id: number;
+  name: string;
+  city: string;
+  wave: string;
+  wind: string;
+  tide: { type: "High" | "Low"; time: string };
+}
+
+const SAVED: Spot[] = [
+  { id: 1, name: "Mavericks",  city: "Half Moon Bay", wave: "8–12 ft", wind: "12 mph NW", tide: { type: "Low",  time: "2:14 PM" } },
+  { id: 2, name: "Pipeline",   city: "Haleiwa, HI",   wave: "6–10 ft", wind: "8 mph E",   tide: { type: "High", time: "3:47 PM" } },
+  { id: 3, name: "Trestles",   city: "San Clemente",  wave: "3–5 ft",  wind: "7 mph NW",  tide: { type: "High", time: "5:02 PM" } },
 ];
 
-const SPOTS = [
-  { id: 4, name: "Steamer Lane", city: "Santa Cruz, CA", wave: "5–8 ft", wind: "15 mph W" },
-  { id: 5, name: "Rincon", city: "Carpinteria, CA", wave: "4–6 ft", wind: "5 mph N" },
-  { id: 6, name: "Huntington", city: "Huntington Beach, CA", wave: "3–4 ft", wind: "6 mph SW" },
-  { id: 7, name: "Cocoa Beach", city: "Cocoa Beach, FL", wave: "2–3 ft", wind: "10 mph SE" },
-  { id: 8, name: "Sebastian Inlet", city: "Sebastian, FL", wave: "3–4 ft", wind: "8 mph NE" },
-  { id: 9, name: "Tofino", city: "British Columbia", wave: "6–9 ft", wind: "18 mph W" },
-  { id: 10, name: "Uluwatu", city: "Bali, Indonesia", wave: "6–10 ft", wind: "10 mph SE" },
-  { id: 11, name: "Nazaré", city: "Leiria, Portugal", wave: "12–20 ft", wind: "20 mph N" },
+const SPOTS: Spot[] = [
+  { id: 4,  name: "Steamer Lane",    city: "Santa Cruz, CA",       wave: "5–8 ft",   wind: "15 mph W",  tide: { type: "Low",  time: "1:38 PM" } },
+  { id: 5,  name: "Rincon",          city: "Carpinteria, CA",      wave: "4–6 ft",   wind: "5 mph N",   tide: { type: "High", time: "6:20 PM" } },
+  { id: 6,  name: "Huntington",      city: "Huntington Beach, CA", wave: "3–4 ft",   wind: "6 mph SW",  tide: { type: "Low",  time: "4:55 PM" } },
+  { id: 7,  name: "Cocoa Beach",     city: "Cocoa Beach, FL",      wave: "2–3 ft",   wind: "10 mph SE", tide: { type: "High", time: "7:10 PM" } },
+  { id: 8,  name: "Sebastian Inlet", city: "Sebastian, FL",        wave: "3–4 ft",   wind: "8 mph NE",  tide: { type: "Low",  time: "3:30 PM" } },
+  { id: 9,  name: "Tofino",          city: "British Columbia",     wave: "6–9 ft",   wind: "18 mph W",  tide: { type: "High", time: "4:15 PM" } },
+  { id: 10, name: "Uluwatu",         city: "Bali, Indonesia",      wave: "6–10 ft",  wind: "10 mph SE", tide: { type: "Low",  time: "2:50 PM" } },
+  { id: 11, name: "Nazaré",          city: "Leiria, Portugal",     wave: "12–20 ft", wind: "20 mph N",  tide: { type: "High", time: "5:33 PM" } },
 ];
+
+function SpotCard({ spot }: { spot: Spot }) {
+  const TideIcon = spot.tide.type === "High" ? TrendingUp : TrendingDown;
+  const tideColor = spot.tide.type === "High" ? "text-sky-400" : "text-teal-400";
+
+  return (
+    <div className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
+      style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div>
+        <p className="text-white text-[12px] font-bold leading-tight">{spot.name}</p>
+        <div className="flex items-center gap-1 mt-0.5">
+          <MapPin size={8} className="text-slate-600 flex-shrink-0" />
+          <p className="text-slate-600 text-[9px] leading-tight truncate">{spot.city}</p>
+        </div>
+      </div>
+      <div className="space-y-0.5">
+        <div className="flex items-center gap-1">
+          <Waves size={9} className="text-emerald-500 flex-shrink-0" />
+          <span className="text-emerald-400 text-[11px] font-bold">{spot.wave}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Wind size={9} className="text-cyan-600 flex-shrink-0" />
+          <span className="text-cyan-500 text-[10px]">{spot.wind}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <TideIcon size={9} className={`${tideColor} flex-shrink-0`} />
+          <span className={`${tideColor} text-[10px]`}>{spot.tide.type} {spot.tide.time}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function GridTiles() {
   const [search, setSearch] = useState("");
@@ -70,23 +111,7 @@ export default function GridTiles() {
             <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Saved</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {SAVED.map(s => (
-              <div key={s.id}
-                className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
-                style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div>
-                  <p className="text-white text-[12px] font-bold leading-tight">{s.name}</p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <MapPin size={8} className="text-slate-600 flex-shrink-0" />
-                    <p className="text-slate-600 text-[9px] leading-tight truncate">{s.city}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Waves size={9} className="text-emerald-500" />
-                  <span className="text-emerald-400 text-[11px] font-bold">{s.wave}</span>
-                </div>
-              </div>
-            ))}
+            {SAVED.map(s => <SpotCard key={s.id} spot={s} />)}
           </div>
         </div>
 
@@ -97,29 +122,7 @@ export default function GridTiles() {
             <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
-          {filtered.map(spot => (
-            <div key={spot.id}
-              className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
-              style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div>
-                <p className="text-white text-[12px] font-bold leading-tight">{spot.name}</p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <MapPin size={8} className="text-slate-600 flex-shrink-0" />
-                  <p className="text-slate-600 text-[9px] leading-tight truncate">{spot.city}</p>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <Waves size={9} className="text-emerald-500" />
-                  <span className="text-emerald-400 text-[11px] font-bold">{spot.wave}</span>
-                </div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <Wind size={9} className="text-cyan-600" />
-                  <span className="text-cyan-500 text-[9px]">{spot.wind}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+            {filtered.map(spot => <SpotCard key={spot.id} spot={spot} />)}
           </div>
         </div>
       </div>
