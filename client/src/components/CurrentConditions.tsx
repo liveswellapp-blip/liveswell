@@ -351,8 +351,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       })
                       .map((tide, i) => (
                         <div key={i} className="flex items-center gap-1.5">
-                          <span className={`text-[10px] font-semibold capitalize w-6 shrink-0 ${tide.type === "high" ? "text-cyan-400" : "text-slate-400"}`}>
-                            {tide.type === "high" ? "Hi" : "Lo"}
+                          <span className={`text-[10px] font-semibold capitalize w-8 shrink-0 ${tide.type === "high" ? "text-cyan-400" : "text-slate-400"}`}>
+                            {tide.type === "high" ? "High" : "Low"}
                           </span>
                           <span className="text-slate-300 text-[10px] font-medium">{tide.time}</span>
                           <span className="text-slate-500 text-[10px]">{tide.height.toFixed(1)} ft</span>
