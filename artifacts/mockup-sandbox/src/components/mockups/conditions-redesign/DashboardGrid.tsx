@@ -1,4 +1,4 @@
-import { Waves, Wind, BarChart3, Droplets, Sun, MapPin, Bot, ChevronRight, Radio, Clock } from "lucide-react";
+import { Waves, Wind, BarChart3, Droplets, Sun, MapPin, Bot, ChevronRight, Radio, Clock, Heart } from "lucide-react";
 
 const stats = [
   { icon: Waves,    label: "Wave Height",  value: "4–5 ft",      sub: "WSW swell",              color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/8" },
@@ -31,25 +31,40 @@ export function DashboardGrid() {
         <span>●●● WiFi 🔋</span>
       </div>
 
-      {/* Location hero */}
-      <div className="mx-3 mt-1 rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #022c22 0%, #064e3b 60%, #0f3460 100%)" }}>
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <MapPin className="h-3 w-3 text-emerald-400" />
-            <span className="text-emerald-400 text-xs font-semibold">Half Moon Bay, CA</span>
+      {/* Location hero — from Design C */}
+      <div className="mx-3 mt-1 rounded-2xl overflow-hidden relative"
+        style={{ background: "linear-gradient(150deg, #022c22 0%, #064e3b 50%, #0c2340 100%)" }}>
+        <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 370 130" preserveAspectRatio="none">
+          {[0,22,44].map(o => <path key={o} d={`M0 ${65+o} Q90 ${50+o} 185 ${65+o} T370 ${65+o}`} stroke="#10b981" strokeWidth="1.5" fill="none" />)}
+        </svg>
+        <div className="relative px-5 pt-4 pb-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <MapPin className="h-3 w-3 text-emerald-400" />
+                <span className="text-emerald-400 text-xs font-semibold">Half Moon Bay, CA</span>
+              </div>
+              <h2 className="text-white font-black text-2xl">Mavericks</h2>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-slate-400 text-[10px]">Stn 46237 · Point Reyes · 4 min ago</span>
+              </div>
+            </div>
+            <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+              <Heart className="h-4 w-4 text-slate-300" />
+            </button>
           </div>
-          <p className="text-white font-black text-xl">Mavericks</p>
-          <div className="flex gap-5 mt-2.5 pt-2.5 border-t border-white/10">
-            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Swell</p><p className="text-emerald-400 font-black text-xl leading-tight">4–5 <span className="text-sm font-semibold text-slate-400">ft</span></p></div>
-            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Period</p><p className="text-teal-400 font-black text-xl leading-tight">17 <span className="text-sm font-semibold text-slate-400">sec</span></p></div>
-            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Wind</p><p className="text-sky-400 font-black text-xl leading-tight">5 <span className="text-sm font-semibold text-slate-400">mph</span></p></div>
-            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Direction</p><p className="text-sky-300 font-bold text-sm leading-tight mt-1">N · Offshore</p></div>
+          <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-white/10">
+            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Height</p><p className="text-emerald-400 font-black text-lg leading-tight">4–5<span className="text-xs font-semibold text-slate-400"> ft</span></p></div>
+            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Period</p><p className="text-teal-400 font-black text-lg leading-tight">17<span className="text-xs font-semibold text-slate-400"> s</span></p></div>
+            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Wind</p><p className="text-sky-400 font-black text-lg leading-tight">5<span className="text-xs font-semibold text-slate-400"> mph</span></p></div>
+            <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Water</p><p className="text-cyan-400 font-black text-lg leading-tight">58<span className="text-xs font-semibold text-slate-400"> °F</span></p></div>
           </div>
-        </div>
-        <div className="flex items-center justify-between px-4 py-2 bg-black/20 text-[10px] text-slate-300">
-          <span>🌅 Sunrise 6:18 AM</span>
-          <div className="flex-1 mx-3 h-0.5 bg-gradient-to-r from-amber-400/60 via-yellow-300/80 to-amber-400/60 rounded-full" />
-          <span>Sunset 8:24 PM 🌇</span>
+          <div className="flex items-center gap-2 mt-2.5">
+            <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">N Wind · Offshore</span>
+            <span className="bg-slate-700/60 text-slate-300 text-[10px] font-semibold px-2.5 py-1 rounded-full">WSW Swell</span>
+            <span className="bg-cyan-500/15 text-cyan-400 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-cyan-500/25">Tide Rising</span>
+          </div>
         </div>
       </div>
 
