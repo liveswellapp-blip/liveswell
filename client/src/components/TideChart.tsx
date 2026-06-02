@@ -73,14 +73,18 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   // SVG viewBox dimensions
   const VW = 640;
   const VH = 120;
+  // Padding reserves space for badges above high-tide dots and below low-tide dots
+  const TOP_PAD = 20;
+  const BOT_PAD = 26;
+
+  const tideY = (normalized: number) =>
+    TOP_PAD + (1 - normalized) * (VH - TOP_PAD - BOT_PAD);
 
   const createTidePath = () => {
     const points = hourlyData.map((point, index) => {
       const x = (index / (hourlyData.length - 1)) * VW;
       const normalized = heightRange > 0 ? (point.height - minHeight) / heightRange : 0.5;
-      // Leave 10px padding top/bottom
-      const y = (VH - 10) - normalized * (VH - 20) + 5;
-      return `${x},${y}`;
+      return `${x},${tideY(normalized)}`;
     });
     return `M ${points.join(" L ")}`;
   };
@@ -93,7 +97,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
     const idx = hourlyData.indexOf(closest);
     const x = (idx / (hourlyData.length - 1)) * VW;
     const normalized = heightRange > 0 ? (closest.height - minHeight) / heightRange : 0.5;
-    const y = (VH - 10) - normalized * (VH - 20) + 5;
+    const y = tideY(normalized);
     return { ...tide, svgX: x, svgY: y, height: closest.height };
   });
 
@@ -160,7 +164,7 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
   return (
     <div className="w-full rounded-xl overflow-hidden flex flex-col bg-gradient-to-br from-slate-900/95 to-slate-950/95 border border-white/5 shadow-xl">
       {/* Chart area */}
-      <div className="flex-1 relative" style={{ height: "100px" }}>
+      <div className="flex-1 relative" style={{ height: "120px" }}>
         <svg
           ref={svgRef}
           viewBox={`0 0 ${VW} ${VH}`}
@@ -257,17 +261,6 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
           );
         })}
 
-        {/* "Now" label */}
-        {isToday && !dragInfo && (
-          <div
-            className="absolute pointer-events-none"
-            style={{ left: `${(currentTimeX / VW) * 100}%`, top: "4px", transform: "translateX(-50%)" }}
-          >
-            <span className="text-[9px] font-bold text-white/70 uppercase tracking-wide bg-slate-900/60 px-1 py-px rounded">
-              Now
-            </span>
-          </div>
-        )}
 
         {/* Drag tooltip */}
         {dragInfo && (
@@ -288,7 +281,17 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
       </div>
 
       {/* Time axis strip */}
-      <div className="flex items-center justify-between px-3 border-t border-white/10 bg-slate-950/40" style={{ height: "26px" }}>
+      <div className="relative flex items-center justify-between px-3 border-t border-white/10 bg-slate-950/40" style={{ height: "26px" }}>
+        {/* Now tick in axis */}
+        {isToday && !dragInfo && (
+          <div
+            className="absolute top-0 flex flex-col items-center pointer-events-none"
+            style={{ left: `${(currentTimeX / VW) * 100}%`, transform: "translateX(-50%)" }}
+          >
+            <div className="w-px h-1.5 bg-white/50" />
+            <span className="text-[8px] font-bold text-white/60 mt-px leading-none">now</span>
+          </div>
+        )}
         {["12a", "6a", "12p", "6p", "12a"].map((label, i) => (
           <span key={i} className="text-[10px] font-medium text-slate-400">{label}</span>
         ))}
