@@ -63,27 +63,40 @@ export default function GridTiles() {
       </div>
 
       <div className="px-4 pt-4 pb-8 space-y-5">
-        {/* ── Saved horizontal scroll ── */}
+        {/* ── Saved grid ── */}
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <Heart size={11} className="text-emerald-400" />
             <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Saved</span>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+          <div className="grid grid-cols-2 gap-2">
             {SAVED.map(s => (
               <div key={s.id}
-                className="flex-shrink-0 rounded-xl px-3 py-2.5 cursor-pointer"
-                style={{ minWidth: 110, background: "linear-gradient(120deg,#04202e,#041a2e)", border: "1px solid rgba(16,185,129,0.22)" }}>
-                <p className="text-white text-[11px] font-bold leading-tight truncate">{s.name}</p>
-                <p className="text-slate-600 text-[9px] truncate">{s.city}</p>
-                <p className="text-emerald-400 text-[11px] font-semibold mt-1">{s.wave}</p>
+                className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
+                style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div>
+                  <p className="text-white text-[12px] font-bold leading-tight">{s.name}</p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <MapPin size={8} className="text-slate-600 flex-shrink-0" />
+                    <p className="text-slate-600 text-[9px] leading-tight truncate">{s.city}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Waves size={9} className="text-emerald-500" />
+                  <span className="text-emerald-400 text-[11px] font-bold">{s.wave}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── 2-col grid ── */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* ── All Locations grid ── */}
+        <div>
+          <div className="flex items-center gap-2 mb-2.5">
+            <div className="w-2 h-2 rounded-full bg-slate-600" />
+            <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
           {filtered.map(spot => (
             <div key={spot.id}
               className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
@@ -107,6 +120,7 @@ export default function GridTiles() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       </div>
     </div>
