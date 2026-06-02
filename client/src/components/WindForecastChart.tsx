@@ -213,27 +213,6 @@ export default function WindForecastChart({ locationName, forecastData }: Props)
         </svg>
       </div>
 
-      {/* ── Gusts bar row ── */}
-      <div className="mb-3">
-        <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1.5">Gusts (mph)</p>
-        <div className="flex gap-0.5">
-          {data.map((d, i) => {
-            const isNow = i === NOW_IDX;
-            const intensity = d.windGusts / maxGust;
-            return (
-              <div key={i} className="flex-1">
-                <div className="w-full rounded text-center text-[7px] font-semibold py-0.5" style={{
-                  background: isNow
-                    ? "#22d3ee"
-                    : `rgba(34,211,238,${0.05 + intensity * 0.25})`,
-                  color: isNow ? "#021825" : "#67e8f9",
-                }}>{i % 4 === 0 || isNow ? d.windGusts : ""}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* ── Direction row ── */}
       <div className="mb-4 pb-4 border-b border-white/5">
         <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1.5">Direction</p>
