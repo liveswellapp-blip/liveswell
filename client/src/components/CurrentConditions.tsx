@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Waves, BarChart3, Wind, Droplets, Sun, Clock, AlertCircle } from "lucide-react";
+import { MapPin, Waves, BarChart3, Wind, Droplets, Sun, Clock, AlertCircle, RefreshCw, Check } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -91,6 +91,20 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     }, 30000);
     return () => clearInterval(id);
   }, [location.latitude, location.longitude]);
+
+  const queryClient = useQueryClient();
+  const [refreshState, setRefreshState] = useState<"idle" | "spinning" | "done">("idle");
+
+  function handleRefresh() {
+    if (refreshState !== "idle") return;
+    setRefreshState("spinning");
+    queryClient.invalidateQueries({ queryKey: [`/api/locations/${location.id}/conditions`] });
+    queryClient.invalidateQueries({ queryKey: [`/api/locations/${location.id}/forecast`] });
+    setTimeout(() => {
+      setRefreshState("done");
+      setTimeout(() => setRefreshState("idle"), 2000);
+    }, 1500);
+  }
 
   const [selectedBuoyStation, setSelectedBuoyStation] = useState<string | null>(null);
   const [selectedBuoyName, setSelectedBuoyName] = useState<string>("");
@@ -222,7 +236,22 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </div>
                 <h1 className="text-white font-black text-3xl leading-tight">{location.name}</h1>
               </div>
-              <div className="mt-1">
+              <div className="mt-1 flex items-center gap-2">
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshState === "spinning"}
+                  aria-label="Refresh conditions"
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
+                  style={{
+                    background: refreshState === "done" ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.07)",
+                    border: refreshState === "done" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.12)",
+                  }}
+                >
+                  {refreshState === "done"
+                    ? <Check size={13} className="text-emerald-400" />
+                    : <RefreshCw size={13} className={`text-slate-400 ${refreshState === "spinning" ? "animate-spin" : ""}`} />
+                  }
+                </button>
                 <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
               </div>
             </div>
