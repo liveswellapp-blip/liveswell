@@ -8,7 +8,7 @@ import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
 import AISurfSummary from "@/components/AISurfSummary";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 interface CurrentConditionsProps {
@@ -58,6 +58,24 @@ interface WindForecastData {
 }
 
 export default function CurrentConditions({ location }: CurrentConditionsProps) {
+  const getLocalTime = () => {
+    const getTimezone = (lat: number, lon: number) => {
+      if (lon >= -125 && lon <= -114 && lat >= 32 && lat <= 49) return "America/Los_Angeles";
+      if (lon >= -115 && lon <= -102 && lat >= 31 && lat <= 49) return "America/Denver";
+      if (lon >= -104 && lon <= -87 && lat >= 25 && lat <= 49) return "America/Chicago";
+      if (lon >= -88 && lon <= -66 && lat >= 25 && lat <= 47) return "America/New_York";
+      return undefined;
+    };
+    const tz = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
+    return new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, ...(tz ? { timeZone: tz } : {}) });
+  };
+
+  const [localTime, setLocalTime] = useState(getLocalTime);
+  useEffect(() => {
+    const id = setInterval(() => setLocalTime(getLocalTime()), 30000);
+    return () => clearInterval(id);
+  }, [location.latitude, location.longitude]);
+
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [isWindForecastExpanded, setIsWindForecastExpanded] = useState(false);
   const [selectedBuoyStation, setSelectedBuoyStation] = useState<string | null>(null);
@@ -560,9 +578,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
           {/* Tide & Sun - Horizontal Layout - Spans full width below */}
           <div className="col-span-2 lg:col-span-3 rounded-lg p-4 bg-muted text-blue-900 dark:text-white border border-border">
-            <div className="flex items-center space-x-2 mb-4">
-              <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
-              <span className="text-base font-medium">Tide & Sun</span>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5 text-blue-900 dark:text-white" />
+                <span className="text-base font-medium">Tide & Sun</span>
+              </div>
+              <div className="flex items-center space-x-1 text-gray-400 dark:text-gray-500">
+                <Clock className="h-3 w-3" />
+                <span className="text-xs">{localTime} local</span>
+              </div>
             </div>
             
             {isLoading || forecastLoading ? (
