@@ -308,7 +308,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <span className="text-sky-400 text-[11px] font-semibold">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
-                        className="mt-2 w-full text-[9px] border border-sky-700/40 rounded-lg py-1 hover:bg-sky-900/30 transition-colors text-[#34d399]"
+                        className="mt-2 w-full text-[9px] border border-sky-700/40 rounded-lg py-1 hover:bg-sky-900/30 transition-colors text-[#38bdf8]"
                         onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                       >
                         Wave History
