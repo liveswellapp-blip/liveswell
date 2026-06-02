@@ -273,7 +273,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <span className="text-emerald-400 text-[11px] font-semibold">{primaryBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
-                        className="mt-2 w-full text-[9px] border border-emerald-700/40 rounded-lg py-1 hover:bg-emerald-900/30 transition-colors text-[#34d399] opacity-[1]"
+                        className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
                         onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
                       >Wave History</button>
                     </>
@@ -308,7 +308,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <span className="text-sky-400 text-[11px] font-semibold">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
-                        className="mt-2 w-full text-[9px] border border-sky-700/40 rounded-lg py-1 hover:bg-sky-900/30 transition-colors text-[#38bdf8]"
+                        className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
                         onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                       >
                         Wave History
@@ -346,7 +346,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                   </div>
                   <button
-                    className="text-[9px] border border-cyan-700/40 rounded-lg px-3 py-1 hover:bg-cyan-900/30 transition-colors shrink-0 text-[#22d3ee]"
+                    className="text-[9px] bg-cyan-500/15 border border-cyan-500/30 rounded-lg px-3 py-1 hover:bg-cyan-500/25 transition-colors shrink-0 text-cyan-400"
                     onClick={() => setShowWindDetailsModal(true)}
                   >Wind Forecast</button>
                 </div>
