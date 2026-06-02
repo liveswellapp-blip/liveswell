@@ -520,29 +520,40 @@ function SavedSpotsCard() {
   }
 
   return (
-    <Card className="bg-muted dark:bg-black">
+    <Card className="bg-muted dark:bg-black overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
           <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
           <span>Saved Spots</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3 lg:space-y-2">
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
           {favorites.map((location) => (
             <div
               key={location.id}
-              className="flex items-center justify-between p-3 rounded-lg border bg-white dark:bg-muted hover:bg-gray-50 dark:hover:bg-muted/80 transition-colors cursor-pointer"
+              className="flex items-stretch hover:bg-muted/60 dark:hover:bg-white/5 transition-colors cursor-pointer"
               onClick={() => handleLocationSelect(location)}
             >
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-blue-900 dark:text-white text-sm">{location.name}</h3>
-                <p className="text-xs text-muted-foreground truncate">
-                  {location.city}, {location.country}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <SpotConditions locationId={location.id} />
+              {/* Left emerald accent bar */}
+              <div className="w-1 flex-shrink-0 bg-emerald-400" />
+
+              {/* Content */}
+              <div className="flex items-center justify-between px-3 py-3 flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full flex-shrink-0 bg-emerald-400" />
+                    <h3 className="font-semibold text-sm text-blue-900 dark:text-white leading-tight truncate">
+                      {location.name}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-3.5 truncate">
+                    {location.city}, {location.country}
+                  </p>
+                </div>
+                <div className="flex-shrink-0 ml-2">
+                  <SpotConditions locationId={location.id} />
+                </div>
               </div>
             </div>
           ))}
