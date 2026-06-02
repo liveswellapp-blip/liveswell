@@ -228,32 +228,32 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
           <div className="relative px-5 pt-5 pb-5">
             {/* Location + favorite */}
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5 text-emerald-400" />
                   <span className="text-emerald-400 text-xs font-semibold">{location.city}</span>
                 </div>
-                <h1 className="text-white font-black text-3xl leading-tight">{location.name}</h1>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={refreshState === "spinning"}
+                    aria-label="Refresh conditions"
+                    className="w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
+                    style={{
+                      background: refreshState === "done" ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.07)",
+                      border: refreshState === "done" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.12)",
+                    }}
+                  >
+                    {refreshState === "done"
+                      ? <Check size={12} className="text-emerald-400" />
+                      : <RefreshCw size={12} className={`text-slate-400 ${refreshState === "spinning" ? "animate-spin" : ""}`} />
+                    }
+                  </button>
+                  <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
+                </div>
               </div>
-              <div className="mt-1 flex items-center gap-2">
-                <button
-                  onClick={handleRefresh}
-                  disabled={refreshState === "spinning"}
-                  aria-label="Refresh conditions"
-                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
-                  style={{
-                    background: refreshState === "done" ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.07)",
-                    border: refreshState === "done" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.12)",
-                  }}
-                >
-                  {refreshState === "done"
-                    ? <Check size={13} className="text-emerald-400" />
-                    : <RefreshCw size={13} className={`text-slate-400 ${refreshState === "spinning" ? "animate-spin" : ""}`} />
-                  }
-                </button>
-                <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
-              </div>
+              <h1 className="text-white font-black text-3xl leading-tight">{location.name}</h1>
             </div>
 
             {/* Buoy cards */}
