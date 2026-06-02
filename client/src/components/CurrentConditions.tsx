@@ -572,7 +572,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 {/* Tide Chart */}
                 {todayTides.length > 0 && (
                   <div className="lg:col-span-3">
-                    <TideChart tides={todayTides} date="today" location={location} />
+                    <TideChart tides={todayTides} date="today" location={location} sunrise={conditions?.sunrise} sunset={conditions?.sunset} />
                   </div>
                 )}
                 

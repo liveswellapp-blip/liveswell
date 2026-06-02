@@ -5,9 +5,11 @@ interface TideChartProps {
   tides: TidePoint[];
   date: string;
   location?: Location;
+  sunrise?: string;
+  sunset?: string;
 }
 
-export default function TideChart({ tides, date, location }: TideChartProps) {
+export default function TideChart({ tides, date, location, sunrise, sunset }: TideChartProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedTimeX, setDraggedTimeX] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -215,6 +217,28 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
               opacity="0.4"
             />
           ))}
+
+          {/* Sunrise line */}
+          {sunrise && (() => {
+            const sx = (parseTimeToHours(sunrise) / 24) * VW;
+            return (
+              <g>
+                <line x1={sx} y1="0" x2={sx} y2={VH} stroke="#fbbf24" strokeWidth="1" strokeDasharray="3 5" opacity="0.5" />
+                <text x={sx + 3} y="12" fontSize="8" fill="#fbbf24" opacity="0.8" fontFamily="sans-serif">↑</text>
+              </g>
+            );
+          })()}
+
+          {/* Sunset line */}
+          {sunset && (() => {
+            const sx = (parseTimeToHours(sunset) / 24) * VW;
+            return (
+              <g>
+                <line x1={sx} y1="0" x2={sx} y2={VH} stroke="#fb923c" strokeWidth="1" strokeDasharray="3 5" opacity="0.5" />
+                <text x={sx + 3} y="12" fontSize="8" fill="#fb923c" opacity="0.8" fontFamily="sans-serif">↓</text>
+              </g>
+            );
+          })()}
 
           {/* Now / drag indicator */}
           {(isToday || isDragging || draggedTimeX !== null) && (
