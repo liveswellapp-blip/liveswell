@@ -6,25 +6,26 @@ interface Spot {
   name: string;
   city: string;
   wave: string;
+  period: string;
   wind: string;
   tide: { type: "High" | "Low"; time: string };
 }
 
 const SAVED: Spot[] = [
-  { id: 1, name: "Mavericks",  city: "Half Moon Bay", wave: "8–12 ft", wind: "12 mph NW", tide: { type: "Low",  time: "2:14 PM" } },
-  { id: 2, name: "Pipeline",   city: "Haleiwa, HI",   wave: "6–10 ft", wind: "8 mph E",   tide: { type: "High", time: "3:47 PM" } },
-  { id: 3, name: "Trestles",   city: "San Clemente",  wave: "3–5 ft",  wind: "7 mph NW",  tide: { type: "High", time: "5:02 PM" } },
+  { id: 1, name: "Mavericks",  city: "Half Moon Bay", wave: "8–12 ft", period: "14 sec", wind: "12 mph NW", tide: { type: "Low",  time: "2:14 PM" } },
+  { id: 2, name: "Pipeline",   city: "Haleiwa, HI",   wave: "6–10 ft", period: "12 sec", wind: "8 mph E",   tide: { type: "High", time: "3:47 PM" } },
+  { id: 3, name: "Trestles",   city: "San Clemente",  wave: "3–5 ft",  period: "9 sec",  wind: "7 mph NW",  tide: { type: "High", time: "5:02 PM" } },
 ];
 
 const SPOTS: Spot[] = [
-  { id: 4,  name: "Steamer Lane",    city: "Santa Cruz, CA",       wave: "5–8 ft",   wind: "15 mph W",  tide: { type: "Low",  time: "1:38 PM" } },
-  { id: 5,  name: "Rincon",          city: "Carpinteria, CA",      wave: "4–6 ft",   wind: "5 mph N",   tide: { type: "High", time: "6:20 PM" } },
-  { id: 6,  name: "Huntington",      city: "Huntington Beach, CA", wave: "3–4 ft",   wind: "6 mph SW",  tide: { type: "Low",  time: "4:55 PM" } },
-  { id: 7,  name: "Cocoa Beach",     city: "Cocoa Beach, FL",      wave: "2–3 ft",   wind: "10 mph SE", tide: { type: "High", time: "7:10 PM" } },
-  { id: 8,  name: "Sebastian Inlet", city: "Sebastian, FL",        wave: "3–4 ft",   wind: "8 mph NE",  tide: { type: "Low",  time: "3:30 PM" } },
-  { id: 9,  name: "Tofino",          city: "British Columbia",     wave: "6–9 ft",   wind: "18 mph W",  tide: { type: "High", time: "4:15 PM" } },
-  { id: 10, name: "Uluwatu",         city: "Bali, Indonesia",      wave: "6–10 ft",  wind: "10 mph SE", tide: { type: "Low",  time: "2:50 PM" } },
-  { id: 11, name: "Nazaré",          city: "Leiria, Portugal",     wave: "12–20 ft", wind: "20 mph N",  tide: { type: "High", time: "5:33 PM" } },
+  { id: 4,  name: "Steamer Lane",    city: "Santa Cruz, CA",       wave: "5–8 ft",   period: "11 sec", wind: "15 mph W",  tide: { type: "Low",  time: "1:38 PM" } },
+  { id: 5,  name: "Rincon",          city: "Carpinteria, CA",      wave: "4–6 ft",   period: "10 sec", wind: "5 mph N",   tide: { type: "High", time: "6:20 PM" } },
+  { id: 6,  name: "Huntington",      city: "Huntington Beach, CA", wave: "3–4 ft",   period: "8 sec",  wind: "6 mph SW",  tide: { type: "Low",  time: "4:55 PM" } },
+  { id: 7,  name: "Cocoa Beach",     city: "Cocoa Beach, FL",      wave: "2–3 ft",   period: "7 sec",  wind: "10 mph SE", tide: { type: "High", time: "7:10 PM" } },
+  { id: 8,  name: "Sebastian Inlet", city: "Sebastian, FL",        wave: "3–4 ft",   period: "9 sec",  wind: "8 mph NE",  tide: { type: "Low",  time: "3:30 PM" } },
+  { id: 9,  name: "Tofino",          city: "British Columbia",     wave: "6–9 ft",   period: "13 sec", wind: "18 mph W",  tide: { type: "High", time: "4:15 PM" } },
+  { id: 10, name: "Uluwatu",         city: "Bali, Indonesia",      wave: "6–10 ft",  period: "12 sec", wind: "10 mph SE", tide: { type: "Low",  time: "2:50 PM" } },
+  { id: 11, name: "Nazaré",          city: "Leiria, Portugal",     wave: "12–20 ft", period: "16 sec", wind: "20 mph N",  tide: { type: "High", time: "5:33 PM" } },
 ];
 
 function SpotCard({ spot }: { spot: Spot }) {
@@ -44,7 +45,7 @@ function SpotCard({ spot }: { spot: Spot }) {
       <div className="space-y-0.5">
         <div className="flex items-center gap-1">
           <Waves size={9} className="text-emerald-500 flex-shrink-0" />
-          <span className="text-emerald-400 text-[11px] font-bold">{spot.wave}</span>
+          <span className="text-emerald-400 text-[11px] font-bold">{spot.wave} @ {spot.period}</span>
         </div>
         <div className="flex items-center gap-1">
           <Wind size={9} className="text-cyan-600 flex-shrink-0" />
