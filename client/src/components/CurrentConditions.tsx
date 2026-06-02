@@ -338,10 +338,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <span className="text-white font-black text-2xl leading-none">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
                       <span className="text-sky-600 text-xs font-semibold">mph</span>
                       <span className="text-slate-400 text-sm font-semibold">{conditions.windDirection}</span>
+                      {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
+                        <>
+                          <span className="text-slate-600 text-xs">·</span>
+                          <span className="text-slate-500 text-[11px]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                        </>
+                      )}
                     </div>
-                    {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
-                      <p className="text-slate-500 text-[10px] mt-0.5">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</p>
-                    )}
                   </div>
                   <button
                     className="text-[9px] text-sky-600 border border-sky-700/40 rounded-lg px-3 py-1 hover:bg-sky-900/30 transition-colors shrink-0"
