@@ -66,8 +66,8 @@ function buildTidePath(vw: number, vh: number, topPad: number, botPad: number) {
 
 // ─── Tide chart card ───────────────────────────────────────────────────────
 function TideCard() {
-  const VW = 340; const VH = 96;
-  const TOP = 18;  const BOT = 22;
+  const VW = 340; const VH = 120;
+  const TOP = 20;  const BOT = 28;
 
   const { path, markers } = buildTidePath(VW, VH, TOP, BOT);
 
@@ -78,8 +78,8 @@ function TideCard() {
   const gradId = "tideGrad-dash";
 
   return (
-    <div className="mx-3 mt-2 rounded-xl overflow-hidden border border-white/8"
-         style={{ background: "linear-gradient(to br, #0f172a, #020617)" }}>
+    <div className="mx-3 mt-2 rounded-xl border border-white/8"
+         style={{ background: "linear-gradient(135deg, #0f172a, #020617)" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 pt-2.5 pb-1.5">
         <div className="flex items-center gap-1.5">
@@ -90,7 +90,7 @@ function TideCard() {
       </div>
 
       {/* SVG chart */}
-      <div className="relative mx-2" style={{ height: `${VH}px` }}>
+      <div className="relative mx-2 overflow-visible" style={{ height: `${VH}px` }}>
         <svg viewBox={`0 0 ${VW} ${VH}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
           <defs>
             <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
