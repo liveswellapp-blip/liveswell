@@ -223,23 +223,23 @@ export function DashboardGrid() {
                   <span className="text-emerald-400 text-[10px] font-bold">Buoy #1</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Clock className="h-2.5 w-2.5 text-slate-500" />
-                  <span className="text-slate-500 text-[9px]">4 min ago</span>
+                  <Clock className="h-2.5 w-2.5 text-slate-400" />
+                  <span className="text-slate-400 text-[9px]">4 min ago</span>
                 </div>
               </div>
               <p className="text-emerald-400 text-xs font-semibold leading-tight">Point Reyes, CA</p>
-              <p className="text-slate-500 text-[9px] mb-2">Station 46237</p>
+              <p className="text-slate-400 text-[9px] mb-2">Station 46237</p>
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-[9px]">Waves</span>
+                  <span className="text-slate-400 text-[9px]">Waves</span>
                   <span className="text-emerald-400 text-[9px] font-semibold">4.5 ft @ 17s · WSW</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-[9px]">Water</span>
+                  <span className="text-slate-400 text-[9px]">Water</span>
                   <span className="text-emerald-400 text-[9px] font-semibold">58°F / 14°C</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-[9px]">Wind</span>
+                  <span className="text-slate-400 text-[9px]">Wind</span>
                   <span className="text-emerald-400 text-[9px] font-semibold">5 mph NW</span>
                 </div>
               </div>
@@ -253,23 +253,23 @@ export function DashboardGrid() {
                   <span className="text-sky-400 text-[10px] font-bold">Buoy #2</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Clock className="h-2.5 w-2.5 text-slate-500" />
-                  <span className="text-slate-500 text-[9px]">11 min ago</span>
+                  <Clock className="h-2.5 w-2.5 text-slate-400" />
+                  <span className="text-slate-400 text-[9px]">11 min ago</span>
                 </div>
               </div>
               <p className="text-sky-400 text-xs font-semibold leading-tight">Half Moon Bay</p>
-              <p className="text-slate-500 text-[9px] mb-2">Station 46012</p>
+              <p className="text-slate-400 text-[9px] mb-2">Station 46012</p>
               <div className="space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-[9px]">Waves</span>
+                  <span className="text-slate-400 text-[9px]">Waves</span>
                   <span className="text-sky-400 text-[9px] font-semibold">4.1 ft @ 16s · W</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-[9px]">Water</span>
+                  <span className="text-slate-400 text-[9px]">Water</span>
                   <span className="text-sky-400 text-[9px] font-semibold">57°F / 14°C</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 text-[9px]">Wind</span>
+                  <span className="text-slate-400 text-[9px]">Wind</span>
                   <span className="text-sky-400 text-[9px] font-semibold">4 mph N</span>
                 </div>
               </div>
