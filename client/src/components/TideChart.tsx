@@ -247,14 +247,14 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
               }}
             >
               {isHigh && (
-                <div className="mb-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[8px] font-semibold text-emerald-300 shadow leading-tight">
-                  {tide.height.toFixed(1)}ft
+                <div className="mb-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[8px] font-semibold text-emerald-300 shadow leading-tight whitespace-nowrap">
+                  {tide.time}
                 </div>
               )}
               <div className="w-1.5 h-1.5 rounded-full bg-slate-950 border border-emerald-400" />
               {!isHigh && (
-                <div className="mt-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[8px] font-semibold text-slate-300 shadow leading-tight">
-                  {tide.height.toFixed(1)}ft
+                <div className="mt-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[8px] font-semibold text-slate-300 shadow leading-tight whitespace-nowrap">
+                  {tide.time}
                 </div>
               )}
             </div>
