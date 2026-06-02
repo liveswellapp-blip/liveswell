@@ -29,7 +29,7 @@ const SPOTS: Spot[] = [
 
 function SpotCard({ spot }: { spot: Spot }) {
   const TideIcon = spot.tide.type === "High" ? TrendingUp : TrendingDown;
-  const tideColor = spot.tide.type === "High" ? "text-sky-400" : "text-teal-400";
+  const tideColor = "text-amber-400";
 
   return (
     <div className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2"
