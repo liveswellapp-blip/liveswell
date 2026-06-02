@@ -220,7 +220,7 @@ export function DashboardGrid() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-white text-[10px] font-bold">Buoy #1</span>
+                  <span className="text-emerald-400 text-[10px] font-bold">Buoy #1</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-2.5 w-2.5 text-slate-400" />
@@ -250,7 +250,7 @@ export function DashboardGrid() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                  <span className="text-white text-[10px] font-bold">Buoy #2</span>
+                  <span className="text-sky-400 text-[10px] font-bold">Buoy #2</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-2.5 w-2.5 text-slate-400" />
