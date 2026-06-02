@@ -140,6 +140,19 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   // ─── Derived values ──────────────────────────────────────────────────────
   const waveH = conditions?.waveHeight ? `${parseFloat(conditions.waveHeight).toFixed(1)} ft` : "—";
+
+  const waveRangeDisplay = (() => {
+    const p = (conditions as any)?.primaryBuoy;
+    const b = (conditions as any)?.backupBuoy;
+    const h1 = p?.waveHeight ? parseFloat(p.waveHeight) : null;
+    const h2 = b?.waveHeight ? parseFloat(b.waveHeight) : null;
+    if (h1 !== null && h2 !== null && Math.abs(h1 - h2) >= 0.2) {
+      const lo = Math.min(h1, h2).toFixed(1);
+      const hi = Math.max(h1, h2).toFixed(1);
+      return `${lo}–${hi} ft`;
+    }
+    return waveH;
+  })();
   const wavePeriodVal = conditions?.wavePeriod ? `${conditions.wavePeriod} sec` : "—";
   const waveDir = conditions?.waveDirection || "";
   const windSpd = conditions?.windSpeed ? `${Math.round(parseFloat(conditions.windSpeed))} mph` : "—";
@@ -160,7 +173,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   const stats = [
     {
-      icon: Waves, label: "Wave Height", value: waveH,
+      icon: Waves, label: "Wave Height", value: waveRangeDisplay,
       sub: waveDir ? `${waveDir} swell` : "NOAA buoy",
       color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10",
     },

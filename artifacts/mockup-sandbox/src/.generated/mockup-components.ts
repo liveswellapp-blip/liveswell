@@ -2,15 +2,15 @@
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/buoy-history/BuoyHistory.tsx": () => import("../components/mockups/buoy-history/BuoyHistory.tsx"),
+  "./components/mockups/conditions-redesign/DashboardGrid.tsx": () => import("../components/mockups/conditions-redesign/DashboardGrid.tsx"),
+  "./components/mockups/conditions-redesign/TabsLayout.tsx": () => import("../components/mockups/conditions-redesign/TabsLayout.tsx"),
+  "./components/mockups/conditions-redesign/TimelineStory.tsx": () => import("../components/mockups/conditions-redesign/TimelineStory.tsx"),
   "./components/mockups/saved-spots/AccentStrip.tsx": () => import("../components/mockups/saved-spots/AccentStrip.tsx"),
   "./components/mockups/saved-spots/DataChips.tsx": () => import("../components/mockups/saved-spots/DataChips.tsx"),
   "./components/mockups/saved-spots/OceanDark.tsx": () => import("../components/mockups/saved-spots/OceanDark.tsx"),
   "./components/mockups/tide-chart/Band.tsx": () => import("../components/mockups/tide-chart/Band.tsx"),
   "./components/mockups/tide-chart/Contained.tsx": () => import("../components/mockups/tide-chart/Contained.tsx"),
   "./components/mockups/tide-chart/DarkGlass.tsx": () => import("../components/mockups/tide-chart/DarkGlass.tsx"),
-  "./components/mockups/conditions-redesign/DashboardGrid.tsx": () => import("../components/mockups/conditions-redesign/DashboardGrid.tsx"),
-  "./components/mockups/conditions-redesign/TabsLayout.tsx": () => import("../components/mockups/conditions-redesign/TabsLayout.tsx"),
-  "./components/mockups/conditions-redesign/TimelineStory.tsx": () => import("../components/mockups/conditions-redesign/TimelineStory.tsx"),
   "./components/mockups/ux-concepts/BestWindow.tsx": () => import("../components/mockups/ux-concepts/BestWindow.tsx"),
   "./components/mockups/ux-concepts/BottomNav.tsx": () => import("../components/mockups/ux-concepts/BottomNav.tsx"),
   "./components/mockups/ux-concepts/MapToggle.tsx": () => import("../components/mockups/ux-concepts/MapToggle.tsx"),
