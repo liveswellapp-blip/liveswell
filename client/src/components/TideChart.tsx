@@ -282,14 +282,13 @@ export default function TideChart({ tides, date, location }: TideChartProps) {
 
       {/* Time axis strip */}
       <div className="relative flex items-center justify-between px-3 border-t border-white/10 bg-slate-950/40" style={{ height: "26px" }}>
-        {/* Now tick in axis */}
+        {/* Now tick in axis — just a small emerald dot, no text */}
         {isToday && !dragInfo && (
           <div
-            className="absolute top-0 flex flex-col items-center pointer-events-none"
+            className="absolute top-0 bottom-0 flex items-center pointer-events-none"
             style={{ left: `${(currentTimeX / VW) * 100}%`, transform: "translateX(-50%)" }}
           >
-            <div className="w-px h-1.5 bg-white/50" />
-            <span className="text-[8px] font-bold text-white/60 mt-px leading-none">now</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/80" />
           </div>
         )}
         {["12a", "6a", "12p", "6p", "12a"].map((label, i) => (
