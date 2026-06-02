@@ -393,10 +393,6 @@ export default function SurfSpots() {
           ))}
         </svg>
         <div className="relative max-w-2xl mx-auto">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d399" }} />
-            <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">LiveSwell</span>
-          </div>
           <h1 className="text-white font-black text-2xl leading-tight mb-3">Global Surf Spots</h1>
           <div className="flex gap-2">
             <div className="relative flex-1">
