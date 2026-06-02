@@ -336,7 +336,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 />
                 {/* Tide times row */}
                 {todayTides.length > 0 && (
-                  <div className="flex gap-3 flex-wrap mt-2">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-2">
                     {[...todayTides]
                       .sort((a, b) => {
                         const parseH = (s: string) => {
@@ -351,10 +351,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       })
                       .map((tide, i) => (
                         <div key={i} className="flex items-center gap-1.5">
-                          <span className={`text-[10px] font-semibold capitalize ${tide.type === "high" ? "text-cyan-400" : "text-slate-400"}`}>
-                            {tide.type}
+                          <span className={`text-[10px] font-semibold capitalize w-6 shrink-0 ${tide.type === "high" ? "text-cyan-400" : "text-slate-400"}`}>
+                            {tide.type === "high" ? "Hi" : "Lo"}
                           </span>
-                          <span className="text-slate-400 text-[10px]">{tide.time}</span>
+                          <span className="text-slate-300 text-[10px] font-medium">{tide.time}</span>
                           <span className="text-slate-500 text-[10px]">{tide.height.toFixed(1)} ft</span>
                         </div>
                       ))}
