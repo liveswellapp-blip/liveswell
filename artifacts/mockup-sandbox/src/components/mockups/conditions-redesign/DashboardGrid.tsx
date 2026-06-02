@@ -37,7 +37,7 @@ export function DashboardGrid() {
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 370 130" preserveAspectRatio="none">
           {[0,22,44].map(o => <path key={o} d={`M0 ${65+o} Q90 ${50+o} 185 ${65+o} T370 ${65+o}`} stroke="#10b981" strokeWidth="1.5" fill="none" />)}
         </svg>
-        <div className="relative px-5 pt-4 pb-7">
+        <div className="relative px-5 pt-4" style={{ paddingBottom: "28px" }}>
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-1.5 mb-1">
