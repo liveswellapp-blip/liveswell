@@ -213,27 +213,6 @@ export default function WindForecastChart({ locationName, forecastData }: Props)
         </svg>
       </div>
 
-      {/* ── Direction row ── */}
-      <div className="mb-4 pb-4 border-b border-white/5">
-        <p className="text-slate-500 text-[9px] uppercase tracking-widest font-semibold mb-1.5">Direction</p>
-        <div className="flex gap-1.5 flex-wrap">
-          {dirIdxs.map(i => {
-            const d = data[i];
-            const isNow = i === NOW_IDX;
-            return (
-              <div key={i} className="flex flex-col items-center gap-0.5">
-                <span className="text-[8px] text-slate-600">{d.time.replace(":00 ", "").toLowerCase()}</span>
-                <div className="px-1.5 py-0.5 rounded-full text-[8px] font-bold" style={{
-                  background: isNow ? "#22d3ee" : "rgba(34,211,238,0.12)",
-                  color: isNow ? "#021825" : "#67e8f9",
-                  border: isNow ? "none" : "1px solid rgba(34,211,238,0.2)",
-                }}>{d.windDirection}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* ── Data table ── */}
       <div>
         <p className="text-slate-400 text-[10px] uppercase tracking-widest font-semibold mb-2">All Readings</p>
