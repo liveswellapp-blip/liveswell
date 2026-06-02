@@ -6,6 +6,7 @@ import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
 import AISurfSummary from "@/components/AISurfSummary";
+import BuoyHistoryChart from "@/components/BuoyHistoryChart";
 import { useState, useEffect } from "react";
 import { getLocationTimezone } from "@/lib/timezone";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,8 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
   }, [location.latitude, location.longitude]);
 
   const [selectedBuoyStation, setSelectedBuoyStation] = useState<string | null>(null);
+  const [selectedBuoyName, setSelectedBuoyName] = useState<string>("");
+  const [selectedBuoyIndex, setSelectedBuoyIndex] = useState<1 | 2>(1);
   const [showBuoyHistoryModal, setShowBuoyHistoryModal] = useState(false);
   const [showWindDetailsModal, setShowWindDetailsModal] = useState(false);
 
@@ -256,7 +259,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       </div>
                       <button
                         className="mt-2 w-full text-[9px] text-emerald-600 border border-emerald-700/40 rounded-lg py-1 hover:bg-emerald-900/30 transition-colors"
-                        onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setShowBuoyHistoryModal(true); }}
+                        onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
                       >
                         24h History
                       </button>
@@ -293,7 +296,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       </div>
                       <button
                         className="mt-2 w-full text-[9px] text-sky-600 border border-sky-700/40 rounded-lg py-1 hover:bg-sky-900/30 transition-colors"
-                        onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setShowBuoyHistoryModal(true); }}
+                        onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                       >
                         24h History
                       </button>
@@ -384,44 +387,32 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
       {/* ── Buoy Historical Data Modal ──────────────────────────────── */}
       <Dialog open={showBuoyHistoryModal} onOpenChange={v => { if (!v) { setShowBuoyHistoryModal(false); setSelectedBuoyStation(null); } }}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-blue-900 dark:text-white pr-8">
-              {selectedBuoyStation && buoyHistoryData &&
-                `24-Hour Buoy History — Station ${selectedBuoyStation} (${buoyHistoryData.dataSource === "noaa" ? "NOAA Data" : "Simulated"})`}
-            </DialogTitle>
-          </DialogHeader>
-          {buoyHistoryLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
-            </div>
-          ) : buoyHistoryData ? (
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="max-h-96 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-emerald-50 dark:bg-emerald-900 sticky top-0 z-10">
-                    <tr className="font-semibold">
-                      {["Time","Height","Period","Direction"].map(h => (
-                        <th key={h} className="text-left py-2.5 px-3 border-r last:border-r-0 border-gray-300 dark:border-gray-600">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-background">
-                    {buoyHistoryData.historicalData.map((d, i) => (
-                      <tr key={i} className="hover:bg-muted/30 border-b border-emerald-200 dark:border-emerald-800 last:border-b-0">
-                        <td className="py-2.5 px-3 border-r border-gray-300 dark:border-gray-600 font-medium">{d.time}</td>
-                        <td className="py-2.5 px-3 border-r border-gray-300 dark:border-gray-600 text-emerald-600 dark:text-emerald-400 font-semibold">{d.waveHeight.toFixed(1)}ft</td>
-                        <td className="py-2.5 px-3 border-r border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400">{d.wavePeriod}s</td>
-                        <td className="py-2.5 px-3 text-blue-600 dark:text-blue-400">{d.waveDirection}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none" aria-describedby={undefined}>
+          <div className="rounded-2xl overflow-hidden p-5"
+            style={{ background: "linear-gradient(160deg, #030f1c 0%, #041a2e 60%, #021810 100%)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            {buoyHistoryLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-full rounded-xl bg-white/5" />
+                <Skeleton className="h-40 w-full rounded-xl bg-white/5" />
+                <Skeleton className="h-8 w-full rounded-xl bg-white/5" />
+                <Skeleton className="h-48 w-full rounded-xl bg-white/5" />
               </div>
+            ) : buoyHistoryData && selectedBuoyStation ? (
+              <BuoyHistoryChart
+                stationId={selectedBuoyStation}
+                stationName={selectedBuoyName}
+                dataSource={buoyHistoryData.dataSource}
+                historicalData={buoyHistoryData.historicalData}
+                buoyIndex={selectedBuoyIndex}
+              />
+            ) : (
+              <p className="text-center py-8 text-slate-500 text-sm">No historical data available for this buoy</p>
+            )}
+            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+              <span className="text-slate-600 text-[9px]">Data from NOAA National Data Buoy Center</span>
+              <span className="text-slate-700 text-[9px]">{buoyHistoryData?.dataSource === "noaa" ? "Live NOAA data" : "Simulated data"}</span>
             </div>
-          ) : (
-            <p className="text-center py-8 text-muted-foreground">No historical data available for this buoy</p>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
 
