@@ -335,13 +335,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-white font-black text-2xl leading-none">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                      <span className="font-black text-2xl leading-none text-[#0891b2]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
                       <span className="text-cyan-600 text-xs font-semibold">mph</span>
-                      <span className="text-slate-400 text-sm font-semibold">{conditions.windDirection}</span>
+                      <span className="text-sm font-semibold text-[#0891b2]">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                         <>
                           <span className="text-slate-600 text-xs">·</span>
-                          <span className="text-slate-500 text-[11px]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                          <span className="text-[11px] text-[#0891b2]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
                         </>
                       )}
                     </div>
