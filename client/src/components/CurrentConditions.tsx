@@ -318,10 +318,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <BarChart3 className="h-3.5 w-3.5 text-cyan-400" />
                 <span className="text-slate-400 text-[11px] uppercase tracking-wide font-semibold">Tides Today</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 text-[10px]">{localTime} local</span>
-                <span className="text-slate-600 text-[10px]">NOAA Tides &amp; Currents</span>
-              </div>
+              <span className="text-slate-500 text-[10px]">{localTime} local</span>
             </div>
             {isLoading ? (
               <Skeleton className="h-36 mx-3 mb-3 rounded-lg bg-white/5" />
@@ -360,6 +357,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       ))}
                   </div>
                 )}
+                <div className="mt-2 pt-2 border-t border-white/5 flex justify-end">
+                  <span className="text-slate-600 text-[9px]">NOAA Tides &amp; Currents</span>
+                </div>
               </div>
             )}
           </div>
