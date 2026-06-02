@@ -1,127 +1,136 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { ArrowLeft, User, Shield, LogOut, Bell } from "lucide-react";
-import { Link } from "wouter";
+import { Bell, LogOut, Shield, ChevronRight, Heart, Settings, Info, Moon } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { Location } from "@/types/weather";
+
+function getInitials(user: any): string {
+  const name = user?.firstName || user?.name || user?.username || "";
+  const email = user?.email || "";
+  if (name) {
+    const parts = name.trim().split(" ");
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  }
+  return email.slice(0, 2).toUpperCase() || "??";
+}
+
+function getDisplayName(user: any): string {
+  if (user?.firstName && user?.lastName) return `${user.firstName} ${user.lastName}`;
+  if (user?.firstName) return user.firstName;
+  if (user?.name) return user.name;
+  if (user?.username) return user.username;
+  return "Surfer";
+}
 
 export default function Profile() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const { data: favorites } = useQuery<Location[]>({
+    queryKey: ["/api/favorites"],
+  });
+
+  const initials = getInitials(user);
+  const displayName = getDisplayName(user);
+  const email = (user as any)?.email || "";
+  const savedCount = favorites?.length ?? 0;
+
+  const ITEMS = [
+    { icon: Bell,     label: "Notifications",  value: "Manage alerts",      color: "#fbbf24", href: "/notifications" },
+    { icon: Heart,    label: "Saved Spots",     value: `${savedCount} saved`, color: "#34d399", href: "/" },
+    { icon: Settings, label: "Preferences",     value: "",                   color: "#94a3b8", href: "/settings" },
+    { icon: Shield,   label: "Privacy",         value: "",                   color: "#38bdf8", href: null },
+    { icon: Info,     label: "About",           value: "v1.0.0",             color: "#64748b", href: null },
+  ];
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
   };
 
   return (
-      <div className="min-h-screen bg-[hsl(155,50%,8%)] pb-24">
-        <Header />
-        
-        <div className="container mx-auto px-6 py-8">
-          {/* Back Navigation */}
-          <div className="mb-6">
-            <Link href="/">
-              <Button variant="ghost" className="mb-4 text-emerald-400">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-            
-            <div className="flex items-center space-x-3 mb-2">
-              <User className="h-8 w-8 text-emerald-400" />
-              <h1 className="text-3xl font-bold text-emerald-400">User Profile</h1>
+    <div className="min-h-screen flex flex-col pb-24" style={{ background: "#030a14" }}>
+      <Header />
+
+      {/* ── Slim header ── */}
+      <div className="px-5 pt-8 pb-6"
+        style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center gap-1.5 mb-5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d399" }} />
+            <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">LiveSwell</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black text-white flex-shrink-0 select-none"
+              style={{ background: "linear-gradient(135deg,#065f46,#0c4a6e)", border: "2px solid rgba(52,211,153,0.35)" }}>
+              {initials}
             </div>
-            <p className="text-slate-300">Manage your personal preferences and settings</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-white font-bold text-lg leading-tight">{displayName}</h1>
+              {email && <p className="text-slate-600 text-[11px] mt-0.5 truncate">{email}</p>}
+            </div>
           </div>
 
-          <div className="grid gap-6 max-w-4xl">
-              {/* Account Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-emerald-400">
-                    <User className="h-5 w-5 mr-2" />
-                    Account Information
-                  </CardTitle>
-                  <CardDescription>
-                    Your account details and basic information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">Email Address</Label>
-                    <Input
-                      value={(user as any)?.email || ""}
-                      disabled
-                      className="bg-slate-800 border-slate-700 text-slate-400"
-                    />
-                    <p className="text-sm text-slate-500">Email cannot be changed</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Notification Preferences */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-emerald-400">
-                    <Bell className="h-5 w-5 mr-2" />
-                    Notification Preferences
-                  </CardTitle>
-                  <CardDescription>
-                    Configure your SMS and email notification settings
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Link href="/notifications">
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
-                      data-testid="button-notification-settings"
-                    >
-                      <Bell className="h-4 w-4 mr-2" />
-                      Manage Notifications
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-
-              {/* Account Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-emerald-400">
-                    <Shield className="h-5 w-5 mr-2" />
-                    Account Actions
-                  </CardTitle>
-                  <CardDescription>
-                    Manage your account and session
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button 
-                    onClick={handleLogout}
-                    variant="outline" 
-                    className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
-                    data-testid="button-logout"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out of Account
-                  </Button>
-                  
-                  <Separator className="bg-slate-700" />
-                  
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-slate-300">App Version</Label>
-                    <p className="text-sm text-slate-400">LiveSwell v1.0.0</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-          </div>
+          <div className="mt-5" style={{ height: 1, background: "rgba(255,255,255,0.05)" }} />
         </div>
-        
-        <Footer />
       </div>
+
+      {/* ── Menu list ── */}
+      <main className="flex-1 px-5 pb-8 max-w-lg mx-auto w-full">
+        <div className="space-y-1">
+          {ITEMS.map(({ icon: Icon, label, value, color, href }, i) => {
+            const row = (
+              <div className="flex items-center justify-between px-1 py-3.5 cursor-pointer"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${color}14`, border: `1px solid ${color}22` }}>
+                    <Icon size={14} style={{ color }} />
+                  </div>
+                  <span className="text-white text-[13px] font-medium">{label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {value ? <span className="text-slate-600 text-[11px]">{value}</span> : null}
+                  <ChevronRight size={13} className="text-slate-700" />
+                </div>
+              </div>
+            );
+
+            return (
+              <div key={label}>
+                {i === 3 && (
+                  <div className="pt-3 pb-2 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-700" />
+                    <span className="text-slate-700 text-[10px] font-bold tracking-widest uppercase">More</span>
+                  </div>
+                )}
+                {href ? <Link href={href}>{row}</Link> : row}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sign out */}
+        <div className="pt-5">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3.5 px-1 py-3.5 rounded-xl"
+            style={{ border: "1px solid rgba(239,68,68,0.15)" }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)" }}>
+              <LogOut size={14} className="text-red-400" />
+            </div>
+            <span className="text-red-400 text-[13px] font-medium">Sign Out</span>
+          </button>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
