@@ -363,7 +363,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <div className="rounded-xl border border-white/8 overflow-hidden" style={{ background: "#0f172a" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <div className="flex items-center gap-1.5">
-                <BarChart3 className="h-3.5 w-3.5 text-cyan-400" />
+                <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
                 <span className="text-slate-400 text-[11px] uppercase tracking-wide font-semibold">Tides Today</span>
               </div>
               <span className="text-slate-500 text-[10px]">{localTime} local</span>
