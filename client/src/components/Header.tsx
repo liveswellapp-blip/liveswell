@@ -1,6 +1,6 @@
-import { User, LogIn, Search, Waves } from "lucide-react";
+import { LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import SearchModal from "./SearchModal";
@@ -33,42 +33,22 @@ export default function Header({ onLocationSelect }: HeaderProps) {
           
           {/* Right side icons with consistent spacing */}
           <div className="flex items-center space-x-1">
-            {/* Navigation icons for conditions page */}
+            {/* Search icon on conditions page */}
             {location === "/conditions" && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowSearchModal(true)}
-                  className="text-white hover:text-gray-200"
-                  title="Search surf spots"
-                  data-testid="button-search"
-                >
-                  <Search className="h-5 w-5" />
-                </Button>
-                
-                <Link href="/">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:text-gray-200"
-                    title="Browse surf spots"
-                    data-testid="button-surf-spots"
-                  >
-                    <Waves className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSearchModal(true)}
+                className="text-white hover:text-gray-200"
+                title="Search surf spots"
+                data-testid="button-search"
+              >
+                <Search className="h-5 w-5" />
+              </Button>
             )}
-            
-            {/* User account section */}
-            {isAuthenticated ? (
-              <Link href="/profile">
-                <Button variant="ghost" size="icon" className="text-white hover:text-gray-200" title="User Account" data-testid="button-profile">
-                  <User className="h-6 w-6" />
-                </Button>
-              </Link>
-            ) : (
+
+            {/* Sign in for unauthenticated users */}
+            {!isAuthenticated && (
               <Button
                 variant="outline"
                 size="sm"

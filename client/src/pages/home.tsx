@@ -164,7 +164,7 @@ export default function Home() {
   // Show full loading screen when initially loading or navigating
   if (isLoadingLocation || isNavigating) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-black pb-24">
         <Header onLocationSelect={setCurrentLocation} />
         <LoadingScreen type="conditions" />
         <Footer />
@@ -173,7 +173,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black pb-24">
       <Header onLocationSelect={setCurrentLocation} />
       
       {currentLocation ? (

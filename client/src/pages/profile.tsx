@@ -17,7 +17,7 @@ export default function Profile() {
   };
 
   return (
-      <div className="min-h-screen bg-[hsl(155,50%,8%)]">
+      <div className="min-h-screen bg-[hsl(155,50%,8%)] pb-24">
         <Header />
         
         <div className="container mx-auto px-6 py-8">
