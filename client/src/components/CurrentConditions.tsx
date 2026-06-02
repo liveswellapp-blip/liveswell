@@ -243,25 +243,24 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   </div>
                   {primaryBuoy ? (
                     <>
-                      <p className="text-white text-xs font-semibold leading-tight">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
+                      <p className="text-white text-xs font-semibold leading-tight truncate">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
                       <p className="text-slate-400 text-[9px] mb-2">Station {primaryBuoy.stationId}</p>
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-[9px]">Waves</span>
-                          <span className="text-emerald-400 text-[9px] font-semibold">
-                            {parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)} ft @ {primaryBuoy.wavePeriod || 0}s · {primaryBuoy.waveDirection || "—"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-[9px]">Water</span>
-                          <span className="text-emerald-400 text-[9px] font-semibold">
-                            {primaryBuoy.waterTemp ? `${parseFloat(primaryBuoy.waterTemp).toFixed(1)}°F / ${fToC(primaryBuoy.waterTemp)}°C` : waterF}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-[9px]">Wind</span>
-                          <span className="text-emerald-400 text-[9px] font-semibold">{windSpd} {windDir}</span>
-                        </div>
+                      {/* Wave height — most prominent */}
+                      <div className="mb-1">
+                        <span className="text-emerald-400 font-black text-2xl leading-none">
+                          {parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}
+                        </span>
+                        <span className="text-emerald-600 text-xs font-semibold ml-0.5">ft</span>
+                      </div>
+                      {/* Period — secondary */}
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-slate-400 text-[9px]">Period</span>
+                        <span className="text-emerald-400 text-[10px] font-semibold">{primaryBuoy.wavePeriod || 0}s</span>
+                      </div>
+                      {/* Direction — tertiary */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-400 text-[9px]">Direction</span>
+                        <span className="text-emerald-400 text-[10px] font-semibold">{primaryBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
                         className="mt-2 w-full text-[9px] text-emerald-600 border border-emerald-700/40 rounded-lg py-1 hover:bg-emerald-900/30 transition-colors"
@@ -289,25 +288,24 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   </div>
                   {backupBuoy ? (
                     <>
-                      <p className="text-white text-xs font-semibold leading-tight">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
+                      <p className="text-white text-xs font-semibold leading-tight truncate">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
                       <p className="text-slate-400 text-[9px] mb-2">Station {backupBuoy.stationId}</p>
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-[9px]">Waves</span>
-                          <span className="text-sky-400 text-[9px] font-semibold">
-                            {parseFloat(backupBuoy.waveHeight || 0).toFixed(1)} ft @ {backupBuoy.wavePeriod || 0}s · {backupBuoy.waveDirection || "—"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-[9px]">Water</span>
-                          <span className="text-sky-400 text-[9px] font-semibold">
-                            {backupBuoy.waterTemp ? `${parseFloat(backupBuoy.waterTemp).toFixed(1)}°F / ${fToC(backupBuoy.waterTemp)}°C` : waterF}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400 text-[9px]">Wind</span>
-                          <span className="text-sky-400 text-[9px] font-semibold">{windSpd} {windDir}</span>
-                        </div>
+                      {/* Wave height — most prominent */}
+                      <div className="mb-1">
+                        <span className="text-sky-400 font-black text-2xl leading-none">
+                          {parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}
+                        </span>
+                        <span className="text-sky-600 text-xs font-semibold ml-0.5">ft</span>
+                      </div>
+                      {/* Period — secondary */}
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-slate-400 text-[9px]">Period</span>
+                        <span className="text-sky-400 text-[10px] font-semibold">{backupBuoy.wavePeriod || 0}s</span>
+                      </div>
+                      {/* Direction — tertiary */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-400 text-[9px]">Direction</span>
+                        <span className="text-sky-400 text-[10px] font-semibold">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
                         className="mt-2 w-full text-[9px] text-sky-600 border border-sky-700/40 rounded-lg py-1 hover:bg-sky-900/30 transition-colors"
