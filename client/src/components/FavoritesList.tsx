@@ -226,22 +226,33 @@ export default function FavoritesList({ onLocationSelect }: FavoritesListProps) 
           <span>Saved</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3 lg:space-y-2">
+      <CardContent className="p-0">
+        <div className="rounded-b-xl overflow-hidden divide-y divide-white/8 dark:divide-white/8">
           {favorites.map((location) => (
             <div
               key={location.id}
-              className="flex items-center justify-between p-3 lg:p-2 rounded-lg border hover:bg-muted transition-colors cursor-pointer"
+              className="flex items-stretch hover:bg-muted/60 transition-colors cursor-pointer"
               onClick={() => onLocationSelect?.(location)}
             >
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-blue-900 dark:text-white">{location.name}</h3>
-                <p className="text-sm text-blue-900 dark:text-white truncate">
-                  {location.city}, {location.country}
-                </p>
-              </div>
-              <div className="flex-shrink-0">
-                <SpotConditions locationId={location.id} />
+              {/* Left emerald accent bar */}
+              <div className="w-1 flex-shrink-0 bg-emerald-400" />
+
+              {/* Content */}
+              <div className="flex items-center justify-between px-3 py-3 flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full flex-shrink-0 bg-emerald-400" />
+                    <h3 className="font-semibold text-sm text-blue-900 dark:text-white leading-tight truncate">
+                      {location.name}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-3.5 truncate">
+                    {location.city}, {location.country}
+                  </p>
+                </div>
+                <div className="flex-shrink-0 ml-2">
+                  <SpotConditions locationId={location.id} />
+                </div>
               </div>
             </div>
           ))}
