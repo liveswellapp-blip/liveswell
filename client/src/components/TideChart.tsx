@@ -218,24 +218,20 @@ export default function TideChart({ tides, date, location, sunrise, sunset }: Ti
             />
           ))}
 
-          {/* Sunrise line */}
-          {sunrise && (() => {
-            const sx = (parseTimeToHours(sunrise) / 24) * VW;
+          {/* Day/night shading + sunrise/sunset lines */}
+          {sunrise && sunset && (() => {
+            const srX = (parseTimeToHours(sunrise) / 24) * VW;
+            const ssX = (parseTimeToHours(sunset) / 24) * VW;
             return (
               <g>
-                <line x1={sx} y1="0" x2={sx} y2={VH} stroke="#fbbf24" strokeWidth="1" strokeDasharray="3 5" opacity="0.5" />
-                <text x={sx + 3} y="12" fontSize="8" fill="#fbbf24" opacity="0.8" fontFamily="sans-serif">↑</text>
-              </g>
-            );
-          })()}
-
-          {/* Sunset line */}
-          {sunset && (() => {
-            const sx = (parseTimeToHours(sunset) / 24) * VW;
-            return (
-              <g>
-                <line x1={sx} y1="0" x2={sx} y2={VH} stroke="#fb923c" strokeWidth="1" strokeDasharray="3 5" opacity="0.5" />
-                <text x={sx + 3} y="12" fontSize="8" fill="#fb923c" opacity="0.8" fontFamily="sans-serif">↓</text>
+                {/* Night before sunrise */}
+                <rect x="0" y="0" width={srX} height={VH} fill="black" opacity="0.25" />
+                {/* Night after sunset */}
+                <rect x={ssX} y="0" width={VW - ssX} height={VH} fill="black" opacity="0.25" />
+                {/* Sunrise line */}
+                <line x1={srX} y1="0" x2={srX} y2={VH} stroke="#fbbf24" strokeWidth="1" strokeDasharray="3 5" opacity="0.4" />
+                {/* Sunset line */}
+                <line x1={ssX} y1="0" x2={ssX} y2={VH} stroke="#fb923c" strokeWidth="1" strokeDasharray="3 5" opacity="0.4" />
               </g>
             );
           })()}
