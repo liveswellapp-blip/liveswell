@@ -273,21 +273,21 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5 text-slate-400" />
-                      <span className="text-slate-400 text-[9px]">{lastUpdated}</span>
+                      <span className="text-[9px] text-[#64748b]">{lastUpdated}</span>
                     </div>
                   </div>
                   {primaryBuoy ? (
                     <>
                       <p className="text-white text-xs font-semibold leading-tight truncate">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
-                      <p className="text-slate-400 text-[9px] mb-2">Station {primaryBuoy.stationId}</p>
+                      <p className="text-[9px] mb-2 text-[#64748b]">Station {primaryBuoy.stationId}</p>
                       {/* Wave height + period + direction in one row */}
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-emerald-400 font-black text-2xl leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
                         <span className="text-emerald-600 text-xs font-semibold">ft</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-emerald-400 text-[11px] font-semibold">{primaryBuoy.wavePeriod || 0}s</span>
+                        <span className="text-[11px] font-semibold text-[#0284c7]">{primaryBuoy.wavePeriod || 0}s</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-emerald-400 text-[11px] font-semibold">{primaryBuoy.waveDirection || "—"}</span>
+                        <span className="text-[11px] font-semibold text-[#0284c7]">{primaryBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
                         className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
@@ -308,21 +308,21 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5 text-slate-400" />
-                      <span className="text-slate-400 text-[9px]">{lastUpdated}</span>
+                      <span className="text-[9px] text-[#64748b]">{lastUpdated}</span>
                     </div>
                   </div>
                   {backupBuoy ? (
                     <>
                       <p className="text-white text-xs font-semibold leading-tight truncate">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
-                      <p className="text-slate-400 text-[9px] mb-2">Station {backupBuoy.stationId}</p>
+                      <p className="text-[9px] mb-2 text-[#64748b]">Station {backupBuoy.stationId}</p>
                       {/* Wave height + period + direction in one row */}
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-sky-400 font-black text-2xl leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
                         <span className="text-sky-600 text-xs font-semibold">ft</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-sky-400 text-[11px] font-semibold">{backupBuoy.wavePeriod || 0}s</span>
+                        <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.wavePeriod || 0}s</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-sky-400 text-[11px] font-semibold">{backupBuoy.waveDirection || "—"}</span>
+                        <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
                         className="mt-2 w-full text-[9px] bg-sky-500/15 border border-sky-500/30 rounded-lg py-1 hover:bg-sky-500/25 transition-colors text-sky-400"
