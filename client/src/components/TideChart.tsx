@@ -1,5 +1,6 @@
 import { TidePoint, Location } from "@/types/weather";
 import { useState, useRef } from "react";
+import { getLocationTimezone } from "@/lib/timezone";
 
 interface TideChartProps {
   tides: TidePoint[];
@@ -104,16 +105,9 @@ export default function TideChart({ tides, date, location, sunrise, sunset }: Ti
   });
 
   const getCurrentTimePosition = () => {
-    const getTimezone = (lat: number, lon: number) => {
-      if (lon >= -125 && lon <= -114 && lat >= 32 && lat <= 49) return "America/Los_Angeles";
-      if (lon >= -115 && lon <= -102 && lat >= 31 && lat <= 49) return "America/Denver";
-      if (lon >= -104 && lon <= -87 && lat >= 25 && lat <= 49) return "America/Chicago";
-      if (lon >= -88 && lon <= -66 && lat >= 25 && lat <= 47) return "America/New_York";
-      return "UTC";
-    };
     const now = new Date();
     if (location) {
-      const tz = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
+      const tz = getLocationTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
       const local = new Date(now.toLocaleString("en-US", { timeZone: tz }));
       return ((local.getHours() + local.getMinutes() / 60) / 24) * VW;
     }
