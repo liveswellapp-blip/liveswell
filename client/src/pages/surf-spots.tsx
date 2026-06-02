@@ -449,7 +449,7 @@ function SpotConditions({ locationId }: { locationId: number }) {
         <Wind className="h-3 w-3" />
         <span>{windDisplay}</span>
       </div>
-      <div className="flex items-center gap-1.5 text-yellow-600 dark:text-yellow-400">
+      <div className="flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400">
         <BarChart3 className="h-3 w-3" />
         <span>{tideDisplay}</span>
       </div>
