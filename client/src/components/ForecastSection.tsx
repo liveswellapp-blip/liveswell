@@ -1,56 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Wind, Waves, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Location, ForecastDay } from "@/types/weather";
 import TideChart from "./TideChart";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 
 interface ForecastSectionProps {
   location: Location;
 }
 
-interface DetailedForecastData {
-  location: string;
-  date: string;
-  dayOffset: number;
-  hourlyData: {
-    time: string;
-    hour: number;
-    waveHeight: string;
-    wavePeriod: string;
-    waveDirection: string;
-    windSpeed: string;
-    windDirection: string;
-  }[];
-}
-
 export default function ForecastSection({ location }: ForecastSectionProps) {
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: forecast = [], isLoading, error } = useQuery<ForecastDay[]>({
     queryKey: [`/api/locations/${location.id}/forecast`],
     staleTime: 30 * 60 * 1000, // 30 minutes
   });
-
-  const { data: detailedData, isLoading: detailedLoading } = useQuery<DetailedForecastData>({
-    queryKey: [`/api/locations/${location.id}/detailed-forecast/${selectedDay}`],
-    enabled: selectedDay !== null,
-    staleTime: 30 * 60 * 1000, // 30 minutes
-  });
-
-  const handleCardClick = (dayIndex: number) => {
-    setSelectedDay(dayIndex + 1); // dayOffset starts from 1 (tomorrow)
-    setShowDetailModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowDetailModal(false);
-    setSelectedDay(null);
-  };
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -172,18 +138,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   </div>
                 </div>
                 
-                {/* Details Button - Show for all days (NOAA wave data available) */}
-                {(
-                  <div className="mt-2 pt-2 border-t border-border/30">
-                    <button 
-                      onClick={() => handleCardClick(index)}
-                      className="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 px-3 rounded transition-colors"
-                      data-testid={`details-button-${index}`}
-                    >
-                      View Hourly Details
-                    </button>
-                  </div>
-                )}
               </div>
             ))
           ) : (
@@ -215,76 +169,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
         </div>
       </div>
       
-      {/* Detailed Forecast Modal */}
-      <Dialog open={showDetailModal} onOpenChange={handleCloseModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-blue-900 dark:text-white">
-              {detailedData?.date} Detailed Forecast - {detailedData?.location}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {detailedLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 p-3 bg-muted rounded-lg">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-          ) : detailedData ? (
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="max-h-96 overflow-y-auto">
-                <table className="w-full text-xs sm:text-sm md:text-base">
-                  <thead className="bg-emerald-50 dark:bg-emerald-900 sticky top-0 z-10">
-                    <tr className="font-semibold">
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Time</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Waves</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Period</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Wind</th>
-                      <th className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 whitespace-nowrap bg-emerald-50 dark:bg-emerald-900">Direction</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-background">
-                    {detailedData.hourlyData.map((hour, index) => (
-                      <tr key={index} className="hover:bg-muted/30 transition-colors border-b border-emerald-200 dark:border-emerald-800 last:border-b-0">
-                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
-                          {hour.time}
-                        </td>
-                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-emerald-600 dark:text-emerald-400 font-semibold border-r border-gray-300 dark:border-gray-600">
-                          <div className="whitespace-nowrap">{hour.waveHeight}</div>
-                          {hour.waveDirection && hour.waveDirection.toLowerCase() !== 'n/a' && (
-                            <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                              {hour.waveDirection}
-                            </div>
-                          )}
-                        </td>
-                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-emerald-600 dark:text-emerald-400 font-medium border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
-                          {hour.wavePeriod}
-                        </td>
-                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-blue-600 dark:text-blue-400 font-semibold border-r border-gray-300 dark:border-gray-600 whitespace-nowrap">
-                          {hour.windSpeed}
-                        </td>
-                        <td className="text-left py-2 sm:py-2.5 md:py-3 px-2 sm:px-3 md:px-4 text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">
-                          {hour.windDirection}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No detailed data available for this day</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
