@@ -324,11 +324,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
             {/* ── Wind subcard ──────────────────────────────────────── */}
             {conditions && (
-              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-sky-500/15">
+              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-violet-500/15">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Wind className="h-3 w-3 text-sky-400" />
-                    <span className="text-sky-400 text-[10px] font-bold uppercase tracking-wide">Wind</span>
+                    <Wind className="h-3 w-3 text-violet-400" />
+                    <span className="text-violet-400 text-[10px] font-bold uppercase tracking-wide">Wind</span>
                   </div>
                   <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
                 </div>
@@ -336,7 +336,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div>
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-white font-black text-2xl leading-none">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
-                      <span className="text-sky-600 text-xs font-semibold">mph</span>
+                      <span className="text-violet-500 text-xs font-semibold">mph</span>
                       <span className="text-slate-400 text-sm font-semibold">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                         <>
@@ -347,7 +347,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                   </div>
                   <button
-                    className="text-[9px] text-sky-600 border border-sky-700/40 rounded-lg px-3 py-1 hover:bg-sky-900/30 transition-colors shrink-0"
+                    className="text-[9px] text-violet-500 border border-violet-700/40 rounded-lg px-3 py-1 hover:bg-violet-900/30 transition-colors shrink-0"
                     onClick={() => setShowWindDetailsModal(true)}
                   >
                     48h Forecast
