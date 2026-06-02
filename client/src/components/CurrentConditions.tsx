@@ -273,11 +273,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <span className="text-emerald-400 text-[11px] font-semibold">{primaryBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
-                        className="mt-2 w-full text-[9px] text-emerald-600 border border-emerald-700/40 rounded-lg py-1 hover:bg-emerald-900/30 transition-colors"
+                        className="mt-2 w-full text-[9px] border border-emerald-700/40 rounded-lg py-1 hover:bg-emerald-900/30 transition-colors text-[#34d399] opacity-[1]"
                         onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
-                      >
-                        24h History
-                      </button>
+                      >Wave History</button>
                     </>
                   ) : (
                     <div className="text-slate-500 text-xs py-4 text-center">No buoy data</div>
@@ -310,10 +308,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <span className="text-sky-400 text-[11px] font-semibold">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
-                        className="mt-2 w-full text-[9px] text-sky-600 border border-sky-700/40 rounded-lg py-1 hover:bg-sky-900/30 transition-colors"
+                        className="mt-2 w-full text-[9px] border border-sky-700/40 rounded-lg py-1 hover:bg-sky-900/30 transition-colors text-[#34d399]"
                         onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                       >
-                        24h History
+                        Wave History
                       </button>
                     </>
                   ) : (
@@ -336,7 +334,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-black text-2xl leading-none text-[#0891b2]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                      <span className="font-black text-2xl leading-none text-[#22d3ee]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
                       <span className="text-cyan-600 text-xs font-semibold">mph</span>
                       <span className="text-sm font-semibold text-[#0891b2]">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
@@ -348,11 +346,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                   </div>
                   <button
-                    className="text-[9px] text-cyan-600 border border-cyan-700/40 rounded-lg px-3 py-1 hover:bg-cyan-900/30 transition-colors shrink-0"
+                    className="text-[9px] border border-cyan-700/40 rounded-lg px-3 py-1 hover:bg-cyan-900/30 transition-colors shrink-0 text-[#22d3ee]"
                     onClick={() => setShowWindDetailsModal(true)}
-                  >
-                    48h Forecast
-                  </button>
+                  >Wind Forecast</button>
                 </div>
               </div>
             )}
