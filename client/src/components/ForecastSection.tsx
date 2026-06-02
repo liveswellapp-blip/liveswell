@@ -94,21 +94,21 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     </span>
                   </div>
 
-                  {/* Wave + wind data */}
-                  <div className="px-3 pt-2.5 pb-2">
-                    {/* Wave height hero */}
-                    <div className="flex items-baseline gap-1 mb-1">
-                      <span className="text-emerald-400 font-black text-xl leading-none">{day.waveHeight}</span>
+                  {/* Wave + wind data — side by side */}
+                  <div className="px-3 pt-2.5 pb-2 flex gap-2">
+                    {/* Left: Wave */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wave</p>
+                      <p className="text-emerald-400 font-black text-lg leading-none mb-0.5">{day.waveHeight}</p>
+                      <p className="text-teal-500 text-[10px] font-semibold">{day.wavePeriod}</p>
                     </div>
-                    {/* Period */}
-                    <div className="flex items-center gap-1 mb-1.5">
-                      <span className="text-teal-500 text-[10px] font-semibold">{day.wavePeriod}</span>
-                      <span className="text-slate-600 text-[9px]">period</span>
-                    </div>
-                    {/* Wind */}
-                    <div className="flex items-center gap-1">
-                      <span className="text-cyan-500 text-[10px] font-semibold">{day.windSpeed}</span>
-                      <span className="text-slate-500 text-[9px]">{day.windDirection}</span>
+                    {/* Divider */}
+                    <div className="w-px bg-white/5 self-stretch" />
+                    {/* Right: Wind */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wind</p>
+                      <p className="text-cyan-400 font-bold text-lg leading-none mb-0.5">{day.windSpeed}</p>
+                      <p className="text-slate-500 text-[10px]">{day.windDirection}</p>
                     </div>
                   </div>
 
