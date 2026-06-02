@@ -6,5 +6,12 @@ export const modules: ModuleMap = {
   "./components/mockups/saved-spots/OceanDark.tsx": () => import("../components/mockups/saved-spots/OceanDark.tsx"),
   "./components/mockups/tide-chart/Band.tsx": () => import("../components/mockups/tide-chart/Band.tsx"),
   "./components/mockups/tide-chart/Contained.tsx": () => import("../components/mockups/tide-chart/Contained.tsx"),
-  "./components/mockups/tide-chart/DarkGlass.tsx": () => import("../components/mockups/tide-chart/DarkGlass.tsx")
+  "./components/mockups/tide-chart/DarkGlass.tsx": () => import("../components/mockups/tide-chart/DarkGlass.tsx"),
+  "./components/mockups/ux-concepts/BestWindow.tsx": () => import("../components/mockups/ux-concepts/BestWindow.tsx"),
+  "./components/mockups/ux-concepts/BottomNav.tsx": () => import("../components/mockups/ux-concepts/BottomNav.tsx"),
+  "./components/mockups/ux-concepts/MapToggle.tsx": () => import("../components/mockups/ux-concepts/MapToggle.tsx"),
+  "./components/mockups/ux-concepts/QualityHero.tsx": () => import("../components/mockups/ux-concepts/QualityHero.tsx"),
+  "./components/mockups/ux-concepts/SpotSwipe.tsx": () => import("../components/mockups/ux-concepts/SpotSwipe.tsx"),
+  "./components/mockups/ux-concepts/TabLayout.tsx": () => import("../components/mockups/ux-concepts/TabLayout.tsx"),
+  "./components/mockups/ux-concepts/WindRose.tsx": () => import("../components/mockups/ux-concepts/WindRose.tsx")
 };
