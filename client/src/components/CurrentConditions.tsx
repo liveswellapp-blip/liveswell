@@ -7,6 +7,7 @@ import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
 import AISurfSummary from "@/components/AISurfSummary";
 import BuoyHistoryChart from "@/components/BuoyHistoryChart";
+import WindForecastChart from "@/components/WindForecastChart";
 import { useState, useEffect } from "react";
 import { getLocationTimezone } from "@/lib/timezone";
 import { Button } from "@/components/ui/button";
@@ -464,49 +465,29 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       </Dialog>
       {/* ── Wind Details Modal ──────────────────────────────────────── */}
       <Dialog open={showWindDetailsModal} onOpenChange={setShowWindDetailsModal}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-blue-900 dark:text-white pr-8">
-              48-Hour Wind Forecast — {location.name}
-            </DialogTitle>
-          </DialogHeader>
-          {windDetailsLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded-lg" />)}
-            </div>
-          ) : windDetailsData ? (
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="max-h-96 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-emerald-50 dark:bg-emerald-900 sticky top-0 z-10">
-                    <tr className="font-semibold">
-                      {["Date & Time","Speed","Gusts","Direction"].map(h => (
-                        <th key={h} className="text-left py-2.5 px-3 border-r last:border-r-0 border-gray-300 dark:border-gray-600">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-background">
-                    {windDetailsData.forecastData.map((d, i) => {
-                      const showDate = i === 0 || d.date !== windDetailsData.forecastData[i - 1].date;
-                      return (
-                        <tr key={i} className="hover:bg-muted/30 border-b border-emerald-200 dark:border-emerald-800 last:border-b-0">
-                          <td className="py-2.5 px-3 border-r border-gray-300 dark:border-gray-600 font-medium">
-                            {showDate && <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-0.5">{d.date}</div>}
-                            {d.time}
-                          </td>
-                          <td className="py-2.5 px-3 border-r border-gray-300 dark:border-gray-600 text-emerald-600 dark:text-emerald-400 font-semibold">{d.windSpeed} mph</td>
-                          <td className="py-2.5 px-3 border-r border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400">{d.windGusts} mph</td>
-                          <td className="py-2.5 px-3 text-blue-600 dark:text-blue-400">{d.windDirection}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none" aria-describedby={undefined}>
+          <div className="rounded-2xl overflow-hidden p-5"
+            style={{ background: "linear-gradient(160deg, #030f1c 0%, #041a2e 60%, #021825 100%)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            {windDetailsLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-full rounded-xl bg-white/5" />
+                <Skeleton className="h-40 w-full rounded-xl bg-white/5" />
+                <Skeleton className="h-8 w-full rounded-xl bg-white/5" />
+                <Skeleton className="h-48 w-full rounded-xl bg-white/5" />
               </div>
+            ) : windDetailsData ? (
+              <WindForecastChart
+                locationName={location.name}
+                forecastData={windDetailsData.forecastData}
+              />
+            ) : (
+              <p className="text-center py-8 text-slate-500 text-sm">No wind forecast data available</p>
+            )}
+            <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+              <span className="text-slate-600 text-[9px]">Data from OpenWeatherMap</span>
+              <span className="text-slate-700 text-[9px]">48-hour forecast</span>
             </div>
-          ) : (
-            <p className="text-center py-8 text-muted-foreground">No wind forecast data available</p>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
