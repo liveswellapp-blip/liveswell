@@ -321,6 +321,37 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </div>
               </div>
             )}
+
+            {/* ── Wind subcard ──────────────────────────────────────── */}
+            {conditions && (
+              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-sky-500/15">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Wind className="h-3 w-3 text-sky-400" />
+                    <span className="text-sky-400 text-[10px] font-bold uppercase tracking-wide">Wind</span>
+                  </div>
+                  <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
+                </div>
+                <div className="mt-2 flex items-end justify-between gap-4">
+                  <div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-white font-black text-2xl leading-none">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                      <span className="text-sky-600 text-xs font-semibold">mph</span>
+                      <span className="text-slate-400 text-sm font-semibold">{conditions.windDirection}</span>
+                    </div>
+                    {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
+                      <p className="text-slate-500 text-[10px] mt-0.5">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</p>
+                    )}
+                  </div>
+                  <button
+                    className="text-[9px] text-sky-600 border border-sky-700/40 rounded-lg px-3 py-1 hover:bg-sky-900/30 transition-colors shrink-0"
+                    onClick={() => setShowWindDetailsModal(true)}
+                  >
+                    48h Forecast
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
