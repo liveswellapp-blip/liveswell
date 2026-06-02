@@ -1722,7 +1722,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Calculate wind from daytime afternoon hours (noon–6pm) for representative conditions
           // Using full-day average includes overnight calm readings which understates actual surf-hour winds
-          const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
           const afternoonItems = dayItems.filter((item: any) => {
             const localHour = new Date(new Date(item.dt * 1000).toLocaleString('en-US', { timeZone: timezone })).getHours();
             return localHour >= 12 && localHour < 18;
