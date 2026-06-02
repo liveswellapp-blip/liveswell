@@ -5,7 +5,6 @@ import { MapPin, Waves, BarChart3, Wind, Droplets, Sun, Clock, AlertCircle } fro
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
-import AISurfSummary from "@/components/AISurfSummary";
 import BuoyHistoryChart from "@/components/BuoyHistoryChart";
 import WindForecastChart from "@/components/WindForecastChart";
 import { useState, useEffect } from "react";
@@ -414,8 +413,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
         )}
 
-        {/* ── AI Surf Summary ───────────────────────────────────────── */}
-        <AISurfSummary location={location} />
 
       </div>
       {/* ── Buoy Historical Data Modal ──────────────────────────────── */}
