@@ -60,11 +60,12 @@ export function DashboardGrid() {
             <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Wind</p><p className="text-sky-400 font-black text-lg leading-tight">5<span className="text-xs font-semibold text-slate-400"> mph</span></p></div>
             <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Water</p><p className="text-cyan-400 font-black text-lg leading-tight">58<span className="text-xs font-semibold text-slate-400"> °F</span></p></div>
           </div>
-          <div className="flex items-center gap-2 mt-2.5 pb-2">
+          <div className="flex items-center gap-2 mt-2.5">
             <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">N Wind · Offshore</span>
             <span className="bg-slate-700/60 text-slate-300 text-[10px] font-semibold px-2.5 py-1 rounded-full">WSW Swell</span>
             <span className="bg-cyan-500/15 text-cyan-400 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-cyan-500/25">Tide Rising</span>
           </div>
+          <div style={{ height: "16px" }} />
         </div>
       </div>
 
