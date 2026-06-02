@@ -228,7 +228,8 @@ export function DashboardGrid() {
                 </div>
               </div>
               <p className="text-emerald-100 text-xs font-semibold leading-tight">Point Reyes, CA</p>
-              <p className="text-emerald-700 text-[9px] mb-2">Station 46237 · 18 mi offshore</p>
+              <p className="text-emerald-700 text-[9px]">Station 46237</p>
+              <p className="text-emerald-700 text-[9px] mb-2">18 mi offshore</p>
               <div className="space-y-1">
                 <div className="flex justify-between">
                   <span className="text-emerald-700 text-[9px]">Waves</span>
@@ -258,7 +259,8 @@ export function DashboardGrid() {
                 </div>
               </div>
               <p className="text-sky-100 text-xs font-semibold leading-tight">Half Moon Bay</p>
-              <p className="text-sky-700 text-[9px] mb-2">Station 46012 · 6 mi offshore</p>
+              <p className="text-sky-700 text-[9px]">Station 46012</p>
+              <p className="text-sky-700 text-[9px] mb-2">6 mi offshore</p>
               <div className="space-y-1">
                 <div className="flex justify-between">
                   <span className="text-sky-700 text-[9px]">Waves</span>
