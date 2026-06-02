@@ -285,9 +285,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <span className="text-emerald-400 font-black text-2xl leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
                         <span className="text-emerald-600 text-xs font-semibold">ft</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#0284c7]">{primaryBuoy.wavePeriod || 0}s</span>
+                        <span className="text-[11px] font-semibold text-[#059669]">{primaryBuoy.wavePeriod || 0}s</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#0284c7]">{primaryBuoy.waveDirection || "—"}</span>
+                        <span className="text-[11px] font-semibold text-[#059669]">{primaryBuoy.waveDirection || "—"}</span>
                       </div>
                       <button
                         className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
