@@ -1,11 +1,10 @@
-import { Waves, Wind, BarChart3, Droplets, Sun, Bot, MapPin, Heart, ChevronRight } from "lucide-react";
+import { Waves, Wind, BarChart3, Droplets, Sun, Bot, MapPin, Heart, ChevronRight, Radio, Clock } from "lucide-react";
 
 const hours = [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19];
 const waveH = [3.5,4,4.5,5,5,4.5,4,3.5,3,3,2.5,2.5,3,3.5,4];
 const windS = [3,4,5,5,5,6,7,8,10,12,11,10,9,8,7];
 const windDir = ["N","N","N","N","N","N","NW","SW","SW","SW","S","S","SW","S","S"];
 const tideH = [2,2.8,3.8,4.8,5.5,5.8,5.5,4.5,3.5,2.5,1.5,1.2,1.8,2.8,3.8];
-
 const isOffshore = (d: string) => ["N","NE","NNE","NNW","NW"].includes(d);
 
 const forecast = [
@@ -37,14 +36,13 @@ function HourlyBars({ values, colorFn }: { values: number[]; colorFn: (v: number
 export function TimelineStory() {
   return (
     <div className="w-[390px] h-[760px] bg-[#0a0f1a] flex flex-col font-sans overflow-hidden">
-      {/* Status bar */}
       <div className="flex justify-between items-center px-5 pt-3 pb-1 text-[11px] text-slate-400">
         <span className="font-semibold">9:41</span>
         <span>●●● WiFi 🔋</span>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Hero — location + key data */}
+        {/* Hero */}
         <div className="mx-3 mt-1 rounded-2xl overflow-hidden relative"
           style={{ background: "linear-gradient(150deg, #022c22 0%, #064e3b 50%, #0c2340 100%)" }}>
           <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 370 130" preserveAspectRatio="none">
@@ -58,34 +56,24 @@ export function TimelineStory() {
                   <span className="text-emerald-400 text-xs font-semibold">Half Moon Bay, CA</span>
                 </div>
                 <h2 className="text-white font-black text-2xl">Mavericks</h2>
-                <p className="text-slate-400 text-xs mt-0.5">Updated 4 min ago</p>
+                {/* Live buoy badge */}
+                <div className="flex items-center gap-1.5 mt-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-slate-400 text-[10px]">Stn 46237 · Point Reyes · 4 min ago</span>
+                </div>
               </div>
               <button className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                 <Heart className="h-4 w-4 text-slate-300" />
               </button>
             </div>
 
-            {/* 4-up stats */}
             <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-white/10">
-              <div>
-                <p className="text-slate-400 text-[10px] uppercase tracking-wide">Height</p>
-                <p className="text-emerald-400 font-black text-lg leading-tight">4–5<span className="text-xs font-semibold text-slate-400"> ft</span></p>
-              </div>
-              <div>
-                <p className="text-slate-400 text-[10px] uppercase tracking-wide">Period</p>
-                <p className="text-teal-400 font-black text-lg leading-tight">17<span className="text-xs font-semibold text-slate-400"> s</span></p>
-              </div>
-              <div>
-                <p className="text-slate-400 text-[10px] uppercase tracking-wide">Wind</p>
-                <p className="text-sky-400 font-black text-lg leading-tight">5<span className="text-xs font-semibold text-slate-400"> mph</span></p>
-              </div>
-              <div>
-                <p className="text-slate-400 text-[10px] uppercase tracking-wide">Water</p>
-                <p className="text-cyan-400 font-black text-lg leading-tight">58<span className="text-xs font-semibold text-slate-400"> °F</span></p>
-              </div>
+              <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Height</p><p className="text-emerald-400 font-black text-lg leading-tight">4–5<span className="text-xs font-semibold text-slate-400"> ft</span></p></div>
+              <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Period</p><p className="text-teal-400 font-black text-lg leading-tight">17<span className="text-xs font-semibold text-slate-400"> s</span></p></div>
+              <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Wind</p><p className="text-sky-400 font-black text-lg leading-tight">5<span className="text-xs font-semibold text-slate-400"> mph</span></p></div>
+              <div><p className="text-slate-400 text-[10px] uppercase tracking-wide">Water</p><p className="text-cyan-400 font-black text-lg leading-tight">58<span className="text-xs font-semibold text-slate-400"> °F</span></p></div>
             </div>
 
-            {/* Wind direction tag */}
             <div className="flex items-center gap-2 mt-2.5">
               <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-500/30">N Wind · Offshore</span>
               <span className="bg-slate-700/60 text-slate-300 text-[10px] font-semibold px-2.5 py-1 rounded-full">WSW Swell</span>
@@ -97,28 +85,16 @@ export function TimelineStory() {
         {/* Hourly chart */}
         <div className="mx-3 mt-3 bg-slate-800/60 rounded-2xl border border-white/8 p-4">
           <p className="text-slate-400 text-[10px] uppercase tracking-wide font-semibold mb-3">Today by Hour</p>
-
           <div className="mb-2">
-            <div className="flex items-center gap-1 mb-1">
-              <Waves className="h-2.5 w-2.5 text-emerald-400" />
-              <span className="text-slate-500 text-[9px]">Wave Height (ft)</span>
-            </div>
+            <div className="flex items-center gap-1 mb-1"><Waves className="h-2.5 w-2.5 text-emerald-400" /><span className="text-slate-500 text-[9px]">Wave Height (ft)</span></div>
             <HourlyBars values={waveH} colorFn={(v) => v >= 4.5 ? "#10b981" : v >= 3.5 ? "#2dd4bf" : "#64748b"} />
           </div>
-
           <div className="mb-2 mt-2">
-            <div className="flex items-center gap-1 mb-1">
-              <Wind className="h-2.5 w-2.5 text-sky-400" />
-              <span className="text-slate-500 text-[9px]">Wind Speed (mph) · green = offshore</span>
-            </div>
+            <div className="flex items-center gap-1 mb-1"><Wind className="h-2.5 w-2.5 text-sky-400" /><span className="text-slate-500 text-[9px]">Wind (blue = offshore · amber = onshore)</span></div>
             <HourlyBars values={windS} colorFn={(_, i) => isOffshore(windDir[i]) ? "#38bdf8" : "#f59e0b"} />
           </div>
-
           <div>
-            <div className="flex items-center gap-1 mb-1">
-              <BarChart3 className="h-2.5 w-2.5 text-cyan-400" />
-              <span className="text-slate-500 text-[9px]">Tide Height (ft)</span>
-            </div>
+            <div className="flex items-center gap-1 mb-1"><BarChart3 className="h-2.5 w-2.5 text-cyan-400" /><span className="text-slate-500 text-[9px]">Tide (ft)</span></div>
             <svg width="100%" height="28" viewBox="0 0 360 28" preserveAspectRatio="none">
               <defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#06b6d4" stopOpacity="0.35" /><stop offset="100%" stopColor="#06b6d4" stopOpacity="0" /></linearGradient></defs>
               {(() => {
@@ -130,10 +106,8 @@ export function TimelineStory() {
               })()}
             </svg>
           </div>
-
-          {/* Hour labels */}
           <div className="flex mt-1.5">
-            {hours.filter((_, i) => i % 5 === 0).map((h, i) => (
+            {hours.filter((_, i) => i % 5 === 0).map((h) => (
               <div key={h} className="flex-1 text-center">
                 <span className="text-slate-600 text-[9px]">{h > 12 ? `${h-12}pm` : `${h}am`}</span>
               </div>
@@ -141,27 +115,76 @@ export function TimelineStory() {
           </div>
         </div>
 
+        {/* Buoy detail cards */}
+        <div className="mx-3 mt-3 bg-slate-800/60 rounded-2xl border border-white/8 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Radio className="h-3.5 w-3.5 text-slate-400" />
+            <span className="text-slate-400 text-[10px] uppercase tracking-wide font-semibold">NOAA Buoy Data</span>
+            <span className="ml-auto text-slate-500 text-[10px]">10 stations nearby</span>
+          </div>
+
+          {/* Primary */}
+          <div className="bg-slate-900/60 rounded-xl border border-emerald-500/20 p-3 mb-2">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-emerald-400 text-[10px] font-bold">PRIMARY · Stn 46237</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-2.5 w-2.5 text-slate-500" />
+                <span className="text-slate-500 text-[9px]">4 min ago</span>
+              </div>
+            </div>
+            <p className="text-white text-xs font-semibold mb-1.5">Point Reyes, CA — 18 mi offshore</p>
+            <div className="flex gap-2">
+              {[["Waves","4.5ft @ 17s","text-emerald-400"],["Direction","WSW","text-slate-300"],["Water","58°F / 14°C","text-cyan-400"],["Wind","5mph NW","text-sky-400"]].map(([l,v,c]) => (
+                <div key={l} className="flex-1 bg-slate-800/80 rounded-lg p-1.5 text-center">
+                  <p className="text-slate-500 text-[8px]">{l}</p>
+                  <p className={`text-[9px] font-bold ${c}`}>{v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Backup */}
+          <div className="bg-slate-900/60 rounded-xl border border-sky-500/15 p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                <span className="text-sky-400 text-[10px] font-bold">BACKUP · Stn 46012</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-2.5 w-2.5 text-slate-500" />
+                <span className="text-slate-500 text-[9px]">11 min ago</span>
+              </div>
+            </div>
+            <p className="text-white text-xs font-semibold mb-1.5">Half Moon Bay — 6 mi offshore</p>
+            <div className="flex gap-2">
+              {[["Waves","4.1ft @ 16s","text-emerald-400"],["Direction","W","text-slate-300"],["Water","57°F / 14°C","text-cyan-400"],["Wind","4mph N","text-sky-400"]].map(([l,v,c]) => (
+                <div key={l} className="flex-1 bg-slate-800/80 rounded-lg p-1.5 text-center">
+                  <p className="text-slate-500 text-[8px]">{l}</p>
+                  <p className={`text-[9px] font-bold ${c}`}>{v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Sun + UV */}
         <div className="flex gap-2 mx-3 mt-2">
-          <div className="flex-1 bg-slate-800/60 rounded-xl border border-white/8 p-3">
-            <Sun className="h-3.5 w-3.5 text-amber-400 mb-1" />
-            <p className="text-slate-400 text-[10px]">UV Index</p>
-            <p className="text-amber-400 font-black text-xl">6</p>
-            <p className="text-slate-500 text-[10px]">High</p>
-          </div>
-          <div className="flex-1 bg-slate-800/60 rounded-xl border border-white/8 p-3">
-            <p className="text-slate-400 text-[10px] mb-1">Sunrise</p>
-            <p className="text-amber-400 font-bold text-base">6:18 AM</p>
-          </div>
-          <div className="flex-1 bg-slate-800/60 rounded-xl border border-white/8 p-3">
-            <p className="text-slate-400 text-[10px] mb-1">Sunset</p>
-            <p className="text-orange-400 font-bold text-base">8:24 PM</p>
-          </div>
-          <div className="flex-1 bg-slate-800/60 rounded-xl border border-white/8 p-3">
-            <Droplets className="h-3.5 w-3.5 text-cyan-400 mb-1" />
-            <p className="text-slate-400 text-[10px]">Water</p>
-            <p className="text-cyan-400 font-bold text-base">58°F</p>
-          </div>
+          {[
+            { label: "UV Index", value: "6",       sub: "High",     icon: Sun,      color: "text-amber-400" },
+            { label: "Sunrise",  value: "6:18 AM",  sub: "🌅",       icon: null,     color: "text-amber-400" },
+            { label: "Sunset",   value: "8:24 PM",  sub: "🌇",       icon: null,     color: "text-orange-400" },
+            { label: "Water",    value: "58°F",     sub: "14°C",     icon: Droplets, color: "text-cyan-400" },
+          ].map(({ label, value, sub, icon: Icon, color }) => (
+            <div key={label} className="flex-1 bg-slate-800/60 rounded-xl border border-white/8 p-2.5 text-center">
+              {Icon && <Icon className={`h-3.5 w-3.5 mx-auto mb-0.5 ${color}`} />}
+              <p className={`font-bold text-sm ${color}`}>{value}</p>
+              <p className="text-slate-500 text-[9px]">{sub}</p>
+              <p className="text-slate-500 text-[9px]">{label}</p>
+            </div>
+          ))}
         </div>
 
         {/* AI summary */}
@@ -170,10 +193,10 @@ export function TimelineStory() {
             <Bot className="h-3.5 w-3.5 text-emerald-400" />
             <span className="text-emerald-400 text-[10px] font-bold uppercase tracking-wide">Conditions Summary</span>
           </div>
-          <p className="text-slate-200 text-xs leading-relaxed">Overhead sets from the NW on a long 17-second period. North winds blowing offshore through the morning — sea breeze expected to shift SW around midday, bringing onshore wind.</p>
+          <p className="text-slate-200 text-xs leading-relaxed">Overhead sets from the NW on a long 17-second period — groundswell from the open Pacific. North winds at 5mph blowing offshore, keeping faces clean. Sea breeze expected to shift SW around midday.</p>
         </div>
 
-        {/* 5-day forecast */}
+        {/* 5-day */}
         <div className="mx-3 mt-2 bg-slate-800/60 rounded-2xl border border-white/8 p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-slate-400 text-[10px] uppercase tracking-wide font-semibold">5-Day Forecast</p>
