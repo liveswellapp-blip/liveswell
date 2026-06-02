@@ -419,6 +419,23 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       ))}
                   </div>
                 )}
+                {/* Sunrise / sunset row */}
+                {(conditions?.sunrise || conditions?.sunset) && (
+                  <div className="mt-2 flex items-center gap-4">
+                    {conditions.sunrise && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-amber-400 text-[11px]">🌅</span>
+                        <span className="text-amber-400 text-[10px] font-semibold">{conditions.sunrise}</span>
+                      </div>
+                    )}
+                    {conditions.sunset && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-orange-400 text-[11px]">🌇</span>
+                        <span className="text-orange-400 text-[10px] font-semibold">{conditions.sunset}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="mt-2 pt-2 border-t border-white/5 flex justify-end">
                   <span className="text-slate-600 text-[9px]">NOAA Tides &amp; Currents</span>
                 </div>
