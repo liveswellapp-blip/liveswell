@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Waves } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Location, NearbySpot } from "@/types/weather";
 
 interface NearbySpotsProps {
@@ -11,35 +10,27 @@ interface NearbySpotsProps {
 
 export default function NearbySpots({ location }: NearbySpotsProps) {
   const [, setLocation] = useLocation();
+
   const { data: nearbySpots = [], isLoading, error } = useQuery<NearbySpot[]>({
     queryKey: [`/api/locations/${location.id}/nearby`],
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
   });
 
   const handleSpotClick = (spotId: number) => {
-    console.log('Navigating to spot:', spotId);
     const newUrl = `/conditions?location=${spotId}`;
-    window.history.pushState(null, '', newUrl);
-    
-    // Dispatch a popstate event to trigger navigation
-    const popStateEvent = new PopStateEvent('popstate', { state: null });
+    window.history.pushState(null, "", newUrl);
+    const popStateEvent = new PopStateEvent("popstate", { state: null });
     window.dispatchEvent(popStateEvent);
-    
-    // Also try wouter navigation as backup
     setLocation(newUrl);
-    
-    // Scroll to top of page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (error) {
     return (
       <div className="w-full">
-        <div className="container mx-auto px-4 md:px-6 max-w-7xl border-b border-emerald-500/30 pb-4 mb-4">
-          <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
-          <div className="text-center text-red-600">
-            <p className="text-destructive">Unable to load nearby spots. Please try again later.</p>
-          </div>
+        <div className="w-full border-b border-emerald-500/30 mt-8 mb-4" />
+        <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-6 mb-6">
+          <p className="text-destructive text-sm text-center">Unable to load nearby spots. Please try again later.</p>
         </div>
       </div>
     );
@@ -47,51 +38,87 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
 
   return (
     <div className="w-full">
-      {/* Emerald separator line with spacing above */}
-      <div className="w-full border-b border-emerald-500/30 mt-8 mb-4"></div>
-      
+      <div className="w-full border-b border-emerald-500/30 mt-8 mb-4" />
+
       <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-6 mb-6">
-        <h3 className="text-xl font-semibold mb-4 text-blue-900 dark:text-white">Nearby Surf Spots</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+
+        {/* ── Section header ── */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d399" }} />
+            <span className="text-emerald-400 text-[11px] font-bold tracking-widest uppercase">Nearby Surf Spots</span>
+          </div>
+          <span className="text-slate-500 text-[10px]">within 30 miles</span>
+        </div>
+
+        {/* ── Grid ── */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
           {isLoading ? (
-            // Loading skeletons
-            Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="bg-muted rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <Skeleton className="w-12 h-12 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-2xl p-3"
+                style={{ background: "linear-gradient(160deg,#030f1c 0%,#041a2e 100%)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div className="flex items-start justify-between mb-2">
+                  <Skeleton className="w-8 h-8 rounded-xl bg-white/10" />
+                  <Skeleton className="h-3 w-12 bg-white/10" />
                 </div>
+                <Skeleton className="h-3 w-full bg-white/10 mb-1" />
+                <Skeleton className="h-3 w-16 bg-white/10" />
               </div>
             ))
           ) : nearbySpots.length > 0 ? (
             nearbySpots.slice(0, 6).map((spot) => (
-              <div 
-                key={spot.id} 
+              <div
+                key={spot.id}
                 onClick={() => handleSpotClick(spot.id)}
-                className="bg-muted rounded-lg p-4 hover:shadow-md hover:bg-muted/80 transition-all cursor-pointer border border-border" 
                 data-testid={`card-nearby-spot-${spot.id}`}
+                className="rounded-2xl p-3 cursor-pointer transition-all hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(160deg,#030f1c 0%,#041a2e 100%)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                }}
               >
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
-                    <Waves className="h-6 w-6 text-emerald-600 dark:text-white" />
+                {/* Icon + distance */}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                    <Waves size={14} className="text-emerald-400" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-blue-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors" data-testid={`text-spot-name-${spot.id}`}>{spot.name}</h4>
-                    <p className="text-sm text-blue-900 dark:text-white" data-testid={`text-spot-distance-${spot.id}`}>{spot.distance} miles away</p>
-                  </div>
+                  <span className="text-slate-500 text-[9px]"
+                    data-testid={`text-spot-distance-${spot.id}`}>
+                    {spot.distance} mi
+                  </span>
                 </div>
+
+                {/* Spot name */}
+                <p className="text-white text-[11px] font-semibold leading-tight mb-2"
+                  data-testid={`text-spot-name-${spot.id}`}>
+                  {spot.name}
+                </p>
+
+                {/* Wave data chips — shown if available */}
+                {(spot.waveHeight || spot.wind) && (
+                  <div className="flex gap-1.5 flex-wrap">
+                    {spot.waveHeight && (
+                      <div className="px-1.5 py-0.5 rounded-full"
+                        style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                        <span className="text-emerald-400 text-[9px] font-bold">{spot.waveHeight}</span>
+                      </div>
+                    )}
+                    {spot.wind && (
+                      <div className="px-1.5 py-0.5 rounded-full"
+                        style={{ background: "rgba(34,211,238,0.08)", border: "1px solid rgba(34,211,238,0.15)" }}>
+                        <span className="text-cyan-500 text-[9px]">{spot.wind}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center text-blue-900 dark:text-emerald-400">
-              <p>No nearby surf spots found</p>
-            </div>
+            <p className="col-span-full text-slate-500 text-sm text-center py-6">No nearby surf spots found</p>
           )}
         </div>
+
       </div>
     </div>
   );
