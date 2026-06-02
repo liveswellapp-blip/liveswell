@@ -1,12 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Waves, Wind, Navigation, Star, Heart, Search, BarChart3 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, Waves, Wind, Search, Heart, SlidersHorizontal, TrendingUp, TrendingDown, X } from "lucide-react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -28,8 +24,6 @@ interface SurfSpot {
   optimal_wind?: string;
 }
 
-
-
 interface GroupedSpots {
   [continent: string]: {
     [country: string]: {
@@ -39,652 +33,344 @@ interface GroupedSpots {
 }
 
 const CONTINENT_MAP: { [key: string]: string } = {
-  "USA": "North America",
-  "Canada": "North America",
-  "Mexico": "North America",
-  "Costa Rica": "North America",
-  "Australia": "Oceania",
-  "Portugal": "Europe",
-  "France": "Europe", 
-  "Spain": "Europe",
-  "Indonesia": "Asia",
-  "Brazil": "South America",
-  "Chile": "South America",
-  "South Africa": "Africa",
-  "Fiji": "Oceania"
+  "USA": "North America", "Canada": "North America", "Mexico": "North America",
+  "Costa Rica": "North America", "Australia": "Oceania", "Portugal": "Europe",
+  "France": "Europe", "Spain": "Europe", "Indonesia": "Asia",
+  "Brazil": "South America", "Chile": "South America", "South Africa": "Africa", "Fiji": "Oceania"
 };
 
-// Map USA cities to their states based on geographic location
 const USA_CITY_TO_STATE: { [key: string]: string } = {
-  // California - Comprehensive Coverage
-  "Half Moon Bay": "California",
-  "Santa Cruz": "California", 
-  "Carpinteria": "California",
-  "San Clemente": "California",
-  "Malibu": "California",
-  "Manhattan Beach": "California",
-  "Huntington Beach": "California",
-  "Encinitas": "California",
-  "La Jolla": "California",
-  "San Francisco": "California",
-  "Oakland": "California",
-  "Monterey": "California",
-  "Big Sur": "California",
-  "Laguna Beach": "California",
-  "San Diego": "California",
-  "Carlsbad": "California",
-  "Pacifica": "California",
-  "Capitola": "California",
-  "Carmel": "California",
-  "Pismo Beach": "California",
-  "Lompoc": "California",
-  "Goleta": "California",
-  "Ventura": "California",
-  "Los Angeles": "California",
-  "El Segundo": "California",
-  "Hermosa Beach": "California",
-  "Redondo Beach": "California",
-  "Palos Verdes": "California",
-  "Dana Point": "California",
-  "Newport Beach": "California",
-  "Seal Beach": "California",
-  "Pescadero": "California",
-  "Davenport": "California",
-  "Aptos": "California",
-  "Moss Landing": "California",
-  "Pacific Grove": "California",
-  "Crescent City": "California",
-  "Eureka": "California",
-  "Cayucos": "California",
-  "Avila Beach": "California",
-  "Cambria": "California",
-  "Fort Bragg": "California",
-  "Mendocino": "California",
-  "Shelter Cove": "California",
-  
-  // Hawaii
-  "Haleiwa": "Hawaii",
-  "Honolulu": "Hawaii",
-  
-  // Florida - Enhanced Coverage
-  "Cocoa Beach": "Florida",
-  "New Smyrna Beach": "Florida",
-  "Jacksonville": "Florida",
-  "Sebastian": "Florida",
-  "Miami": "Florida",
-  "Vero Beach": "Florida",
-  "Pensacola": "Florida",
-  "Destin": "Florida",
-  "Panama City Beach": "Florida",
-  "St. Augustine": "Florida",
-  "Flagler Beach": "Florida",
-  "Ormond Beach": "Florida",
-  "Daytona Beach": "Florida",
-  "Ponce Inlet": "Florida",
-  "Melbourne Beach": "Florida",
-  "Indialantic": "Florida",
-  "Satellite Beach": "Florida",
-  "Fernandina Beach": "Florida",
-  "Fort Myers": "Florida",
-  "Naples": "Florida",
-  "Clearwater": "Florida",
-  "Bradenton": "Florida",
-  "Key Largo": "Florida",
-  "Key West": "Florida",
-  "Marathon": "Florida",
-  "Islamorada": "Florida",
-  
-  // Oregon - Pacific Northwest
-  "Cannon Beach": "Oregon",
-  "Manzanita": "Oregon",
-  "Seaside": "Oregon",
-  "Oswald West": "Oregon",
-  "Lincoln City": "Oregon",
-  "Pacific City": "Oregon",
-  "Otter Rock": "Oregon",
-  "Bandon": "Oregon",
-  "Gold Beach": "Oregon",
-  "Brookings": "Oregon",
-  
-  // Washington - Pacific Northwest
-  "La Push": "Washington",
-  "Westport": "Washington",
-  "Neah Bay": "Washington",
-  "Ocean Shores": "Washington",
-  
-  // New England - Maine & New Hampshire
-  "Hampton": "New Hampshire",
-  "Rye": "New Hampshire",
-  "York": "Maine",
-  "Wells": "Maine",
-  "Kennebunkport": "Maine",
-  "Biddeford": "Maine",
-  "Popham Beach": "Maine",
-  "Reid State Park": "Maine",
-  
-  // Mid-Atlantic - New York, New Jersey, Rhode Island
-  "Montauk": "New York",
-  "New York City": "New York",
-  "Babylon": "New York",
-  "Long Beach": "New York",
-  "Manasquan": "New Jersey",
-  "Asbury Park": "New Jersey",
-  "Spring Lake": "New Jersey",
-  "Belmar": "New Jersey",
-  "Narragansett": "Rhode Island",
-  "Newport": "Rhode Island",
-  "Block Island": "Rhode Island",
-  
-  // Southeast - Virginia through Georgia
-  "Virginia Beach": "Virginia",
-  "Cape Hatteras": "North Carolina",
-  "Kill Devil Hills": "North Carolina",
-  "Nags Head": "North Carolina",
-  "Wrightsville Beach": "North Carolina",
-  "Buxton": "North Carolina",
-  "Rehoboth Beach": "Delaware",
-  "Charleston": "South Carolina",
-  "Hilton Head": "South Carolina",
-  "Kiawah Island": "South Carolina",
-  "Isle of Palms": "South Carolina",
-  "Sullivan's Island": "South Carolina",
-  "Edisto Beach": "South Carolina",
-  "Beaufort": "South Carolina",
-  "Savannah": "Georgia",
-  
-  // Gulf Coast - Alabama
-  "Gulf Shores": "Alabama",
-  "Orange Beach": "Alabama",
-  
-  // Great Lakes - Wisconsin, Michigan, Pennsylvania, Ohio
-  "Sheboygan": "Wisconsin",
-  "Grand Haven": "Michigan",
-  "Empire": "Michigan",
-  "Ludington": "Michigan",
-  "Grand Marais": "Michigan",
-  "Marquette": "Michigan",
-  "Erie": "Pennsylvania",
-  "Bay Village": "Ohio",
-  
-  // Texas - Gulf Coast Expansion
-  "Galveston": "Texas",
-  "Surfside Beach": "Texas",
-  "Freeport": "Texas",
-  "South Padre Island": "Texas",
-  "Corpus Christi": "Texas",
-  "Port Aransas": "Texas",
-  "Brownsville": "Texas",
-  "Port Mansfield": "Texas",
-  "Matagorda": "Texas",
-  
-  // Massachusetts  
-  "Nantucket": "Massachusetts",
-  "Oak Bluffs": "Massachusetts",
-  "Orleans": "Massachusetts",
-  
-  // Connecticut
-  "Westport Beach": "Connecticut",
-  "Fairfield": "Connecticut",
-  
-  // Louisiana
-  "Grand Isle": "Louisiana",
-  
-
-  
-  // Georgia
-  "Tybee Island": "Georgia",
-  "Jekyll Island": "Georgia",
-  
-  // South Carolina
-  "Myrtle Beach": "South Carolina",
-  "Folly Beach": "South Carolina",
-  
-  // NEW STATES - Major Coastal Expansion
-  
-  // Virginia - Major East Coast
-  "Chincoteague": "Virginia",
-  
-  // Maryland - Mid-Atlantic
-  "Ocean City": "Maryland",
-  "Berlin": "Maryland",
-  
-  // Delaware - Small State Big Surf
-  "Bethany Beach": "Delaware",
-  
-  // North Carolina - Additional Outer Banks
-  "Duck": "North Carolina",
-  
-  // Alabama - Gulf Coast
-  "Dauphin Island": "Alabama",
-  
-  // Mississippi - Gulf Coast
-  "Ocean Springs": "Mississippi",
-  "Biloxi": "Mississippi",
-  
-  // Alaska - Remote Surfing
-  "Yakutat": "Alaska",
-  "Sitka": "Alaska",
-
-  // Additional Comprehensive State Coverage
-  "Georgetown": "South Carolina",
-  "Tampa": "Florida",
-  "Pago Pago": "American Samoa",
-  "Phippsburg": "Maine",
-  "Old Orchard Beach": "Maine",
-  
-
-  
-
+  "Half Moon Bay": "California","Santa Cruz": "California","Carpinteria": "California",
+  "San Clemente": "California","Malibu": "California","Manhattan Beach": "California",
+  "Huntington Beach": "California","Encinitas": "California","La Jolla": "California",
+  "San Francisco": "California","Oakland": "California","Monterey": "California",
+  "Big Sur": "California","Laguna Beach": "California","San Diego": "California",
+  "Carlsbad": "California","Pacifica": "California","Capitola": "California",
+  "Carmel": "California","Pismo Beach": "California","Lompoc": "California",
+  "Goleta": "California","Ventura": "California","Los Angeles": "California",
+  "El Segundo": "California","Hermosa Beach": "California","Redondo Beach": "California",
+  "Palos Verdes": "California","Dana Point": "California","Newport Beach": "California",
+  "Seal Beach": "California","Pescadero": "California","Davenport": "California",
+  "Aptos": "California","Moss Landing": "California","Pacific Grove": "California",
+  "Crescent City": "California","Eureka": "California","Cayucos": "California",
+  "Avila Beach": "California","Cambria": "California","Fort Bragg": "California",
+  "Mendocino": "California","Shelter Cove": "California",
+  "Haleiwa": "Hawaii","Honolulu": "Hawaii",
+  "Cocoa Beach": "Florida","New Smyrna Beach": "Florida","Jacksonville": "Florida",
+  "Sebastian": "Florida","Miami": "Florida","Vero Beach": "Florida",
+  "Pensacola": "Florida","Destin": "Florida","Panama City Beach": "Florida",
+  "St. Augustine": "Florida","Flagler Beach": "Florida","Ormond Beach": "Florida",
+  "Daytona Beach": "Florida","Ponce Inlet": "Florida","Melbourne Beach": "Florida",
+  "Indialantic": "Florida","Satellite Beach": "Florida","Fernandina Beach": "Florida",
+  "Fort Myers": "Florida","Naples": "Florida","Clearwater": "Florida",
+  "Bradenton": "Florida","Key Largo": "Florida","Key West": "Florida",
+  "Marathon": "Florida","Islamorada": "Florida",
+  "Cannon Beach": "Oregon","Manzanita": "Oregon","Seaside": "Oregon",
+  "Oswald West": "Oregon","Lincoln City": "Oregon","Pacific City": "Oregon",
+  "Otter Rock": "Oregon","Bandon": "Oregon","Gold Beach": "Oregon","Brookings": "Oregon",
+  "La Push": "Washington","Westport": "Washington","Neah Bay": "Washington","Ocean Shores": "Washington",
+  "Hampton": "New Hampshire","Rye": "New Hampshire",
+  "York": "Maine","Wells": "Maine","Kennebunkport": "Maine","Biddeford": "Maine",
+  "Popham Beach": "Maine","Reid State Park": "Maine",
+  "Montauk": "New York","New York City": "New York","Babylon": "New York","Long Beach": "New York",
+  "Manasquan": "New Jersey","Asbury Park": "New Jersey","Spring Lake": "New Jersey","Belmar": "New Jersey",
+  "Narragansett": "Rhode Island","Newport": "Rhode Island","Block Island": "Rhode Island",
+  "Virginia Beach": "Virginia","Cape Hatteras": "North Carolina","Kill Devil Hills": "North Carolina",
+  "Nags Head": "North Carolina","Wrightsville Beach": "North Carolina","Buxton": "North Carolina",
+  "Rehoboth Beach": "Delaware","Charleston": "South Carolina","Hilton Head": "South Carolina",
+  "Kiawah Island": "South Carolina","Isle of Palms": "South Carolina",
+  "Sullivan's Island": "South Carolina","Edisto Beach": "South Carolina",
+  "Beaufort": "South Carolina","Savannah": "Georgia",
+  "Gulf Shores": "Alabama","Orange Beach": "Alabama",
+  "Sheboygan": "Wisconsin","Grand Haven": "Michigan","Empire": "Michigan",
+  "Ludington": "Michigan","Grand Marais": "Michigan","Marquette": "Michigan",
+  "Erie": "Pennsylvania","Bay Village": "Ohio",
+  "Galveston": "Texas","Surfside Beach": "Texas","Freeport": "Texas",
+  "South Padre Island": "Texas","Corpus Christi": "Texas","Port Aransas": "Texas",
+  "Brownsville": "Texas","Port Mansfield": "Texas","Matagorda": "Texas",
+  "Nantucket": "Massachusetts","Oak Bluffs": "Massachusetts","Orleans": "Massachusetts",
+  "Westport Beach": "Connecticut","Fairfield": "Connecticut",
+  "Grand Isle": "Louisiana","Tybee Island": "Georgia","Jekyll Island": "Georgia",
+  "Myrtle Beach": "South Carolina","Folly Beach": "South Carolina",
+  "Chincoteague": "Virginia","Ocean City": "Maryland","Berlin": "Maryland",
+  "Bethany Beach": "Delaware","Duck": "North Carolina","Dauphin Island": "Alabama",
+  "Ocean Springs": "Mississippi","Biloxi": "Mississippi",
+  "Yakutat": "Alaska","Sitka": "Alaska",
+  "Georgetown": "South Carolina","Tampa": "Florida","Pago Pago": "American Samoa",
+  "Phippsburg": "Maine","Old Orchard Beach": "Maine",
 };
 
-// Map Canadian cities to their provinces
 const CANADA_CITY_TO_STATE: { [key: string]: string } = {
-  "Tofino": "British Columbia",
-  "Ucluelet": "British Columbia", 
-  "Halifax": "Nova Scotia",
-  "Ingonish": "Nova Scotia"
+  "Tofino": "British Columbia","Ucluelet": "British Columbia",
+  "Halifax": "Nova Scotia","Ingonish": "Nova Scotia"
 };
 
-// Map US Territory cities to their territories
 const US_TERRITORY_CITY_TO_STATE: { [key: string]: string } = {
-  // Puerto Rico - Caribbean Surf Capital
-  "Rincon": "Puerto Rico",
-  "Aguadilla": "Puerto Rico", 
-  "Isabela": "Puerto Rico",
-  "Dorado": "Puerto Rico",
-  
-  // US Virgin Islands - Pristine Caribbean
-  "Charlotte Amalie": "US Virgin Islands",
-  "Red Hook": "US Virgin Islands",
-  "Frederiksted": "US Virgin Islands",
-  
-  // Guam - Remote Pacific
-  "Talofofo": "Guam",
-  "Dededo": "Guam",
-  
-  // American Samoa - Polynesian Surf
-  "Pago Pago": "American Samoa",
-  
-
-  
-  // Remote California - Northern Coast
-  "Shelter Cove": "California",
-  "Mendocino": "California",
-  "Fort Bragg": "California",
-  
-  // Florida Keys - Remote Islands
-  "Key Largo": "Florida",
-  "Islamorada": "Florida",
-  "Marathon": "Florida",
-  "Key West": "Florida",
-  
-  // Michigan - Great Lakes Remote
-  "Ludington": "Michigan",
-  "Grand Marais": "Michigan",
-  "Marquette": "Michigan",
-  
-  // Texas - Remote Gulf Coast
-  "Port Aransas": "Texas",
-  "Matagorda": "Texas",
-  
-  // Oregon - Remote Pacific Northwest
-  "Brookings": "Oregon"
+  "Rincon": "Puerto Rico","Aguadilla": "Puerto Rico","Isabela": "Puerto Rico","Dorado": "Puerto Rico",
+  "Charlotte Amalie": "US Virgin Islands","Red Hook": "US Virgin Islands","Frederiksted": "US Virgin Islands",
+  "Talofofo": "Guam","Dededo": "Guam",
 };
 
-// Map Mexican cities to their states
 const MEXICO_CITY_TO_STATE: { [key: string]: string } = {
-  "Ensenada": "Baja California",
-  "Rosarito": "Baja California",
-  "Todos Santos": "Baja California Sur",
-  "San Juanico": "Baja California Sur",
+  "Ensenada": "Baja California","Rosarito": "Baja California",
+  "Todos Santos": "Baja California Sur","San Juanico": "Baja California Sur",
   "Puerto Vallarta": "Jalisco"
 };
 
-const DIFFICULTY_COLORS = {
-  "Beginner": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  "Intermediate": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-  "Advanced": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-  "Expert": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-};
+function getState(spot: SurfSpot): string {
+  if (spot.country === "USA") return USA_CITY_TO_STATE[spot.city] || US_TERRITORY_CITY_TO_STATE[spot.city] || "Other";
+  if (spot.country === "Canada") return CANADA_CITY_TO_STATE[spot.city] || "General";
+  if (spot.country === "Mexico") return MEXICO_CITY_TO_STATE[spot.city] || "General";
+  return spot.region || "General";
+}
 
-
-
-// Component to fetch and display conditions for a single spot
-function SpotConditions({ locationId }: { locationId: number }) {
-  const { data: conditions, isLoading: conditionsLoading } = useQuery<any>({
-    queryKey: [`/api/locations/${locationId}/conditions`],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+// ── SpotCard ────────────────────────────────────────────────────────────────
+function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) => void }) {
+  const { data: conditions, isLoading: condLoading } = useQuery<any>({
+    queryKey: [`/api/locations/${spot.id}/conditions`],
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+  const { data: forecast, isLoading: fcLoading } = useQuery<any>({
+    queryKey: [`/api/locations/${spot.id}/forecast`],
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-  const { data: forecast, isLoading: forecastLoading } = useQuery<any>({
-    queryKey: [`/api/locations/${locationId}/forecast`],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    retry: 1,
-  });
+  const isLoading = condLoading || fcLoading;
 
-  if (conditionsLoading || forecastLoading) {
-    return (
-      <div className="flex items-center gap-3 text-xs mt-1">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="h-3 w-24" />
-      </div>
-    );
-  }
-
-  if (!conditions) {
-    return null;
-  }
-
-  // Calculate wave height range from buoys
-  let waveDisplay = "N/A";
-  const waveDirection = conditions.waveDirection || "N/A";
-  const wavePeriod = conditions.wavePeriod || "0";
-  
-  if (conditions.primaryBuoy && conditions.backupBuoy) {
-    const minHeight = Math.round(Math.min(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
-    const maxHeight = Math.round(Math.max(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
-    waveDisplay = minHeight === maxHeight 
-      ? `${minHeight} ft ${waveDirection} @ ${wavePeriod} sec`
-      : `${minHeight}-${maxHeight} ft ${waveDirection} @ ${wavePeriod} sec`;
-  } else if (conditions.primaryBuoy) {
-    waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft ${waveDirection} @ ${wavePeriod} sec`;
-  } else if (conditions.waveHeight) {
-    waveDisplay = `${Math.round(parseFloat(conditions.waveHeight))} ft ${waveDirection} @ ${wavePeriod} sec`;
-  }
-
-  // Format wind data
-  const windSpeed = Math.round(parseFloat(conditions.windSpeed || "0"));
-  const windDir = conditions.windDirection || "N/A";
-  const windDisplay = `${windSpeed} mph ${windDir}`;
-
-  // Get next tide based on local time
-  let tideDisplay = "N/A";
-  if (forecast?.[0]?.tides?.length > 0) {
-    const tideStatus = conditions.tideStatus?.toLowerCase();
-    const targetType = tideStatus === 'rising' ? 'high' : 'low';
-    
-    // Get current time (browser's local time is fine for filtering)
-    const now = new Date();
-    
-    // Parse tide times and find future tides
-    const tidesWithDates = forecast[0].tides
-      .filter((t: any) => t.type.toLowerCase() === targetType)
-      .map((tide: any) => {
-        const [time, period] = tide.time.split(' ');
-        const [hours, minutes] = time.split(':');
-        let hour24 = parseInt(hours);
-        
-        if (period === 'PM' && hour24 !== 12) {
-          hour24 += 12;
-        } else if (period === 'AM' && hour24 === 12) {
-          hour24 = 0;
-        }
-        
-        const tideDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour24, parseInt(minutes));
-        
-        return {
-          ...tide,
-          dateTime: tideDate
-        };
-      })
-      .filter((tide: any) => tide.dateTime > now)
-      .sort((a: any, b: any) => a.dateTime.getTime() - b.dateTime.getTime());
-    
-    if (tidesWithDates.length > 0) {
-      const nextTide = tidesWithDates[0];
-      const tideType = nextTide.type.charAt(0).toUpperCase() + nextTide.type.slice(1);
-      tideDisplay = `${tideType} ${nextTide.time}`;
+  // Wave
+  let waveDisplay = "—";
+  if (conditions) {
+    const waveDir = conditions.waveDirection || "";
+    const period = conditions.wavePeriod ? ` @ ${Math.round(parseFloat(conditions.wavePeriod))} sec` : "";
+    if (conditions.primaryBuoy && conditions.backupBuoy) {
+      const lo = Math.round(Math.min(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+      const hi = Math.round(Math.max(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+      waveDisplay = lo === hi ? `${lo} ft${period}` : `${lo}–${hi} ft${period}`;
+    } else if (conditions.primaryBuoy) {
+      waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft${period}`;
+    } else if (conditions.waveHeight) {
+      waveDisplay = `${Math.round(parseFloat(conditions.waveHeight))} ft${period}`;
     }
   }
 
+  // Wind
+  const windDisplay = conditions
+    ? `${Math.round(parseFloat(conditions.windSpeed || "0"))} mph ${conditions.windDirection || ""}`
+    : "—";
+
+  // Tide
+  let tideDisplay = "—";
+  let tideType: "High" | "Low" = "High";
+  if (conditions && forecast?.[0]?.tides?.length > 0) {
+    const tideStatus = conditions.tideStatus?.toLowerCase();
+    const targetType = tideStatus === "rising" ? "high" : "low";
+    tideType = targetType === "high" ? "High" : "Low";
+    const now = new Date();
+    const future = forecast[0].tides
+      .filter((t: any) => t.type.toLowerCase() === targetType)
+      .map((t: any) => {
+        const [time, period] = t.time.split(" ");
+        const [h, m] = time.split(":");
+        let h24 = parseInt(h);
+        if (period === "PM" && h24 !== 12) h24 += 12;
+        else if (period === "AM" && h24 === 12) h24 = 0;
+        return { ...t, dt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), h24, parseInt(m)) };
+      })
+      .filter((t: any) => t.dt > now)
+      .sort((a: any, b: any) => a.dt - b.dt);
+    if (future.length > 0) {
+      const next = future[0];
+      tideType = next.type.charAt(0).toUpperCase() + next.type.slice(1) as "High" | "Low";
+      tideDisplay = `${tideType} ${next.time}`;
+    }
+  }
+
+  const TideIcon = tideType === "High" ? TrendingUp : TrendingDown;
+
   return (
-    <div className="flex flex-col gap-0.5 text-xs font-medium items-end">
-      <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-        <Waves className="h-3 w-3" />
-        <span>{waveDisplay}</span>
+    <div
+      onClick={() => onSelect(spot.id)}
+      className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2 active:scale-[0.98] transition-transform"
+      style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}
+    >
+      {/* Name + location + fav */}
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0 flex-1">
+          <p className="text-white text-[12px] font-bold leading-tight truncate">{spot.name}</p>
+          <div className="flex items-center gap-1 mt-0.5">
+            <MapPin size={8} className="text-slate-600 flex-shrink-0" />
+            <p className="text-slate-600 text-[9px] leading-tight truncate">{spot.city}, {spot.country}</p>
+          </div>
+        </div>
+        <div onClick={e => e.stopPropagation()} className="flex-shrink-0 -mt-0.5">
+          <FavoriteButton locationId={spot.id} locationName={spot.name} size="sm" />
+        </div>
       </div>
-      <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
-        <Wind className="h-3 w-3" />
-        <span>{windDisplay}</span>
-      </div>
-      <div className="flex items-center gap-1.5 text-cyan-600 dark:text-cyan-400">
-        <BarChart3 className="h-3 w-3" />
-        <span>{tideDisplay}</span>
-      </div>
+
+      {/* Conditions */}
+      {isLoading ? (
+        <div className="space-y-1">
+          <Skeleton className="h-2.5 w-24 bg-white/5" />
+          <Skeleton className="h-2.5 w-20 bg-white/5" />
+          <Skeleton className="h-2.5 w-16 bg-white/5" />
+        </div>
+      ) : (
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1">
+            <Waves size={9} className="text-emerald-500 flex-shrink-0" />
+            <span className="text-emerald-400 text-[11px] font-bold truncate">{waveDisplay}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Wind size={9} className="text-cyan-600 flex-shrink-0" />
+            <span className="text-cyan-500 text-[10px]">{windDisplay}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <TideIcon size={9} className="text-amber-400 flex-shrink-0" />
+            <span className="text-amber-400 text-[10px]">{tideDisplay}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function SavedSpotsCard() {
-  const [, setLocation] = useLocation();
+// ── SavedGrid ────────────────────────────────────────────────────────────────
+function SavedGrid({ onSelect }: { onSelect: (id: number) => void }) {
   const { data: favorites, isLoading } = useQuery<Location[]>({
     queryKey: ["/api/favorites"],
     refetchInterval: 30000,
   });
 
-  const handleLocationSelect = (location: Location) => {
-    setLocation(`/conditions?location=${location.id}`);
-    // Scroll to top when navigating to the detail page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   if (isLoading) {
     return (
-      <Card className="bg-muted dark:bg-black">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
-            <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
-            <span>Saved Spots</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 lg:space-y-2">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <div key={index} className="flex items-center space-x-3 p-3 rounded-lg border">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-32 mb-1" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-                <Skeleton className="h-8 w-8 rounded" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <div className="flex items-center gap-2 mb-2.5">
+          <Heart size={11} className="text-emerald-400" />
+          <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Saved</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[1, 2].map(i => (
+            <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <Skeleton className="h-3 w-20 mb-1.5 bg-white/5" />
+              <Skeleton className="h-2 w-14 mb-3 bg-white/5" />
+              <Skeleton className="h-2 w-16 bg-white/5" />
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
   if (!favorites || favorites.length === 0) {
     return (
-      <Card className="bg-muted dark:bg-black">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
-            <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
-            <span>Saved Spots</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-6">
-            <Heart className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground mb-1">No saved spots yet</p>
-            <p className="text-xs text-muted-foreground">
-              Save spots to quickly access their wave conditions
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div>
+        <div className="flex items-center gap-2 mb-2.5">
+          <Heart size={11} className="text-emerald-400" />
+          <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Saved</span>
+        </div>
+        <div className="rounded-2xl px-4 py-5 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <Heart size={18} className="text-slate-700 mx-auto mb-2" />
+          <p className="text-slate-600 text-[11px]">No saved spots yet</p>
+          <p className="text-slate-700 text-[10px] mt-0.5">Tap the heart on any spot to save it</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-muted dark:bg-black overflow-hidden">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-white">
-          <Heart className="h-5 w-5 text-blue-900 dark:text-emerald-400" />
-          <span>Saved Spots</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-border">
-          {favorites.map((location) => (
-            <div
-              key={location.id}
-              className="flex items-stretch hover:bg-muted/60 dark:hover:bg-white/5 transition-colors cursor-pointer"
-              onClick={() => handleLocationSelect(location)}
-            >
-              {/* Left emerald accent bar */}
-              <div className="w-1 flex-shrink-0 bg-emerald-400" />
-
-              {/* Content */}
-              <div className="flex items-center justify-between px-3 py-3 flex-1 min-w-0">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full flex-shrink-0 bg-emerald-400" />
-                    <h3 className="font-semibold text-sm text-blue-900 dark:text-white leading-tight truncate">
-                      {location.name}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 ml-3.5 truncate">
-                    {location.city}, {location.country}
-                  </p>
-                </div>
-                <div className="flex-shrink-0 ml-2">
-                  <SpotConditions locationId={location.id} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div>
+      <div className="flex items-center gap-2 mb-2.5">
+        <Heart size={11} className="text-emerald-400" />
+        <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Saved</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {favorites.map(loc => (
+          <SpotCard
+            key={loc.id}
+            spot={{ id: loc.id, name: loc.name, city: loc.city, country: loc.country, latitude: String(loc.latitude), longitude: String(loc.longitude) }}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
+// ── Main Page ────────────────────────────────────────────────────────────────
 export default function SurfSpots() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContinent, setSelectedContinent] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedState, setSelectedState] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Detect mobile device
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const check = () => setIsMobile(window.innerWidth <= 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   const { data: spots, isLoading } = useQuery<SurfSpot[]>({
     queryKey: ["/api/locations/search", "all"],
     queryFn: async () => {
-      const response = await fetch("/api/locations/all");
-      if (!response.ok) throw new Error("Failed to fetch surf spots");
-      return response.json();
+      const res = await fetch("/api/locations/all");
+      if (!res.ok) throw new Error("Failed to fetch surf spots");
+      return res.json();
     },
   });
 
   const groupedSpots = useMemo((): GroupedSpots => {
     if (!spots) return {};
-    
     return spots.reduce((acc, spot) => {
       const continent = CONTINENT_MAP[spot.country] || "Other";
-      const country = spot.country;
-      
-      // Use appropriate state/province mapping based on country
-      let state: string;
-      if (country === "USA") {
-        state = USA_CITY_TO_STATE[spot.city] || "Other";
-      } else if (country === "Canada") {
-        state = CANADA_CITY_TO_STATE[spot.city] || "General";
-      } else if (country === "Mexico") {
-        state = MEXICO_CITY_TO_STATE[spot.city] || "General";
-      } else {
-        state = spot.region || "General";
-      }
-      
+      const state = getState(spot);
       if (!acc[continent]) acc[continent] = {};
-      if (!acc[continent][country]) acc[continent][country] = {};
-      if (!acc[continent][country][state]) acc[continent][country][state] = [];
-      
-      acc[continent][country][state].push(spot);
+      if (!acc[continent][spot.country]) acc[continent][spot.country] = {};
+      if (!acc[continent][spot.country][state]) acc[continent][spot.country][state] = [];
+      acc[continent][spot.country][state].push(spot);
       return acc;
     }, {} as GroupedSpots);
   }, [spots]);
 
   const filteredSpots = useMemo(() => {
     if (!spots) return [];
-    
-    // Show results if any filter is applied OR if there's a search query
     const hasFilters = selectedContinent || selectedCountry || selectedState;
     const hasSearch = searchQuery.trim().length > 0;
-    
-    // Don't show any spots until at least one filter or search is used
-    if (!hasFilters && !hasSearch) {
-      return [];
-    }
-    
+    if (!hasFilters && !hasSearch) return [];
     return spots.filter(spot => {
       const continent = CONTINENT_MAP[spot.country] || "Other";
-      
-      // Use appropriate state/province mapping based on country
-      let state: string;
-      if (spot.country === "USA") {
-        state = USA_CITY_TO_STATE[spot.city] || "Other";
-      } else if (spot.country === "Canada") {
-        state = CANADA_CITY_TO_STATE[spot.city] || "General";
-      } else if (spot.country === "Mexico") {
-        state = MEXICO_CITY_TO_STATE[spot.city] || "General";
-      } else {
-        state = spot.region || "General";
-      }
-      
-      // Search query filter
-      const matchesSearch = !searchQuery.trim() || 
-        spot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        spot.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        spot.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (spot.region && spot.region.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        state.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // Hierarchical filters
-      const matchesContinent = !selectedContinent || continent === selectedContinent;
-      const matchesCountry = !selectedCountry || spot.country === selectedCountry;
-      const matchesState = !selectedState || state === selectedState;
-      
-      return matchesSearch && matchesContinent && matchesCountry && matchesState;
+      const state = getState(spot);
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = !searchQuery.trim() ||
+        spot.name.toLowerCase().includes(q) ||
+        spot.city.toLowerCase().includes(q) ||
+        spot.country.toLowerCase().includes(q) ||
+        (spot.region && spot.region.toLowerCase().includes(q)) ||
+        state.toLowerCase().includes(q);
+      return matchesSearch &&
+        (!selectedContinent || continent === selectedContinent) &&
+        (!selectedCountry || spot.country === selectedCountry) &&
+        (!selectedState || state === selectedState);
     });
   }, [spots, searchQuery, selectedContinent, selectedCountry, selectedState]);
 
   const continents = Object.keys(groupedSpots).sort();
   const countries = selectedContinent ? Object.keys(groupedSpots[selectedContinent] || {}).sort() : [];
-  const states = selectedContinent && selectedCountry 
+  const states = selectedContinent && selectedCountry
     ? Object.keys(groupedSpots[selectedContinent]?.[selectedCountry] || {}).sort()
     : [];
 
+  const hasActiveFilters = !!(searchQuery.trim() || selectedContinent || selectedCountry || selectedState);
+
   const handleSpotSelect = (spotId: number) => {
     setLocation(`/conditions?location=${spotId}`);
-    // Scroll to top when navigating to the detail page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleLocationSelect = (location: Location) => {
-    setShowSearchModal(false);
-    setLocation(`/conditions?location=${location.id}`);
-  };
-
-  const handleSearchClick = () => {
-    if (isMobile) {
-      setShowSearchModal(true);
-    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const clearFilters = () => {
@@ -694,247 +380,158 @@ export default function SurfSpots() {
     setSelectedState("");
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)] flex flex-col pb-24">
-        <Header />
-        <main className="container mx-auto px-4 py-8 max-w-6xl flex-1">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-48" />
-              <div className="flex space-x-4">
-                <Skeleton className="h-10 w-48" />
-                <Skeleton className="h-10 w-48" />
-                <Skeleton className="h-10 w-48" />
-              </div>
+  return (
+    <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
+      <Header />
+
+      {/* ── Hero ── */}
+      <div className="relative overflow-hidden px-4 pt-6 pb-5"
+        style={{ background: "linear-gradient(160deg,#022c22 0%,#041a2e 100%)" }}>
+        <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          {[0, 18, 36].map(o => (
+            <path key={o} d={`M0 ${60 + o} Q300 ${50 + o} 600 ${60 + o} T1200 ${60 + o}`} stroke="#10b981" strokeWidth="1.5" fill="none" />
+          ))}
+        </svg>
+        <div className="relative max-w-2xl mx-auto">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d399" }} />
+            <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">LiveSwell</span>
+          </div>
+          <h1 className="text-white font-black text-2xl leading-tight mb-3">Global Surf Spots</h1>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onClick={() => isMobile && setShowSearchModal(true)}
+                readOnly={isMobile}
+                placeholder="Search spots, cities, regions…"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl text-[13px] text-slate-300 placeholder-slate-600 outline-none"
+                style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.1)" }}
+              />
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <Skeleton key={i} className="h-48" />
+            <button
+              onClick={() => setShowFilters(f => !f)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+              style={{
+                background: showFilters ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.07)",
+                border: showFilters ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.1)",
+              }}>
+              <SlidersHorizontal size={14} className={showFilters ? "text-emerald-400" : "text-slate-400"} />
+            </button>
+          </div>
+
+          {/* Filter panel */}
+          {showFilters && (
+            <div className="mt-3 rounded-2xl p-3 space-y-2"
+              style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">Filter by Region</span>
+                {hasActiveFilters && (
+                  <button onClick={clearFilters} className="flex items-center gap-1 text-slate-500 text-[10px] hover:text-slate-300">
+                    <X size={10} /> Clear
+                  </button>
+                )}
+              </div>
+              <Select value={selectedContinent} onValueChange={v => { setSelectedContinent(v); setSelectedCountry(""); setSelectedState(""); }}>
+                <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10 text-slate-300">
+                  <SelectValue placeholder="Continent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {continents.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {selectedContinent && (
+                <Select value={selectedCountry} onValueChange={v => { setSelectedCountry(v); setSelectedState(""); }}>
+                  <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10 text-slate-300">
+                    <SelectValue placeholder="Country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+              {selectedCountry === "USA" && states.length > 1 && (
+                <Select value={selectedState} onValueChange={setSelectedState}>
+                  <SelectTrigger className="h-8 text-xs bg-white/5 border-white/10 text-slate-300">
+                    <SelectValue placeholder="State" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <main className="flex-1 px-4 pt-5 pb-24 max-w-2xl mx-auto w-full space-y-6">
+
+        {/* Saved */}
+        <SavedGrid onSelect={handleSpotSelect} />
+
+        {/* All Locations */}
+        {isLoading ? (
+          <div>
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-2 h-2 rounded-full bg-slate-700" />
+              <span className="text-slate-500 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <Skeleton className="h-3 w-20 mb-1.5 bg-white/5" />
+                  <Skeleton className="h-2 w-14 mb-3 bg-white/5" />
+                  <Skeleton className="h-2 w-16 bg-white/5" />
+                </div>
               ))}
             </div>
           </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-blue-50 dark:bg-[hsl(155,50%,8%)] flex flex-col pb-24">
-      <Header />
-      <main className="container mx-auto px-4 py-8 max-w-6xl flex-1">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-bold text-blue-900 dark:text-white">
-                Global Surf Spots
-              </h1>
+        ) : hasActiveFilters ? (
+          <div>
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-2 h-2 rounded-full bg-slate-600" />
+              <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+              <span className="text-slate-600 text-[9px]">{filteredSpots.length} results</span>
             </div>
-
-            {/* Universal Search Bar */}
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onClick={handleSearchClick}
-                readOnly={isMobile}
-                className="pl-10 bg-muted border-input focus:ring-2 focus:ring-primary focus:border-transparent"
-                data-testid="input-search-homepage"
-              />
-            </div>
-
-            {(searchQuery.trim() || selectedContinent || selectedCountry || selectedState) && (
-              <div>
-                <Button variant="outline" onClick={clearFilters}>
-                  Clear All Filters
-                </Button>
-              </div>
-            )}
-
-            {/* Hierarchical Filters */}
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-blue-900 dark:text-white">Filter by Location</h3>
-              <div className="flex flex-col sm:flex-row gap-4">
-              <Select value={selectedContinent} onValueChange={(value) => {
-                setSelectedContinent(value);
-                setSelectedCountry("");
-                setSelectedState("");
-              }}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Select continent" />
-                </SelectTrigger>
-                <SelectContent>
-                  {continents.map(continent => (
-                    <SelectItem key={continent} value={continent}>
-                      {continent}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {selectedContinent && (
-                <Select value={selectedCountry} onValueChange={(value) => {
-                  setSelectedCountry(value);
-                  setSelectedState("");
-                }}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map(country => (
-                      <SelectItem key={country} value={country}>
-                        {country}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-
-              {selectedCountry === "USA" && states.length > 1 && (
-                <Select value={selectedState} onValueChange={setSelectedState}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue placeholder="Select state" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {states.map(state => (
-                      <SelectItem key={state} value={state}>
-                        {state}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              </div>
-            </div>
-
-            {/* Results Counter - only show when filters are active */}
-            {(searchQuery.trim() || selectedContinent || selectedCountry || selectedState) && (
-              <div className="text-sm text-muted-foreground">
-                Showing {filteredSpots.length} surf spot{filteredSpots.length !== 1 ? 's' : ''}
-                {selectedContinent || selectedCountry || selectedState ? (
-                  <span>
-                    {selectedContinent && ` in ${selectedContinent}`}
-                    {selectedState && ` • ${selectedState}`}
-                  </span>
-                ) : (
-                  searchQuery.trim() ? " matching your search" : " worldwide"
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Results - only show when filters are active */}
-          {(searchQuery.trim() || selectedContinent || selectedCountry || selectedState) && (
-            filteredSpots.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredSpots.map((spot) => (
-                  <Card 
-                    key={spot.id} 
-                    className="hover:shadow-lg transition-shadow border-border dark:bg-muted"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1 flex-1 cursor-pointer" onClick={() => handleSpotSelect(spot.id)}>
-                          <CardTitle className="text-lg text-blue-900 dark:text-white">
-                            {spot.name}
-                          </CardTitle>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <MapPin className="h-3 w-3 mr-1" />
-                            {spot.city}, {spot.country}
-                          </div>
-                          {spot.region && (
-                            <div className="text-xs text-muted-foreground">
-                              {spot.region}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {spot.difficulty && (
-                            <Badge 
-                              variant="secondary" 
-                              className={DIFFICULTY_COLORS[spot.difficulty as keyof typeof DIFFICULTY_COLORS]}
-                            >
-                              {spot.difficulty}
-                            </Badge>
-                          )}
-                          <FavoriteButton 
-                            locationId={spot.id} 
-                            locationName={spot.name}
-                            size="sm"
-                          />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3" onClick={() => handleSpotSelect(spot.id)}>
-                      {spot.break_type && (
-                        <div className="flex items-center text-sm">
-                          <Waves className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
-                          <span className="text-muted-foreground">{spot.break_type}</span>
-                        </div>
-                      )}
-                      
-                      {spot.optimal_swell && (
-                        <div className="flex items-center text-sm">
-                          <Navigation className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
-                          <span className="text-muted-foreground">
-                            Best swell: {spot.optimal_swell}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {spot.optimal_wind && (
-                        <div className="flex items-center text-sm">
-                          <Wind className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
-                          <span className="text-muted-foreground">
-                            Best wind: {spot.optimal_wind}
-                          </span>
-                        </div>
-                      )}
-
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-3 text-blue-900 dark:text-emerald-400 border-blue-200 dark:border-emerald-600 hover:bg-blue-50 dark:hover:bg-emerald-900/20 cursor-pointer"
-                      >
-                        <Waves className="h-4 w-4 mr-2" />
-                        View Conditions
-                      </Button>
-                    </CardContent>
-                  </Card>
+            {filteredSpots.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {filteredSpots.map(spot => (
+                  <SpotCard key={spot.id} spot={spot} onSelect={handleSpotSelect} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <div className="max-w-md mx-auto">
-                  <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-blue-900 dark:text-white mb-2">
-                    No Surf Spots Found
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Try adjusting your filters or selecting a different location
-                  </p>
-                  <Button onClick={clearFilters}>Clear All Filters</Button>
-                </div>
+              <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <MapPin size={20} className="text-slate-700 mx-auto mb-2" />
+                <p className="text-slate-500 text-[12px] font-semibold mb-1">No spots found</p>
+                <p className="text-slate-700 text-[10px]">Try a different search or filter</p>
               </div>
-            )
-          )}
-
-          {/* Saved Spots Card */}
-          <SavedSpotsCard />
-        </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="w-2 h-2 rounded-full bg-slate-600" />
+              <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+            </div>
+            <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <Search size={20} className="text-slate-700 mx-auto mb-2" />
+              <p className="text-slate-500 text-[12px] font-semibold mb-1">Search or filter to explore spots</p>
+              <p className="text-slate-700 text-[10px]">229+ locations worldwide</p>
+            </div>
+          </div>
+        )}
       </main>
+
       <Footer />
-      
-      {/* Mobile Search Modal */}
+
       <SearchModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
-        onLocationSelect={handleLocationSelect}
+        onLocationSelect={(loc: Location) => { setShowSearchModal(false); setLocation(`/conditions?location=${loc.id}`); }}
         initialQuery=""
       />
     </div>
