@@ -17,5 +17,6 @@ export const modules: ModuleMap = {
   "./components/mockups/ux-concepts/QualityHero.tsx": () => import("../components/mockups/ux-concepts/QualityHero.tsx"),
   "./components/mockups/ux-concepts/SpotSwipe.tsx": () => import("../components/mockups/ux-concepts/SpotSwipe.tsx"),
   "./components/mockups/ux-concepts/TabLayout.tsx": () => import("../components/mockups/ux-concepts/TabLayout.tsx"),
-  "./components/mockups/ux-concepts/WindRose.tsx": () => import("../components/mockups/ux-concepts/WindRose.tsx")
+  "./components/mockups/ux-concepts/WindRose.tsx": () => import("../components/mockups/ux-concepts/WindRose.tsx"),
+  "./components/mockups/wind-forecast/WindForecast.tsx": () => import("../components/mockups/wind-forecast/WindForecast.tsx")
 };
