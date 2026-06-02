@@ -1,10 +1,9 @@
 import { Link, useLocation } from "wouter";
-import { Waves, Heart, User, MapPin } from "lucide-react";
+import { Waves, User } from "lucide-react";
 
 const tabs = [
-  { label: "Spots",   icon: Waves,  href: "/" },
-  { label: "Saved",   icon: Heart,  href: "/favorites" },
-  { label: "Profile", icon: User,   href: "/profile" },
+  { label: "Spots",   icon: Waves, href: "/" },
+  { label: "Profile", icon: User,  href: "/profile" },
 ];
 
 export default function BottomNav() {
