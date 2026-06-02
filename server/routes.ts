@@ -1720,9 +1720,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const dayItems = forecastsByDay.get(dayKey);
           if (!dayItems || dayItems.length === 0) continue;
           
-          // Calculate average conditions from all readings for the day
-          const avgWindSpeed = dayItems.reduce((sum: number, item: any) => sum + (item.wind?.speed || 0), 0) / dayItems.length;
-          const avgWindDeg = dayItems.reduce((sum: number, item: any) => sum + (item.wind?.deg || 0), 0) / dayItems.length;
+          // Calculate wind from daytime afternoon hours (noon–6pm) for representative conditions
+          // Using full-day average includes overnight calm readings which understates actual surf-hour winds
+          const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
+          const afternoonItems = dayItems.filter((item: any) => {
+            const localHour = new Date(new Date(item.dt * 1000).toLocaleString('en-US', { timeZone: timezone })).getHours();
+            return localHour >= 12 && localHour < 18;
+          });
+          const daytimeItems = afternoonItems.length > 0 ? afternoonItems : dayItems;
+          const avgWindSpeed = daytimeItems.reduce((sum: number, item: any) => sum + (item.wind?.speed || 0), 0) / daytimeItems.length;
+          const avgWindDeg = daytimeItems.reduce((sum: number, item: any) => sum + (item.wind?.deg || 0), 0) / daytimeItems.length;
           const maxWindSpeed = Math.max(...dayItems.map((item: any) => item.wind?.speed || 0));
           
           // Use real marine wave data if available, otherwise fallback to wind-based calculation
