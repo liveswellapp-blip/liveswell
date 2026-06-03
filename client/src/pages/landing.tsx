@@ -1,16 +1,99 @@
+import type { ReactNode } from "react";
 import logoImage from "@assets/Live_(1500_x_500_px)_(1)_1780500060904.png";
 
 const SCALE = 264 / 390;
 
-function PhoneScreen() {
+/* ─── Shared tab bar ───────────────────────────────────────────── */
+function TabBar({ active }: { active: "explore" | "conditions" | "favorites" | "profile" }) {
+  const tabs = [
+    { key: "explore",    icon: "🔍", label: "Explore"    },
+    { key: "conditions", icon: "🌊", label: "Conditions" },
+    { key: "favorites",  icon: "⭐", label: "Favorites"  },
+    { key: "profile",    icon: "👤", label: "Profile"    },
+  ] as const;
+  return (
+    <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", padding: "10px 18px 20px", background: "#030a14" }}>
+      {tabs.map(t => (
+        <div key={t.key} style={{ flex: 1, textAlign: "center" as const }}>
+          <div style={{ fontSize: 18, marginBottom: 3 }}>{t.icon}</div>
+          <div style={{ fontSize: 9, color: t.key === active ? "#34d399" : "rgba(255,255,255,0.3)", fontWeight: t.key === active ? 700 : 400 }}>{t.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── App header ───────────────────────────────────────────────── */
+function AppHeader() {
+  return (
+    <div style={{ padding: "14px 18px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.3px" }}>
+        <span style={{ color: "#34d399" }}>LIVE</span><span style={{ color: "white" }}> SWELL</span>
+      </div>
+      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #34d399, #059669)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#030a14" }}>JD</div>
+    </div>
+  );
+}
+
+/* ─── Screen 1: Explore ────────────────────────────────────────── */
+function ExploreScreen() {
+  const spots = [
+    { name: "Pipeline",         loc: "Oahu, Hawaii",      ft: "8.2", period: "16s", wind: "NE offshore", badge: "Epic",       badgeColor: "#34d399", badgeBg: "rgba(52,211,153,0.12)",  badgeBorder: "rgba(52,211,153,0.3)"  },
+    { name: "Trestles",         loc: "San Clemente, CA",  ft: "4.8", period: "14s", wind: "NNE offshore", badge: "Good",       badgeColor: "#34d399", badgeBg: "rgba(52,211,153,0.10)",  badgeBorder: "rgba(52,211,153,0.25)" },
+    { name: "Rincon",           loc: "Santa Barbara, CA", ft: "3.6", period: "12s", wind: "W onshore",    badge: "Fair",       badgeColor: "#fbbf24", badgeBg: "rgba(251,191,36,0.10)",  badgeBorder: "rgba(251,191,36,0.25)" },
+    { name: "Mavericks",        loc: "Half Moon Bay, CA", ft: "12.5", period: "18s", wind: "NW",          badge: "Experts",    badgeColor: "#f87171", badgeBg: "rgba(248,113,113,0.10)", badgeBorder: "rgba(248,113,113,0.25)"},
+    { name: "Huntington Beach", loc: "Orange County, CA", ft: "2.1", period: "9s",  wind: "SW onshore",   badge: "Poor",       badgeColor: "rgba(255,255,255,0.35)", badgeBg: "rgba(255,255,255,0.03)", badgeBorder: "rgba(255,255,255,0.1)" },
+  ];
   return (
     <div style={{ fontFamily: "'Poppins', sans-serif", background: "#030a14", width: 390, color: "white", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "14px 18px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.3px" }}>
-          <span style={{ color: "#34d399" }}>LIVE</span><span style={{ color: "white" }}> SWELL</span>
+      <AppHeader />
+      <div style={{ padding: "10px 18px 6px" }}>
+        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "9px 14px", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13 }}>🔍</span>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Search surf spots...</span>
         </div>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #34d399, #059669)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#030a14" }}>JD</div>
       </div>
+      <div style={{ padding: "10px 18px 6px", display: "flex", gap: 8 }}>
+        {["All", "Hawaii", "California", "Australia"].map((f, i) => (
+          <div key={f} style={{ background: i === 0 ? "#34d399" : "rgba(255,255,255,0.05)", color: i === 0 ? "#030a14" : "rgba(255,255,255,0.5)", borderRadius: 20, padding: "4px 12px", fontSize: 11, fontWeight: 600, border: i === 0 ? "none" : "1px solid rgba(255,255,255,0.08)" }}>
+            {f}
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: "8px 18px 0" }}>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: "0.08em", marginBottom: 8, textTransform: "uppercase" as const }}>🌊 Top Spots Near You</div>
+        <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
+          {spots.map(s => (
+            <div key={s.name} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap" as const }}>{s.name}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: s.badgeColor, background: s.badgeBg, border: `1px solid ${s.badgeBorder}`, borderRadius: 6, padding: "1px 6px", flexShrink: 0 }}>{s.badge}</span>
+                </div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>📍 {s.loc}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>💨 {s.wind} · {s.period} period</div>
+              </div>
+              <div style={{ textAlign: "right" as const, flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+                  <span style={{ fontSize: 26, fontWeight: 900, color: "#34d399", lineHeight: 1 }}>{s.ft}</span>
+                  <span style={{ fontSize: 11, color: "#059669", fontWeight: 700 }}>ft</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ flex: 1, minHeight: 8 }} />
+      <TabBar active="explore" />
+    </div>
+  );
+}
+
+/* ─── Screen 2: Conditions ─────────────────────────────────────── */
+function ConditionsScreen() {
+  return (
+    <div style={{ fontFamily: "'Poppins', sans-serif", background: "#030a14", width: 390, color: "white", display: "flex", flexDirection: "column" }}>
+      <AppHeader />
       <div style={{ padding: "10px 18px 6px" }}>
         <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "9px 14px", display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 13 }}>🔍</span>
@@ -56,7 +139,7 @@ function PhoneScreen() {
           Overhead+ NNE offshore wind grooming a solid 4–5 ft SW groundswell at Uppers. Low tide push at 6:42am makes the point fire. Glassy, long walls — don't miss this one.
         </div>
       </div>
-      <div style={{ padding: "0 18px 12px" }}>
+      <div style={{ padding: "0 18px 8px" }}>
         <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 8, textTransform: "uppercase" as const }}>7-Day Forecast</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 5 }}>
           {[
@@ -73,34 +156,110 @@ function PhoneScreen() {
           ))}
         </div>
       </div>
-      <div style={{ margin: "0 18px 12px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 14px", display: "flex" }}>
-        {[{ label: "Low", time: "6:42am", ft: "0.8ft" }, { label: "High", time: "1:15pm", ft: "4.8ft" }, { label: "Low", time: "7:31pm", ft: "1.2ft" }].map((t, i) => (
-          <div key={i} style={{ flex: 1, textAlign: "center" as const, borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", marginBottom: 2 }}>{t.label}</div>
-            <div style={{ fontSize: 11, fontWeight: 700 }}>{t.time}</div>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)" }}>{t.ft}</div>
+      <TabBar active="conditions" />
+    </div>
+  );
+}
+
+/* ─── Screen 3: Favorites ──────────────────────────────────────── */
+function FavoritesScreen() {
+  const favs = [
+    { name: "Trestles",    loc: "San Clemente, CA",  ft: "4.8", wind: "NNE offshore 🤙", badge: "Good",  badgeColor: "#34d399", badgeBg: "rgba(52,211,153,0.1)",  badgeBorder: "rgba(52,211,153,0.25)",  tide: "Low ↑" },
+    { name: "Pipeline",    loc: "Oahu, Hawaii",       ft: "8.2", wind: "NE offshore",     badge: "Epic",  badgeColor: "#34d399", badgeBg: "rgba(52,211,153,0.12)", badgeBorder: "rgba(52,211,153,0.3)",   tide: "Mid ↑" },
+    { name: "Rincon",      loc: "Santa Barbara, CA",  ft: "3.6", wind: "W onshore",       badge: "Fair",  badgeColor: "#fbbf24", badgeBg: "rgba(251,191,36,0.1)",  badgeBorder: "rgba(251,191,36,0.25)",  tide: "High ↓" },
+    { name: "Steamer Lane", loc: "Santa Cruz, CA",   ft: "5.1", wind: "NW offshore 🤙",  badge: "Good",  badgeColor: "#34d399", badgeBg: "rgba(52,211,153,0.1)",  badgeBorder: "rgba(52,211,153,0.25)",  tide: "Low ↑" },
+  ];
+  return (
+    <div style={{ fontFamily: "'Poppins', sans-serif", background: "#030a14", width: 390, color: "white", display: "flex", flexDirection: "column" }}>
+      <AppHeader />
+      <div style={{ padding: "14px 18px 10px" }}>
+        <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.3px", marginBottom: 2 }}>My Favorites</div>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Your saved breaks · updated live</div>
+      </div>
+      <div style={{ padding: "4px 18px 0", display: "flex", flexDirection: "column" as const, gap: 9 }}>
+        {favs.map(s => (
+          <div key={s.name} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "14px 16px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3 }}>
+                  <span style={{ fontSize: 14, fontWeight: 800 }}>{s.name}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: s.badgeColor, background: s.badgeBg, border: `1px solid ${s.badgeBorder}`, borderRadius: 6, padding: "1px 6px" }}>{s.badge}</span>
+                </div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>📍 {s.loc}</div>
+              </div>
+              <div style={{ textAlign: "right" as const }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
+                  <span style={{ fontSize: 28, fontWeight: 900, color: "#34d399", lineHeight: 1 }}>{s.ft}</span>
+                  <span style={{ fontSize: 11, color: "#059669", fontWeight: 700 }}>ft</span>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "5px 8px" }}>
+                <div style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", marginBottom: 2 }}>💨 WIND</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{s.wind}</div>
+              </div>
+              <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "5px 8px" }}>
+                <div style={{ fontSize: 8, color: "rgba(255,255,255,0.3)", marginBottom: 2 }}>🌙 TIDE</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{s.tide}</div>
+              </div>
+            </div>
           </div>
         ))}
       </div>
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", padding: "10px 18px 20px", background: "#030a14" }}>
-        {[
-          { icon: "🔍", label: "Explore",    active: false },
-          { icon: "🌊", label: "Conditions", active: true  },
-          { icon: "⭐", label: "Favorites",  active: false },
-          { icon: "👤", label: "Profile",    active: false },
-        ].map(t => (
-          <div key={t.label} style={{ flex: 1, textAlign: "center" as const }}>
-            <div style={{ fontSize: 18, marginBottom: 3 }}>{t.icon}</div>
-            <div style={{ fontSize: 9, color: t.active ? "#34d399" : "rgba(255,255,255,0.3)", fontWeight: t.active ? 700 : 400 }}>{t.label}</div>
+      <div style={{ flex: 1, minHeight: 12 }} />
+      <TabBar active="favorites" />
+    </div>
+  );
+}
+
+/* ─── Shared phone shell ───────────────────────────────────────── */
+function PhoneShell({ children, statusBar = true }: { children: ReactNode; statusBar?: boolean }) {
+  return (
+    <div style={{ width: 280, borderRadius: 46, background: "#161616", boxShadow: "0 0 0 2px #262626, 0 0 0 5px #0d0d0d, 0 36px 72px rgba(0,0,0,0.75), inset 0 0 0 1px rgba(255,255,255,0.07)", padding: "10px 8px", position: "relative", flexShrink: 0 }}>
+      <div style={{ position: "absolute", left: -2.5, top: 90,  width: 3, height: 30, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
+      <div style={{ position: "absolute", left: -2.5, top: 130, width: 3, height: 55, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
+      <div style={{ position: "absolute", left: -2.5, top: 196, width: 3, height: 55, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
+      <div style={{ position: "absolute", right: -2.5, top: 145, width: 3, height: 70, background: "#2a2a2a", borderRadius: "0 2px 2px 0" }} />
+      <div style={{ borderRadius: 38, overflow: "hidden", background: "#030a14", position: "relative" }}>
+        {statusBar && (
+          <div style={{ height: 38, background: "#030a14", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", position: "relative", zIndex: 2 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "white" }}>9:41</span>
+            <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: 7, width: 86, height: 26, background: "#000", borderRadius: 15 }} />
+            <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+              <svg width="12" height="9" viewBox="0 0 16 12" fill="white" opacity={0.85}>
+                <rect x="0" y="3" width="2" height="9" rx="1"/>
+                <rect x="4" y="2" width="2" height="10" rx="1"/>
+                <rect x="8" y="1" width="2" height="11" rx="1"/>
+                <rect x="12" y="0" width="2" height="12" rx="1"/>
+              </svg>
+              <div style={{ width: 17, height: 9, border: "1.5px solid rgba(255,255,255,0.7)", borderRadius: 2.5, display: "flex", alignItems: "center", padding: "1px 1.5px", gap: 1 }}>
+                <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
+                <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
+                <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
+              </div>
+            </div>
           </div>
-        ))}
+        )}
+        <div style={{ width: 264, height: 570, overflow: "hidden" }}>
+          <div style={{ width: 390, transformOrigin: "top left", transform: `scale(${SCALE})`, pointerEvents: "none" }}>
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
+/* ─── Landing page ─────────────────────────────────────────────── */
 export default function Landing() {
   const handleLogin = () => { window.location.href = "/api/login"; };
+
+  const screenshots = [
+    { label: "Discover Spots",   caption: "Browse 218+ breaks worldwide with live wave heights and conditions ratings.", screen: <ExploreScreen />    },
+    { label: "Live Conditions",  caption: "Full detail view — waves, wind, tides, AI summary and 7-day forecast.",      screen: <ConditionsScreen /> },
+    { label: "Your Favorites",   caption: "Save your go-to spots and get a live at-a-glance dashboard every session.",   screen: <FavoritesScreen />  },
+  ];
 
   return (
     <div className="landing-root">
@@ -115,12 +274,10 @@ export default function Landing() {
           overflow-x: hidden;
         }
 
-        /* ── Nav ───────────────────────────────────────────── */
+        /* ── Nav ────────────────────────────────────────────── */
         .landing-nav {
           padding: 16px 48px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
+          display: flex; align-items: center; justify-content: space-between;
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .landing-nav img { height: 36px; object-fit: contain; }
@@ -130,15 +287,11 @@ export default function Landing() {
           font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer;
         }
 
-        /* ── Hero ──────────────────────────────────────────── */
+        /* ── Hero ───────────────────────────────────────────── */
         .landing-hero {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 56px;
-          padding: 64px 48px 56px;
-          align-items: center;
-          max-width: 1280px;
-          margin: 0 auto;
+          display: grid; grid-template-columns: 1fr 1fr;
+          gap: 56px; padding: 64px 48px 56px;
+          align-items: center; max-width: 1280px; margin: 0 auto;
         }
         .landing-eyebrow {
           display: inline-flex; align-items: center; gap: 6px;
@@ -162,61 +315,30 @@ export default function Landing() {
         }
         .landing-cta-note { color: rgba(255,255,255,0.3); font-size: 12px; }
 
-        /* ── Phone mockup ──────────────────────────────────── */
-        .landing-phone-wrap {
-          display: flex; justify-content: center; position: relative;
-        }
+        /* ── Hero phone ─────────────────────────────────────── */
+        .landing-phone-wrap { display: flex; justify-content: center; position: relative; }
         .landing-phone-glow {
           position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
           width: 360px; height: 580px; border-radius: 50%;
           background: radial-gradient(ellipse, rgba(52,211,153,0.11) 0%, transparent 70%);
           pointer-events: none;
         }
-        .landing-phone-shell {
-          width: 280px; border-radius: 46px; background: #161616;
-          box-shadow: 0 0 0 2px #262626, 0 0 0 5px #0d0d0d, 0 36px 72px rgba(0,0,0,0.75), inset 0 0 0 1px rgba(255,255,255,0.07);
-          padding: 10px 8px; position: relative; flex-shrink: 0;
-        }
-        .landing-phone-btn-l1 { position:absolute;left:-2.5px;top:90px;  width:3px;height:30px;background:#2a2a2a;border-radius:2px 0 0 2px }
-        .landing-phone-btn-l2 { position:absolute;left:-2.5px;top:130px; width:3px;height:55px;background:#2a2a2a;border-radius:2px 0 0 2px }
-        .landing-phone-btn-l3 { position:absolute;left:-2.5px;top:196px; width:3px;height:55px;background:#2a2a2a;border-radius:2px 0 0 2px }
-        .landing-phone-btn-r  { position:absolute;right:-2.5px;top:145px;width:3px;height:70px;background:#2a2a2a;border-radius:0 2px 2px 0 }
-        .landing-phone-screen { border-radius: 38px; overflow: hidden; background: #030a14; position: relative; }
-        .landing-phone-statusbar {
-          height: 38px; background: #030a14; display: flex; align-items: center;
-          justify-content: space-between; padding: 0 20px; position: relative; z-index: 2;
-        }
-        .landing-phone-statusbar span { font-size: 11px; font-weight: 700; color: white; }
-        .landing-phone-island {
-          position: absolute; left: 50%; transform: translateX(-50%);
-          top: 7px; width: 86px; height: 26px; background: #000; border-radius: 15px;
-        }
-        .landing-phone-content { width: 264px; height: 570px; overflow: hidden; }
-        .landing-phone-scaler { width: 390px; transform-origin: top left; pointer-events: none; }
 
-        /* ── Stats bar ─────────────────────────────────────── */
+        /* ── Stats bar ──────────────────────────────────────── */
         .landing-stats-bar {
           border-top: 1px solid rgba(255,255,255,0.05);
           border-bottom: 1px solid rgba(255,255,255,0.05);
           background: rgba(255,255,255,0.015);
         }
-        .landing-stats-inner {
-          max-width: 1280px; margin: 0 auto; padding: 24px 48px; display: flex;
-        }
-        .landing-stat {
-          flex: 1; text-align: center;
-        }
+        .landing-stats-inner { max-width: 1280px; margin: 0 auto; padding: 24px 48px; display: flex; }
+        .landing-stat { flex: 1; text-align: center; }
         .landing-stat-num { font-size: 26px; font-weight: 900; color: #34d399; }
         .landing-stat-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; font-weight: 500; }
         .landing-stat-divider { border-right: 1px solid rgba(255,255,255,0.06); }
 
-        /* ── Features ──────────────────────────────────────── */
-        .landing-features {
-          max-width: 1280px; margin: 0 auto; padding: 60px 48px 48px;
-        }
-        .landing-features-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-        }
+        /* ── Features ───────────────────────────────────────── */
+        .landing-features { max-width: 1280px; margin: 0 auto; padding: 60px 48px 48px; }
+        .landing-features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .landing-feature-card {
           background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
           border-radius: 16px; padding: 28px 24px;
@@ -225,21 +347,42 @@ export default function Landing() {
         .landing-feature-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
         .landing-feature-body { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
 
-        /* ── Footer ────────────────────────────────────────── */
+        /* ── Screenshots ────────────────────────────────────── */
+        .landing-screenshots {
+          padding: 64px 48px 72px;
+          border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .landing-screenshots-heading {
+          text-align: center; margin-bottom: 12px;
+          font-size: 34px; font-weight: 900; letter-spacing: -0.5px;
+        }
+        .landing-screenshots-sub {
+          text-align: center; color: rgba(255,255,255,0.45); font-size: 15px;
+          margin-bottom: 52px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.6;
+        }
+        .landing-screenshots-grid {
+          display: grid; grid-template-columns: repeat(3, 280px);
+          gap: 48px; justify-content: center;
+        }
+        .landing-screenshot-item { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .landing-screenshot-label {
+          font-size: 14px; font-weight: 800; color: white; letter-spacing: -0.2px;
+        }
+        .landing-screenshot-caption {
+          font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.6;
+          text-align: center; max-width: 240px;
+        }
+
+        /* ── Footer ─────────────────────────────────────────── */
         .landing-footer { text-align: center; padding: 0 48px 48px; color: rgba(255,255,255,0.2); font-size: 11px; }
 
-        /* ── Mobile ────────────────────────────────────────── */
+        /* ── Mobile ─────────────────────────────────────────── */
         @media (max-width: 768px) {
           .landing-nav { padding: 14px 20px; }
           .landing-nav img { height: 28px; }
 
-          .landing-hero {
-            grid-template-columns: 1fr;
-            gap: 0;
-            padding: 32px 20px 28px;
-          }
+          .landing-hero { grid-template-columns: 1fr; gap: 0; padding: 32px 20px 28px; }
           .landing-phone-wrap { display: none; }
-
           .landing-eyebrow { margin-bottom: 16px; }
           .landing-h1 { font-size: 36px; letter-spacing: -0.5px; margin-bottom: 14px; }
           .landing-sub { font-size: 15px; margin-bottom: 24px; max-width: 100%; }
@@ -248,19 +391,27 @@ export default function Landing() {
           .landing-cta-btn { padding: 16px; font-size: 16px; text-align: center; }
           .landing-cta-note { text-align: center; }
 
-          .landing-stats-inner { padding: 0; flex-wrap: wrap; }
-          .landing-stat { padding: 20px 8px; width: 50%; box-sizing: border-box; }
-          .landing-stat:nth-child(1), .landing-stat:nth-child(3) { border-right: 1px solid rgba(255,255,255,0.06); }
-          .landing-stat:nth-child(1), .landing-stat:nth-child(2) { border-bottom: 1px solid rgba(255,255,255,0.06); }
-          .landing-stat-divider { border-right: none; }
-          .landing-stat-num { font-size: 22px; }
+          .landing-stats-bar { display: none; }
 
           .landing-features { padding: 32px 20px 32px; }
           .landing-features-grid { grid-template-columns: 1fr; gap: 12px; }
           .landing-feature-card { padding: 20px 18px; }
 
+          .landing-screenshots { padding: 40px 0 48px; border-top: none; }
+          .landing-screenshots-heading { font-size: 26px; padding: 0 20px; }
+          .landing-screenshots-sub { font-size: 14px; padding: 0 24px; margin-bottom: 32px; }
+          .landing-screenshots-grid {
+            grid-template-columns: 280px 280px 280px;
+            gap: 24px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            padding: 0 20px 16px;
+            justify-content: flex-start;
+          }
+          .landing-screenshot-item { scroll-snap-align: start; }
+
           .landing-footer { padding: 0 20px 40px; }
-          .landing-stats-bar { display: none; }
         }
       `}</style>
 
@@ -272,7 +423,6 @@ export default function Landing() {
 
       {/* Hero */}
       <div className="landing-hero">
-        {/* Left — copy */}
         <div>
           <div className="landing-eyebrow">
             <div className="landing-eyebrow-dot" />
@@ -297,39 +447,9 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Right — phone (desktop only) */}
         <div className="landing-phone-wrap">
           <div className="landing-phone-glow" />
-          <div className="landing-phone-shell">
-            <div className="landing-phone-btn-l1" />
-            <div className="landing-phone-btn-l2" />
-            <div className="landing-phone-btn-l3" />
-            <div className="landing-phone-btn-r"  />
-            <div className="landing-phone-screen">
-              <div className="landing-phone-statusbar">
-                <span>9:41</span>
-                <div className="landing-phone-island" />
-                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                  <svg width="12" height="9" viewBox="0 0 16 12" fill="white" opacity={0.85}>
-                    <rect x="0" y="3" width="2" height="9" rx="1"/>
-                    <rect x="4" y="2" width="2" height="10" rx="1"/>
-                    <rect x="8" y="1" width="2" height="11" rx="1"/>
-                    <rect x="12" y="0" width="2" height="12" rx="1"/>
-                  </svg>
-                  <div style={{ width: 17, height: 9, border: "1.5px solid rgba(255,255,255,0.7)", borderRadius: 2.5, display: "flex", alignItems: "center", padding: "1px 1.5px", gap: 1 }}>
-                    <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
-                    <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
-                    <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
-                  </div>
-                </div>
-              </div>
-              <div className="landing-phone-content">
-                <div className="landing-phone-scaler" style={{ transform: `scale(${SCALE})` }}>
-                  <PhoneScreen />
-                </div>
-              </div>
-            </div>
-          </div>
+          <PhoneShell><ConditionsScreen /></PhoneShell>
         </div>
       </div>
 
@@ -362,6 +482,23 @@ export default function Landing() {
               <div className="landing-feature-icon">{f.icon}</div>
               <div className="landing-feature-title">{f.title}</div>
               <div className="landing-feature-body">{f.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Screenshots */}
+      <div className="landing-screenshots">
+        <div className="landing-screenshots-heading">See it in action</div>
+        <p className="landing-screenshots-sub">
+          Every screen built around one goal — getting you the right information before you paddle out.
+        </p>
+        <div className="landing-screenshots-grid">
+          {screenshots.map(s => (
+            <div key={s.label} className="landing-screenshot-item">
+              <PhoneShell>{s.screen}</PhoneShell>
+              <div className="landing-screenshot-label">{s.label}</div>
+              <div className="landing-screenshot-caption">{s.caption}</div>
             </div>
           ))}
         </div>
