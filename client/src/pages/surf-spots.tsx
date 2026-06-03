@@ -208,7 +208,7 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
       ref={ref}
       onClick={() => onSelect(spot.id)}
       className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2 active:scale-[0.98] transition-transform relative"
-      style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}
+      style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}
     >
       {/* Name + location */}
       <div className="min-w-0 pr-1">
@@ -267,7 +267,7 @@ function SavedGrid({ onSelect }: { onSelect: (id: number) => void }) {
         </div>
         <div className="grid grid-cols-2 gap-2">
           {[1, 2].map(i => (
-            <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
               <Skeleton className="h-3 w-20 mb-1.5 bg-white/5" />
               <Skeleton className="h-2 w-14 mb-3 bg-white/5" />
               <Skeleton className="h-2 w-16 bg-white/5" />
@@ -285,7 +285,7 @@ function SavedGrid({ onSelect }: { onSelect: (id: number) => void }) {
           <Heart size={11} className="text-emerald-400" />
           <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Saved</span>
         </div>
-        <div className="rounded-2xl px-4 py-5 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="rounded-2xl px-4 py-5 text-center" style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
           <Heart size={18} className="text-slate-700 mx-auto mb-2" />
           <p className="text-slate-600 text-[11px]">No saved spots yet</p>
           <p className="text-slate-700 text-[10px] mt-0.5">Tap the heart on any spot to save it</p>
@@ -409,7 +409,7 @@ export default function SurfSpots() {
 
       {/* ── Hero ── */}
       <div className="relative overflow-hidden px-4 pt-6 pb-5"
-        style={{ background: "linear-gradient(160deg,#022c22 0%,#041a2e 100%)" }}>
+        style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)" }}>
         <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 1200 120" preserveAspectRatio="none">
           {[0, 18, 36].map(o => (
             <path key={o} d={`M0 ${60 + o} Q300 ${50 + o} 600 ${60 + o} T1200 ${60 + o}`} stroke="#10b981" strokeWidth="1.5" fill="none" />
@@ -501,7 +501,7 @@ export default function SurfSpots() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
                   <Skeleton className="h-3 w-20 mb-1.5 bg-white/5" />
                   <Skeleton className="h-2 w-14 mb-3 bg-white/5" />
                   <Skeleton className="h-2 w-16 bg-white/5" />
@@ -523,7 +523,7 @@ export default function SurfSpots() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
                 <MapPin size={20} className="text-slate-700 mx-auto mb-2" />
                 <p className="text-slate-500 text-[12px] font-semibold mb-1">No spots found</p>
                 <p className="text-slate-700 text-[10px]">Try a different search or filter</p>
@@ -536,7 +536,7 @@ export default function SurfSpots() {
               <div className="w-2 h-2 rounded-full bg-slate-600" />
               <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
             </div>
-            <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
               <Search size={20} className="text-slate-700 mx-auto mb-2" />
               <p className="text-slate-500 text-[12px] font-semibold mb-1">Search or filter to explore spots</p>
               <p className="text-slate-700 text-[10px]">229+ locations worldwide</p>
