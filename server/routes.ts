@@ -1422,21 +1422,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Add live buoy data to the response (not stored in DB)
+      // Add live buoy + tide data to the response (not stored in DB)
+      const lat = parseFloat(location.latitude);
+      const lon = parseFloat(location.longitude);
+      const tz = getTimezone(lat, lon);
       try {
-        const marineData = await fetchMarineData(
-          parseFloat(location.latitude),
-          parseFloat(location.longitude)
-        );
+        const [marineData, tideData] = await Promise.all([
+          fetchMarineData(lat, lon),
+          fetchTideData(lat, lon),
+        ]);
         
         res.json({
           ...conditions,
+          timezone: tz,
+          tideHigh: tideData.tideHigh || [
+            { time: '6:30 AM', height: '4.8' },
+            { time: '7:15 PM', height: '4.2' },
+          ],
+          tideLow: tideData.tideLow || [
+            { time: '12:45 PM', height: '1.1' },
+            { time: '1:30 AM', height: '0.9' },
+          ],
           primaryBuoy: marineData.primaryBuoy,
-          backupBuoy: marineData.backupBuoy
+          backupBuoy: marineData.backupBuoy,
         });
       } catch (buoyError) {
         console.warn('Buoy data error:', buoyError);
-        res.json(conditions);
+        res.json({ ...conditions, timezone: tz });
       }
     } catch (error) {
       console.error('Conditions error:', error);

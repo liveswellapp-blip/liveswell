@@ -178,38 +178,43 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
 
   let tideDisplay = "—";
   let tideType: "High" | "Low" = "High";
-  if (conditions && forecast?.[0]?.tides?.length > 0) {
-    const targetType = conditions.tideStatus?.toLowerCase() === "rising" ? "high" : "low";
-    tideType = targetType === "high" ? "High" : "Low";
+  if (conditions) {
+    // conditions.tideHigh / tideLow carry today's actual tide times (from NOAA or fallback).
+    // forecast[0] starts at "Tomorrow" and its times are prefixed "Est." — don't use those.
+    const highTides: any[] = (conditions.tideHigh || []).map((t: any) => ({ ...t, type: "high" }));
+    const lowTides:  any[] = (conditions.tideLow  || []).map((t: any) => ({ ...t, type: "low"  }));
+    const allTides = [...highTides, ...lowTides];
 
-    // Compare tide times against the current time in the location's timezone.
-    // Tide strings like "5:20 PM" are in location-local time (LST/LDT from NOAA),
-    // so we must not compare them against browser-local "now".
-    const tz: string = conditions.timezone || "UTC";
-    const now = new Date();
-    const timeParts = new Intl.DateTimeFormat("en-US", {
-      timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-    }).formatToParts(now);
-    const locHour = parseInt(timeParts.find(p => p.type === "hour")?.value ?? "0");
-    const locMin  = parseInt(timeParts.find(p => p.type === "minute")?.value ?? "0");
-    const nowMins = locHour * 60 + locMin;
+    if (allTides.length > 0) {
+      // Get the current minutes-since-midnight in the location's timezone
+      const tz: string = conditions.timezone || "UTC";
+      const now = new Date();
+      const timeParts = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+      }).formatToParts(now);
+      const locHour = parseInt(timeParts.find(p => p.type === "hour")?.value ?? "0");
+      const locMin  = parseInt(timeParts.find(p => p.type === "minute")?.value ?? "0");
+      const nowMins = locHour * 60 + locMin;
 
-    const future = forecast[0].tides
-      .filter((t: any) => t.type.toLowerCase() === targetType)
-      .map((t: any) => {
-        const [time, period] = t.time.split(" ");
-        const [h, m] = time.split(":");
-        let h24 = parseInt(h);
-        if (period === "PM" && h24 !== 12) h24 += 12;
-        else if (period === "AM" && h24 === 12) h24 = 0;
-        return { ...t, tideMins: h24 * 60 + parseInt(m) };
-      })
-      .filter((t: any) => t.tideMins > nowMins)
-      .sort((a: any, b: any) => a.tideMins - b.tideMins);
-    if (future.length > 0) {
-      const next = future[0];
-      tideType = (next.type.charAt(0).toUpperCase() + next.type.slice(1)) as "High" | "Low";
-      tideDisplay = `${tideType} ${next.time}`;
+      const parsed = allTides
+        .map((t: any) => {
+          const rawTime: string = t.time || "";
+          const [hStr, rest] = rawTime.split(":");
+          const mStr = rest?.slice(0, 2) ?? "0";
+          const period = rest?.slice(3)?.trim().toUpperCase() ?? "";
+          let h24 = parseInt(hStr) || 0;
+          if (period === "PM" && h24 !== 12) h24 += 12;
+          else if (period === "AM" && h24 === 12) h24 = 0;
+          return { ...t, tideMins: h24 * 60 + parseInt(mStr) };
+        })
+        .filter((t: any) => t.tideMins > nowMins)
+        .sort((a: any, b: any) => a.tideMins - b.tideMins);
+
+      if (parsed.length > 0) {
+        const next = parsed[0];
+        tideType = (next.type.charAt(0).toUpperCase() + next.type.slice(1)) as "High" | "Low";
+        tideDisplay = `${tideType} ${next.time}`;
+      }
     }
   }
 
