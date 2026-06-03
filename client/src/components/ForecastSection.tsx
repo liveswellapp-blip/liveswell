@@ -139,7 +139,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                       {day.date}
                     </span>
                   </div>
-
                   {/* Wave + wind — side by side */}
                   <div className="px-3 pt-2.5 pb-2 flex gap-2">
                     <div className="flex-1 min-w-0">
@@ -150,11 +149,10 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     <div className="w-px bg-white/5 self-stretch" />
                     <div className="flex-1 min-w-0">
                       <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wind</p>
-                      <p className="text-cyan-400 font-bold text-lg leading-none mb-0.5">{day.windSpeed}</p>
+                      <p className="text-cyan-400 font-bold mb-0.5 text-[14px]">{day.windSpeed}</p>
                       <p className="text-slate-500 text-[10px]">{day.windDirection}</p>
                     </div>
                   </div>
-
                   {/* Compact tide chart */}
                   <div className="px-2 pb-2 mt-auto">
                     {day.tides && day.tides.length > 0 && (
