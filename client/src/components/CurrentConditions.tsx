@@ -275,21 +275,20 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <p className="text-[8px] text-slate-600 mb-2">
                         {primaryBuoy.stationId === 'open-meteo' ? 'Global wave model' : `Station ${primaryBuoy.stationId}`}
                       </p>
-                      {/* Big height + period/dir pills */}
-                      <div className="flex items-end justify-between flex-1 mb-2">
-                        <div className="flex items-end gap-1">
-                          <span className="text-emerald-400 font-black text-[38px] leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
-                          <span className="text-[11px] font-bold text-emerald-400 mb-1.5">ft</span>
+                      {/* Big height */}
+                      <div className="flex items-end gap-1 mb-2">
+                        <span className="text-emerald-400 font-black text-[38px] leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
+                        <span className="text-[11px] font-bold text-emerald-400 mb-1.5">ft</span>
+                      </div>
+                      {/* Period + Direction stacked */}
+                      <div className="flex flex-col gap-1.5 mb-2">
+                        <div className="flex items-center justify-between bg-emerald-500/8 rounded-full px-2.5 py-1">
+                          <span className="text-[7px] font-bold text-slate-500 tracking-wider">PERIOD</span>
+                          <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.wavePeriod || 0}s</span>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
-                            <span className="text-[7px] font-bold text-slate-500 tracking-wider">PERIOD</span>
-                            <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.wavePeriod || 0}s</span>
-                          </div>
-                          <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
-                            <span className="text-[7px] font-bold text-slate-500 tracking-wider">DIR</span>
-                            <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.waveDirection || "—"}</span>
-                          </div>
+                        <div className="flex items-center justify-between bg-emerald-500/8 rounded-full px-2.5 py-1">
+                          <span className="text-[7px] font-bold text-slate-500 tracking-wider">Direction</span>
+                          <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.waveDirection || "—"}</span>
                         </div>
                       </div>
                       {primaryBuoy.stationId !== 'open-meteo' && (
@@ -316,20 +315,20 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                     <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
                     <p className="text-[8px] text-slate-600 mb-2">Station {backupBuoy.stationId}</p>
-                    <div className="flex items-end justify-between flex-1 mb-2">
-                      <div className="flex items-end gap-1">
-                        <span className="text-emerald-400 font-black text-[38px] leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
-                        <span className="text-[11px] font-bold text-emerald-400 mb-1.5">ft</span>
+                    {/* Big height */}
+                    <div className="flex items-end gap-1 mb-2">
+                      <span className="text-emerald-400 font-black text-[38px] leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
+                      <span className="text-[11px] font-bold text-emerald-400 mb-1.5">ft</span>
+                    </div>
+                    {/* Period + Direction stacked */}
+                    <div className="flex flex-col gap-1.5 mb-2">
+                      <div className="flex items-center justify-between bg-emerald-500/8 rounded-full px-2.5 py-1">
+                        <span className="text-[7px] font-bold text-slate-500 tracking-wider">PERIOD</span>
+                        <span className="text-[11px] font-black text-emerald-400">{backupBuoy.wavePeriod || 0}s</span>
                       </div>
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
-                          <span className="text-[7px] font-bold text-slate-500 tracking-wider">PERIOD</span>
-                          <span className="text-[11px] font-black text-emerald-400">{backupBuoy.wavePeriod || 0}s</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
-                          <span className="text-[7px] font-bold text-slate-500 tracking-wider">DIR</span>
-                          <span className="text-[11px] font-black text-emerald-400">{backupBuoy.waveDirection || "—"}</span>
-                        </div>
+                      <div className="flex items-center justify-between bg-emerald-500/8 rounded-full px-2.5 py-1">
+                        <span className="text-[7px] font-bold text-slate-500 tracking-wider">Direction</span>
+                        <span className="text-[11px] font-black text-emerald-400">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                     </div>
                     <button

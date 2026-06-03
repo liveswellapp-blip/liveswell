@@ -25,26 +25,21 @@ function BuoyCard({
       <p style={{ color: "#fff", fontWeight: 600, fontSize: 10, lineHeight: 1.2, marginBottom: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{station}</p>
       <p style={{ color: "#475569", fontSize: 8, marginBottom: 10 }}>Stn {stationId}</p>
 
-      {/* Big wave height + pills side by side */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flex: 1, marginBottom: showHistory ? 10 : 0 }}>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 3 }}>
-          <span style={{ color: "#34d399", fontWeight: 900, fontSize: 42, lineHeight: 1 }}>{height}</span>
-          <span style={{ color: "#34d399", fontWeight: 700, fontSize: 13, marginBottom: 5 }}>ft</span>
-        </div>
+      {/* Big wave height */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, marginBottom: 10 }}>
+        <span style={{ color: "#34d399", fontWeight: 900, fontSize: 42, lineHeight: 1 }}>{height}</span>
+        <span style={{ color: "#34d399", fontWeight: 700, fontSize: 13, marginBottom: 5 }}>ft</span>
+      </div>
 
-        {/* Period + Direction pills — label left, value right with clear gap */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "stretch" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 16, padding: "5px 10px", minWidth: 80 }}>
-            <span style={{ color: "#64748b", fontSize: 8, fontWeight: 700, letterSpacing: "0.06em" }}>PERIOD</span>
-            <span style={{ color: "#34d399", fontSize: 13, fontWeight: 900 }}>{period}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 16, padding: "5px 10px", minWidth: 80 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <Navigation size={8} color="#64748b" />
-              <span style={{ color: "#64748b", fontSize: 8, fontWeight: 700, letterSpacing: "0.06em" }}>DIR</span>
-            </div>
-            <span style={{ color: "#34d399", fontSize: 13, fontWeight: 900 }}>{direction}</span>
-          </div>
+      {/* Period + Direction stacked, no border */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: showHistory ? 10 : 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(16,185,129,0.08)", borderRadius: 20, padding: "5px 10px" }}>
+          <span style={{ color: "#64748b", fontSize: 8, fontWeight: 700, letterSpacing: "0.06em" }}>PERIOD</span>
+          <span style={{ color: "#34d399", fontSize: 13, fontWeight: 900 }}>{period}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(16,185,129,0.08)", borderRadius: 20, padding: "5px 10px" }}>
+          <span style={{ color: "#64748b", fontSize: 8, fontWeight: 700, letterSpacing: "0.06em" }}>Direction</span>
+          <span style={{ color: "#34d399", fontSize: 13, fontWeight: 900 }}>{direction}</span>
         </div>
       </div>
 
