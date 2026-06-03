@@ -305,13 +305,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 {/* Buoy #2 — Design C */}
                 {backupBuoy && (
                   <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#22d3ee]">Secondary</span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-2 w-2 text-slate-600" />
-                        <span className="text-[8px] text-slate-600">{lastUpdated}</span>
-                      </div>
-                    </div>
                     <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
                     <p className="text-[8px] text-slate-600 mb-2">Station {backupBuoy.stationId}</p>
                     {/* Height / Period / Direction rows */}
