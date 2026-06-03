@@ -262,7 +262,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
                   {primaryBuoy ? (
                     <>
-                      <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5">Swell — Buoy #1</p>
+                      <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5">Waves — Buoy #1</p>
                       <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
                       <p className="text-[8px] text-slate-600 mb-2">
                         {primaryBuoy.stationId === 'open-meteo' ? 'Global wave model' : `Station ${primaryBuoy.stationId}`}
@@ -297,7 +297,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 {/* Buoy #2 — Design C */}
                 {backupBuoy && (
                   <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
-                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5">Swell — Buoy #2</p>
+                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider mb-1.5">Waves — Buoy #2</p>
                     <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
                     <p className="text-[8px] text-slate-600 mb-2">Station {backupBuoy.stationId}</p>
                     {/* Height / Period / Direction rows */}
