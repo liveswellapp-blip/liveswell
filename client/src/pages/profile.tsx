@@ -1,10 +1,8 @@
-import { Bell, LogOut, Shield, ChevronRight, Heart, Settings, Info, Moon } from "lucide-react";
+import { Bell, LogOut, Shield, ChevronRight, Settings, Info } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { Location } from "@/types/weather";
 
 function getInitials(user: any): string {
   const name = user?.firstName || user?.name || user?.username || "";
@@ -30,18 +28,12 @@ export default function Profile() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { data: favorites } = useQuery<Location[]>({
-    queryKey: ["/api/favorites"],
-  });
-
   const initials = getInitials(user);
   const displayName = getDisplayName(user);
   const email = (user as any)?.email || "";
-  const savedCount = favorites?.length ?? 0;
 
   const ITEMS = [
     { icon: Bell,     label: "Notifications",  value: "Manage alerts",      color: "#fbbf24", href: "/notifications" },
-    { icon: Heart,    label: "Saved Spots",     value: `${savedCount} saved`, color: "#34d399", href: "/" },
     { icon: Settings, label: "Preferences",     value: "",                   color: "#94a3b8", href: "/settings" },
     { icon: Shield,   label: "Privacy",         value: "",                   color: "#38bdf8", href: null },
     { icon: Info,     label: "About",           value: "v1.0.0",             color: "#64748b", href: null },
