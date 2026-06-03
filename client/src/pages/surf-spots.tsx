@@ -232,11 +232,11 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
             <span className="text-emerald-400 text-[13px] font-bold truncate">{waveDisplay}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Wind size={11} className="text-cyan-600 flex-shrink-0" />
+            <Wind size={11} className="text-[#67e8f9] flex-shrink-0" />
             <span className="text-[12px] text-[#67e8f9]">{windDisplay}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <TideIcon size={11} className="text-amber-400 flex-shrink-0" />
+            <TideIcon size={11} className="text-[#38bdf8] flex-shrink-0" />
             <span className="text-[12px] text-[#38bdf8]">{tideDisplay}</span>
           </div>
         </div>
