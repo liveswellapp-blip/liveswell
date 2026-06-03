@@ -487,7 +487,7 @@ export default function SurfSpots() {
       </div>
 
       {/* ── Content ── */}
-      <main className="flex-1 px-4 pt-5 pb-24 max-w-2xl mx-auto w-full space-y-6">
+      <main className="flex-1 px-4 pt-5 pb-6 max-w-2xl mx-auto w-full space-y-6">
 
         {/* Saved */}
         <SavedGrid onSelect={handleSpotSelect} />

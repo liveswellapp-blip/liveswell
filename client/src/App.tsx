@@ -14,37 +14,32 @@ import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin";
 import NotificationSettings from "@/pages/NotificationSettings";
-import BottomNav from "@/components/BottomNav";
-
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <>
-      <Switch>
-        {isLoading || !isAuthenticated ? (
-          <Route path="/" component={Landing} />
-        ) : (
-          <>
-            <Route path="/" component={SurfSpots} />
-            <Route path="/conditions" component={Home} />
-            <Route path="/settings" component={Settings} />
-            <Route path="/notifications" component={NotificationSettings} />
-            <Route path="/profile" component={Profile} />
-            <Route path="/monitoring" component={Monitoring} />
-          </>
-        )}
-        
-        <Route path="/admin" component={AdminDashboard} />
-        
-        {(isLoading || !isAuthenticated) ? (
-          <Route component={Landing} />
-        ) : (
-          <Route component={NotFound} />
-        )}
-      </Switch>
-      {isAuthenticated && !isLoading && <BottomNav />}
-    </>
+    <Switch>
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <>
+          <Route path="/" component={SurfSpots} />
+          <Route path="/conditions" component={Home} />
+          <Route path="/settings" component={Settings} />
+          <Route path="/notifications" component={NotificationSettings} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/monitoring" component={Monitoring} />
+        </>
+      )}
+      
+      <Route path="/admin" component={AdminDashboard} />
+      
+      {(isLoading || !isAuthenticated) ? (
+        <Route component={Landing} />
+      ) : (
+        <Route component={NotFound} />
+      )}
+    </Switch>
   );
 }
 

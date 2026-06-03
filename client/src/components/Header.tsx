@@ -1,5 +1,5 @@
-import { Search } from "lucide-react";
-import { useLocation } from "wouter";
+import { Search, Waves, User } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import SearchModal from "./SearchModal";
@@ -14,6 +14,9 @@ export default function Header({ onLocationSelect }: HeaderProps) {
   const [location] = useLocation();
   const [showSearchModal, setShowSearchModal] = useState(false);
 
+  const spotsActive = location === "/" || location === "/conditions";
+  const profileActive = location === "/profile";
+
   return (
     <header className="sticky top-0 z-50" style={{ background: "#030a14", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
       <div className="mx-auto px-5 py-3 max-w-2xl flex items-center justify-between">
@@ -24,19 +27,48 @@ export default function Header({ onLocationSelect }: HeaderProps) {
         />
 
         <div className="flex items-center gap-1">
-          {location === "/conditions" && isAuthenticated && (
-            <button
-              onClick={() => setShowSearchModal(true)}
-              className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-200 transition-colors"
-              style={{ background: "rgba(255,255,255,0.05)" }}
-              title="Search surf spots"
-              data-testid="button-search"
-            >
-              <Search size={15} />
-            </button>
-          )}
+          {isAuthenticated ? (
+            <>
+              {/* Spots */}
+              <Link href="/">
+                <button
+                  className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+                  style={{
+                    background: spotsActive ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)",
+                    color: spotsActive ? "#34d399" : "#475569",
+                  }}
+                  title="Surf spots"
+                >
+                  <Waves size={15} />
+                </button>
+              </Link>
 
-          {!isAuthenticated && (
+              {/* Search */}
+              <button
+                onClick={() => setShowSearchModal(true)}
+                className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+                style={{ background: "rgba(255,255,255,0.05)", color: "#475569" }}
+                title="Search surf spots"
+                data-testid="button-search"
+              >
+                <Search size={15} />
+              </button>
+
+              {/* Profile */}
+              <Link href="/profile">
+                <button
+                  className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+                  style={{
+                    background: profileActive ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)",
+                    color: profileActive ? "#34d399" : "#475569",
+                  }}
+                  title="Profile"
+                >
+                  <User size={15} />
+                </button>
+              </Link>
+            </>
+          ) : (
             <button
               className="px-3 py-1.5 rounded-xl text-[12px] font-semibold text-white transition-opacity hover:opacity-80"
               style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)" }}
