@@ -252,10 +252,6 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
             <Wind size={11} className="text-[#67e8f9] flex-shrink-0" />
             <span className="text-[12px] text-[#67e8f9]">{windDisplay}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <TideIcon size={11} className="text-[#38bdf8] flex-shrink-0" />
-            <span className="text-[12px] text-[#38bdf8]">{tideDisplay}</span>
-          </div>
         </div>
       )}
       {/* Fav — bottom-right corner */}
