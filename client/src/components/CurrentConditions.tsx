@@ -258,38 +258,43 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
             ) : (
               <div className={`grid gap-3 ${backupBuoy ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {/* Buoy #1 / Marine Forecast */}
-                <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span className="text-[10px] font-bold text-[#ffffff]">
-                        {primaryBuoy?.stationId === 'open-meteo' ? 'Marine Forecast' : 'Buoy #1'}
-                      </span>
-                    </div>
+                {/* Buoy #1 / Marine Forecast — Design C */}
+                <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">
+                      {primaryBuoy?.stationId === 'open-meteo' ? 'Forecast' : 'Primary'}
+                    </span>
                     <div className="flex items-center gap-1">
-                      <Clock className="h-2.5 w-2.5 text-slate-400" />
-                      <span className="text-[9px] text-[#64748b]">{lastUpdated}</span>
+                      <Clock className="h-2 w-2 text-slate-600" />
+                      <span className="text-[8px] text-slate-600">{lastUpdated}</span>
                     </div>
                   </div>
                   {primaryBuoy ? (
                     <>
-                      <p className="text-white text-xs font-semibold leading-tight truncate">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
-                      <p className="text-[9px] mb-2 text-[#64748b]">
+                      <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
+                      <p className="text-[8px] text-slate-600 mb-2">
                         {primaryBuoy.stationId === 'open-meteo' ? 'Global wave model' : `Station ${primaryBuoy.stationId}`}
                       </p>
-                      {/* Wave height + period + direction in one row */}
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-emerald-400 font-black text-2xl leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
-                        <span className="text-xs font-semibold text-[#34d399]">ft</span>
-                        <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#34d399]">{primaryBuoy.wavePeriod || 0}s</span>
-                        <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#34d399]">{primaryBuoy.waveDirection || "—"}</span>
+                      {/* Big height + period/dir pills */}
+                      <div className="flex items-end justify-between flex-1 mb-2">
+                        <div className="flex items-end gap-1">
+                          <span className="text-emerald-400 font-black text-[38px] leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
+                          <span className="text-[11px] font-bold text-emerald-400 mb-1.5">ft</span>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
+                            <span className="text-[7px] font-bold text-slate-500 tracking-wider">PERIOD</span>
+                            <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.wavePeriod || 0}s</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
+                            <span className="text-[7px] font-bold text-slate-500 tracking-wider">DIR</span>
+                            <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.waveDirection || "—"}</span>
+                          </div>
+                        </div>
                       </div>
                       {primaryBuoy.stationId !== 'open-meteo' && (
                         <button
-                          className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-[#ffffff]"
+                          className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors text-emerald-400 font-medium"
                           onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
                         >Wave History</button>
                       )}
@@ -299,35 +304,38 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
 
-                {/* Buoy #2 — only shown when a backup NOAA buoy exists */}
+                {/* Buoy #2 — Design C */}
                 {backupBuoy && (
-                  <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span className="text-[10px] font-bold text-[#ffffff]">Buoy #2</span>
-                      </div>
+                  <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Secondary</span>
                       <div className="flex items-center gap-1">
-                        <Clock className="h-2.5 w-2.5 text-slate-400" />
-                        <span className="text-[9px] text-[#64748b]">{lastUpdated}</span>
+                        <Clock className="h-2 w-2 text-slate-600" />
+                        <span className="text-[8px] text-slate-600">{lastUpdated}</span>
                       </div>
                     </div>
-                    <p className="text-white text-xs font-semibold leading-tight truncate">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
-                    <p className="text-[9px] mb-2 text-[#64748b]">Station {backupBuoy.stationId}</p>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-emerald-400 font-black text-2xl leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
-                      <span className="text-xs font-semibold text-[#34d399]">ft</span>
-                      <span className="text-slate-600 text-xs">·</span>
-                      <span className="text-[11px] font-semibold text-[#34d399]">{backupBuoy.wavePeriod || 0}s</span>
-                      <span className="text-slate-600 text-xs">·</span>
-                      <span className="text-[11px] font-semibold text-[#34d399]">{backupBuoy.waveDirection || "—"}</span>
+                    <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
+                    <p className="text-[8px] text-slate-600 mb-2">Station {backupBuoy.stationId}</p>
+                    <div className="flex items-end justify-between flex-1 mb-2">
+                      <div className="flex items-end gap-1">
+                        <span className="text-emerald-400 font-black text-[38px] leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
+                        <span className="text-[11px] font-bold text-emerald-400 mb-1.5">ft</span>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
+                          <span className="text-[7px] font-bold text-slate-500 tracking-wider">PERIOD</span>
+                          <span className="text-[11px] font-black text-emerald-400">{backupBuoy.wavePeriod || 0}s</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-full px-2.5 py-1" style={{ minWidth: 72 }}>
+                          <span className="text-[7px] font-bold text-slate-500 tracking-wider">DIR</span>
+                          <span className="text-[11px] font-black text-emerald-400">{backupBuoy.waveDirection || "—"}</span>
+                        </div>
+                      </div>
                     </div>
                     <button
-                      className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-[#ffffff]"
+                      className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors text-emerald-400 font-medium"
                       onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
-                    >
-                      Wave History
-                    </button>
+                    >Wave History</button>
                   </div>
                 )}
               </div>
