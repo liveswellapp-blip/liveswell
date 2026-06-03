@@ -198,10 +198,10 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
       {/* Name + location + fav */}
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0 flex-1">
-          <p className="text-white text-[12px] font-bold leading-tight truncate">{spot.name}</p>
+          <p className="text-white text-[14px] font-bold leading-tight truncate">{spot.name}</p>
           <div className="flex items-center gap-1 mt-0.5">
-            <MapPin size={8} className="text-slate-600 flex-shrink-0" />
-            <p className="text-slate-600 text-[9px] leading-tight truncate">{spot.city}, {spot.country}</p>
+            <MapPin size={10} className="text-slate-500 flex-shrink-0" />
+            <p className="text-slate-500 text-[11px] leading-tight truncate">{spot.city}, {spot.country}</p>
           </div>
         </div>
         <div onClick={e => e.stopPropagation()} className="flex-shrink-0 -mt-0.5">
@@ -212,23 +212,23 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
       {/* Conditions */}
       {isLoading ? (
         <div className="space-y-1">
-          <Skeleton className="h-2.5 w-24 bg-white/5" />
-          <Skeleton className="h-2.5 w-20 bg-white/5" />
-          <Skeleton className="h-2.5 w-16 bg-white/5" />
+          <Skeleton className="h-3 w-24 bg-white/5" />
+          <Skeleton className="h-3 w-20 bg-white/5" />
+          <Skeleton className="h-3 w-16 bg-white/5" />
         </div>
       ) : (
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-1">
-            <Waves size={9} className="text-emerald-500 flex-shrink-0" />
-            <span className="text-emerald-400 text-[11px] font-bold truncate">{waveDisplay}</span>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Waves size={11} className="text-emerald-500 flex-shrink-0" />
+            <span className="text-emerald-400 text-[13px] font-bold truncate">{waveDisplay}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Wind size={9} className="text-cyan-600 flex-shrink-0" />
-            <span className="text-cyan-500 text-[10px]">{windDisplay}</span>
+          <div className="flex items-center gap-1.5">
+            <Wind size={11} className="text-cyan-600 flex-shrink-0" />
+            <span className="text-cyan-500 text-[12px]">{windDisplay}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <TideIcon size={9} className="text-amber-400 flex-shrink-0" />
-            <span className="text-amber-400 text-[10px]">{tideDisplay}</span>
+          <div className="flex items-center gap-1.5">
+            <TideIcon size={11} className="text-amber-400 flex-shrink-0" />
+            <span className="text-amber-400 text-[12px]">{tideDisplay}</span>
           </div>
         </div>
       )}
