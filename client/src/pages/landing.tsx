@@ -260,6 +260,7 @@ export default function Landing() {
           .landing-feature-card { padding: 20px 18px; }
 
           .landing-footer { padding: 0 20px 40px; }
+          .landing-stats-bar { display: none; }
         }
       `}</style>
 
