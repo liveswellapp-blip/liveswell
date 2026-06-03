@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import logoImage from "@assets/Live_(1500_x_500_px)_(2)_1780520244305.png";
-import screenConditions from "@assets/image_1780504204791.png";
-import screenSpots from "@assets/image_1780504263938.png";
-import screenHistory from "@assets/image_1780504292264.png";
-import screenForecast from "@assets/image_1780504331560.png";
+import screenSpots from "@assets/image_1780521005139.png";
+import screenConditions from "@assets/image_1780521031708.png";
+import screenHistory from "@assets/image_1780521051364.png";
 
 const SCALE = 264 / 390;
 
