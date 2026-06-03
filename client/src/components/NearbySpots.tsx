@@ -56,7 +56,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="rounded-2xl p-3"
-                style={{ background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
                 <div className="flex items-start justify-between mb-2">
                   <Skeleton className="w-8 h-8 rounded-xl bg-white/10" />
                   <Skeleton className="h-3 w-12 bg-white/10" />
@@ -73,7 +73,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                 data-testid={`card-nearby-spot-${spot.id}`}
                 className="rounded-2xl p-3 cursor-pointer transition-all hover:scale-[1.02]"
                 style={{
-                  background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)",
+                  background: "linear-gradient(160deg, #030912 0%, #091a35 100%)",
                   border: "1px solid rgba(16,185,129,0.15)",
                 }}
               >

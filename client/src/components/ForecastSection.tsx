@@ -96,7 +96,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 rounded-2xl overflow-hidden snap-start"
-                style={{ minWidth: 175, background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                style={{ minWidth: 175, background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
                 <div className="px-3 pt-3 pb-2 border-b border-white/5 flex justify-between">
                   <Skeleton className="h-3 w-12 bg-white/10" />
                 </div>
@@ -128,7 +128,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   style={{
                     minWidth: 175,
                     flex: "1 0 175px",
-                    background: "linear-gradient(160deg,#03091a 0%,#102850 45%,#051020 100%)",
+                    background: "linear-gradient(160deg, #030912 0%, #091a35 100%)",
                     border: today
                       ? "1px solid rgba(16,185,129,0.35)"
                       : "1px solid rgba(16,185,129,0.15)",
