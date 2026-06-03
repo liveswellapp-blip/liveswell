@@ -475,22 +475,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Features */}
-      <div className="landing-features">
-        <div className="landing-features-grid">
-          {[
-            { icon: "📍", title: "228+ Curated Spots",    body: "From Pipeline to Jeffreys Bay. Advanced, intermediate, and beginner breaks across 6 continents with real-time conditions." },
-            { icon: "⭐", title: "Personal Favorites",    body: "Save your go-to breaks and get them at a glance. Your personalized surf dashboard, always one tap away." },
-          ].map(f => (
-            <div key={f.title} className="landing-feature-card">
-              <div className="landing-feature-icon">{f.icon}</div>
-              <div className="landing-feature-title">{f.title}</div>
-              <div className="landing-feature-body">{f.body}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Screenshots */}
       <div className="landing-screenshots">
         <div className="landing-screenshots-heading">See it in action</div>
