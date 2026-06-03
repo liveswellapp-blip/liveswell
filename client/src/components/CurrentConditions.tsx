@@ -218,13 +218,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           className="rounded-2xl relative overflow-hidden border border-emerald-500/20"
           style={{ background: "linear-gradient(160deg, #03091a 0%, #102850 45%, #051020 100%)" }}
         >
-          {/* Subtle wave lines */}
-          <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 600 220" preserveAspectRatio="none">
-            {[0, 22, 44].map(o => (
-              <path key={o} d={`M0 ${110+o} Q150 ${90+o} 300 ${110+o} T600 ${110+o}`}
-                stroke="#10b981" strokeWidth="1.5" fill="none" />
-            ))}
-          </svg>
 
           <div className="relative px-5 pt-5 pb-5">
             {/* Location + favorite */}
