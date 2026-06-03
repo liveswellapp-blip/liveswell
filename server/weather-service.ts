@@ -152,26 +152,87 @@ export async function fetchMarineData(lat: number, lon: number) {
       };
     }
     
-    // Fallback if no primary buoy
-    return {
-      waveHeight: 2.0 + Math.random() * 3,
-      wavePeriod: 8 + Math.round(Math.random() * 8),
-      waveDirection: getCoastalSwellDirection(lat, lon),
-      waterTemp: getRealisticWaterTemperature(lat, lon),
-      primaryBuoy: null,
-      backupBuoy: null
-    };
+    // Fallback if no primary buoy — try Open-Meteo Marine (global coverage, free, no key needed)
+    return await fetchOpenMeteoMarineFallback(lat, lon);
   } catch (error) {
     console.error('Marine data fetch failed:', error);
-    return {
-      waveHeight: 2.0 + Math.random() * 3,
-      wavePeriod: 8 + Math.round(Math.random() * 8),
-      waveDirection: getCoastalSwellDirection(lat, lon),
-      waterTemp: getRealisticWaterTemperature(lat, lon),
-      primaryBuoy: null,
-      backupBuoy: null
-    };
+    return await fetchOpenMeteoMarineFallback(lat, lon);
   }
+}
+
+/**
+ * Fetch current wave conditions from Open-Meteo Marine API.
+ * Used as a global fallback when no NOAA NDBC buoy is within range.
+ */
+async function fetchOpenMeteoMarineFallback(lat: number, lon: number) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const res = await fetch(
+      `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=UTC&forecast_days=1`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const json = await res.json();
+      const times: string[]   = json.hourly?.time       || [];
+      const heights: number[] = json.hourly?.wave_height || [];
+      const periods: number[] = json.hourly?.wave_period || [];
+      const dirs: number[]    = json.hourly?.wave_direction || [];
+
+      // Match current UTC hour
+      const now = new Date();
+      const currentUTC = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}T${String(now.getUTCHours()).padStart(2, '0')}:00`;
+      let idx = times.findIndex(t => t === currentUTC);
+      if (idx === -1) idx = 0;
+
+      const waveHeightM = heights[idx];
+      const wavePeriod  = periods[idx];
+      const waveDir     = dirs[idx];
+
+      if (waveHeightM != null && !isNaN(waveHeightM)) {
+        const waveHeightFt   = waveHeightM * 3.28084;
+        const waveDirectionStr = (waveDir != null && !isNaN(waveDir)) ? getWindDirection(waveDir) : null;
+
+        console.log(`🌊 Open-Meteo Marine fallback for ${lat.toFixed(2)}, ${lon.toFixed(2)}: ${waveHeightFt.toFixed(1)}ft @ ${wavePeriod}s ${waveDirectionStr || ''}`);
+
+        const buoy = {
+          waveHeight: waveHeightFt,
+          wavePeriod: wavePeriod ?? null,
+          waveDirection: waveDirectionStr,
+          windSpeed: null,
+          windDirection: null,
+          waterTemp: null,
+          stationId: 'open-meteo',
+          stationName: 'Open-Meteo Marine',
+          lastUpdate: new Date()
+        };
+
+        return {
+          waveHeight: waveHeightFt,
+          wavePeriod: wavePeriod ?? null,
+          waveDirection: waveDirectionStr,
+          waterTemp: getRealisticWaterTemperature(lat, lon),
+          primaryBuoy: buoy,
+          backupBuoy: null
+        };
+      }
+    }
+  } catch (openMeteoErr) {
+    console.warn('Open-Meteo Marine fallback failed:', openMeteoErr);
+  }
+
+  // Last-resort estimated values
+  return {
+    waveHeight: 2.0 + Math.random() * 3,
+    wavePeriod: 8 + Math.round(Math.random() * 8),
+    waveDirection: getCoastalSwellDirection(lat, lon),
+    waterTemp: getRealisticWaterTemperature(lat, lon),
+    primaryBuoy: null,
+    backupBuoy: null
+  };
 }
 
 export async function fetchTideData(lat: number, lon: number) {

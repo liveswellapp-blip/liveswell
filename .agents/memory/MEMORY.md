@@ -1,0 +1,1 @@
+- [Open-Meteo Marine fallback](open-meteo-marine-fallback.md) — NOAA NDBC is US-only; non-US surf spots need Open-Meteo Marine (marine-api.open-meteo.com) as a fallback for current wave data.

@@ -264,12 +264,14 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {/* Buoy #1 */}
+                {/* Buoy #1 / Marine Forecast */}
                 <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span className="text-emerald-400 text-[10px] font-bold">Buoy #1</span>
+                      <span className="text-emerald-400 text-[10px] font-bold">
+                        {primaryBuoy?.stationId === 'open-meteo' ? 'Marine Forecast' : 'Buoy #1'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5 text-slate-400" />
@@ -279,7 +281,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   {primaryBuoy ? (
                     <>
                       <p className="text-white text-xs font-semibold leading-tight truncate">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
-                      <p className="text-[9px] mb-2 text-[#64748b]">Station {primaryBuoy.stationId}</p>
+                      <p className="text-[9px] mb-2 text-[#64748b]">
+                        {primaryBuoy.stationId === 'open-meteo' ? 'Global wave model' : `Station ${primaryBuoy.stationId}`}
+                      </p>
                       {/* Wave height + period + direction in one row */}
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-emerald-400 font-black text-2xl leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
@@ -289,10 +293,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                         <span className="text-slate-600 text-xs">·</span>
                         <span className="text-[11px] font-semibold text-[#059669]">{primaryBuoy.waveDirection || "—"}</span>
                       </div>
-                      <button
-                        className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
-                        onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
-                      >Wave History</button>
+                      {primaryBuoy.stationId !== 'open-meteo' && (
+                        <button
+                          className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
+                          onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
+                        >Wave History</button>
+                      )}
                     </>
                   ) : (
                     <div className="text-slate-500 text-xs py-4 text-center">No buoy data</div>

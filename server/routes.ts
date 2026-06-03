@@ -1556,7 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Fallback to Open-Meteo if NOAA fails
         if (!marineResponse || !marineResponse.ok) {
           marineResponse = await fetch(
-            `https://api.open-meteo.com/v1/marine?latitude=${location.latitude}&longitude=${location.longitude}&daily=wave_height_max,wave_direction_dominant,wave_period_max&timezone=auto&forecast_days=7`
+            `https://marine-api.open-meteo.com/v1/marine?latitude=${location.latitude}&longitude=${location.longitude}&daily=wave_height_max,wave_direction_dominant,wave_period_max&timezone=auto&forecast_days=7`
           );
           isNOAAData = false;
         }
@@ -1912,7 +1912,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Fallback to Open-Meteo if NOAA fails
         if (!marineResponse || !marineResponse.ok) {
           marineResponse = await fetch(
-            `https://api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=auto&forecast_days=7`
+            `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_direction,wave_period&timezone=auto&forecast_days=7`
           );
           isNOAAData = false;
         }
