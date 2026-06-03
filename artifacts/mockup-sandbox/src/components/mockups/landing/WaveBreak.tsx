@@ -1,13 +1,6 @@
-const APP_URL = "https://974a14aa-7f4f-4a5f-942b-fb1f3e567712-00-39timpdr2atzk.picard.replit.dev";
+const SCREEN_IMG = "https://974a14aa-7f4f-4a5f-942b-fb1f3e567712-00-39timpdr2atzk.picard.replit.dev:5904/trestles-screen.png";
 
 export default function WaveBreak() {
-  // Scale the 390px-wide app down to fit the 254px-wide phone screen
-  const screenW = 254;
-  const appW = 390;
-  const scale = screenW / appW;
-  const screenH = 580;
-  const appH = Math.ceil(screenH / scale); // unscaled height to fill container
-
   return (
     <div style={{ fontFamily: "'Poppins', sans-serif", background: "#030a14", minHeight: "100vh", color: "white", overflowX: "hidden" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');`}</style>
@@ -59,15 +52,15 @@ export default function WaveBreak() {
           </div>
         </div>
 
-        {/* Right — phone with real app embedded */}
+        {/* Right — phone with screenshot */}
         <div style={{ display: "flex", justifyContent: "center", position: "relative" }}>
           {/* Glow behind phone */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340, height: 560, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(52,211,153,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340, height: 560, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(52,211,153,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
 
           {/* Phone shell */}
           <div style={{
-            width: 270,
-            borderRadius: 44,
+            width: 280,
+            borderRadius: 46,
             background: "#161616",
             boxShadow: "0 0 0 2px #252525, 0 0 0 5px #0d0d0d, 0 32px 64px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.06)",
             padding: "10px 8px",
@@ -75,22 +68,21 @@ export default function WaveBreak() {
             flexShrink: 0,
           }}>
             {/* Side buttons */}
-            <div style={{ position: "absolute", left: -2.5, top: 88, width: 3, height: 28, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
-            <div style={{ position: "absolute", left: -2.5, top: 126, width: 3, height: 52, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
-            <div style={{ position: "absolute", left: -2.5, top: 188, width: 3, height: 52, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
-            <div style={{ position: "absolute", right: -2.5, top: 138, width: 3, height: 64, background: "#2a2a2a", borderRadius: "0 2px 2px 0" }} />
+            <div style={{ position: "absolute", left: -2.5, top: 90, width: 3, height: 30, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
+            <div style={{ position: "absolute", left: -2.5, top: 130, width: 3, height: 55, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
+            <div style={{ position: "absolute", left: -2.5, top: 196, width: 3, height: 55, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
+            <div style={{ position: "absolute", right: -2.5, top: 145, width: 3, height: 70, background: "#2a2a2a", borderRadius: "0 2px 2px 0" }} />
 
-            {/* Screen bezel */}
-            <div style={{ borderRadius: 36, overflow: "hidden", background: "#030a14", height: screenH, width: screenW, position: "relative" }}>
+            {/* Screen */}
+            <div style={{ borderRadius: 38, overflow: "hidden", background: "#030a14", position: "relative" }}>
 
-              {/* Status bar overlay (sits on top of iframe) */}
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 36, zIndex: 10, background: "linear-gradient(to bottom, #030a14 60%, transparent)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "8px 14px 0", pointerEvents: "none" }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "white" }}>9:41</span>
-                {/* Dynamic island pill */}
-                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: 6, width: 70, height: 20, background: "#000", borderRadius: 12 }} />
-                <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
-                  <svg width="10" height="8" viewBox="0 0 16 12" fill="white" opacity="0.85"><rect x="0" y="3" width="2" height="9" rx="1"/><rect x="4" y="2" width="2" height="10" rx="1"/><rect x="8" y="1" width="2" height="11" rx="1"/><rect x="12" y="0" width="2" height="12" rx="1"/></svg>
-                  <div style={{ width: 14, height: 7, border: "1.5px solid rgba(255,255,255,0.7)", borderRadius: 2, display: "flex", alignItems: "center", padding: "1px", gap: 1 }}>
+              {/* Status bar */}
+              <div style={{ height: 38, background: "#030a14", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", position: "relative" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "white" }}>9:41</span>
+                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: 7, width: 86, height: 26, background: "#000", borderRadius: 15 }} />
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                  <svg width="12" height="9" viewBox="0 0 16 12" fill="white" opacity="0.85"><rect x="0" y="3" width="2" height="9" rx="1"/><rect x="4" y="2" width="2" height="10" rx="1"/><rect x="8" y="1" width="2" height="11" rx="1"/><rect x="12" y="0" width="2" height="12" rx="1"/></svg>
+                  <div style={{ width: 17, height: 9, border: "1.5px solid rgba(255,255,255,0.7)", borderRadius: 2.5, display: "flex", alignItems: "center", padding: "1px 1.5px", gap: 1 }}>
                     <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
                     <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
                     <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
@@ -98,21 +90,12 @@ export default function WaveBreak() {
                 </div>
               </div>
 
-              {/* The real app — scaled to fit */}
-              <div style={{ width: screenW, height: screenH, overflow: "hidden", position: "relative" }}>
-                <iframe
-                  src={`${APP_URL}/conditions?location=4`}
-                  style={{
-                    width: appW,
-                    height: appH,
-                    border: "none",
-                    transform: `scale(${scale})`,
-                    transformOrigin: "top left",
-                    pointerEvents: "none",
-                  }}
-                  scrolling="no"
-                />
-              </div>
+              {/* Screenshot image filling the screen */}
+              <img
+                src={SCREEN_IMG}
+                alt="Trestles conditions"
+                style={{ width: "100%", display: "block" }}
+              />
             </div>
           </div>
         </div>
