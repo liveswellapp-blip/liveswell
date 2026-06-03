@@ -263,7 +263,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <Skeleton className="h-32 rounded-xl bg-white/10" />
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className={`grid gap-3 ${backupBuoy ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {/* Buoy #1 / Marine Forecast */}
                 <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25">
                   <div className="flex items-center justify-between mb-2">
@@ -305,42 +305,37 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
 
-                {/* Buoy #2 */}
-                <div className="bg-black/30 rounded-xl p-3 border border-sky-500/25">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                      <span className="text-sky-400 text-[10px] font-bold">Buoy #2</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-2.5 w-2.5 text-slate-400" />
-                      <span className="text-[9px] text-[#64748b]">{lastUpdated}</span>
-                    </div>
-                  </div>
-                  {backupBuoy ? (
-                    <>
-                      <p className="text-white text-xs font-semibold leading-tight truncate">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
-                      <p className="text-[9px] mb-2 text-[#64748b]">Station {backupBuoy.stationId}</p>
-                      {/* Wave height + period + direction in one row */}
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-sky-400 font-black text-2xl leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
-                        <span className="text-sky-600 text-xs font-semibold">ft</span>
-                        <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.wavePeriod || 0}s</span>
-                        <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.waveDirection || "—"}</span>
+                {/* Buoy #2 — only shown when a backup NOAA buoy exists */}
+                {backupBuoy && (
+                  <div className="bg-black/30 rounded-xl p-3 border border-sky-500/25">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                        <span className="text-sky-400 text-[10px] font-bold">Buoy #2</span>
                       </div>
-                      <button
-                        className="mt-2 w-full text-[9px] bg-sky-500/15 border border-sky-500/30 rounded-lg py-1 hover:bg-sky-500/25 transition-colors text-sky-400"
-                        onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
-                      >
-                        Wave History
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-slate-500 text-xs py-4 text-center">No buoy data</div>
-                  )}
-                </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-2.5 w-2.5 text-slate-400" />
+                        <span className="text-[9px] text-[#64748b]">{lastUpdated}</span>
+                      </div>
+                    </div>
+                    <p className="text-white text-xs font-semibold leading-tight truncate">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
+                    <p className="text-[9px] mb-2 text-[#64748b]">Station {backupBuoy.stationId}</p>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sky-400 font-black text-2xl leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
+                      <span className="text-sky-600 text-xs font-semibold">ft</span>
+                      <span className="text-slate-600 text-xs">·</span>
+                      <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.wavePeriod || 0}s</span>
+                      <span className="text-slate-600 text-xs">·</span>
+                      <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.waveDirection || "—"}</span>
+                    </div>
+                    <button
+                      className="mt-2 w-full text-[9px] bg-sky-500/15 border border-sky-500/30 rounded-lg py-1 hover:bg-sky-500/25 transition-colors text-sky-400"
+                      onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
+                    >
+                      Wave History
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
