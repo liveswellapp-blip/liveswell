@@ -307,11 +307,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
                 {/* Buoy #2 — only shown when a backup NOAA buoy exists */}
                 {backupBuoy && (
-                  <div className="bg-black/30 rounded-xl p-3 border border-sky-500/25">
+                  <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-sky-400" />
-                        <span className="text-sky-400 text-[10px] font-bold">Buoy #2</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span className="text-emerald-400 text-[10px] font-bold">Buoy #2</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-2.5 w-2.5 text-slate-400" />
@@ -321,15 +321,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <p className="text-white text-xs font-semibold leading-tight truncate">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
                     <p className="text-[9px] mb-2 text-[#64748b]">Station {backupBuoy.stationId}</p>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-sky-400 font-black text-2xl leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
-                      <span className="text-xs font-semibold text-[#38bdf8]">ft</span>
+                      <span className="text-emerald-400 font-black text-2xl leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
+                      <span className="text-xs font-semibold text-[#34d399]">ft</span>
                       <span className="text-slate-600 text-xs">·</span>
-                      <span className="text-[11px] font-semibold text-[#38bdf8]">{backupBuoy.wavePeriod || 0}s</span>
+                      <span className="text-[11px] font-semibold text-[#34d399]">{backupBuoy.wavePeriod || 0}s</span>
                       <span className="text-slate-600 text-xs">·</span>
-                      <span className="text-[11px] font-semibold text-[#38bdf8]">{backupBuoy.waveDirection || "—"}</span>
+                      <span className="text-[11px] font-semibold text-[#34d399]">{backupBuoy.waveDirection || "—"}</span>
                     </div>
                     <button
-                      className="mt-2 w-full text-[9px] bg-sky-500/15 border border-sky-500/30 rounded-lg py-1 hover:bg-sky-500/25 transition-colors text-sky-400"
+                      className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
                       onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                     >
                       Wave History
@@ -341,30 +341,30 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
             {/* ── Wind subcard ──────────────────────────────────────── */}
             {conditions && (
-              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-amber-500/20">
+              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-emerald-500/25">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Wind className="h-3 w-3 text-amber-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#fbbf24]">Wind</span>
+                    <Wind className="h-3 w-3 text-emerald-400" />
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-400">Wind</span>
                   </div>
                   <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
                 </div>
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-black text-2xl leading-none text-[#fbbf24]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
-                      <span className="text-xs font-semibold text-[#fbbf24]">mph</span>
-                      <span className="text-sm font-semibold text-[#fbbf24]">{conditions.windDirection}</span>
+                      <span className="font-black text-2xl leading-none text-emerald-400">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                      <span className="text-xs font-semibold text-[#34d399]">mph</span>
+                      <span className="text-sm font-semibold text-[#34d399]">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                         <>
                           <span className="text-slate-600 text-xs">·</span>
-                          <span className="text-[11px] text-[#fbbf24]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                          <span className="text-[11px] text-[#34d399]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
                         </>
                       )}
                     </div>
                   </div>
                   <button
-                    className="text-[9px] bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1 hover:bg-amber-500/20 transition-colors shrink-0 text-[#fbbf24]"
+                    className="text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg px-3 py-1 hover:bg-emerald-500/25 transition-colors shrink-0 text-emerald-400"
                     onClick={() => setShowWindDetailsModal(true)}
                   >Wind Forecast</button>
                 </div>
