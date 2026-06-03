@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Clock, MapPin, ArrowLeft, Smartphone } from "lucide-react";
+import { Bell, Clock, MapPin, ArrowLeft, Smartphone, CheckCircle, AlertCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location, NotificationSettings as NotificationSettingsType } from "@/types/weather";
 import Header from "@/components/Header";
@@ -15,16 +11,13 @@ import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { pushNotifications } from "@/lib/push-notifications";
 
-// Generate time options for notification time
 const generateTimeOptions = () => {
   const times = [];
   for (let hour = 0; hour < 24; hour++) {
     for (let minute = 0; minute < 60; minute += 30) {
-      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      const displayTime = new Date(`2000-01-01 ${timeString}`).toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
+      const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+      const displayTime = new Date(`2000-01-01 ${timeString}`).toLocaleTimeString("en-US", {
+        hour: "numeric", minute: "2-digit", hour12: true,
       });
       times.push({ value: timeString, label: displayTime });
     }
@@ -34,15 +27,26 @@ const generateTimeOptions = () => {
 
 const timeOptions = generateTimeOptions();
 
-// Common US timezone options
 const timezoneOptions = [
-  { value: "America/New_York", label: "Eastern Time (ET)" },
-  { value: "America/Chicago", label: "Central Time (CT)" },
-  { value: "America/Denver", label: "Mountain Time (MT)" },
+  { value: "America/New_York",    label: "Eastern Time (ET)" },
+  { value: "America/Chicago",     label: "Central Time (CT)" },
+  { value: "America/Denver",      label: "Mountain Time (MT)" },
   { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
-  { value: "America/Anchorage", label: "Alaska Time (AKT)" },
-  { value: "Pacific/Honolulu", label: "Hawaii Time (HST)" },
+  { value: "America/Anchorage",   label: "Alaska Time (AKT)" },
+  { value: "Pacific/Honolulu",    label: "Hawaii Time (HST)" },
 ];
+
+const CARD = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" };
+const SEL  = { background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" } as React.CSSProperties;
+
+function FieldLabel({ icon: Icon, label }: { icon: any; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 mb-1.5">
+      <Icon size={12} className="text-emerald-400" />
+      <span className="text-[11px] text-slate-400">{label}</span>
+    </div>
+  );
+}
 
 export default function NotificationSettings() {
   const { toast } = useToast();
@@ -54,27 +58,22 @@ export default function NotificationSettings() {
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission>("default");
 
-  // Fetch current notification settings
   const { data: settings, isLoading: settingsLoading } = useQuery<NotificationSettingsType>({
-    queryKey: ['/api/notification-settings'],
+    queryKey: ["/api/notification-settings"],
     retry: false,
   });
 
-  // Fetch user's favorite locations
   const { data: locations } = useQuery<Location[]>({
-    queryKey: ['/api/favorites'],
+    queryKey: ["/api/favorites"],
   });
 
-  // Initialize push notifications on mount
   useEffect(() => {
-    const initializePush = async () => {
+    const init = async () => {
       const supported = pushNotifications.isSupported();
       setPushSupported(supported);
-      
       if (supported) {
         const permission = await pushNotifications.getPermissionStatus();
         setPushPermission(permission);
-        
         const initialized = await pushNotifications.initialize();
         if (initialized) {
           const subscribed = await pushNotifications.isSubscribed();
@@ -82,11 +81,9 @@ export default function NotificationSettings() {
         }
       }
     };
-    
-    initializePush();
+    init();
   }, []);
 
-  // Update form when settings are loaded
   useEffect(() => {
     if (settings) {
       setPushEnabled(settings.pushEnabled || false);
@@ -96,127 +93,55 @@ export default function NotificationSettings() {
     }
   }, [settings]);
 
-  // Save notification settings mutation
   const saveSettingsMutation = useMutation({
-    mutationFn: async (data: {
-      pushEnabled: boolean;
-      notificationTime: string;
-      timezone: string;
-      locationId?: number;
-    }) => {
-      return await apiRequest("/api/notification-settings", {
-        method: "POST",
-        body: data,
-      });
-    },
+    mutationFn: async (data: { pushEnabled: boolean; notificationTime: string; timezone: string; locationId?: number }) =>
+      await apiRequest("/api/notification-settings", { method: "POST", body: data }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notification-settings'] });
-      toast({
-        title: "Settings Saved",
-        description: "Your notification settings have been updated successfully.",
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/notification-settings"] });
+      toast({ title: "Settings Saved", description: "Notification settings updated." });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive",
-      });
-      console.error("Save settings error:", error);
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
     },
   });
 
-  // Test push notification mutation
   const testPushMutation = useMutation({
     mutationFn: async () => {
       const result = await pushNotifications.sendTestNotification();
-      if (!result) {
-        throw new Error("Failed to send test push notification");
-      }
+      if (!result) throw new Error("Failed to send test");
       return result;
     },
-    onSuccess: () => {
-      toast({
-        title: "Test Push Sent!",
-        description: "You should see the test notification on this device.",
-      });
-    },
-    onError: (error) => {
-      console.error("Test push error:", error);
-      toast({
-        title: "Test Failed",
-        description: "Failed to send test push notification. Make sure notifications are enabled.",
-        variant: "destructive",
-      });
-    },
+    onSuccess: () => toast({ title: "Test Push Sent!", description: "Check your browser notifications." }),
+    onError: () => toast({ title: "Test Failed", description: "Enable notifications and save first.", variant: "destructive" }),
   });
 
   const handlePushToggle = async (enabled: boolean) => {
     if (enabled) {
       if (!pushSupported) {
-        toast({
-          title: "Not Supported",
-          description: "Push notifications are not supported on this browser/device.",
-          variant: "destructive",
-        });
+        toast({ title: "Not Supported", description: "Push notifications aren't supported on this browser.", variant: "destructive" });
         return;
       }
-
       try {
-        const subscriptionData = await pushNotifications.subscribe();
-        if (subscriptionData) {
-          setPushEnabled(true);
-          setPushSubscribed(true);
-          setPushPermission("granted");
+        const sub = await pushNotifications.subscribe();
+        if (sub) {
+          setPushEnabled(true); setPushSubscribed(true); setPushPermission("granted");
         } else {
-          toast({
-            title: "Permission Denied",
-            description: "Please allow notifications in your browser to enable push notifications.",
-            variant: "destructive",
-          });
+          toast({ title: "Permission Denied", description: "Allow notifications in your browser settings.", variant: "destructive" });
         }
-      } catch (error) {
-        console.error("Push subscription error:", error);
-        toast({
-          title: "Subscription Failed",
-          description: "Failed to enable push notifications. Please try again.",
-          variant: "destructive",
-        });
+      } catch {
+        toast({ title: "Subscription Failed", description: "Please try again.", variant: "destructive" });
       }
     } else {
-      try {
-        await pushNotifications.unsubscribe();
-        setPushEnabled(false);
-        setPushSubscribed(false);
-      } catch (error) {
-        console.error("Push unsubscription error:", error);
-      }
+      try { await pushNotifications.unsubscribe(); } catch {}
+      setPushEnabled(false); setPushSubscribed(false);
     }
-  };
-
-  const handleTestPush = () => {
-    if (!pushEnabled || !pushSubscribed || !selectedLocation) {
-      toast({
-        title: "Complete Settings Required",
-        description: "Please enable push notifications, select a location, then save settings before testing.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    testPushMutation.mutate();
   };
 
   const handleSave = () => {
     if (pushEnabled && !selectedLocation) {
-      toast({
-        title: "Missing Location",
-        description: "Location is required for notifications.",
-        variant: "destructive",
-      });
+      toast({ title: "Missing Location", description: "Select a spot to receive notifications for.", variant: "destructive" });
       return;
     }
-
     saveSettingsMutation.mutate({
       pushEnabled: pushEnabled && pushSubscribed,
       notificationTime: selectedTime,
@@ -227,13 +152,12 @@ export default function NotificationSettings() {
 
   if (settingsLoading) {
     return (
-      <div className="min-h-screen bg-[hsl(155,50%,8%)]">
+      <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
         <Header />
-        <div className="container mx-auto px-6 py-8 max-w-2xl">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-300 rounded w-1/3"></div>
-            <div className="h-32 bg-gray-300 rounded"></div>
-          </div>
+        <div className="flex-1 px-4 pt-8 max-w-2xl mx-auto w-full space-y-3">
+          {[1, 2].map(i => (
+            <div key={i} className="rounded-2xl h-24 animate-pulse" style={CARD} />
+          ))}
         </div>
         <Footer />
       </div>
@@ -241,178 +165,146 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(155,50%,8%)]">
+    <div className="min-h-screen flex flex-col pb-24" style={{ background: "#030a14" }}>
       <Header />
-      
-      <div className="container mx-auto px-6 py-8 max-w-2xl">
-        <div className="mb-6">
-          <Link href="/profile">
-            <Button
-              variant="ghost"
-              className="mb-4 text-emerald-400"
-              data-testid="back-to-profile-button"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Profile
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold text-emerald-400 mb-2 flex items-center">
-            <Bell className="mr-3 h-6 w-6 text-emerald-400" />
-            Notification Settings
-          </h1>
-          <p className="text-slate-300">
-            Configure your daily surf condition notifications
-          </p>
+
+      {/* ── Slim header ── */}
+      <div className="px-5 pt-8 pb-6" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
+        <Link href="/profile">
+          <button className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-[12px] mb-5 transition-colors">
+            <ArrowLeft size={14} />
+            Back to Profile
+          </button>
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
+            <Bell size={18} className="text-amber-400" />
+          </div>
+          <div>
+            <h1 className="text-white font-black text-xl leading-tight">Notifications</h1>
+            <p className="text-slate-500 text-[11px] mt-0.5">Configure your daily surf alerts</p>
+          </div>
+        </div>
+      </div>
+
+      <main className="flex-1 px-4 pt-4 max-w-2xl mx-auto w-full space-y-4">
+
+        {/* Push toggle card */}
+        <div className="rounded-2xl p-4" style={CARD}>
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-2 h-2 rounded-full bg-amber-400" style={{ boxShadow: "0 0 6px #fbbf24" }} />
+            <span className="text-[10px] font-bold tracking-widest uppercase text-amber-400">Push Notifications</span>
+          </div>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <Smartphone size={14} className="text-slate-400 flex-shrink-0" />
+                <p className="text-[13px] font-semibold text-slate-200">Browser Push Notifications</p>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1 ml-5">
+                {pushSupported
+                  ? "Get instant surf condition updates directly in your browser"
+                  : "Push notifications are not supported on this browser"}
+              </p>
+              {pushPermission === "denied" && (
+                <p className="text-[11px] text-red-400 mt-1 ml-5">Blocked — allow in browser settings to enable</p>
+              )}
+            </div>
+            <Switch
+              checked={pushEnabled}
+              onCheckedChange={handlePushToggle}
+              disabled={!pushSupported || pushPermission === "denied"}
+              data-testid="push-toggle"
+            />
+          </div>
+
+          {pushEnabled && (
+            <div className="mt-4 pt-4 space-y-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              {/* Status pill */}
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-4"
+                style={{ background: pushSubscribed ? "rgba(16,185,129,0.08)" : "rgba(245,158,11,0.08)", border: `1px solid ${pushSubscribed ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}` }}>
+                {pushSubscribed
+                  ? <CheckCircle size={13} className="text-emerald-400 flex-shrink-0" />
+                  : <AlertCircle size={13} className="text-amber-400 flex-shrink-0" />}
+                <span className="text-[12px] font-medium" style={{ color: pushSubscribed ? "#34d399" : "#fbbf24" }}>
+                  {pushSubscribed ? "Push notifications are active" : "Save settings to activate notifications"}
+                </span>
+              </div>
+
+              {/* Time picker */}
+              <div className="mb-3">
+                <FieldLabel icon={Clock} label="Notification Time" />
+                <Select value={selectedTime} onValueChange={setSelectedTime}>
+                  <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-600 mt-1">When you want your daily surf report</p>
+              </div>
+
+              {/* Location picker */}
+              <div className="mb-3">
+                <FieldLabel icon={MapPin} label="Location for Conditions" />
+                <Select
+                  value={selectedLocation?.toString()}
+                  onValueChange={v => setSelectedLocation(parseInt(v))}>
+                  <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}>
+                    <SelectValue placeholder="Select your surf spot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations?.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id.toString()}>{loc.name}, {loc.city}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Timezone picker */}
+              <div className="mb-4">
+                <FieldLabel icon={Clock} label="Timezone" />
+                <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
+                  <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL} data-testid="timezone-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timezoneOptions.map(tz => (
+                      <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-slate-600 mt-1">For accurate notification delivery times</p>
+              </div>
+
+              {/* Test button */}
+              <button
+                onClick={() => testPushMutation.mutate()}
+                disabled={testPushMutation.isPending || !pushSubscribed || !selectedLocation}
+                className="w-full h-9 rounded-xl text-[12px] font-semibold transition-opacity disabled:opacity-40"
+                style={{ border: "1px solid rgba(16,185,129,0.3)", color: "#34d399", background: "rgba(16,185,129,0.06)" }}
+                data-testid="test-push-button">
+                <Bell size={12} className="inline mr-1.5" />
+                {testPushMutation.isPending ? "Sending…" : "Send Test Notification"}
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Push Notifications Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-emerald-400">
-              <Smartphone className="mr-2 h-5 w-5" />
-              Push Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Push Enable Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-slate-300 text-base">Enable Browser Push Notifications</Label>
-                <p className="text-sm text-slate-400">
-                  {pushSupported 
-                    ? "Get instant surf condition updates directly in your browser"
-                    : "Push notifications are not supported on this browser"
-                  }
-                </p>
-                {pushPermission === "denied" && (
-                  <p className="text-xs text-red-400 mt-1">
-                    Notifications blocked. Please allow in browser settings.
-                  </p>
-                )}
-              </div>
-              <Switch
-                checked={pushEnabled}
-                onCheckedChange={handlePushToggle}
-                disabled={!pushSupported || pushPermission === "denied"}
-                data-testid="push-toggle"
-              />
-            </div>
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          disabled={saveSettingsMutation.isPending}
+          className="w-full h-11 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+          style={{ background: "linear-gradient(135deg,#b45309,#d97706)" }}
+          data-testid="save-settings-button">
+          {saveSettingsMutation.isPending ? "Saving…" : "Save Settings"}
+        </button>
 
-            {pushEnabled && (
-              <div className="space-y-4 pt-4 border-t border-slate-700">
-                {/* Push Status */}
-                <div className="bg-slate-800 p-4 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${pushSubscribed ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                    <span className="text-sm text-slate-300">
-                      {pushSubscribed ? "✅ Push notifications are active" : "⚠️ Push notifications pending setup"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    {pushSubscribed 
-                      ? "You'll receive push notifications when conditions change"
-                      : "Please save settings to activate push notifications"
-                    }
-                  </p>
-                </div>
-
-                {/* Notification Time (shared with SMS) */}
-                <div>
-                  <Label className="text-slate-300 flex items-center mb-2">
-                    <Clock className="mr-2 h-4 w-4 text-emerald-400" />
-                    Notification Time
-                  </Label>
-                  <Select value={selectedTime} onValueChange={setSelectedTime}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeOptions.map((time) => (
-                        <SelectItem key={time.value} value={time.value}>
-                          {time.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Choose when you want to receive your daily surf conditions
-                  </p>
-                </div>
-
-                {/* Location */}
-                <div>
-                  <Label className="text-slate-300 flex items-center mb-2">
-                    <MapPin className="mr-2 h-4 w-4 text-emerald-400" />
-                    Location for Conditions
-                  </Label>
-                  <Select value={selectedLocation?.toString()} onValueChange={(value) => setSelectedLocation(parseInt(value))}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                      <SelectValue placeholder="Select your surf spot" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations?.map((location) => (
-                        <SelectItem key={location.id} value={location.id.toString()}>
-                          {location.name}, {location.city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Timezone Selection */}
-                <div>
-                  <Label className="text-slate-300 flex items-center mb-2">
-                    <Clock className="mr-2 h-4 w-4 text-emerald-400" />
-                    Timezone
-                  </Label>
-                  <Select value={selectedTimezone} onValueChange={setSelectedTimezone}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white" data-testid="timezone-select">
-                      <SelectValue placeholder="Select timezone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timezoneOptions.map((timezone) => (
-                        <SelectItem key={timezone.value} value={timezone.value}>
-                          {timezone.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Choose your local timezone for accurate notification delivery
-                  </p>
-                </div>
-
-                {/* Save Settings Button */}
-                <div className="pt-4">
-                  <Button
-                    onClick={handleSave}
-                    disabled={saveSettingsMutation.isPending}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                    data-testid="save-settings-button"
-                  >
-                    {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
-                  </Button>
-                </div>
-
-                {/* Push Test Button */}
-                <div className="pt-2">
-                  <Button
-                    onClick={handleTestPush}
-                    disabled={testPushMutation.isPending || !pushSubscribed || !selectedLocation}
-                    variant="outline"
-                    className="w-full border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white"
-                    data-testid="test-push-button"
-                  >
-                    <Bell className="mr-2 h-4 w-4" />
-                    {testPushMutation.isPending ? "Sending Test..." : "Send Test Push Notification"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-      </div>
+      </main>
 
       <Footer />
     </div>
