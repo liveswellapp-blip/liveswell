@@ -102,7 +102,7 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Poppins', sans-serif;
     /* Apply emerald scrollbar globally with black background */
     scrollbar-width: thin;
     scrollbar-color: rgba(52, 211, 153, 0.6) rgba(0, 0, 0, 0.8);
