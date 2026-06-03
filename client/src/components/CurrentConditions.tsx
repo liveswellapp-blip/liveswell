@@ -279,15 +279,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <div className="flex flex-col divide-y divide-white/5 mb-2">
                         <div className="flex items-center justify-between py-1.5">
                           <span className="text-[8px] font-bold text-slate-500 tracking-wider">Height</span>
-                          <span className="text-[11px] font-black text-emerald-400">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)} ft</span>
+                          <span className="text-[14px] font-black text-emerald-400">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)} ft</span>
                         </div>
                         <div className="flex items-center justify-between py-1.5">
                           <span className="text-[8px] font-bold text-slate-500 tracking-wider">Period</span>
-                          <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.wavePeriod || 0} sec</span>
+                          <span className="text-[14px] font-black text-emerald-400">{primaryBuoy.wavePeriod || 0} sec</span>
                         </div>
                         <div className="flex items-center justify-between py-1.5">
                           <span className="text-[8px] font-bold text-slate-500 tracking-wider">Direction</span>
-                          <span className="text-[11px] font-black text-emerald-400">{primaryBuoy.waveDirection || "—"}</span>
+                          <span className="text-[14px] font-black text-emerald-400">{primaryBuoy.waveDirection || "—"}</span>
                         </div>
                       </div>
                       {primaryBuoy.stationId !== 'open-meteo' && (
@@ -318,15 +318,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="flex flex-col divide-y divide-white/5 mb-2">
                       <div className="flex items-center justify-between py-1.5">
                         <span className="text-[8px] font-bold text-slate-500 tracking-wider">Height</span>
-                        <span className="text-[11px] font-black text-emerald-400">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)} ft</span>
+                        <span className="text-[14px] font-black text-emerald-400">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)} ft</span>
                       </div>
                       <div className="flex items-center justify-between py-1.5">
                         <span className="text-[8px] font-bold text-slate-500 tracking-wider">Period</span>
-                        <span className="text-[11px] font-black text-emerald-400">{backupBuoy.wavePeriod || 0} sec</span>
+                        <span className="text-[14px] font-black text-emerald-400">{backupBuoy.wavePeriod || 0} sec</span>
                       </div>
                       <div className="flex items-center justify-between py-1.5">
                         <span className="text-[8px] font-bold text-slate-500 tracking-wider">Direction</span>
-                        <span className="text-[11px] font-black text-emerald-400">{backupBuoy.waveDirection || "—"}</span>
+                        <span className="text-[14px] font-black text-emerald-400">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                     </div>
                     <button
