@@ -144,7 +144,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     <div className="flex-1 min-w-0">
                       <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wave</p>
                       <p className="text-emerald-400 font-black mb-0.5 text-[16px]">{day.waveHeight}</p>
-                      <p className="text-teal-500 text-[10px] font-semibold">{day.wavePeriod}</p>
+                      <p className="text-[10px] font-semibold text-[#64748b]">{day.wavePeriod}</p>
                     </div>
                     <div className="w-px bg-white/5 self-stretch" />
                     <div className="flex-1 min-w-0">
