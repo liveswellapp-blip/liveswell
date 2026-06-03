@@ -193,7 +193,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10",
     },
     {
-      icon: Waves, label: "Wave Period", value: wavePeriodVal,
+      icon: Clock, label: "Wave Period", value: wavePeriodVal,
       sub: "Long-period groundswell",
       color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10",
     },
