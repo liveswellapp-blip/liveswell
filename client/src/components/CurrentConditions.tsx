@@ -334,7 +334,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <Wind className="h-3 w-3 text-[#94a3b8]" />
                     <span className="text-[10px] font-bold uppercase tracking-wide text-[#94a3b8]">Wind</span>
                   </div>
-                  <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
+                  <span className="text-slate-500 text-[9px]">OpenWeatherMap API</span>
                 </div>
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
