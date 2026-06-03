@@ -401,7 +401,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                           <span className="text-[10px] font-semibold capitalize w-8 shrink-0 text-[#94a3b8]">
                             {tide.type === "high" ? "High" : "Low"}
                           </span>
-                          <span className="text-slate-300 text-[10px] font-medium">{tide.time}</span>
+                          <span className="text-[10px] font-medium text-[#34d399]">{tide.time}</span>
                           <span className="text-slate-500 text-[10px]">{tide.height.toFixed(1)} ft</span>
                         </div>
                       ))}
