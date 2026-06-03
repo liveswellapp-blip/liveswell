@@ -261,7 +261,6 @@ export default function Landing() {
     { label: "Live Conditions",  caption: "Full detail view — waves, wind, tides, and real-time NOAA buoy readings.",   img: screenConditions },
     { label: "Discover Spots",   caption: "Browse 228+ breaks worldwide with live wave heights and conditions ratings.", img: screenSpots      },
     { label: "Wave History",     caption: "24-hour buoy history — every reading plotted so you can see the swell trend.", img: screenHistory    },
-    { label: "5-Day Forecast",   caption: "Wave and tide forecast plus nearby spots, all on one scrollable screen.",     img: screenForecast   },
   ];
 
   return (
