@@ -1,4 +1,13 @@
+const APP_URL = "https://974a14aa-7f4f-4a5f-942b-fb1f3e567712-00-39timpdr2atzk.picard.replit.dev";
+
 export default function WaveBreak() {
+  // Scale the 390px-wide app down to fit the 254px-wide phone screen
+  const screenW = 254;
+  const appW = 390;
+  const scale = screenW / appW;
+  const screenH = 580;
+  const appH = Math.ceil(screenH / scale); // unscaled height to fill container
+
   return (
     <div style={{ fontFamily: "'Poppins', sans-serif", background: "#030a14", minHeight: "100vh", color: "white", overflowX: "hidden" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');`}</style>
@@ -50,7 +59,7 @@ export default function WaveBreak() {
           </div>
         </div>
 
-        {/* Right — phone mockup showing logged-in app */}
+        {/* Right — phone with real app embedded */}
         <div style={{ display: "flex", justifyContent: "center", position: "relative" }}>
           {/* Glow behind phone */}
           <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 340, height: 560, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(52,211,153,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
@@ -71,16 +80,17 @@ export default function WaveBreak() {
             <div style={{ position: "absolute", left: -2.5, top: 188, width: 3, height: 52, background: "#2a2a2a", borderRadius: "2px 0 0 2px" }} />
             <div style={{ position: "absolute", right: -2.5, top: 138, width: 3, height: 64, background: "#2a2a2a", borderRadius: "0 2px 2px 0" }} />
 
-            {/* Screen */}
-            <div style={{ borderRadius: 36, overflow: "hidden", background: "#030a14", height: 580 }}>
+            {/* Screen bezel */}
+            <div style={{ borderRadius: 36, overflow: "hidden", background: "#030a14", height: screenH, width: screenW, position: "relative" }}>
 
-              {/* Status bar */}
-              <div style={{ height: 36, background: "#030a14", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 18px", position: "relative" }}>
+              {/* Status bar overlay (sits on top of iframe) */}
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 36, zIndex: 10, background: "linear-gradient(to bottom, #030a14 60%, transparent)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "8px 14px 0", pointerEvents: "none" }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: "white" }}>9:41</span>
-                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: 6, width: 80, height: 24, background: "#000", borderRadius: 14 }} />
-                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                  <svg width="12" height="9" viewBox="0 0 16 12" fill="white" opacity="0.85"><rect x="0" y="3" width="2" height="9" rx="1"/><rect x="4" y="2" width="2" height="10" rx="1"/><rect x="8" y="1" width="2" height="11" rx="1"/><rect x="12" y="0" width="2" height="12" rx="1"/></svg>
-                  <div style={{ width: 16, height: 8, border: "1.5px solid rgba(255,255,255,0.7)", borderRadius: 2, display: "flex", alignItems: "center", padding: "1px 1.5px", gap: 1 }}>
+                {/* Dynamic island pill */}
+                <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: 6, width: 70, height: 20, background: "#000", borderRadius: 12 }} />
+                <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+                  <svg width="10" height="8" viewBox="0 0 16 12" fill="white" opacity="0.85"><rect x="0" y="3" width="2" height="9" rx="1"/><rect x="4" y="2" width="2" height="10" rx="1"/><rect x="8" y="1" width="2" height="11" rx="1"/><rect x="12" y="0" width="2" height="12" rx="1"/></svg>
+                  <div style={{ width: 14, height: 7, border: "1.5px solid rgba(255,255,255,0.7)", borderRadius: 2, display: "flex", alignItems: "center", padding: "1px", gap: 1 }}>
                     <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
                     <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
                     <div style={{ flex: 1, height: "100%", background: "#34d399", borderRadius: 1 }} />
@@ -88,117 +98,21 @@ export default function WaveBreak() {
                 </div>
               </div>
 
-              {/* App header — logged in */}
-              <div style={{ padding: "10px 14px 8px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: "-0.3px" }}>
-                  <span style={{ color: "#34d399" }}>LIVE</span>
-                  <span style={{ color: "white" }}> SWELL</span>
-                </div>
-                {/* User avatar — logged in */}
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #34d399, #059669)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "#030a14" }}>
-                  JD
-                </div>
+              {/* The real app — scaled to fit */}
+              <div style={{ width: screenW, height: screenH, overflow: "hidden", position: "relative" }}>
+                <iframe
+                  src={`${APP_URL}/conditions?location=4`}
+                  style={{
+                    width: appW,
+                    height: appH,
+                    border: "none",
+                    transform: `scale(${scale})`,
+                    transformOrigin: "top left",
+                    pointerEvents: "none",
+                  }}
+                  scrolling="no"
+                />
               </div>
-
-              {/* Location bar */}
-              <div style={{ padding: "10px 14px 8px", display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "7px 10px", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 10 }}>🔍</span>
-                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Search spots...</span>
-                </div>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>⭐</div>
-              </div>
-
-              {/* Spot header */}
-              <div style={{ padding: "4px 14px 10px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399" }} />
-                  <span style={{ fontSize: 9, color: "#34d399", fontWeight: 600 }}>📍 San Clemente, CA</span>
-                  <span style={{ marginLeft: "auto", fontSize: 8, color: "rgba(255,255,255,0.25)", background: "rgba(52,211,153,0.07)", border: "1px solid rgba(52,211,153,0.15)", borderRadius: 4, padding: "1px 5px" }}>LIVE</span>
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: "-0.5px" }}>Trestles</div>
-              </div>
-
-              {/* Conditions grid */}
-              <div style={{ padding: "0 14px 10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                {/* Waves */}
-                <div style={{ background: "rgba(0,0,0,0.35)", borderRadius: 10, padding: "10px", border: "1px solid rgba(52,211,153,0.2)" }}>
-                  <div style={{ fontSize: 7.5, color: "#34d399", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 3 }}>🌊 WAVES</div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                    <span style={{ fontSize: 22, fontWeight: 900, color: "#34d399", lineHeight: 1 }}>4.8</span>
-                    <span style={{ fontSize: 9, color: "#059669", fontWeight: 600 }}>ft</span>
-                  </div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>14s · SW swell</div>
-                </div>
-                {/* Wind */}
-                <div style={{ background: "rgba(0,0,0,0.35)", borderRadius: 10, padding: "10px", border: "1px solid rgba(6,182,212,0.2)" }}>
-                  <div style={{ fontSize: 7.5, color: "#22d3ee", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 3 }}>💨 WIND</div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                    <span style={{ fontSize: 22, fontWeight: 900, color: "#22d3ee", lineHeight: 1 }}>8</span>
-                    <span style={{ fontSize: 9, color: "#0891b2", fontWeight: 600 }}>mph</span>
-                  </div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>NNE · offshore 🤙</div>
-                </div>
-                {/* Tide */}
-                <div style={{ background: "rgba(0,0,0,0.35)", borderRadius: 10, padding: "10px", border: "1px solid rgba(99,102,241,0.2)" }}>
-                  <div style={{ fontSize: 7.5, color: "#a5b4fc", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 3 }}>🌙 TIDE</div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                    <span style={{ fontSize: 22, fontWeight: 900, color: "#a5b4fc", lineHeight: 1 }}>1.2</span>
-                    <span style={{ fontSize: 9, color: "#818cf8", fontWeight: 600 }}>ft</span>
-                  </div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Low · rising ↑</div>
-                </div>
-                {/* Water temp */}
-                <div style={{ background: "rgba(0,0,0,0.35)", borderRadius: 10, padding: "10px", border: "1px solid rgba(251,191,36,0.2)" }}>
-                  <div style={{ fontSize: 7.5, color: "#fbbf24", fontWeight: 700, letterSpacing: "0.06em", marginBottom: 3 }}>🌡 WATER</div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 2 }}>
-                    <span style={{ fontSize: 22, fontWeight: 900, color: "#fbbf24", lineHeight: 1 }}>65</span>
-                    <span style={{ fontSize: 9, color: "#d97706", fontWeight: 600 }}>°F</span>
-                  </div>
-                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Springsuit ok</div>
-                </div>
-              </div>
-
-              {/* AI summary */}
-              <div style={{ margin: "0 14px 10px", background: "rgba(52,211,153,0.07)", border: "1px solid rgba(52,211,153,0.18)", borderRadius: 9, padding: "8px 10px" }}>
-                <div style={{ fontSize: 7.5, color: "#34d399", fontWeight: 700, marginBottom: 3, letterSpacing: "0.05em" }}>✨ AI SURF SUMMARY</div>
-                <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
-                  Overhead+ NNE offshore grooming 4–5 ft SW groundswell. Uppers firing on the low push. Go now.
-                </div>
-              </div>
-
-              {/* 5-day forecast */}
-              <div style={{ padding: "0 14px 12px", display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 5 }}>
-                {[
-                  { day: "MON", ft: "4.8", good: true },
-                  { day: "TUE", ft: "5.2", good: true },
-                  { day: "WED", ft: "3.6", good: false },
-                  { day: "THU", ft: "2.4", good: false },
-                  { day: "FRI", ft: "3.9", good: false },
-                ].map(d => (
-                  <div key={d.day} style={{ background: d.good ? "rgba(52,211,153,0.08)" : "rgba(255,255,255,0.03)", borderRadius: 7, padding: "6px 3px", textAlign: "center", border: `1px solid ${d.good ? "rgba(52,211,153,0.22)" : "rgba(255,255,255,0.05)"}` }}>
-                    <div style={{ fontSize: 7, color: "rgba(255,255,255,0.35)", marginBottom: 2 }}>{d.day}</div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: d.good ? "#34d399" : "rgba(255,255,255,0.55)" }}>{d.ft}</div>
-                    <div style={{ fontSize: 6.5, color: "rgba(255,255,255,0.25)", marginTop: 1 }}>ft</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Bottom tab bar */}
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", padding: "8px 14px 10px" }}>
-                {[
-                  { icon: "🔍", label: "Explore", active: false },
-                  { icon: "🌊", label: "Conditions", active: true },
-                  { icon: "⭐", label: "Favorites", active: false },
-                  { icon: "👤", label: "Profile", active: false },
-                ].map(t => (
-                  <div key={t.label} style={{ flex: 1, textAlign: "center" }}>
-                    <div style={{ fontSize: 14, marginBottom: 2 }}>{t.icon}</div>
-                    <div style={{ fontSize: 7.5, color: t.active ? "#34d399" : "rgba(255,255,255,0.3)", fontWeight: t.active ? 700 : 400 }}>{t.label}</div>
-                  </div>
-                ))}
-              </div>
-
             </div>
           </div>
         </div>
