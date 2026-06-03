@@ -427,7 +427,7 @@ export default function Landing() {
             <em>Catch the</em><br />
             Moment.
           </h1>
-          <p className="landing-sub">Get accurate and real-time NOAA wave, wind and tide data across 200+ surf locations.</p>
+          <p className="landing-sub">Live NOAA wave, wind and tide data across 200+ surf locations. No more opinion or inaccurate surf conditions, just real-time data.</p>
           <div className="landing-badges">
             {["218+ Surf Spots", "6 Continents", "Real-time NOAA"].map(label => (
               <div key={label} className="landing-badge">{label}</div>
