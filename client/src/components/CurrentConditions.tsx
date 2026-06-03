@@ -71,7 +71,7 @@ function StatTile({
         <Icon className={`h-3.5 w-3.5 ${color}`} />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-medium leading-tight text-[#94a3b8]">{label}</p>
+        <p className="text-[10px] font-medium leading-tight text-[#ffffff]">{label}</p>
         <p className={`font-bold text-sm ${color} leading-snug`}>{value}</p>
       </div>
     </div>
@@ -332,7 +332,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Wind className="h-3 w-3 text-[#94a3b8]" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#94a3b8]">Wind</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#ffffff]">Wind</span>
                   </div>
                   <span className="text-slate-500 text-[9px]">OpenWeatherMap API</span>
                 </div>
@@ -366,7 +366,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <div className="flex items-center gap-1.5">
                 <BarChart3 className="h-3.5 w-3.5 text-[#94a3b8]" />
-                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#94a3b8]">Tides</span>
+                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]">Tides</span>
               </div>
               <span className="text-slate-500 text-[10px]">{localTime} local</span>
             </div>
