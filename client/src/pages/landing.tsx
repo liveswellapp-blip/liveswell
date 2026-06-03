@@ -427,10 +427,6 @@ export default function Landing() {
       {/* Hero */}
       <div className="landing-hero">
         <div>
-          <div className="landing-eyebrow">
-            <div className="landing-eyebrow-dot" />
-            <span>LIVE OCEAN DATA · 218+ SPOTS</span>
-          </div>
           <h1 className="landing-h1">
             Read the Ocean.<br />
             <em>Catch the</em><br />
