@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import SearchModal from "./SearchModal";
-import logoImageDark from "@assets/Live_(1500_x_500_px)_(1)_1780500060904.png";
+import logoImageDark from "@assets/Live_(1500_x_500_px)_(2)_1780520244305.png";
 
 interface HeaderProps {
   onLocationSelect?: (location: any) => void;

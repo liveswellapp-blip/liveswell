@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import logoImage from "@assets/Live_(1500_x_500_px)_(1)_1780500060904.png";
+import logoImage from "@assets/Live_(1500_x_500_px)_(2)_1780520244305.png";
 import screenConditions from "@assets/image_1780504204791.png";
 import screenSpots from "@assets/image_1780504263938.png";
 import screenHistory from "@assets/image_1780504292264.png";
@@ -31,9 +31,7 @@ function TabBar({ active }: { active: "explore" | "conditions" | "favorites" | "
 function AppHeader() {
   return (
     <div style={{ padding: "14px 18px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: "-0.3px" }}>
-        <span style={{ color: "#34d399" }}>LIVE</span><span style={{ color: "white" }}> SWELL</span>
-      </div>
+      <img src={logoImage} alt="LiveSwell" style={{ height: 22, objectFit: "contain" }} />
       <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #34d399, #059669)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#030a14" }}>JD</div>
     </div>
   );
