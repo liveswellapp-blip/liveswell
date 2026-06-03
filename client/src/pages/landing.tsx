@@ -428,11 +428,6 @@ export default function Landing() {
             Moment.
           </h1>
           <p className="landing-sub">Live NOAA wave, wind and tide data across 200+ surf locations. No more opinion or inaccurate surf conditions, just real-time data.</p>
-          <div className="landing-badges">
-            {["218+ Surf Spots", "6 Continents", "Real-time NOAA"].map(label => (
-              <div key={label} className="landing-badge">{label}</div>
-            ))}
-          </div>
           <div className="landing-cta-row">
             <button className="landing-cta-btn" onClick={handleLogin}>Sign in with Replit →</button>
             <span className="landing-cta-note">Free · No credit card needed</span>
