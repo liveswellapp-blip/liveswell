@@ -79,7 +79,7 @@ export default function Navigation({ onLocationSelect }: NavigationProps) {
           {/* Centered container for search and favorites */}
           <div className="flex items-center space-x-6 w-full max-w-4xl justify-center">
             {/* Search Bar */}
-            <div className={`relative flex-1 ${location === "/favorites" ? "max-w-none" : "max-w-lg"}`} ref={searchRef}>
+            <div className="relative flex-1 max-w-lg" ref={searchRef}>
               <div className="relative">
                 <Input
                   type="text"

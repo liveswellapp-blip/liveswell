@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
-import Favorites from "@/pages/favorites";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import SurfSpots from "@/pages/surf-spots";
@@ -29,7 +28,6 @@ function Router() {
           <>
             <Route path="/" component={SurfSpots} />
             <Route path="/conditions" component={Home} />
-            <Route path="/favorites" component={Favorites} />
             <Route path="/settings" component={Settings} />
             <Route path="/notifications" component={NotificationSettings} />
             <Route path="/profile" component={Profile} />
