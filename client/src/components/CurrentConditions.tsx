@@ -425,7 +425,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   </div>
                 )}
                 <div className="mt-2 pt-2 border-t border-white/5 flex justify-end">
-                  <span className="text-slate-600 text-[9px]">NOAA Tides &amp; Currents</span>
+                  <span className="text-slate-600 text-[9px]">NOAA Tides & Currents data</span>
                 </div>
               </div>
             )}
