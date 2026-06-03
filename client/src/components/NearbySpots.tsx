@@ -39,14 +39,13 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
   return (
     <div className="w-full">
       <div className="w-full border-b border-emerald-500/30 mt-8 mb-4" />
-
       <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-6 mb-6">
 
         {/* ── Section header ── */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d399" }} />
-            <span className="text-emerald-400 text-[11px] font-bold tracking-widest uppercase">Nearby Surf Spots</span>
+            <span className="text-[11px] font-bold tracking-widest uppercase text-[#ffffff]">Nearby Surf Spots</span>
           </div>
           <span className="text-slate-500 text-[10px]">within 30 miles</span>
         </div>
