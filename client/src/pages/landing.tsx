@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
 import logoImage from "@assets/Live_(1500_x_500_px)_(1)_1780500060904.png";
+import screenConditions from "@assets/image_1780504204791.png";
+import screenSpots from "@assets/image_1780504263938.png";
+import screenHistory from "@assets/image_1780504292264.png";
+import screenForecast from "@assets/image_1780504331560.png";
 
 const SCALE = 264 / 390;
 
@@ -256,9 +260,10 @@ export default function Landing() {
   const handleLogin = () => { window.location.href = "/api/login"; };
 
   const screenshots = [
-    { label: "Discover Spots",   caption: "Browse 218+ breaks worldwide with live wave heights and conditions ratings.", screen: <ExploreScreen />    },
-    { label: "Live Conditions",  caption: "Full detail view — waves, wind, tides, AI summary and 7-day forecast.",      screen: <ConditionsScreen /> },
-    { label: "Your Favorites",   caption: "Save your go-to spots and get a live at-a-glance dashboard every session.",   screen: <FavoritesScreen />  },
+    { label: "Live Conditions",  caption: "Full detail view — waves, wind, tides, and real-time NOAA buoy readings.",   img: screenConditions },
+    { label: "Discover Spots",   caption: "Browse 228+ breaks worldwide with live wave heights and conditions ratings.", img: screenSpots      },
+    { label: "Wave History",     caption: "24-hour buoy history — every reading plotted so you can see the swell trend.", img: screenHistory    },
+    { label: "5-Day Forecast",   caption: "Wave and tide forecast plus nearby spots, all on one scrollable screen.",     img: screenForecast   },
   ];
 
   return (
@@ -449,7 +454,9 @@ export default function Landing() {
 
         <div className="landing-phone-wrap">
           <div className="landing-phone-glow" />
-          <PhoneShell><ConditionsScreen /></PhoneShell>
+          <PhoneShell statusBar={false}>
+            <img src={screenConditions} alt="LiveSwell conditions screen" style={{ width: 390, display: "block" }} />
+          </PhoneShell>
         </div>
       </div>
 
@@ -496,7 +503,9 @@ export default function Landing() {
         <div className="landing-screenshots-grid">
           {screenshots.map(s => (
             <div key={s.label} className="landing-screenshot-item">
-              <PhoneShell>{s.screen}</PhoneShell>
+              <PhoneShell statusBar={false}>
+                <img src={s.img} alt={s.label} style={{ width: 390, display: "block" }} />
+              </PhoneShell>
               <div className="landing-screenshot-label">{s.label}</div>
               <div className="landing-screenshot-caption">{s.caption}</div>
             </div>
