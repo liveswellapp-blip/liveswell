@@ -306,7 +306,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 {backupBuoy && (
                   <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Secondary</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#22d3ee]">Secondary</span>
                       <div className="flex items-center gap-1">
                         <Clock className="h-2 w-2 text-slate-600" />
                         <span className="text-[8px] text-slate-600">{lastUpdated}</span>
