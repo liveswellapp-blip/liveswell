@@ -188,7 +188,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           </div>
         )}
 
-        <p className="text-slate-700 text-[9px] mt-3 text-center">NOAA wave forecast · OpenWeatherMap wind</p>
+        <p className="text-slate-700 text-[9px] mt-3 text-center">NOAA and Open Weather Map data</p>
       </div>
     </div>
   );
