@@ -149,7 +149,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     <div className="w-px bg-white/5 self-stretch" />
                     <div className="flex-1 min-w-0">
                       <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wind</p>
-                      <p className="text-cyan-400 font-bold mb-0.5 text-[14px]">{day.windSpeed}</p>
+                      <p className="text-cyan-400 font-bold mb-0.5 text-[16px]">{day.windSpeed}</p>
                       <p className="text-slate-500 text-[10px]">{day.windDirection}</p>
                     </div>
                   </div>
