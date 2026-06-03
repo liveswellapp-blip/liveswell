@@ -181,7 +181,14 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
   if (conditions && forecast?.[0]?.tides?.length > 0) {
     const targetType = conditions.tideStatus?.toLowerCase() === "rising" ? "high" : "low";
     tideType = targetType === "high" ? "High" : "Low";
-    const now = new Date();
+
+    // Get current time in the location's timezone so comparison is correct
+    // regardless of where the user's browser is located
+    const tz: string = conditions.timezone || "UTC";
+    const nowUtc = new Date();
+    const localStr = nowUtc.toLocaleString("en-US", { timeZone: tz });
+    const nowLocal = new Date(localStr);
+
     const future = forecast[0].tides
       .filter((t: any) => t.type.toLowerCase() === targetType)
       .map((t: any) => {
@@ -190,9 +197,10 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
         let h24 = parseInt(h);
         if (period === "PM" && h24 !== 12) h24 += 12;
         else if (period === "AM" && h24 === 12) h24 = 0;
-        return { ...t, dt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), h24, parseInt(m)) };
+        const dt = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), nowLocal.getDate(), h24, parseInt(m));
+        return { ...t, dt };
       })
-      .filter((t: any) => t.dt > now)
+      .filter((t: any) => t.dt > nowLocal)
       .sort((a: any, b: any) => a.dt - b.dt);
     if (future.length > 0) {
       const next = future[0];

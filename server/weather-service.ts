@@ -451,6 +451,7 @@ export async function generateDemoWeatherData(lat: number, lon: number) {
       hour12: true,
       timeZone: timezone 
     }),
+    timezone,
     // Include detailed buoy information from fetchMarineData
     primaryBuoy: marineData.primaryBuoy || null,
     backupBuoy: marineData.backupBuoy || null,
@@ -530,6 +531,7 @@ export async function fetchWeatherData(lat: number, lon: number) {
         { time: '12:45 PM', height: '1.1' },
         { time: '1:30 AM', height: '0.9' }
       ],
+      timezone,
       primaryBuoy: marineData.primaryBuoy || null,
       backupBuoy: marineData.backupBuoy || null,
     };
