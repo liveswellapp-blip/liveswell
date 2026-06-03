@@ -217,7 +217,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         {/* ── Hero card ─────────────────────────────────────────────── */}
         <div
           className="rounded-2xl relative overflow-hidden border border-emerald-500/20"
-          style={{ background: "linear-gradient(160deg, #03091a 0%, #102850 45%, #051020 100%)" }}
+          style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}
         >
 
           <div className="relative px-5 pt-5 pb-5">
