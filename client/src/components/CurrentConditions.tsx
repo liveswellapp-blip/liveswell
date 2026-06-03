@@ -287,11 +287,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       {/* Wave height + period + direction in one row */}
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-emerald-400 font-black text-2xl leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)}</span>
-                        <span className="text-emerald-600 text-xs font-semibold">ft</span>
+                        <span className="text-xs font-semibold text-[#34d399]">ft</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#059669]">{primaryBuoy.wavePeriod || 0}s</span>
+                        <span className="text-[11px] font-semibold text-[#34d399]">{primaryBuoy.wavePeriod || 0}s</span>
                         <span className="text-slate-600 text-xs">·</span>
-                        <span className="text-[11px] font-semibold text-[#059669]">{primaryBuoy.waveDirection || "—"}</span>
+                        <span className="text-[11px] font-semibold text-[#34d399]">{primaryBuoy.waveDirection || "—"}</span>
                       </div>
                       {primaryBuoy.stationId !== 'open-meteo' && (
                         <button
@@ -322,11 +322,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <p className="text-[9px] mb-2 text-[#64748b]">Station {backupBuoy.stationId}</p>
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-sky-400 font-black text-2xl leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)}</span>
-                      <span className="text-sky-600 text-xs font-semibold">ft</span>
+                      <span className="text-xs font-semibold text-[#38bdf8]">ft</span>
                       <span className="text-slate-600 text-xs">·</span>
-                      <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.wavePeriod || 0}s</span>
+                      <span className="text-[11px] font-semibold text-[#38bdf8]">{backupBuoy.wavePeriod || 0}s</span>
                       <span className="text-slate-600 text-xs">·</span>
-                      <span className="text-[11px] font-semibold text-[#0284c7]">{backupBuoy.waveDirection || "—"}</span>
+                      <span className="text-[11px] font-semibold text-[#38bdf8]">{backupBuoy.waveDirection || "—"}</span>
                     </div>
                     <button
                       className="mt-2 w-full text-[9px] bg-sky-500/15 border border-sky-500/30 rounded-lg py-1 hover:bg-sky-500/25 transition-colors text-sky-400"
@@ -345,26 +345,26 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Wind className="h-3 w-3 text-amber-400" />
-                    <span className="text-amber-400 text-[10px] font-bold uppercase tracking-wide">Wind</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#fbbf24]">Wind</span>
                   </div>
                   <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
                 </div>
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-black text-2xl leading-none text-amber-400">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
-                      <span className="text-amber-600 text-xs font-semibold">mph</span>
-                      <span className="text-sm font-semibold text-[#d97706]">{conditions.windDirection}</span>
+                      <span className="font-black text-2xl leading-none text-[#fbbf24]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                      <span className="text-xs font-semibold text-[#fbbf24]">mph</span>
+                      <span className="text-sm font-semibold text-[#fbbf24]">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                         <>
                           <span className="text-slate-600 text-xs">·</span>
-                          <span className="text-[11px] text-[#d97706]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                          <span className="text-[11px] text-[#fbbf24]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
                         </>
                       )}
                     </div>
                   </div>
                   <button
-                    className="text-[9px] bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1 hover:bg-amber-500/20 transition-colors shrink-0 text-amber-400"
+                    className="text-[9px] bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1 hover:bg-amber-500/20 transition-colors shrink-0 text-[#fbbf24]"
                     onClick={() => setShowWindDetailsModal(true)}
                   >Wind Forecast</button>
                 </div>
