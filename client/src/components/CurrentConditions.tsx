@@ -71,7 +71,7 @@ function StatTile({
         <Icon className={`h-3.5 w-3.5 ${color}`} />
       </div>
       <div className="min-w-0">
-        <p className="text-slate-400 text-[10px] font-medium leading-tight">{label}</p>
+        <p className="text-[10px] font-medium leading-tight text-[#ffffff]">{label}</p>
         <p className={`font-bold text-sm ${color} leading-snug`}>{value}</p>
         <p className="text-slate-500 text-[10px] leading-tight truncate">{sub}</p>
       </div>
@@ -263,7 +263,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      <span className="text-emerald-400 text-[10px] font-bold">
+                      <span className="text-[10px] font-bold text-[#ffffff]">
                         {primaryBuoy?.stationId === 'open-meteo' ? 'Marine Forecast' : 'Buoy #1'}
                       </span>
                     </div>
@@ -289,7 +289,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       </div>
                       {primaryBuoy.stationId !== 'open-meteo' && (
                         <button
-                          className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
+                          className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-[#ffffff]"
                           onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
                         >Wave History</button>
                       )}
@@ -305,7 +305,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                        <span className="text-emerald-400 text-[10px] font-bold">Buoy #2</span>
+                        <span className="text-[10px] font-bold text-[#ffffff]">Buoy #2</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-2.5 w-2.5 text-slate-400" />
@@ -323,7 +323,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       <span className="text-[11px] font-semibold text-[#34d399]">{backupBuoy.waveDirection || "—"}</span>
                     </div>
                     <button
-                      className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-emerald-400"
+                      className="mt-2 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1 hover:bg-emerald-500/25 transition-colors text-[#ffffff]"
                       onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                     >
                       Wave History
@@ -339,7 +339,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Wind className="h-3 w-3 text-emerald-400" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-400">Wind</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#ffffff]">Wind</span>
                   </div>
                   <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
                 </div>
@@ -358,7 +358,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                   </div>
                   <button
-                    className="text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg px-3 py-1 hover:bg-emerald-500/25 transition-colors shrink-0 text-emerald-400"
+                    className="text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg px-3 py-1 hover:bg-emerald-500/25 transition-colors shrink-0 text-[#ffffff]"
                     onClick={() => setShowWindDetailsModal(true)}
                   >Wind Forecast</button>
                 </div>
@@ -373,7 +373,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <div className="flex items-center gap-1.5">
                 <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-slate-400 text-[11px] uppercase tracking-wide font-semibold">Tides Today</span>
+                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]">Tides</span>
               </div>
               <span className="text-slate-500 text-[10px]">{localTime} local</span>
             </div>
