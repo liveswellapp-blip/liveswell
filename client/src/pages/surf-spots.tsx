@@ -182,12 +182,17 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
     const targetType = conditions.tideStatus?.toLowerCase() === "rising" ? "high" : "low";
     tideType = targetType === "high" ? "High" : "Low";
 
-    // Get current time in the location's timezone so comparison is correct
-    // regardless of where the user's browser is located
+    // Compare tide times against the current time in the location's timezone.
+    // Tide strings like "5:20 PM" are in location-local time (LST/LDT from NOAA),
+    // so we must not compare them against browser-local "now".
     const tz: string = conditions.timezone || "UTC";
-    const nowUtc = new Date();
-    const localStr = nowUtc.toLocaleString("en-US", { timeZone: tz });
-    const nowLocal = new Date(localStr);
+    const now = new Date();
+    const timeParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(now);
+    const locHour = parseInt(timeParts.find(p => p.type === "hour")?.value ?? "0");
+    const locMin  = parseInt(timeParts.find(p => p.type === "minute")?.value ?? "0");
+    const nowMins = locHour * 60 + locMin;
 
     const future = forecast[0].tides
       .filter((t: any) => t.type.toLowerCase() === targetType)
@@ -197,11 +202,10 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
         let h24 = parseInt(h);
         if (period === "PM" && h24 !== 12) h24 += 12;
         else if (period === "AM" && h24 === 12) h24 = 0;
-        const dt = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), nowLocal.getDate(), h24, parseInt(m));
-        return { ...t, dt };
+        return { ...t, tideMins: h24 * 60 + parseInt(m) };
       })
-      .filter((t: any) => t.dt > nowLocal)
-      .sort((a: any, b: any) => a.dt - b.dt);
+      .filter((t: any) => t.tideMins > nowMins)
+      .sort((a: any, b: any) => a.tideMins - b.tideMins);
     if (future.length > 0) {
       const next = future[0];
       tideType = (next.type.charAt(0).toUpperCase() + next.type.slice(1)) as "High" | "Low";
