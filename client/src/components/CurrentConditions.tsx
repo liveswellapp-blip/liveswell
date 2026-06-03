@@ -318,7 +318,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       </div>
                     </div>
                     <button
-                      className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#67e8f9]"
+                      className="w-full text-[9px] bg-cyan-400/15 border border-cyan-400/30 rounded-lg py-1.5 hover:bg-cyan-400/25 transition-colors font-medium text-[#67e8f9]"
                       onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                     >Wave History</button>
                   </div>
