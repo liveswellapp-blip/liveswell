@@ -426,13 +426,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     {conditions.sunrise && (
                       <div className="flex items-center gap-1">
                         <span className="text-slate-500 text-[9px] uppercase tracking-wider">Sunrise</span>
-                        <span className="text-[10px] font-semibold text-[#d97706]">{conditions.sunrise}</span>
+                        <span className="text-[10px] font-semibold text-[#34d399]">{conditions.sunrise}</span>
                       </div>
                     )}
                     {conditions.sunset && (
                       <div className="flex items-center gap-1">
                         <span className="text-slate-500 text-[9px] uppercase tracking-wider">Sunset</span>
-                        <span className="text-[10px] font-semibold text-[#d97706]">{conditions.sunset}</span>
+                        <span className="text-[10px] font-semibold text-[#34d399]">{conditions.sunset}</span>
                       </div>
                     )}
                   </div>
