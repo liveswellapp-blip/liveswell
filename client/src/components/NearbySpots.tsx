@@ -90,19 +90,22 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                   {spot.name}
                 </p>
 
-                {/* Wave / Wind data rows */}
+                {/* Wave / Wind — side by side, forecast card style */}
                 {(spot.waveHeight || spot.wind) && (
-                  <div className="flex flex-col gap-0.5 mt-1">
+                  <div className="flex gap-2 mt-1">
                     {spot.waveHeight && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-[8px] font-bold text-slate-500 tracking-wider">Wave</span>
-                        <span className="text-emerald-400 text-[10px] font-black">{spot.waveHeight}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wave</p>
+                        <p className="text-emerald-400 font-black text-[16px] leading-none">{spot.waveHeight}</p>
                       </div>
                     )}
+                    {spot.waveHeight && spot.wind && (
+                      <div className="w-px bg-white/5 self-stretch" />
+                    )}
                     {spot.wind && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-[8px] font-bold text-slate-500 tracking-wider">Wind</span>
-                        <span className="text-emerald-400 text-[10px] font-black">{spot.wind}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wind</p>
+                        <p className="text-cyan-400 font-bold text-[16px] leading-none">{spot.wind}</p>
                       </div>
                     )}
                   </div>
