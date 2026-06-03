@@ -1,5 +1,4 @@
-import { LogIn, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -11,65 +10,50 @@ interface HeaderProps {
 }
 
 export default function Header({ onLocationSelect }: HeaderProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [location] = useLocation();
   const [showSearchModal, setShowSearchModal] = useState(false);
 
   return (
-    <header className="bg-background shadow-lg sticky top-0 z-50 border-b border-border">
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="relative w-48 h-12">
-              {/* Dark mode logo only */}
-              <img 
-                src={logoImageDark} 
-                alt="LiveSwell" 
-                className="h-12 object-contain object-left"
-                style={{ imageRendering: 'auto' }}
-              />
-            </div>
-          </div>
-          
-          {/* Right side icons with consistent spacing */}
-          <div className="flex items-center space-x-1">
-            {/* Search icon on conditions page */}
-            {location === "/conditions" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowSearchModal(true)}
-                className="text-white hover:text-gray-200"
-                title="Search surf spots"
-                data-testid="button-search"
-              >
-                <Search className="h-5 w-5" />
-              </Button>
-            )}
+    <header className="sticky top-0 z-50" style={{ background: "#030a14", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div className="mx-auto px-5 py-3 max-w-2xl flex items-center justify-between">
+        <img
+          src={logoImageDark}
+          alt="LiveSwell"
+          className="h-8 object-contain object-left"
+        />
 
-            {/* Sign in for unauthenticated users */}
-            {!isAuthenticated && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-white border-white hover:bg-white hover:text-gray-900"
-                data-testid="button-open-auth"
-                onClick={() => window.location.href = "/api/login"}
-              >
-                <LogIn className="h-4 w-4 mr-1" />
-                Sign In
-              </Button>
-            )}
-          </div>
+        <div className="flex items-center gap-1">
+          {location === "/conditions" && isAuthenticated && (
+            <button
+              onClick={() => setShowSearchModal(true)}
+              className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-200 transition-colors"
+              style={{ background: "rgba(255,255,255,0.05)" }}
+              title="Search surf spots"
+              data-testid="button-search"
+            >
+              <Search size={15} />
+            </button>
+          )}
+
+          {!isAuthenticated && (
+            <button
+              className="px-3 py-1.5 rounded-xl text-[12px] font-semibold text-white transition-opacity hover:opacity-80"
+              style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)" }}
+              data-testid="button-open-auth"
+              onClick={() => window.location.href = "/api/login"}
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </div>
-      
-      {/* Search Modal */}
+
       <SearchModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
-        onLocationSelect={(location) => {
-          if (onLocationSelect) onLocationSelect(location);
+        onLocationSelect={(loc) => {
+          if (onLocationSelect) onLocationSelect(loc);
           setShowSearchModal(false);
         }}
         initialQuery=""

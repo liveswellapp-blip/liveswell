@@ -1,6 +1,5 @@
 import { Bell, LogOut, Shield, ChevronRight, Settings, Info } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -33,10 +32,10 @@ export default function Profile() {
   const email = (user as any)?.email || "";
 
   const ITEMS = [
-    { icon: Bell,     label: "Notifications",  value: "Manage alerts",      color: "#fbbf24", href: "/notifications" },
-    { icon: Settings, label: "Preferences",     value: "",                   color: "#94a3b8", href: "/settings" },
-    { icon: Shield,   label: "Privacy",         value: "",                   color: "#38bdf8", href: null },
-    { icon: Info,     label: "About",           value: "v1.0.0",             color: "#64748b", href: null },
+    { icon: Bell,     label: "Notifications", value: "Manage alerts", color: "#fbbf24", href: "/notifications" },
+    { icon: Settings, label: "Preferences",   value: "",              color: "#94a3b8", href: "/settings" },
+    { icon: Shield,   label: "Privacy",        value: "",              color: "#38bdf8", href: null },
+    { icon: Info,     label: "About",          value: "v1.0.0",        color: "#64748b", href: null },
   ];
 
   const handleLogout = () => {
@@ -45,8 +44,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: "#030a14" }}>
-      <Header />
-
       {/* ── Slim header ── */}
       <div className="px-5 pt-8 pb-6"
         style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
@@ -70,7 +67,7 @@ export default function Profile() {
       {/* ── Menu list ── */}
       <main className="flex-1 px-5 pb-8 max-w-lg mx-auto w-full">
         <div className="space-y-1">
-          {ITEMS.map(({ icon: Icon, label, value, color, href }, i) => {
+          {ITEMS.map(({ icon: Icon, label, value, color, href }) => {
             const row = (
               <div className="flex items-center justify-between px-1 py-3.5 cursor-pointer"
                 style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>

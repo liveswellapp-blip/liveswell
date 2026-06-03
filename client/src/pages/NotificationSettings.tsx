@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Bell, Clock, MapPin, ArrowLeft, Smartphone, CheckCircle, AlertCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location, NotificationSettings as NotificationSettingsType } from "@/types/weather";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Link } from "wouter";
 import { pushNotifications } from "@/lib/push-notifications";
@@ -153,8 +152,7 @@ export default function NotificationSettings() {
   if (settingsLoading) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
-        <Header />
-        <div className="flex-1 px-4 pt-8 max-w-2xl mx-auto w-full space-y-3">
+          <div className="flex-1 px-4 pt-8 max-w-2xl mx-auto w-full space-y-3">
           {[1, 2].map(i => (
             <div key={i} className="rounded-2xl h-24 animate-pulse" style={CARD} />
           ))}
@@ -166,8 +164,6 @@ export default function NotificationSettings() {
 
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: "#030a14" }}>
-      <Header />
-
       {/* ── Slim header ── */}
       <div className="px-5 pt-8 pb-6" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
         <Link href="/profile">

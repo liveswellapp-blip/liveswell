@@ -2,7 +2,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, MapPin, Globe, Shield, RefreshCw, Trash2, Download } from "lucide-react";
 import { Link } from "wouter";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useState } from "react";
 
@@ -37,8 +36,6 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: "#030a14" }}>
-      <Header />
-
       {/* ── Slim header ── */}
       <div className="px-5 pt-8 pb-6" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
         <Link href="/profile">
