@@ -59,11 +59,6 @@ export default function Profile() {
       <div className="px-5 pt-8 pb-6"
         style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
         <div className="max-w-lg mx-auto">
-          <div className="flex items-center gap-1.5 mb-5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px #34d399" }} />
-            <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">LiveSwell</span>
-          </div>
-
           <div className="flex items-center gap-4">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black text-white flex-shrink-0 select-none"
