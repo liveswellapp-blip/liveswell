@@ -218,7 +218,6 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
           <p className="text-slate-500 text-[11px] leading-tight truncate">{spot.city}, {spot.country}</p>
         </div>
       </div>
-
       {/* Conditions — lazy loaded */}
       {!inView || isLoading ? (
         <div className="space-y-1">
@@ -234,7 +233,7 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
           </div>
           <div className="flex items-center gap-1.5">
             <Wind size={11} className="text-cyan-600 flex-shrink-0" />
-            <span className="text-cyan-500 text-[12px]">{windDisplay}</span>
+            <span className="text-[12px] text-[#67e8f9]">{windDisplay}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <TideIcon size={11} className="text-amber-400 flex-shrink-0" />
@@ -242,7 +241,6 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
           </div>
         </div>
       )}
-
       {/* Fav — bottom-right corner */}
       <div onClick={e => e.stopPropagation()} className="absolute bottom-2 right-2">
         <FavoriteButton locationId={spot.id} locationName={spot.name} size="sm" />
