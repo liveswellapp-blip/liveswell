@@ -404,15 +404,12 @@ export default function Landing() {
           .landing-screenshots-heading { font-size: 26px; padding: 0 20px; }
           .landing-screenshots-sub { font-size: 14px; padding: 0 24px; margin-bottom: 32px; }
           .landing-screenshots-grid {
-            grid-template-columns: 280px 280px 280px;
-            gap: 24px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scroll-snap-type: x mandatory;
+            grid-template-columns: 1fr;
+            gap: 40px;
             padding: 0 20px 16px;
-            justify-content: flex-start;
+            justify-content: center;
           }
-          .landing-screenshot-item { scroll-snap-align: start; }
+          .landing-screenshot-item { align-items: center; }
 
           .landing-footer { padding: 0 20px 40px; }
         }
