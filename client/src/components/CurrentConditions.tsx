@@ -228,6 +228,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <span className="text-emerald-400 text-xs font-semibold">{location.city}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  {lastUpdated !== "—" && (
+                    <span className="text-[9px] text-slate-600">Updated {lastUpdated}</span>
+                  )}
                   <button
                     onClick={handleRefresh}
                     disabled={refreshState === "spinning"}
