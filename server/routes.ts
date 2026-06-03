@@ -353,7 +353,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Apply rate limiting to API routes
-  app.use("/api/locations", generalApiLimiter);
+  // NOTE: /api/locations is intentionally NOT rate-limited here — it covers pure DB
+  // routes like /api/locations/all that must stay available even under load.
+  // Weather sub-routes get their own limiter below.
   app.use("/api/weather", weatherApiLimiter);
   app.use("/api/conditions", weatherApiLimiter);
   app.use("/api/buoy", noaaApiLimiter);
