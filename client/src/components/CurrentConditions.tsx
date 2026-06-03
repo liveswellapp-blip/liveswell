@@ -292,7 +292,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       </div>
                       {primaryBuoy.stationId !== 'open-meteo' && (
                         <button
-                          className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors text-emerald-400 font-medium"
+                          className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#ffffff]"
                           onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
                         >Wave History</button>
                       )}
@@ -330,7 +330,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       </div>
                     </div>
                     <button
-                      className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors text-emerald-400 font-medium"
+                      className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#ffffff]"
                       onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                     >Wave History</button>
                   </div>
