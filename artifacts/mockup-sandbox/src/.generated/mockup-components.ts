@@ -21,6 +21,7 @@ export const modules: ModuleMap = {
   "./components/mockups/landing/TrestlesScreen.tsx": () => import("../components/mockups/landing/TrestlesScreen.tsx"),
   "./components/mockups/landing/WaveBreak.tsx": () => import("../components/mockups/landing/WaveBreak.tsx"),
   "./components/mockups/landing/WaveBreakMobile.tsx": () => import("../components/mockups/landing/WaveBreakMobile.tsx"),
+  "./components/mockups/palette/ColorPalette.tsx": () => import("../components/mockups/palette/ColorPalette.tsx"),
   "./components/mockups/nearby-spots/NearbySpots.tsx": () => import("../components/mockups/nearby-spots/NearbySpots.tsx"),
   "./components/mockups/profile/GlassCard.tsx": () => import("../components/mockups/profile/GlassCard.tsx"),
   "./components/mockups/profile/MinimalDark.tsx": () => import("../components/mockups/profile/MinimalDark.tsx"),
