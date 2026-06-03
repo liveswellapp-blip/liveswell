@@ -414,13 +414,11 @@ export default function Landing() {
           .landing-footer { padding: 0 20px 40px; }
         }
       `}</style>
-
       {/* Nav */}
       <nav className="landing-nav">
         <img src={logoImage} alt="LiveSwell" />
         <button className="landing-nav-btn" onClick={handleLogin}>Sign In</button>
       </nav>
-
       {/* Hero */}
       <div className="landing-hero">
         <div>
@@ -429,9 +427,7 @@ export default function Landing() {
             <em>Catch the</em><br />
             Moment.
           </h1>
-          <p className="landing-sub">
-            Real-time surf conditions from 1,355+ NOAA buoys worldwide. Wave heights, swell periods, tides, and wind — all in one place.
-          </p>
+          <p className="landing-sub">Get accurate and real-time NOAA wave, wind and tide data across 200+ surf locations.</p>
           <div className="landing-badges">
             {["218+ Surf Spots", "6 Continents", "Real-time NOAA"].map(label => (
               <div key={label} className="landing-badge">{label}</div>
@@ -450,7 +446,6 @@ export default function Landing() {
           </PhoneShell>
         </div>
       </div>
-
       {/* Stats */}
       <div className="landing-stats-bar">
         <div className="landing-stats-inner">
@@ -467,7 +462,6 @@ export default function Landing() {
           ))}
         </div>
       </div>
-
       {/* Screenshots */}
       <div className="landing-screenshots">
         <div className="landing-screenshots-heading">See it in action</div>
@@ -486,7 +480,6 @@ export default function Landing() {
           ))}
         </div>
       </div>
-
       <div className="landing-footer">
         Data sources: NOAA NDBC · OpenWeatherMap · Open-Meteo Marine · NOAA Tides &amp; Currents
       </div>
