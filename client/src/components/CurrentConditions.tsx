@@ -339,19 +339,19 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-black text-2xl leading-none text-emerald-400">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
-                      <span className="text-xs font-semibold text-[#34d399]">mph</span>
-                      <span className="text-sm font-semibold text-[#34d399]">{conditions.windDirection}</span>
+                      <span className="font-black text-2xl leading-none text-[#38bdf8]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                      <span className="text-xs font-semibold text-[#38bdf8]">mph</span>
+                      <span className="text-sm font-semibold text-[#38bdf8]">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                         <>
                           <span className="text-slate-600 text-xs">·</span>
-                          <span className="text-[11px] text-[#34d399]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                          <span className="text-[11px] text-[#38bdf8]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
                         </>
                       )}
                     </div>
                   </div>
                   <button
-                    className="text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg px-3 py-1 hover:bg-emerald-500/25 transition-colors shrink-0 text-[#34d399]"
+                    className="text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg px-3 py-1 hover:bg-emerald-500/25 transition-colors shrink-0 text-[#38bdf8]"
                     onClick={() => setShowWindDetailsModal(true)}
                   >Wind Forecast</button>
                 </div>
