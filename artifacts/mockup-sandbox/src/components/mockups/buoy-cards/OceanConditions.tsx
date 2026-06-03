@@ -41,7 +41,7 @@ function BuoyCard({
             borderTop: i === 0 ? "none" : ROW_DIVIDER,
           }}>
             <span style={{ color: "#64748b", fontSize: 8, fontWeight: 700, letterSpacing: "0.06em" }}>{row.label}</span>
-            <span style={{ color: "#34d399", fontSize: 14, fontWeight: 900 }}>{row.value}</span>
+            <span style={{ color: "#34d399", fontSize: row.label === "Height" ? 22 : 14, fontWeight: 900, lineHeight: 1 }}>{row.value}</span>
           </div>
         ))}
       </div>
