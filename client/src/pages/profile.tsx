@@ -90,12 +90,6 @@ export default function Profile() {
 
             return (
               <div key={label}>
-                {i === 3 && (
-                  <div className="pt-3 pb-2 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-slate-700" />
-                    <span className="text-slate-700 text-[10px] font-bold tracking-widest uppercase">More</span>
-                  </div>
-                )}
                 {href ? <Link href={href}>{row}</Link> : row}
               </div>
             );
