@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import SearchModal from "./SearchModal";
-import logoImageDark from "@assets/LiveSwell logo (6)_1753469985642.png";
+import logoImageDark from "@assets/Live_(1500_x_500_px)_1780496302976.png";
 
 interface HeaderProps {
   onLocationSelect?: (location: any) => void;
