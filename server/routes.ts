@@ -1386,10 +1386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const now = new Date();
       const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
       
-      // Force fresh data to get new buoy fields (temporary)
-      const forceRefresh = true;
-      
-      if (!conditions || (conditions.lastUpdated && conditions.lastUpdated < tenMinutesAgo) || forceRefresh) {
+      if (!conditions || !conditions.lastUpdated || conditions.lastUpdated < tenMinutesAgo) {
         // Fetch fresh data from weather API
         try {
           const weatherData = await fetchWeatherData(
