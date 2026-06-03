@@ -85,7 +85,7 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                 </div>
 
                 {/* Spot name */}
-                <p className="text-white text-[11px] font-semibold leading-tight mb-2"
+                <p className="text-white font-semibold mb-2 text-[12px]"
                   data-testid={`text-spot-name-${spot.id}`}>
                   {spot.name}
                 </p>
