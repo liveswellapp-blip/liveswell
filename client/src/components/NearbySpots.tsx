@@ -77,12 +77,8 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                {/* Icon + distance */}
+                {/* Distance */}
                 <div className="flex items-start justify-between mb-2">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.2)" }}>
-                    <Waves size={14} className="text-emerald-400" />
-                  </div>
                   <span className="text-slate-500 text-[9px]"
                     data-testid={`text-spot-distance-${spot.id}`}>
                     {spot.distance} mi
