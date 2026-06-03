@@ -341,30 +341,30 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
             {/* ── Wind subcard ──────────────────────────────────────── */}
             {conditions && (
-              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-cyan-500/15">
+              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-amber-500/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Wind className="h-3 w-3 text-cyan-400" />
-                    <span className="text-cyan-400 text-[10px] font-bold uppercase tracking-wide">Wind</span>
+                    <Wind className="h-3 w-3 text-amber-400" />
+                    <span className="text-amber-400 text-[10px] font-bold uppercase tracking-wide">Wind</span>
                   </div>
                   <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
                 </div>
                 <div className="mt-2 flex items-end justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="font-black text-2xl leading-none text-[#22d3ee]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
-                      <span className="text-cyan-600 text-xs font-semibold">mph</span>
-                      <span className="text-sm font-semibold text-[#0891b2]">{conditions.windDirection}</span>
+                      <span className="font-black text-2xl leading-none text-amber-400">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                      <span className="text-amber-600 text-xs font-semibold">mph</span>
+                      <span className="text-sm font-semibold text-amber-500">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                         <>
                           <span className="text-slate-600 text-xs">·</span>
-                          <span className="text-[11px] text-[#0891b2]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                          <span className="text-[11px] text-amber-500">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
                         </>
                       )}
                     </div>
                   </div>
                   <button
-                    className="text-[9px] bg-cyan-500/15 border border-cyan-500/30 rounded-lg px-3 py-1 hover:bg-cyan-500/25 transition-colors shrink-0 text-cyan-400"
+                    className="text-[9px] bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1 hover:bg-amber-500/20 transition-colors shrink-0 text-amber-400"
                     onClick={() => setShowWindDetailsModal(true)}
                   >Wind Forecast</button>
                 </div>
