@@ -224,7 +224,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="mb-4">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-emerald-400" />
+                  <MapPin className="h-3.5 w-3.5 text-[#94a3b8]" />
                   <span className="text-xs font-semibold text-[#94a3b8]">{location.city}</span>
                 </div>
                 <div className="flex items-center gap-2">
