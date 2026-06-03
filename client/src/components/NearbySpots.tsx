@@ -90,19 +90,19 @@ export default function NearbySpots({ location }: NearbySpotsProps) {
                   {spot.name}
                 </p>
 
-                {/* Wave data chips — shown if available */}
+                {/* Wave / Wind data rows */}
                 {(spot.waveHeight || spot.wind) && (
-                  <div className="flex gap-1.5 flex-wrap">
+                  <div className="flex flex-col gap-0.5 mt-1">
                     {spot.waveHeight && (
-                      <div className="px-1.5 py-0.5 rounded-full"
-                        style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                        <span className="text-emerald-400 text-[9px] font-bold">{spot.waveHeight}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] font-bold text-slate-500 tracking-wider">Wave</span>
+                        <span className="text-emerald-400 text-[10px] font-black">{spot.waveHeight}</span>
                       </div>
                     )}
                     {spot.wind && (
-                      <div className="px-1.5 py-0.5 rounded-full"
-                        style={{ background: "rgba(34,211,238,0.08)", border: "1px solid rgba(34,211,238,0.15)" }}>
-                        <span className="text-cyan-500 text-[9px]">{spot.wind}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] font-bold text-slate-500 tracking-wider">Wind</span>
+                        <span className="text-emerald-400 text-[10px] font-black">{spot.wind}</span>
                       </div>
                     )}
                   </div>
