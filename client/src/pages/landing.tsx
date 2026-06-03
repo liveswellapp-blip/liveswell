@@ -479,7 +479,6 @@ export default function Landing() {
       <div className="landing-features">
         <div className="landing-features-grid">
           {[
-            { icon: "🌊", title: "Global Wave Forecasts", body: "7-day wave height, period, and direction powered by NOAA NWS and Open-Meteo Marine — covering every beach on Earth." },
             { icon: "📍", title: "228+ Curated Spots",    body: "From Pipeline to Jeffreys Bay. Advanced, intermediate, and beginner breaks across 6 continents with real-time conditions." },
             { icon: "⭐", title: "Personal Favorites",    body: "Save your go-to breaks and get them at a glance. Your personalized surf dashboard, always one tap away." },
           ].map(f => (
