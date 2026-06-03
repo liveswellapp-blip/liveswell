@@ -354,11 +354,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="flex items-baseline gap-1.5">
                       <span className="font-black text-2xl leading-none text-amber-400">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
                       <span className="text-amber-600 text-xs font-semibold">mph</span>
-                      <span className="text-sm font-semibold text-amber-500">{conditions.windDirection}</span>
+                      <span className="text-sm font-semibold text-[#d97706]">{conditions.windDirection}</span>
                       {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                         <>
                           <span className="text-slate-600 text-xs">·</span>
-                          <span className="text-[11px] text-amber-500">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                          <span className="text-[11px] text-[#d97706]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
                         </>
                       )}
                     </div>
@@ -426,13 +426,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     {conditions.sunrise && (
                       <div className="flex items-center gap-1">
                         <span className="text-slate-500 text-[9px] uppercase tracking-wider">Sunrise</span>
-                        <span className="text-amber-400 text-[10px] font-semibold">{conditions.sunrise}</span>
+                        <span className="text-[10px] font-semibold text-[#d97706]">{conditions.sunrise}</span>
                       </div>
                     )}
                     {conditions.sunset && (
                       <div className="flex items-center gap-1">
                         <span className="text-slate-500 text-[9px] uppercase tracking-wider">Sunset</span>
-                        <span className="text-orange-400 text-[10px] font-semibold">{conditions.sunset}</span>
+                        <span className="text-[10px] font-semibold text-[#d97706]">{conditions.sunset}</span>
                       </div>
                     )}
                   </div>
