@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Waves, MapPin, TrendingUp, Star } from "lucide-react";
-import logoImageDark from "@assets/Live_(1500_x_500_px)_1780496302976.png";
+import logoImageDark from "@assets/Live_(1500_x_500_px)_(1)_1780500060904.png";
 
 export default function Landing() {
   const handleLogin = () => {
