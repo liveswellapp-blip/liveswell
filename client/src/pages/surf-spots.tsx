@@ -331,6 +331,14 @@ export default function SurfSpots() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("search") === "1") {
+      setShowSearchModal(true);
+      window.history.replaceState({}, "", "/");
+    }
+  }, []);
+
   const { data: spots, isLoading } = useQuery<SurfSpot[]>({
     queryKey: ["/api/locations/search", "all"],
     queryFn: async () => {
