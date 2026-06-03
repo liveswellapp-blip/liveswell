@@ -216,7 +216,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         {/* ── Hero card ─────────────────────────────────────────────── */}
         <div
           className="rounded-2xl relative overflow-hidden border border-emerald-500/20"
-          style={{ background: "linear-gradient(160deg, #040b1c 0%, #0d2245 50%, #040e1c 100%)" }}
+          style={{ background: "linear-gradient(160deg, #03091a 0%, #102850 45%, #051020 100%)" }}
         >
           {/* Subtle wave lines */}
           <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 600 220" preserveAspectRatio="none">
