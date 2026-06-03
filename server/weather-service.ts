@@ -212,7 +212,7 @@ async function fetchOpenMeteoMarineFallback(lat: number, lon: number) {
 
         return {
           waveHeight: waveHeightFt,
-          wavePeriod: wavePeriod ?? null,
+          wavePeriod: wavePeriod != null ? Math.round(wavePeriod) : null,
           waveDirection: waveDirectionStr,
           waterTemp: getRealisticWaterTemperature(lat, lon),
           primaryBuoy: buoy,
@@ -407,7 +407,7 @@ export async function generateDemoWeatherData(lat: number, lon: number) {
   // Try to fetch real marine data even in demo mode
   const marineData = await fetchMarineData(lat, lon);
   const waveHeight = marineData.waveHeight || Math.max(1, windSpeed * 0.3 + Math.random() * 2);
-  const wavePeriod = marineData.wavePeriod || Math.round(8 + Math.random() * 8);
+  const wavePeriod = marineData.wavePeriod != null ? Math.round(marineData.wavePeriod) : Math.round(8 + Math.random() * 8);
   const waveDirection = marineData.waveDirection || getCoastalSwellDirection(lat, lon);
   
   // Fetch real tide data
@@ -510,7 +510,7 @@ export async function fetchWeatherData(lat: number, lon: number) {
     
     const result = {
       waveHeight: marineData.waveHeight?.toFixed(1) || "2.5",
-      wavePeriod: marineData.wavePeriod || 8,
+      wavePeriod: marineData.wavePeriod != null ? Math.round(marineData.wavePeriod) : 8,
       waveDirection: marineData.waveDirection || getCoastalSwellDirection(lat, lon),
       windSpeed: Math.round(weatherData.wind?.speed || 10).toString(),
       windDirection: getWindDirection(weatherData.wind?.deg || 180),
