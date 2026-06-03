@@ -331,7 +331,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className="mt-3 bg-black/30 rounded-xl p-3 border border-emerald-500/25">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Wind className="h-3 w-3 text-emerald-400" />
+                    <Wind className="h-3 w-3 text-[#94a3b8]" />
                     <span className="text-[10px] font-bold uppercase tracking-wide text-[#94a3b8]">Wind</span>
                   </div>
                   <span className="text-slate-500 text-[9px]">OpenWeatherMap</span>
@@ -365,7 +365,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <div className="rounded-xl border border-emerald-500/15 overflow-hidden" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <div className="flex items-center gap-1.5">
-                <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
+                <BarChart3 className="h-3.5 w-3.5 text-[#94a3b8]" />
                 <span className="text-[11px] uppercase tracking-wide font-semibold text-[#94a3b8]">Tides</span>
               </div>
               <span className="text-slate-500 text-[10px]">{localTime} local</span>
