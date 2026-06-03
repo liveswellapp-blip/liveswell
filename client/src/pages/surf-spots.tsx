@@ -192,20 +192,15 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
   return (
     <div
       onClick={() => onSelect(spot.id)}
-      className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2 active:scale-[0.98] transition-transform"
+      className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2 active:scale-[0.98] transition-transform relative"
       style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}
     >
-      {/* Name + location + fav */}
-      <div className="flex items-start justify-between gap-1">
-        <div className="min-w-0 flex-1">
-          <p className="text-white text-[14px] font-bold leading-tight truncate">{spot.name}</p>
-          <div className="flex items-center gap-1 mt-0.5">
-            <MapPin size={10} className="text-slate-500 flex-shrink-0" />
-            <p className="text-slate-500 text-[11px] leading-tight truncate">{spot.city}, {spot.country}</p>
-          </div>
-        </div>
-        <div onClick={e => e.stopPropagation()} className="flex-shrink-0 -mt-0.5">
-          <FavoriteButton locationId={spot.id} locationName={spot.name} size="sm" />
+      {/* Name + location */}
+      <div className="min-w-0 pr-1">
+        <p className="text-white text-[14px] font-bold leading-tight truncate">{spot.name}</p>
+        <div className="flex items-center gap-1 mt-0.5">
+          <MapPin size={10} className="text-slate-500 flex-shrink-0" />
+          <p className="text-slate-500 text-[11px] leading-tight truncate">{spot.city}, {spot.country}</p>
         </div>
       </div>
 
@@ -232,6 +227,11 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
           </div>
         </div>
       )}
+
+      {/* Fav — bottom-right corner */}
+      <div onClick={e => e.stopPropagation()} className="absolute bottom-2 right-2">
+        <FavoriteButton locationId={spot.id} locationName={spot.name} size="sm" />
+      </div>
     </div>
   );
 }
