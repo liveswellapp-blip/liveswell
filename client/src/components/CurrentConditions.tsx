@@ -71,7 +71,7 @@ function StatTile({
         <Icon className={`h-3.5 w-3.5 ${color}`} />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-medium leading-tight text-[#ffffff]">{label}</p>
+        <p className="text-[10px] font-medium leading-tight text-[#94a3b8]">{label}</p>
         <p className={`font-bold text-sm ${color} leading-snug`}>{value}</p>
         <p className="text-slate-500 text-[10px] leading-tight truncate">{sub}</p>
       </div>
