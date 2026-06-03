@@ -195,17 +195,17 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     {
       icon: Waves, label: "Wave Period", value: wavePeriodVal,
       sub: "Long-period groundswell",
-      color: "text-teal-400", border: "border-teal-500/20", bg: "bg-teal-500/10",
+      color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10",
     },
     {
       icon: Droplets, label: "Water Temp", value: waterF,
       sub: waterC ? `${waterC} sea surface` : "NOAA buoy",
-      color: "text-blue-400", border: "border-blue-500/20", bg: "bg-blue-500/10",
+      color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10",
     },
     {
       icon: Sun, label: "UV Index", value: uvVal,
       sub: uvSub,
-      color: "text-amber-400", border: "border-amber-500/20", bg: "bg-amber-500/10",
+      color: "text-emerald-400", border: "border-emerald-500/20", bg: "bg-emerald-500/10",
     },
   ];
 
