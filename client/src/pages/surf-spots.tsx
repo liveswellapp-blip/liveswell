@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Waves, Wind, Search, SlidersHorizontal, TrendingUp, X } from "lucide-react";
+import { MapPin, Waves, Wind, Search, Heart, SlidersHorizontal, TrendingUp, TrendingDown, X } from "lucide-react";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -125,19 +125,87 @@ function getState(spot: SurfSpot): string {
 }
 
 // ── SpotCard ────────────────────────────────────────────────────────────────
-// Cards show only static spot data — no live API calls.
-// Live conditions load on the detail page when a spot is selected.
+// Conditions are fetched lazily — only when the card scrolls into view.
+// This prevents a flood of simultaneous API calls when many cards render.
 function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) => void }) {
-  const difficultyColor: Record<string, string> = {
-    Beginner: "text-emerald-400",
-    Intermediate: "text-cyan-400",
-    Advanced: "text-amber-400",
-    Expert: "text-red-400",
-  };
-  const diffColor = spot.difficulty ? (difficultyColor[spot.difficulty] ?? "text-slate-400") : "text-slate-500";
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      { rootMargin: "100px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const { data: conditions, isLoading: condLoading } = useQuery<any>({
+    queryKey: [`/api/locations/${spot.id}/conditions`],
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+    enabled: inView,
+  });
+  const { data: forecast, isLoading: fcLoading } = useQuery<any>({
+    queryKey: [`/api/locations/${spot.id}/forecast`],
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
+    enabled: inView,
+  });
+
+  const isLoading = inView && (condLoading || fcLoading);
+
+  // Wave
+  let waveDisplay = "—";
+  if (conditions) {
+    const period = conditions.wavePeriod ? ` @ ${Math.round(parseFloat(conditions.wavePeriod))}s` : "";
+    if (conditions.primaryBuoy && conditions.backupBuoy) {
+      const lo = Math.round(Math.min(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+      const hi = Math.round(Math.max(parseFloat(conditions.primaryBuoy.waveHeight), parseFloat(conditions.backupBuoy.waveHeight)));
+      waveDisplay = lo === hi ? `${lo} ft${period}` : `${lo}–${hi} ft${period}`;
+    } else if (conditions.primaryBuoy) {
+      waveDisplay = `${Math.round(parseFloat(conditions.primaryBuoy.waveHeight))} ft${period}`;
+    } else if (conditions.waveHeight) {
+      waveDisplay = `${Math.round(parseFloat(conditions.waveHeight))} ft${period}`;
+    }
+  }
+
+  const windDisplay = conditions
+    ? `${Math.round(parseFloat(conditions.windSpeed || "0"))} mph ${conditions.windDirection || ""}`
+    : "—";
+
+  let tideDisplay = "—";
+  let tideType: "High" | "Low" = "High";
+  if (conditions && forecast?.[0]?.tides?.length > 0) {
+    const targetType = conditions.tideStatus?.toLowerCase() === "rising" ? "high" : "low";
+    tideType = targetType === "high" ? "High" : "Low";
+    const now = new Date();
+    const future = forecast[0].tides
+      .filter((t: any) => t.type.toLowerCase() === targetType)
+      .map((t: any) => {
+        const [time, period] = t.time.split(" ");
+        const [h, m] = time.split(":");
+        let h24 = parseInt(h);
+        if (period === "PM" && h24 !== 12) h24 += 12;
+        else if (period === "AM" && h24 === 12) h24 = 0;
+        return { ...t, dt: new Date(now.getFullYear(), now.getMonth(), now.getDate(), h24, parseInt(m)) };
+      })
+      .filter((t: any) => t.dt > now)
+      .sort((a: any, b: any) => a.dt - b.dt);
+    if (future.length > 0) {
+      const next = future[0];
+      tideType = (next.type.charAt(0).toUpperCase() + next.type.slice(1)) as "High" | "Low";
+      tideDisplay = `${tideType} ${next.time}`;
+    }
+  }
+
+  const TideIcon = tideType === "High" ? TrendingUp : TrendingDown;
 
   return (
     <div
+      ref={ref}
       onClick={() => onSelect(spot.id)}
       className="rounded-2xl p-3 cursor-pointer flex flex-col gap-2 active:scale-[0.98] transition-transform relative"
       style={{ background: "linear-gradient(160deg,#030f1c,#041a2e)", border: "1px solid rgba(255,255,255,0.06)" }}
@@ -151,27 +219,29 @@ function SpotCard({ spot, onSelect }: { spot: SurfSpot; onSelect: (id: number) =
         </div>
       </div>
 
-      {/* Static spot info */}
-      <div className="space-y-1">
-        {spot.difficulty && (
+      {/* Conditions — lazy loaded */}
+      {!inView || isLoading ? (
+        <div className="space-y-1">
+          <Skeleton className="h-3 w-24 bg-white/5" />
+          <Skeleton className="h-3 w-20 bg-white/5" />
+          <Skeleton className="h-3 w-16 bg-white/5" />
+        </div>
+      ) : (
+        <div className="space-y-1">
           <div className="flex items-center gap-1.5">
             <Waves size={11} className="text-emerald-500 flex-shrink-0" />
-            <span className={`text-[12px] font-semibold ${diffColor}`}>{spot.difficulty}</span>
+            <span className="text-emerald-400 text-[13px] font-bold truncate">{waveDisplay}</span>
           </div>
-        )}
-        {spot.break_type && (
           <div className="flex items-center gap-1.5">
             <Wind size={11} className="text-cyan-600 flex-shrink-0" />
-            <span className="text-cyan-500 text-[12px]">{spot.break_type}</span>
+            <span className="text-cyan-500 text-[12px]">{windDisplay}</span>
           </div>
-        )}
-        {spot.optimal_swell && (
           <div className="flex items-center gap-1.5">
-            <TrendingUp size={11} className="text-amber-400 flex-shrink-0" />
-            <span className="text-amber-400 text-[12px]">Best swell: {spot.optimal_swell}</span>
+            <TideIcon size={11} className="text-amber-400 flex-shrink-0" />
+            <span className="text-amber-400 text-[12px]">{tideDisplay}</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Fav — bottom-right corner */}
       <div onClick={e => e.stopPropagation()} className="absolute bottom-2 right-2">
