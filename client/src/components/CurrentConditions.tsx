@@ -306,19 +306,19 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     <div className="flex flex-col divide-y divide-white/5 mb-2">
                       <div className="flex items-center justify-between py-1.5">
                         <span className="text-[8px] font-bold text-slate-500 tracking-wider">Height</span>
-                        <span className="text-[22px] font-black text-emerald-400 leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)} ft</span>
+                        <span className="text-[22px] font-black leading-none text-[#67e8f9]">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)} ft</span>
                       </div>
                       <div className="flex items-center justify-between py-1.5">
                         <span className="text-[8px] font-bold text-slate-500 tracking-wider">Period</span>
-                        <span className="text-[14px] font-black text-emerald-400">{backupBuoy.wavePeriod || 0} sec</span>
+                        <span className="text-[14px] font-black text-[#67e8f9]">{backupBuoy.wavePeriod || 0} sec</span>
                       </div>
                       <div className="flex items-center justify-between py-1.5">
                         <span className="text-[8px] font-bold text-slate-500 tracking-wider">Direction</span>
-                        <span className="text-[14px] font-black text-emerald-400">{backupBuoy.waveDirection || "—"}</span>
+                        <span className="text-[14px] font-black text-[#67e8f9]">{backupBuoy.waveDirection || "—"}</span>
                       </div>
                     </div>
                     <button
-                      className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#34d399]"
+                      className="w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#67e8f9]"
                       onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                     >Wave History</button>
                   </div>
