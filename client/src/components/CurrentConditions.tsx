@@ -260,15 +260,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               <div className={`grid gap-3 ${backupBuoy ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {/* Buoy #1 / Marine Forecast — Design C */}
                 <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">
-                      {primaryBuoy?.stationId === 'open-meteo' ? 'Forecast' : 'Primary'}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-2 w-2 text-slate-600" />
-                      <span className="text-[8px] text-slate-600">{lastUpdated}</span>
-                    </div>
-                  </div>
                   {primaryBuoy ? (
                     <>
                       <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
