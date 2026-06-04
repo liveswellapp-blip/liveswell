@@ -1479,6 +1479,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } catch { /* keep DB wind on parse error */ }
         }
 
+        // Safety net: if cached DB gusts are lower than live wind speed, recalculate
+        const gustNum = parseFloat(liveWindGusts?.toString() || '0');
+        const speedNum = parseFloat(liveWindSpeed?.toString() || '0');
+        if (speedNum > 0 && gustNum < speedNum) {
+          liveWindGusts = Math.round(speedNum * 1.3).toString();
+        }
+
         res.json({
           ...conditions,
           windSpeed: liveWindSpeed,
