@@ -570,3 +570,75 @@ export async function fetchWeatherData(lat: number, lon: number) {
     return await generateDemoWeatherData(lat, lon);
   }
 }
+
+// Cache NWS grid-point hourly URLs — these are geography-based and never change.
+// Key: "lat,lon" rounded to 2 decimal places. Value: { hourlyUrl, gridId }.
+const nwsGridCache = new Map<string, { hourlyUrl: string; gridId: string }>();
+
+/**
+ * Fetch current wind from the National Weather Service point forecast API.
+ * Free, no key, NWS-calibrated to the exact coastal grid point.
+ * The grid-point lookup (step 1) is cached per location so subsequent calls
+ * only make ONE HTTP request instead of two.
+ * Returns null if the location is outside NWS coverage (outside CONUS).
+ */
+export async function fetchNWSWind(lat: number, lon: number): Promise<{
+  windSpeed: number;
+  windDirection: string;
+  windGusts: number | null;
+  source: string;
+} | null> {
+  const cacheKey = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+
+  try {
+    // Step 1 — resolve the NWS grid point (cached after first lookup)
+    let gridEntry = nwsGridCache.get(cacheKey);
+    if (!gridEntry) {
+      const pointsRes = await fetch(
+        `https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,
+        {
+          signal: AbortSignal.timeout(3500),
+          headers: { 'User-Agent': 'LiveSwell/1.0 (surf conditions app)' },
+        }
+      );
+      if (!pointsRes.ok) return null; // Outside CONUS
+
+      const pointsData = await pointsRes.json();
+      const hourlyUrl: string | undefined = pointsData?.properties?.forecastHourly;
+      const gridId: string = pointsData?.properties?.gridId ?? 'NWS';
+      if (!hourlyUrl) return null;
+
+      gridEntry = { hourlyUrl, gridId };
+      nwsGridCache.set(cacheKey, gridEntry);
+    }
+
+    // Step 2 — fetch the hourly forecast (always fresh — wind changes every hour)
+    const forecastRes = await fetch(gridEntry.hourlyUrl, {
+      signal: AbortSignal.timeout(3500),
+      headers: { 'User-Agent': 'LiveSwell/1.0 (surf conditions app)' },
+    });
+    if (!forecastRes.ok) return null;
+
+    const forecastData = await forecastRes.json();
+    const periods: any[] = forecastData?.properties?.periods ?? [];
+    if (periods.length === 0) return null;
+
+    // The first period covers the current hour
+    const current = periods[0];
+
+    // windSpeed is a string like "10 mph" or "10 to 15 mph" — take the max value
+    const rawSpeed: string = current.windSpeed ?? '';
+    const speedNumbers = rawSpeed.match(/\d+/g)?.map(Number) ?? [];
+    if (speedNumbers.length === 0) return null;
+    const windSpeedMph = Math.max(...speedNumbers);
+
+    const windDirection: string = current.windDirection ?? '';
+    if (!windDirection) return null;
+
+    console.log(`🌬️  Wind from NWS (${gridEntry.gridId}): ${windSpeedMph} mph ${windDirection}`);
+
+    return { windSpeed: windSpeedMph, windDirection, windGusts: null, source: `NWS ${gridEntry.gridId}` };
+  } catch {
+    return null;
+  }
+}
