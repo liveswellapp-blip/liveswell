@@ -1429,10 +1429,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const lon = parseFloat(location.longitude);
       const tz = getTimezone(lat, lon);
       try {
-        const windForecastPromise = fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHER_API_KEY}&units=imperial&cnt=2`,
-          { signal: AbortSignal.timeout(4000) }
-        ).catch(() => null);
+        // Fetch OWM forecast wind in parallel with marine/tide (cnt=2 = cheapest call)
+        const windForecastPromise = (API_KEY && API_KEY !== "demo_key")
+          ? fetch(
+              `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial&cnt=2`,
+              { signal: AbortSignal.timeout(4000) }
+            ).catch(() => null)
+          : Promise.resolve(null);
 
         const [marineData, tideData, windForecastRes] = await Promise.all([
           fetchMarineData(lat, lon),
@@ -1440,18 +1443,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           windForecastPromise,
         ]);
 
-        // Override wind with live forecast data if available
+        // Wind priority:
+        //   1. NOAA NDBC buoy (real observation, ~30 min cadence) — most accurate for coast
+        //   2. OWM forecast list[0] (NWP model) — better than current-weather obs for coast
+        //   3. DB cache — last resort
         let liveWindSpeed = conditions.windSpeed;
         let liveWindDirection = conditions.windDirection;
         let liveWindGusts = conditions.windGusts;
-        if (windForecastRes && windForecastRes.ok) {
+
+        const buoy = (marineData as any).primaryBuoy;
+        if (buoy?.windSpeed != null && buoy.windSpeed > 0) {
+          liveWindSpeed    = Math.round(buoy.windSpeed).toString();
+          liveWindDirection = buoy.windDirection || liveWindDirection;
+          // Buoys don't report gusts — estimate 30% above sustained
+          liveWindGusts    = Math.round(buoy.windSpeed * 1.3).toString();
+          console.log(`💨 Wind from NOAA buoy ${buoy.stationId}: ${liveWindSpeed} mph ${liveWindDirection}`);
+        } else if (windForecastRes && windForecastRes.ok) {
           try {
             const wf = await windForecastRes.json();
             const nearest = wf?.list?.[0];
             if (nearest?.wind?.speed != null) {
-              liveWindSpeed = Math.round(nearest.wind.speed).toString();
+              liveWindSpeed    = Math.round(nearest.wind.speed).toString();
               liveWindDirection = getWindDirection(nearest.wind.deg ?? 180);
-              liveWindGusts = Math.round(nearest.wind.gust ?? nearest.wind.speed * 1.3).toString();
+              liveWindGusts    = Math.round(nearest.wind.gust ?? nearest.wind.speed * 1.3).toString();
+              console.log(`💨 Wind from OWM forecast: ${liveWindSpeed} mph ${liveWindDirection}`);
             }
           } catch { /* keep DB wind on parse error */ }
         }
