@@ -1,6 +1,7 @@
 import { Bell, LogOut, Shield, ChevronRight, Settings, Info } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 
 function getInitials(user: any): string {
@@ -44,8 +45,8 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
-      {/* ── Slim header ── */}
-      <div className="px-5 pt-8 pb-6"
+      <Header />
+      <div className="px-5 pt-6 pb-6"
         style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
         <div className="max-w-lg mx-auto">
           <div className="flex items-center gap-4">
