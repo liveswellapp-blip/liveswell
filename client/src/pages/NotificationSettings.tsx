@@ -3,11 +3,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, Clock, MapPin, ArrowLeft, Smartphone, CheckCircle, AlertCircle } from "lucide-react";
+import { Bell, Clock, MapPin, Smartphone, CheckCircle, AlertCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location, NotificationSettings as NotificationSettingsType } from "@/types/weather";
 import Footer from "@/components/Footer";
-import { Link } from "wouter";
+import Header from "@/components/Header";
 import { pushNotifications } from "@/lib/push-notifications";
 
 const generateTimeOptions = () => {
@@ -152,7 +152,8 @@ export default function NotificationSettings() {
   if (settingsLoading) {
     return (
       <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
-          <div className="flex-1 px-4 pt-8 max-w-2xl mx-auto w-full space-y-3">
+        <Header />
+        <div className="flex-1 px-4 pt-6 max-w-2xl mx-auto w-full space-y-3">
           {[1, 2].map(i => (
             <div key={i} className="rounded-2xl h-24 animate-pulse" style={CARD} />
           ))}
@@ -164,15 +165,9 @@ export default function NotificationSettings() {
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
-      {/* ── Slim header ── */}
-      <div className="px-5 pt-8 pb-6" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
-        <Link href="/profile">
-          <button className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-[12px] mb-5 transition-colors">
-            <ArrowLeft size={14} />
-            Back to Profile
-          </button>
-        </Link>
-        <div className="flex items-center gap-3">
+      <Header />
+      <div className="px-5 pt-6 pb-4" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
+        <div className="flex items-center gap-3 max-w-2xl mx-auto">
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
             style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
             <Bell size={18} className="text-amber-400" />

@@ -1,8 +1,8 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, MapPin, Globe, Shield, RefreshCw, Trash2, Download } from "lucide-react";
-import { Link } from "wouter";
+import { MapPin, Globe, Shield, RefreshCw, Trash2, Download } from "lucide-react";
 import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 import { useState } from "react";
 
 const CARD = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" };
@@ -36,15 +36,9 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
-      {/* ── Slim header ── */}
-      <div className="px-5 pt-8 pb-6" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
-        <Link href="/profile">
-          <button className="flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-[12px] mb-5 transition-colors">
-            <ArrowLeft size={14} />
-            Back to Profile
-          </button>
-        </Link>
-        <div className="flex items-center gap-3">
+      <Header />
+      <div className="px-5 pt-6 pb-4" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
+        <div className="flex items-center gap-3 max-w-2xl mx-auto">
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
             style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.15)" }}>
             <Globe size={18} className="text-slate-400" />
