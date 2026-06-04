@@ -474,17 +474,43 @@ export async function fetchWeatherData(lat: number, lon: number) {
   }
 
   try {
-    // Fetch current weather data
-    const weatherResponse = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`,
-      { signal: AbortSignal.timeout(5000) }
-    );
+    // Fetch current weather + forecast in parallel — we use forecast for wind because
+    // the current-weather endpoint can lag behind by hours or pull from inland stations.
+    // The forecast list[0] (nearest 3-hour block) is model-based and consistently accurate
+    // for coastal wind speed and direction.
+    const [weatherResponse, forecastResponse] = await Promise.all([
+      fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`,
+        { signal: AbortSignal.timeout(5000) }
+      ),
+      fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial&cnt=2`,
+        { signal: AbortSignal.timeout(5000) }
+      ),
+    ]);
 
     if (!weatherResponse.ok) {
       throw new Error(`Weather API error: ${weatherResponse.status}`);
     }
 
     const weatherData = await weatherResponse.json() as OpenWeatherMarineResponse;
+
+    // Use forecast wind if available — it's more accurate than current-weather observations
+    let windSpeed = weatherData.wind?.speed || 10;
+    let windDeg   = weatherData.wind?.deg   || 180;
+    let windGust  = weatherData.wind?.gust  || windSpeed * 1.3;
+    if (forecastResponse.ok) {
+      try {
+        const forecastData = await forecastResponse.json();
+        const nearest = forecastData?.list?.[0];
+        if (nearest?.wind?.speed != null) {
+          windSpeed = nearest.wind.speed;
+          windDeg   = nearest.wind.deg   ?? windDeg;
+          windGust  = nearest.wind.gust  ?? windSpeed * 1.3;
+          console.log(`🌬️  Wind from forecast API: ${Math.round(windSpeed)} mph ${getWindDirection(windDeg)} (was ${Math.round(weatherData.wind?.speed || 0)} mph ${getWindDirection(weatherData.wind?.deg || 0)} from current-weather)`);
+        }
+      } catch { /* keep current-weather wind on parse error */ }
+    }
 
     // Fetch UV data
     let uvIndex = 5; // Default fallback
@@ -513,9 +539,9 @@ export async function fetchWeatherData(lat: number, lon: number) {
       waveHeight: marineData.waveHeight?.toFixed(1) || "2.5",
       wavePeriod: marineData.wavePeriod != null ? Math.round(marineData.wavePeriod) : 8,
       waveDirection: marineData.waveDirection || getCoastalSwellDirection(lat, lon),
-      windSpeed: Math.round(weatherData.wind?.speed || 10).toString(),
-      windDirection: getWindDirection(weatherData.wind?.deg || 180),
-      windGusts: Math.round(weatherData.wind?.gust || weatherData.wind?.speed * 1.3 || 13).toString(),
+      windSpeed: Math.round(windSpeed).toString(),
+      windDirection: getWindDirection(windDeg),
+      windGusts: Math.round(windGust).toString(),
       tideHeight: tideData.currentTide?.toFixed(1) || "2.0",
       tideStatus: tideData.tideStatus || "Rising",
       waterTemp: marineData.waterTemp?.toFixed(1) || getRealisticWaterTemperature(lat, lon).toFixed(1),

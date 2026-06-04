@@ -1422,18 +1422,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Add live buoy + tide data to the response (not stored in DB)
+      // Add live buoy, tide, AND wind data to the response (not stored in DB).
+      // Wind is fetched live on every request using the OWM forecast API (nearest 3-hour
+      // block) so it is never served stale from the 10-minute DB cache.
       const lat = parseFloat(location.latitude);
       const lon = parseFloat(location.longitude);
       const tz = getTimezone(lat, lon);
       try {
-        const [marineData, tideData] = await Promise.all([
+        const windForecastPromise = fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${process.env.OPENWEATHER_API_KEY}&units=imperial&cnt=2`,
+          { signal: AbortSignal.timeout(4000) }
+        ).catch(() => null);
+
+        const [marineData, tideData, windForecastRes] = await Promise.all([
           fetchMarineData(lat, lon),
           fetchTideData(lat, lon),
+          windForecastPromise,
         ]);
-        
+
+        // Override wind with live forecast data if available
+        let liveWindSpeed = conditions.windSpeed;
+        let liveWindDirection = conditions.windDirection;
+        let liveWindGusts = conditions.windGusts;
+        if (windForecastRes && windForecastRes.ok) {
+          try {
+            const wf = await windForecastRes.json();
+            const nearest = wf?.list?.[0];
+            if (nearest?.wind?.speed != null) {
+              liveWindSpeed = Math.round(nearest.wind.speed).toString();
+              liveWindDirection = getWindDirection(nearest.wind.deg ?? 180);
+              liveWindGusts = Math.round(nearest.wind.gust ?? nearest.wind.speed * 1.3).toString();
+            }
+          } catch { /* keep DB wind on parse error */ }
+        }
+
         res.json({
           ...conditions,
+          windSpeed: liveWindSpeed,
+          windDirection: liveWindDirection,
+          windGusts: liveWindGusts,
           timezone: tz,
           tideHigh: tideData.tideHigh || [
             { time: '6:30 AM', height: '4.8' },
