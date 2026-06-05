@@ -3,6 +3,7 @@ import { storage } from './storage';
 import { SMSService } from './sms-service';
 import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
+import { ConditionMonitor } from './condition-monitor';
 import { db } from './db';
 import { userAlerts, notificationSettings } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
@@ -44,6 +45,9 @@ export class NotificationScheduler {
     } else {
       console.warn('⚠️ SMS service not properly configured');
     }
+
+    // Initialize condition-based alert monitor (runs every 20 min)
+    await ConditionMonitor.initialize();
 
     // One-time backfill: migrate existing notification_settings rows into user_alerts
     await this.backfillLegacySettings();
@@ -129,6 +133,8 @@ export class NotificationScheduler {
       };
 
       const due = allActive.filter(alert => {
+        // Condition alerts (swell/wind/tide) are handled by ConditionMonitor
+        if (alert.alertType !== 'daily_report') return false;
         const localTime = getTime(alert.timezone);
         return (
           alert.notificationTime === localTime ||

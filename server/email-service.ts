@@ -170,4 +170,78 @@ LiveSwell · Manage alerts at liveswell.app`;
       return false;
     }
   }
+
+  static async sendConditionAlert(
+    toEmail: string,
+    locationName: string,
+    triggerReason: string,
+    locationId: number,
+  ): Promise<boolean> {
+    if (!resend) {
+      console.error('Resend not configured — cannot send condition alert email');
+      return false;
+    }
+
+    try {
+      const now = new Date();
+      const timestamp = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      const subject = `🚨 Surf Alert: ${triggerReason} at ${locationName}`;
+
+      const text = `🌊 LiveSwell Condition Alert
+
+${triggerReason} at ${locationName}
+Triggered at: ${timestamp}
+
+Open the app to see full conditions.
+
+—
+LiveSwell · Manage alerts at liveswell.app`;
+
+      const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#030912;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e2e8f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <tr><td>
+      <div style="background:linear-gradient(160deg,#030912 0%,#0f1e35 100%);border:1px solid rgba(245,158,11,0.25);border-radius:16px;padding:24px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <span style="font-size:28px;">🚨</span>
+          <div>
+            <div style="font-size:18px;font-weight:900;color:#fff;">Surf Alert Triggered</div>
+            <div style="font-size:12px;color:#64748b;">${locationName} · ${timestamp}</div>
+          </div>
+        </div>
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:16px;margin-bottom:16px;">
+          <div style="font-size:14px;font-weight:700;color:#fbbf24;">${triggerReason}</div>
+        </div>
+        <a href="https://liveswell.app" style="display:block;text-align:center;background:linear-gradient(135deg,#059669,#10b981);color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-size:13px;font-weight:700;">View Full Conditions</a>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#334155;">
+        LiveSwell · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">Manage your alerts</a>
+      </div>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      const result = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: toEmail,
+        subject,
+        text,
+        html,
+      });
+
+      if (result.error) {
+        console.error(`❌ Resend condition alert error: ${result.error.message}`);
+        return false;
+      }
+
+      console.log(`✅ Condition alert email sent to ${toEmail} (id: ${result.data?.id})`);
+      return true;
+    } catch (error) {
+      console.error('Error sending condition alert email:', error);
+      return false;
+    }
+  }
 }

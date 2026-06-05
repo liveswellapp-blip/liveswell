@@ -1,6 +1,6 @@
 import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, or, sql } from "drizzle-orm";
+import { eq, and, like, or, sql, ne } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -91,6 +91,8 @@ export interface IStorage {
   toggleUserAlert(id: number, userId: string, active: boolean): Promise<UserAlert | undefined>;
   getActiveUserAlertsForTime(time: string): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
   getAllActiveUserAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
+  getActiveConditionAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
+  updateAlertLastFiredAt(id: number, firedAt: Date): Promise<void>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -625,6 +627,9 @@ export class DatabaseStorage implements IStorage {
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
         active: userAlerts.active,
+        thresholds: userAlerts.thresholds,
+        lastFiredAt: userAlerts.lastFiredAt,
+        cooldownHours: userAlerts.cooldownHours,
         createdAt: userAlerts.createdAt,
         updatedAt: userAlerts.updatedAt,
         locationName: locations.name,
@@ -682,6 +687,9 @@ export class DatabaseStorage implements IStorage {
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
         active: userAlerts.active,
+        thresholds: userAlerts.thresholds,
+        lastFiredAt: userAlerts.lastFiredAt,
+        cooldownHours: userAlerts.cooldownHours,
         createdAt: userAlerts.createdAt,
         updatedAt: userAlerts.updatedAt,
         locationName: locations.name,
@@ -717,6 +725,9 @@ export class DatabaseStorage implements IStorage {
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
         active: userAlerts.active,
+        thresholds: userAlerts.thresholds,
+        lastFiredAt: userAlerts.lastFiredAt,
+        cooldownHours: userAlerts.cooldownHours,
         createdAt: userAlerts.createdAt,
         updatedAt: userAlerts.updatedAt,
         locationName: locations.name,
@@ -726,6 +737,47 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(locations, eq(locations.id, userAlerts.locationId))
       .innerJoin(users, eq(users.id, userAlerts.userId))
       .where(eq(userAlerts.active, true));
+  }
+
+  async getActiveConditionAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]> {
+    return db
+      .select({
+        id: userAlerts.id,
+        userId: userAlerts.userId,
+        locationId: userAlerts.locationId,
+        label: userAlerts.label,
+        alertType: userAlerts.alertType,
+        deliveryChannels: userAlerts.deliveryChannels,
+        frequency: userAlerts.frequency,
+        notificationTime: userAlerts.notificationTime,
+        notificationTimeTwo: userAlerts.notificationTimeTwo,
+        timezone: userAlerts.timezone,
+        phoneNumber: userAlerts.phoneNumber,
+        active: userAlerts.active,
+        thresholds: userAlerts.thresholds,
+        lastFiredAt: userAlerts.lastFiredAt,
+        cooldownHours: userAlerts.cooldownHours,
+        createdAt: userAlerts.createdAt,
+        updatedAt: userAlerts.updatedAt,
+        locationName: locations.name,
+        userEmail: users.email,
+      })
+      .from(userAlerts)
+      .innerJoin(locations, eq(locations.id, userAlerts.locationId))
+      .innerJoin(users, eq(users.id, userAlerts.userId))
+      .where(
+        and(
+          eq(userAlerts.active, true),
+          ne(userAlerts.alertType, 'daily_report')
+        )
+      );
+  }
+
+  async updateAlertLastFiredAt(id: number, firedAt: Date): Promise<void> {
+    await db
+      .update(userAlerts)
+      .set({ lastFiredAt: firedAt, updatedAt: new Date() })
+      .where(eq(userAlerts.id, id));
   }
 }
 

@@ -148,6 +148,42 @@ Low: ${lowTides}
 Sunrise: ${conditions.sunrise} | Sunset: ${conditions.sunset} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})`;
   }
 
+  static async sendConditionAlert(
+    phoneNumber: string,
+    locationName: string,
+    triggerReason: string,
+    locationId: number,
+  ): Promise<boolean> {
+    if (!client || !twilioPhoneNumber) {
+      console.error('Twilio not configured — cannot send condition alert SMS');
+      return false;
+    }
+
+    try {
+      const now = new Date();
+      const timestamp = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+      const message = `🚨 LiveSwell Alert
+
+${triggerReason} at ${locationName}
+Triggered: ${timestamp}
+
+Open the app for full conditions.`;
+
+      const result = await client.messages.create({
+        body: message,
+        from: twilioPhoneNumber,
+        to: phoneNumber,
+      });
+
+      console.log(`📱 Condition alert SMS sent: ${result.sid} to ${phoneNumber}`);
+      return true;
+    } catch (error) {
+      console.error('Error sending condition alert SMS:', error);
+      return false;
+    }
+  }
+
   static async testSMSConfiguration(): Promise<boolean> {
     if (!client) {
       console.log('Twilio not configured');

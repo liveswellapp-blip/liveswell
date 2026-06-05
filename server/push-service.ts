@@ -210,6 +210,22 @@ class PushNotificationService {
   }
 
   /**
+   * Send a condition-triggered alert push notification to a user
+   */
+  async sendCustomNotification(userId: string, title: string, body: string): Promise<boolean> {
+    const payload: PushNotificationPayload = {
+      title,
+      body,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `condition-alert-${Date.now()}`,
+      requireInteraction: true,
+    };
+    const successCount = await this.sendNotificationToUser(userId, payload);
+    return successCount > 0;
+  }
+
+  /**
    * Get VAPID public key for client-side subscription
    */
   getVapidPublicKey(): string {

@@ -101,6 +101,10 @@ export const userAlerts = pgTable("user_alerts", {
   timezone: text("timezone").notNull().default("America/New_York"),
   phoneNumber: text("phone_number"),
   active: boolean("active").notNull().default(true),
+  // Condition-based alert fields
+  thresholds: jsonb("thresholds"),
+  lastFiredAt: timestamp("last_fired_at"),
+  cooldownHours: integer("cooldown_hours").notNull().default(4),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Bell, Plus, MapPin, Clock, Trash2, Pencil, Mail, MessageSquare, Smartphone, ChevronRight,
+  Bell, Plus, MapPin, Clock, Trash2, Pencil, Mail, MessageSquare, Smartphone,
+  Waves, Wind, Droplets, AlertCircle,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location } from "@/types/weather";
@@ -15,6 +16,8 @@ import { pushNotifications } from "@/lib/push-notifications";
 import { useAuth } from "@/hooks/useAuth";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
+type AlertTypeId = "daily_report" | "swell" | "wind" | "tide";
+
 interface UserAlert {
   id: number;
   userId: string;
@@ -30,30 +33,51 @@ interface UserAlert {
   timezone: string;
   phoneNumber: string | null;
   active: boolean;
+  thresholds: any | null;
+  lastFiredAt: string | null;
+  cooldownHours: number;
   createdAt: string;
 }
 
 interface AlertFormState {
   locationId: number | null;
   label: string;
+  alertType: AlertTypeId;
   frequency: "once_daily" | "twice_daily";
   notificationTime: string;
   notificationTimeTwo: string;
   timezone: string;
   channels: { push: boolean; sms: boolean; email: boolean };
   phoneNumber: string;
+  swellMinHeight: number;
+  swellMinPeriod: number;
+  windThreshold: number;
+  windTriggerWhen: "above" | "below";
+  windDirectionFilter: "any" | "onshore" | "offshore" | "sideshore";
+  tideType: "high" | "low";
+  tideWindowMinutes: number;
+  cooldownHours: number;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const BLANK_FORM: AlertFormState = {
   locationId: null,
   label: "",
+  alertType: "daily_report",
   frequency: "once_daily",
   notificationTime: "08:00",
   notificationTimeTwo: "18:00",
   timezone: "America/New_York",
   channels: { push: false, sms: false, email: false },
   phoneNumber: "",
+  swellMinHeight: 4,
+  swellMinPeriod: 0,
+  windThreshold: 15,
+  windTriggerWhen: "below",
+  windDirectionFilter: "any",
+  tideType: "high",
+  tideWindowMinutes: 30,
+  cooldownHours: 4,
 };
 
 const TIMEZONES = [
@@ -63,6 +87,13 @@ const TIMEZONES = [
   { value: "America/Los_Angeles", label: "Pacific (PT)" },
   { value: "America/Anchorage",   label: "Alaska (AKT)" },
   { value: "Pacific/Honolulu",    label: "Hawaii (HST)" },
+];
+
+const ALERT_TYPES: { id: AlertTypeId; label: string; icon: any; color: string; desc: string }[] = [
+  { id: "daily_report", label: "Daily Report",  icon: Bell,    color: "#f59e0b", desc: "Scheduled surf conditions" },
+  { id: "swell",        label: "Swell Alert",   icon: Waves,   color: "#10b981", desc: "Wave height & period" },
+  { id: "wind",         label: "Wind Alert",    icon: Wind,    color: "#38bdf8", desc: "Wind speed & direction" },
+  { id: "tide",         label: "Tide Alert",    icon: Droplets, color: "#a78bfa", desc: "High or low tide timing" },
 ];
 
 function generateTimeOptions() {
@@ -80,6 +111,16 @@ const TIME_OPTIONS = generateTimeOptions();
 
 function formatTime(t: string) {
   return new Date(`2000-01-01 ${t}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+}
+
+function relativeTime(isoStr: string): string {
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 const CARD: React.CSSProperties = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" };
@@ -105,20 +146,88 @@ function ChannelBadge({ ch }: { ch: string }) {
   );
 }
 
+// ─── Alert type badge ─────────────────────────────────────────────────────────
+function AlertTypeBadge({ alertType }: { alertType: string }) {
+  const t = ALERT_TYPES.find(a => a.id === alertType) ?? ALERT_TYPES[0];
+  const Icon = t.icon;
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold"
+      style={{ background: `${t.color}15`, border: `1px solid ${t.color}25`, color: t.color }}>
+      <Icon size={9} />
+      {t.label}
+    </span>
+  );
+}
+
+// ─── Threshold summary ────────────────────────────────────────────────────────
+function thresholdSummary(alert: UserAlert): string {
+  const t = alert.thresholds as any;
+  if (!t) return "";
+  if (alert.alertType === "swell") {
+    const period = t.minPeriod && t.minPeriod > 0 ? ` · ${t.minPeriod}+ sec` : "";
+    return `Waves ≥ ${t.minWaveHeight}ft${period}`;
+  }
+  if (alert.alertType === "wind") {
+    const dir = t.directionFilter && t.directionFilter !== "any" ? ` · ${t.directionFilter}` : "";
+    return `Wind ${t.triggerWhen} ${t.threshold} mph${dir}`;
+  }
+  if (alert.alertType === "tide") {
+    return `${t.windowMinutes} min before ${t.tideType === "high" ? "High" : "Low"} tide`;
+  }
+  return "";
+}
+
+// ─── Preview sentence ─────────────────────────────────────────────────────────
+function previewSentence(form: AlertFormState, locationName: string): string {
+  const loc = locationName || "your spot";
+  if (form.alertType === "daily_report") {
+    const freq = form.frequency === "twice_daily"
+      ? `${formatTime(form.notificationTime)} & ${formatTime(form.notificationTimeTwo)}`
+      : formatTime(form.notificationTime);
+    return `Send me a surf report for ${loc} at ${freq}`;
+  }
+  if (form.alertType === "swell") {
+    const period = form.swellMinPeriod > 0 ? `, with ${form.swellMinPeriod}+ sec period` : "";
+    return `Alert me when waves at ${loc} reach ${form.swellMinHeight}ft or higher${period}`;
+  }
+  if (form.alertType === "wind") {
+    const dir = form.windDirectionFilter !== "any" ? `, ${form.windDirectionFilter} wind only` : "";
+    return `Alert me when wind at ${loc} is ${form.windTriggerWhen} ${form.windThreshold} mph${dir}`;
+  }
+  if (form.alertType === "tide") {
+    return `Alert me ${form.tideWindowMinutes} min before ${form.tideType === "high" ? "High" : "Low"} tide at ${loc}`;
+  }
+  return "";
+}
+
+// ─── Stepper ──────────────────────────────────────────────────────────────────
+function Stepper({ value, min, max, step = 1, onChange }: {
+  value: number; min: number; max: number; step?: number; onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={() => onChange(Math.max(min, value - step))}
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 font-bold hover:bg-white/10 transition-colors"
+        style={CARD}>−</button>
+      <span className="w-10 text-center text-[14px] font-bold text-white">{value}</span>
+      <button onClick={() => onChange(Math.min(max, value + step))}
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 font-bold hover:bg-white/10 transition-colors"
+        style={CARD}>+</button>
+    </div>
+  );
+}
+
 // ─── Alert Card ───────────────────────────────────────────────────────────────
-function AlertCard({
-  alert,
-  onToggle,
-  onEdit,
-  onDelete,
-}: {
+function AlertCard({ alert, onToggle, onEdit, onDelete }: {
   alert: UserAlert;
   onToggle: (active: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const scheduleText =
-    alert.frequency === "twice_daily" && alert.notificationTimeTwo
+  const isCondition = alert.alertType !== "daily_report";
+  const scheduleText = isCondition
+    ? thresholdSummary(alert)
+    : alert.frequency === "twice_daily" && alert.notificationTimeTwo
       ? `${formatTime(alert.notificationTime)} & ${formatTime(alert.notificationTimeTwo)} · Twice daily`
       : `${formatTime(alert.notificationTime)} · Once daily`;
 
@@ -127,7 +236,10 @@ function AlertCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: alert.active ? "#10b981" : "#475569", boxShadow: alert.active ? "0 0 6px #10b981" : "none" }} />
+            <div className="w-1.5 h-1.5 rounded-full" style={{
+              background: alert.active ? "#10b981" : "#475569",
+              boxShadow: alert.active ? "0 0 6px #10b981" : "none"
+            }} />
             <span className="text-[14px] font-bold text-white truncate">
               {alert.label || alert.locationName}
             </span>
@@ -138,10 +250,26 @@ function AlertCard({
               <span className="text-[11px] text-slate-500">{alert.locationName}, {alert.locationCity}</span>
             </div>
           )}
-          <div className="flex items-center gap-1 ml-3.5 mb-2">
-            <Clock size={10} className="text-slate-500" />
-            <span className="text-[11px] text-slate-400">{scheduleText}</span>
+          <div className="flex items-center gap-2 ml-3.5 mb-1.5 flex-wrap">
+            <AlertTypeBadge alertType={alert.alertType} />
+            {isCondition && (
+              <span className="text-[10px] text-slate-600">{alert.cooldownHours}h cooldown</span>
+            )}
           </div>
+          {scheduleText && (
+            <div className="flex items-center gap-1 ml-3.5 mb-1.5">
+              {isCondition
+                ? <Waves size={10} className="text-slate-500" />
+                : <Clock size={10} className="text-slate-500" />}
+              <span className="text-[11px] text-slate-400">{scheduleText}</span>
+            </div>
+          )}
+          {isCondition && alert.lastFiredAt && (
+            <div className="flex items-center gap-1 ml-3.5 mb-1.5">
+              <AlertCircle size={10} className="text-amber-500" />
+              <span className="text-[11px] text-amber-400">Triggered {relativeTime(alert.lastFiredAt)}</span>
+            </div>
+          )}
           <div className="flex flex-wrap gap-1 ml-3.5">
             {(alert.deliveryChannels ?? []).map(ch => <ChannelBadge key={ch} ch={ch} />)}
           </div>
@@ -163,14 +291,7 @@ function AlertCard({
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-function AlertFormDialog({
-  open,
-  onClose,
-  initialData,
-  editId,
-  userEmail,
-  favorites,
-}: {
+function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favorites }: {
   open: boolean;
   onClose: () => void;
   initialData?: Partial<AlertFormState>;
@@ -185,10 +306,11 @@ function AlertFormDialog({
   const patchCh = (ch: keyof typeof BLANK_FORM.channels, v: boolean) =>
     setForm(f => ({ ...f, channels: { ...f.channels, [ch]: v } }));
 
+  const selectedLocation = favorites.find(l => l.id === form.locationId);
+
   const handlePushToggle = async (val: boolean) => {
     if (val) {
-      const supported = pushNotifications.isSupported();
-      if (!supported) {
+      if (!pushNotifications.isSupported()) {
         toast({ title: "Not supported", description: "Push isn't available on this browser.", variant: "destructive" });
         return;
       }
@@ -205,7 +327,7 @@ function AlertFormDialog({
     mutationFn: (data: any) => apiRequest("/api/user-alerts", { method: "POST", body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user-alerts"] });
-      toast({ title: "Alert created", description: "You'll be notified as scheduled." });
+      toast({ title: "Alert created", description: "Your alert is now active." });
       onClose();
     },
     onError: () => toast({ title: "Error", description: "Failed to create alert.", variant: "destructive" }),
@@ -235,22 +357,36 @@ function AlertFormDialog({
       toast({ title: "Phone required", description: "Enter your phone number for SMS alerts.", variant: "destructive" });
       return;
     }
+
+    const thresholds =
+      form.alertType === "swell"
+        ? { minWaveHeight: form.swellMinHeight, ...(form.swellMinPeriod > 0 ? { minPeriod: form.swellMinPeriod } : {}) }
+        : form.alertType === "wind"
+          ? { threshold: form.windThreshold, triggerWhen: form.windTriggerWhen, directionFilter: form.windDirectionFilter }
+          : form.alertType === "tide"
+            ? { tideType: form.tideType, windowMinutes: form.tideWindowMinutes }
+            : null;
+
     const payload = {
       locationId: form.locationId,
       label: form.label.trim() || null,
-      alertType: "daily_report",
-      frequency: form.frequency,
-      notificationTime: form.notificationTime,
-      notificationTimeTwo: form.frequency === "twice_daily" ? form.notificationTimeTwo : null,
-      timezone: form.timezone,
+      alertType: form.alertType,
+      frequency: form.alertType === "daily_report" ? form.frequency : "once_daily",
+      notificationTime: form.alertType === "daily_report" ? form.notificationTime : "00:00",
+      notificationTimeTwo: form.alertType === "daily_report" && form.frequency === "twice_daily" ? form.notificationTimeTwo : null,
+      timezone: form.alertType === "daily_report" ? form.timezone : "UTC",
       deliveryChannels: channels,
       phoneNumber: channels.includes("sms") ? form.phoneNumber.trim() : null,
       active: true,
+      thresholds,
+      cooldownHours: form.alertType !== "daily_report" ? form.cooldownHours : 4,
     };
+
     editId ? updateMutation.mutate(payload) : createMutation.mutate(payload);
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const preview = previewSentence(form, selectedLocation?.name ?? "");
 
   return (
     <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
@@ -263,6 +399,31 @@ function AlertFormDialog({
         </DialogHeader>
 
         <div className="space-y-4 pt-1">
+          {/* Alert type selector */}
+          <div>
+            <label className="text-[11px] text-slate-400 mb-2 block">Alert type</label>
+            <div className="grid grid-cols-2 gap-2">
+              {ALERT_TYPES.map(t => {
+                const Icon = t.icon;
+                const active = form.alertType === t.id;
+                return (
+                  <button key={t.id} onClick={() => patch("alertType", t.id)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all"
+                    style={{
+                      background: active ? `${t.color}15` : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${active ? `${t.color}40` : "rgba(255,255,255,0.06)"}`,
+                    }}>
+                    <Icon size={14} style={{ color: active ? t.color : "#64748b" }} />
+                    <div>
+                      <div className="text-[12px] font-semibold" style={{ color: active ? t.color : "#94a3b8" }}>{t.label}</div>
+                      <div className="text-[10px] text-slate-500">{t.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Location */}
           <div>
             <label className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1.5">
@@ -286,84 +447,186 @@ function AlertFormDialog({
           {/* Label */}
           <div>
             <label className="text-[11px] text-slate-400 mb-1.5 block">Label (optional)</label>
-            <input
-              className={INPUT_CLS}
-              style={SEL}
-              placeholder="e.g. Morning session check"
+            <input className={INPUT_CLS} style={SEL}
+              placeholder="e.g. Dawn patrol check"
               value={form.label}
               onChange={e => patch("label", e.target.value)}
             />
           </div>
 
-          {/* Frequency */}
-          <div>
-            <label className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1.5">
-              <Clock size={11} className="text-emerald-400" /> Frequency
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["once_daily", "twice_daily"] as const).map(f => (
-                <button key={f} onClick={() => patch("frequency", f)}
-                  className="h-9 rounded-xl text-[12px] font-semibold transition-all"
-                  style={{
-                    background: form.frequency === f ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.03)",
-                    border: `1px solid ${form.frequency === f ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.08)"}`,
-                    color: form.frequency === f ? "#34d399" : "#94a3b8",
-                  }}>
-                  {f === "once_daily" ? "Once daily" : "Twice daily"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Times */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] text-slate-400 mb-1.5 block">
-                {form.frequency === "twice_daily" ? "First time" : "Time"}
-              </label>
-              <Select value={form.notificationTime} onValueChange={v => patch("notificationTime", v)}>
-                <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_OPTIONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            {form.frequency === "twice_daily" && (
+          {/* ── Daily report schedule ── */}
+          {form.alertType === "daily_report" && (
+            <>
               <div>
-                <label className="text-[11px] text-slate-400 mb-1.5 block">Second time</label>
-                <Select value={form.notificationTimeTwo} onValueChange={v => patch("notificationTimeTwo", v)}>
-                  <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIME_OPTIONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                  </SelectContent>
+                <label className="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1.5">
+                  <Clock size={11} className="text-emerald-400" /> Frequency
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["once_daily", "twice_daily"] as const).map(f => (
+                    <button key={f} onClick={() => patch("frequency", f)}
+                      className="h-9 rounded-xl text-[12px] font-semibold transition-all"
+                      style={{
+                        background: form.frequency === f ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${form.frequency === f ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        color: form.frequency === f ? "#34d399" : "#94a3b8",
+                      }}>
+                      {f === "once_daily" ? "Once daily" : "Twice daily"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] text-slate-400 mb-1.5 block">
+                    {form.frequency === "twice_daily" ? "First time" : "Time"}
+                  </label>
+                  <Select value={form.notificationTime} onValueChange={v => patch("notificationTime", v)}>
+                    <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}><SelectValue /></SelectTrigger>
+                    <SelectContent>{TIME_OPTIONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                {form.frequency === "twice_daily" && (
+                  <div>
+                    <label className="text-[11px] text-slate-400 mb-1.5 block">Second time</label>
+                    <Select value={form.notificationTimeTwo} onValueChange={v => patch("notificationTimeTwo", v)}>
+                      <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}><SelectValue /></SelectTrigger>
+                      <SelectContent>{TIME_OPTIONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-1.5 block">Timezone</label>
+                <Select value={form.timezone} onValueChange={v => patch("timezone", v)}>
+                  <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}><SelectValue /></SelectTrigger>
+                  <SelectContent>{TIMEZONES.map(tz => <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-            )}
-          </div>
+            </>
+          )}
 
-          {/* Timezone */}
-          <div>
-            <label className="text-[11px] text-slate-400 mb-1.5 block">Timezone</label>
-            <Select value={form.timezone} onValueChange={v => patch("timezone", v)}>
-              <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl" style={SEL}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map(tz => <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* ── Swell thresholds ── */}
+          {form.alertType === "swell" && (
+            <div className="space-y-4 p-3 rounded-xl" style={CARD}>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-2 block">Min wave height (ft)</label>
+                <div className="flex items-center gap-3">
+                  <Stepper value={form.swellMinHeight} min={1} max={20} onChange={v => patch("swellMinHeight", v)} />
+                  <span className="text-[13px] text-emerald-400 font-bold">{form.swellMinHeight}ft+</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-2 block">
+                  Min wave period (sec) <span className="text-slate-600">— 0 to skip</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <Stepper value={form.swellMinPeriod} min={0} max={25} onChange={v => patch("swellMinPeriod", v)} />
+                  <span className="text-[13px] font-bold" style={{ color: form.swellMinPeriod > 0 ? "#10b981" : "#475569" }}>
+                    {form.swellMinPeriod > 0 ? `${form.swellMinPeriod}s+` : "off"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Wind thresholds ── */}
+          {form.alertType === "wind" && (
+            <div className="space-y-4 p-3 rounded-xl" style={CARD}>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-2 block">Wind speed threshold (mph)</label>
+                <div className="flex items-center gap-3">
+                  <Stepper value={form.windThreshold} min={1} max={60} step={5} onChange={v => patch("windThreshold", v)} />
+                  <span className="text-[13px] text-sky-400 font-bold">{form.windThreshold} mph</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-2 block">Trigger when wind is</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["below", "above"] as const).map(w => (
+                    <button key={w} onClick={() => patch("windTriggerWhen", w)}
+                      className="h-9 rounded-xl text-[12px] font-semibold transition-all"
+                      style={{
+                        background: form.windTriggerWhen === w ? "rgba(56,189,248,0.15)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${form.windTriggerWhen === w ? "rgba(56,189,248,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        color: form.windTriggerWhen === w ? "#38bdf8" : "#94a3b8",
+                      }}>
+                      {w === "below" ? `≤ ${form.windThreshold} mph` : `≥ ${form.windThreshold} mph`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-2 block">Direction filter</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(["any", "onshore", "offshore", "sideshore"] as const).map(d => (
+                    <button key={d} onClick={() => patch("windDirectionFilter", d)}
+                      className="h-8 rounded-xl text-[11px] font-semibold capitalize transition-all"
+                      style={{
+                        background: form.windDirectionFilter === d ? "rgba(56,189,248,0.12)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${form.windDirectionFilter === d ? "rgba(56,189,248,0.3)" : "rgba(255,255,255,0.06)"}`,
+                        color: form.windDirectionFilter === d ? "#38bdf8" : "#64748b",
+                      }}>
+                      {d === "any" ? "Any direction" : d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tide thresholds ── */}
+          {form.alertType === "tide" && (
+            <div className="space-y-4 p-3 rounded-xl" style={CARD}>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-2 block">Tide type</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["high", "low"] as const).map(t => (
+                    <button key={t} onClick={() => patch("tideType", t)}
+                      className="h-9 rounded-xl text-[12px] font-semibold transition-all"
+                      style={{
+                        background: form.tideType === t ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${form.tideType === t ? "rgba(167,139,250,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        color: form.tideType === t ? "#a78bfa" : "#94a3b8",
+                      }}>
+                      {t === "high" ? "🌊 High tide" : "⬇️ Low tide"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-400 mb-2 block">Notify how many minutes before?</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[15, 30, 60, 120].map(m => (
+                    <button key={m} onClick={() => patch("tideWindowMinutes", m)}
+                      className="h-9 rounded-xl text-[11px] font-semibold transition-all"
+                      style={{
+                        background: form.tideWindowMinutes === m ? "rgba(167,139,250,0.15)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${form.tideWindowMinutes === m ? "rgba(167,139,250,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        color: form.tideWindowMinutes === m ? "#a78bfa" : "#94a3b8",
+                      }}>
+                      {m < 60 ? `${m}m` : `${m / 60}h`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Cooldown (condition alerts only) */}
+          {form.alertType !== "daily_report" && (
+            <div>
+              <label className="text-[11px] text-slate-400 mb-2 block">Cooldown between triggers (hours)</label>
+              <div className="flex items-center gap-3">
+                <Stepper value={form.cooldownHours} min={1} max={24} onChange={v => patch("cooldownHours", v)} />
+                <span className="text-[12px] text-slate-400">{form.cooldownHours}h between alerts</span>
+              </div>
+            </div>
+          )}
 
           {/* Delivery channels */}
           <div>
             <label className="text-[11px] text-slate-400 mb-2 block">Deliver via</label>
             <div className="space-y-2">
-
-              {/* Push */}
               <div className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={CARD}>
                 <div className="flex items-center gap-2">
                   <Smartphone size={13} className="text-violet-400" />
@@ -371,8 +634,6 @@ function AlertFormDialog({
                 </div>
                 <Switch checked={form.channels.push} onCheckedChange={handlePushToggle} />
               </div>
-
-              {/* SMS */}
               <div className="rounded-xl overflow-hidden" style={CARD}>
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <div className="flex items-center gap-2">
@@ -383,9 +644,7 @@ function AlertFormDialog({
                 </div>
                 {form.channels.sms && (
                   <div className="px-3 pb-3 pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    <input
-                      className={INPUT_CLS}
-                      style={{ ...SEL, marginTop: 4 }}
+                    <input className={INPUT_CLS} style={{ ...SEL, marginTop: 4 }}
                       placeholder="+1 (555) 000-0000"
                       value={form.phoneNumber}
                       onChange={e => patch("phoneNumber", e.target.value)}
@@ -394,8 +653,6 @@ function AlertFormDialog({
                   </div>
                 )}
               </div>
-
-              {/* Email */}
               <div className="rounded-xl overflow-hidden" style={CARD}>
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <div className="flex items-center gap-2">
@@ -418,10 +675,15 @@ function AlertFormDialog({
             </div>
           </div>
 
-          {/* Save */}
-          <button
-            onClick={handleSave}
-            disabled={isPending}
+          {/* Plain-English preview */}
+          {preview && form.locationId && (
+            <div className="px-3 py-2.5 rounded-xl" style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
+              <p className="text-[11px] text-emerald-400 font-medium">"{preview}"</p>
+            </div>
+          )}
+
+          {/* Save button */}
+          <button onClick={handleSave} disabled={isPending}
             className="w-full h-11 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
             style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
             {isPending ? "Saving…" : editId ? "Save Changes" : "Create Alert"}
@@ -469,9 +731,10 @@ export default function NotificationSettings() {
 
   const userEmail = (user as any)?.email ?? null;
 
-  const editInitial = editAlert ? {
+  const editInitial: Partial<AlertFormState> | undefined = editAlert ? {
     locationId: editAlert.locationId,
     label: editAlert.label ?? "",
+    alertType: (editAlert.alertType ?? "daily_report") as AlertTypeId,
     frequency: editAlert.frequency as "once_daily" | "twice_daily",
     notificationTime: editAlert.notificationTime,
     notificationTimeTwo: editAlert.notificationTimeTwo ?? "18:00",
@@ -482,13 +745,23 @@ export default function NotificationSettings() {
       email: editAlert.deliveryChannels?.includes("email") ?? false,
     },
     phoneNumber: editAlert.phoneNumber ?? "",
+    swellMinHeight: (editAlert.thresholds as any)?.minWaveHeight ?? 4,
+    swellMinPeriod: (editAlert.thresholds as any)?.minPeriod ?? 0,
+    windThreshold: (editAlert.thresholds as any)?.threshold ?? 15,
+    windTriggerWhen: (editAlert.thresholds as any)?.triggerWhen ?? "below",
+    windDirectionFilter: (editAlert.thresholds as any)?.directionFilter ?? "any",
+    tideType: (editAlert.thresholds as any)?.tideType ?? "high",
+    tideWindowMinutes: (editAlert.thresholds as any)?.windowMinutes ?? 30,
+    cooldownHours: editAlert.cooldownHours ?? 4,
   } : undefined;
+
+  const conditionAlerts = alerts.filter(a => a.alertType !== "daily_report");
+  const dailyAlerts = alerts.filter(a => a.alertType === "daily_report");
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
       <Header />
 
-      {/* Page header */}
       <div className="px-5 pt-6 pb-4" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
         <div className="flex items-center justify-between max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
@@ -498,82 +771,83 @@ export default function NotificationSettings() {
             </div>
             <div>
               <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
-              <p className="text-slate-500 text-[11px] mt-0.5">
-                {alerts.length === 0 ? "No alerts yet" : `${alerts.length} alert${alerts.length !== 1 ? "s" : ""} configured`}
-              </p>
+              <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
             </div>
           </div>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-2xl text-[12px] font-bold text-emerald-400 transition-opacity hover:opacity-80"
-            style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)" }}>
+          <button onClick={openCreate}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+            style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
             <Plus size={14} />
             Add Alert
           </button>
         </div>
       </div>
 
-      <main className="flex-1 px-4 pt-4 max-w-2xl mx-auto w-full">
+      <div className="flex-1 px-5 max-w-2xl mx-auto w-full space-y-6">
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 pt-2">
             {[1, 2].map(i => (
-              <div key={i} className="rounded-2xl h-24 animate-pulse" style={CARD} />
+              <div key={i} className="h-28 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
             ))}
           </div>
         ) : alerts.length === 0 ? (
-          /* Empty state */
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <Bell size={22} className="text-slate-600" />
-            </div>
-            <p className="text-slate-300 font-semibold text-sm mb-1">No alerts set up</p>
-            <p className="text-slate-500 text-xs max-w-[220px]">
-              Create your first alert to get daily surf reports via push, SMS, or email.
-            </p>
-            <button
-              onClick={openCreate}
-              className="mt-5 flex items-center gap-2 h-10 px-5 rounded-2xl text-[13px] font-bold text-white"
+          <div className="text-center py-16">
+            <Bell size={36} className="text-slate-700 mx-auto mb-3" />
+            <p className="text-slate-500 text-[14px]">No alerts yet</p>
+            <p className="text-slate-600 text-[12px] mt-1">Daily reports or real-time condition triggers</p>
+            <button onClick={openCreate}
+              className="mt-5 px-6 py-2.5 rounded-2xl text-[13px] font-bold text-white"
               style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
-              <Plus size={14} />
-              Create First Alert
+              Create your first alert
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {alerts.map(a => (
-              <AlertCard
-                key={a.id}
-                alert={a}
-                onToggle={active => toggleMutation.mutate({ id: a.id, active })}
-                onEdit={() => openEdit(a)}
-                onDelete={() => deleteMutation.mutate(a.id)}
-              />
-            ))}
+          <>
+            {conditionAlerts.length > 0 && (
+              <section className="pt-2">
+                <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <Waves size={11} /> Condition Triggers
+                </h2>
+                <div className="space-y-3">
+                  {conditionAlerts.map(a => (
+                    <AlertCard key={a.id} alert={a}
+                      onToggle={active => toggleMutation.mutate({ id: a.id, active })}
+                      onEdit={() => openEdit(a)}
+                      onDelete={() => deleteMutation.mutate(a.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
-            {/* Add another */}
-            <button
-              onClick={openCreate}
-              className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl text-[12px] font-semibold text-slate-400 transition-opacity hover:opacity-70"
-              style={{ border: "1px dashed rgba(255,255,255,0.1)", background: "transparent" }}>
-              <Plus size={13} />
-              Add another alert
-            </button>
-          </div>
+            {dailyAlerts.length > 0 && (
+              <section className={conditionAlerts.length === 0 ? "pt-2" : ""}>
+                <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <Clock size={11} /> Daily Reports
+                </h2>
+                <div className="space-y-3">
+                  {dailyAlerts.map(a => (
+                    <AlertCard key={a.id} alert={a}
+                      onToggle={active => toggleMutation.mutate({ id: a.id, active })}
+                      onEdit={() => openEdit(a)}
+                      onDelete={() => deleteMutation.mutate(a.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
-      </main>
+      </div>
 
-      {/* Add / Edit dialog */}
-      {dialogOpen && (
-        <AlertFormDialog
-          open={dialogOpen}
-          onClose={() => { setDialogOpen(false); setEditAlert(null); }}
-          initialData={editInitial}
-          editId={editAlert?.id}
-          userEmail={userEmail}
-          favorites={favorites}
-        />
-      )}
+      <AlertFormDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        initialData={editInitial}
+        editId={editAlert?.id}
+        userEmail={userEmail}
+        favorites={favorites}
+      />
 
       <Footer />
     </div>
