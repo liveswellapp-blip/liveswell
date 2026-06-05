@@ -83,16 +83,46 @@ export function evaluateWindAlert(
   return true;
 }
 
-export function evaluateTideAlert(weatherData: any, t: TideThresholds): boolean {
+/**
+ * Evaluates tide alerts in a timezone-correct way.
+ * Tide time strings (e.g. "7:15 AM") are in the station's local time (lst_ldt from NOAA).
+ * We approximate that timezone from longitude — accurate to within ~30 min for all
+ * coastal surf locations (no inland political timezone quirks to worry about).
+ */
+export function evaluateTideAlert(weatherData: any, t: TideThresholds, lon: number): boolean {
   const tides: Array<{ time: string; height: string }> =
     t.tideType === 'high' ? (weatherData.tideHigh ?? []) : (weatherData.tideLow ?? []);
   const now = Date.now();
   const windowMs = t.windowMinutes * 60 * 1000;
+
+  // Approximate UTC offset from longitude: works well for US coasts (ET/CT/MT/PT/HT)
+  const utcOffsetHours = Math.round(lon / 15);
+
+  // "Today" in the location's approximate local timezone
+  const locationNowMs = now + utcOffsetHours * 3600_000;
+  const locationNow = new Date(locationNowMs);
+
   for (const tide of tides) {
     try {
-      const tideDate = new Date(`${new Date().toDateString()} ${tide.time}`);
-      if (isNaN(tideDate.getTime())) continue;
-      const diff = tideDate.getTime() - now;
+      const match = tide.time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      if (!match) continue;
+      let h = parseInt(match[1]);
+      const m = parseInt(match[2]);
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      else if (ampm === 'AM' && h === 12) h = 0;
+
+      // Build the tide moment as a UTC timestamp:
+      // local h → UTC by subtracting the offset
+      const tideDateMs = Date.UTC(
+        locationNow.getUTCFullYear(),
+        locationNow.getUTCMonth(),
+        locationNow.getUTCDate(),
+        h - utcOffsetHours,
+        m,
+      );
+
+      const diff = tideDateMs - now;
       // Fire if tide is approaching (within window) or just passed (within 5 min)
       if (diff >= -5 * 60_000 && diff <= windowMs) return true;
     } catch { /* ignore parse errors */ }
@@ -227,7 +257,7 @@ export class ConditionMonitor {
           } else if (alert.alertType === 'wind') {
             triggered = evaluateWindAlert(weatherData, thresholds as WindThresholds, lat, lon);
           } else if (alert.alertType === 'tide') {
-            triggered = evaluateTideAlert(weatherData, thresholds as TideThresholds);
+            triggered = evaluateTideAlert(weatherData, thresholds as TideThresholds, lon);
           }
 
           if (!triggered) continue;
