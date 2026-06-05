@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne } from "drizzle-orm";
 
@@ -93,6 +93,8 @@ export interface IStorage {
   getAllActiveUserAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
   getActiveConditionAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
   updateAlertLastFiredAt(id: number, firedAt: Date): Promise<void>;
+  logAlertTrigger(alertId: number, triggerReason: string, conditionSnapshot?: any): Promise<AlertTriggerLog>;
+  getAlertTriggerLog(alertId: number, userId: string, limit?: number): Promise<AlertTriggerLog[]>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -778,6 +780,31 @@ export class DatabaseStorage implements IStorage {
       .update(userAlerts)
       .set({ lastFiredAt: firedAt, updatedAt: new Date() })
       .where(eq(userAlerts.id, id));
+  }
+
+  async logAlertTrigger(alertId: number, triggerReason: string, conditionSnapshot?: any): Promise<AlertTriggerLog> {
+    const [result] = await db
+      .insert(alertTriggerLog)
+      .values({ alertId, triggerReason, conditionSnapshot: conditionSnapshot ?? null })
+      .returning();
+    return result;
+  }
+
+  async getAlertTriggerLog(alertId: number, userId: string, limit: number = 10): Promise<AlertTriggerLog[]> {
+    // Verify ownership via join then fetch log entries
+    const ownerCheck = await db
+      .select({ id: userAlerts.id })
+      .from(userAlerts)
+      .where(and(eq(userAlerts.id, alertId), eq(userAlerts.userId, userId)))
+      .limit(1);
+    if (ownerCheck.length === 0) return [];
+
+    return db
+      .select()
+      .from(alertTriggerLog)
+      .where(eq(alertTriggerLog.alertId, alertId))
+      .orderBy(sql`${alertTriggerLog.firedAt} DESC`)
+      .limit(limit);
   }
 }
 

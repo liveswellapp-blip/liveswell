@@ -109,6 +109,14 @@ export const userAlerts = pgTable("user_alerts", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const alertTriggerLog = pgTable("alert_trigger_log", {
+  id: serial("id").primaryKey(),
+  alertId: integer("alert_id").references(() => userAlerts.id, { onDelete: "cascade" }).notNull(),
+  firedAt: timestamp("fired_at").defaultNow().notNull(),
+  triggerReason: text("trigger_reason").notNull(),
+  conditionSnapshot: jsonb("condition_snapshot"),
+}, (table) => [index("IDX_alert_trigger_log_alert_id").on(table.alertId)]);
+
 export const pushSubscriptions = pgTable("push_subscriptions", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -171,6 +179,11 @@ export const updateNotificationSettingsSchema = createInsertSchema(notificationS
   updatedAt: true,
 }).partial();
 
+export const insertAlertTriggerLogSchema = createInsertSchema(alertTriggerLog).omit({
+  id: true,
+  firedAt: true,
+});
+
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
   id: true,
   createdAt: true,
@@ -210,3 +223,5 @@ export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema
 export type UserAlert = typeof userAlerts.$inferSelect;
 export type InsertUserAlert = z.infer<typeof insertUserAlertSchema>;
 export type UpdateUserAlert = z.infer<typeof updateUserAlertSchema>;
+export type AlertTriggerLog = typeof alertTriggerLog.$inferSelect;
+export type InsertAlertTriggerLog = z.infer<typeof insertAlertTriggerLogSchema>;

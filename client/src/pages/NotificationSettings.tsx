@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import {
   Bell, Plus, MapPin, Clock, Trash2, Pencil, Mail, MessageSquare, Smartphone,
-  Waves, Wind, Droplets, AlertCircle,
+  Waves, Wind, Droplets, AlertCircle, History,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location } from "@/types/weather";
@@ -17,6 +17,14 @@ import { useAuth } from "@/hooks/useAuth";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type AlertTypeId = "daily_report" | "swell" | "wind" | "tide";
+
+interface AlertTriggerLog {
+  id: number;
+  alertId: number;
+  firedAt: string;
+  triggerReason: string;
+  conditionSnapshot: any | null;
+}
 
 interface UserAlert {
   id: number;
@@ -217,6 +225,49 @@ function Stepper({ value, min, max, step = 1, onChange }: {
   );
 }
 
+// ─── Trigger History Panel ────────────────────────────────────────────────────
+function TriggerHistoryPanel({ alertId }: { alertId: number }) {
+  const { data: log = [], isLoading } = useQuery<AlertTriggerLog[]>({
+    queryKey: ["/api/user-alerts", alertId, "history"],
+    queryFn: () => fetch(`/api/user-alerts/${alertId}/history`).then(r => r.json()),
+    staleTime: 60_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-1.5 mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        {[1, 2].map(i => (
+          <div key={i} className="h-8 rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (log.length === 0) {
+    return (
+      <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <History size={11} className="text-slate-600" />
+        <span className="text-[11px] text-slate-600">No triggers yet</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 pt-3 space-y-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      {log.map(entry => (
+        <div key={entry.id} className="flex items-start gap-2 px-2 py-1.5 rounded-lg"
+          style={{ background: "rgba(251,191,36,0.04)", border: "1px solid rgba(251,191,36,0.08)" }}>
+          <AlertCircle size={10} className="text-amber-500 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] text-slate-300 leading-snug">{entry.triggerReason}</p>
+            <p className="text-[10px] text-slate-600 mt-0.5">{relativeTime(entry.firedAt)}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Alert Card ───────────────────────────────────────────────────────────────
 function AlertCard({ alert, onToggle, onEdit, onDelete }: {
   alert: UserAlert;
@@ -224,6 +275,7 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [historyOpen, setHistoryOpen] = useState(false);
   const isCondition = alert.alertType !== "daily_report";
   const scheduleText = isCondition
     ? thresholdSummary(alert)
@@ -277,6 +329,13 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
         <div className="flex flex-col items-end gap-2 shrink-0">
           <Switch checked={alert.active} onCheckedChange={onToggle} />
           <div className="flex items-center gap-1">
+            {isCondition && (
+              <button onClick={() => setHistoryOpen(o => !o)}
+                className="p-1.5 rounded-lg transition-colors hover:bg-white/5"
+                title="Trigger history">
+                <History size={12} className={historyOpen ? "text-amber-400" : "text-slate-400"} />
+              </button>
+            )}
             <button onClick={onEdit} className="p-1.5 rounded-lg transition-colors hover:bg-white/5">
               <Pencil size={12} className="text-slate-400" />
             </button>
@@ -286,6 +345,7 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
           </div>
         </div>
       </div>
+      {isCondition && historyOpen && <TriggerHistoryPanel alertId={alert.id} />}
     </div>
   );
 }

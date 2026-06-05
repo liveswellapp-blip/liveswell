@@ -341,7 +341,20 @@ export class ConditionMonitor {
           // Only mark lastFiredAt when at least one channel delivered, so a delivery
           // failure doesn't silently burn the cooldown window.
           if (delivered) {
-            await storage.updateAlertLastFiredAt(alert.id, new Date());
+            const firedAt = new Date();
+            await storage.updateAlertLastFiredAt(alert.id, firedAt);
+            // Record the trigger event in the history log
+            const snapshot = {
+              waveHeight: weatherData.waveHeight,
+              wavePeriod: weatherData.wavePeriod,
+              windSpeed: weatherData.windSpeed,
+              windDirection: weatherData.windDirection,
+              tideStatus: weatherData.tideStatus,
+              tideHeight: weatherData.tideHeight,
+            };
+            await storage.logAlertTrigger(alert.id, triggerReason, snapshot).catch(err =>
+              console.error(`⚠️ Failed to log trigger for alert ${alert.id}:`, err)
+            );
           } else {
             console.warn(`⚠️ Alert ${alert.id} triggered but no channel delivered — cooldown NOT advanced`);
           }

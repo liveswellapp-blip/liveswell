@@ -2923,6 +2923,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/user-alerts/:id/history", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
+      const log = await storage.getAlertTriggerLog(id, userId, 10);
+      res.json(log);
+    } catch (error) {
+      console.error("Error fetching alert history:", error);
+      res.status(500).json({ message: "Failed to fetch alert history" });
+    }
+  });
+
   // Helper function to determine wind type based on coastline orientation
   const getWindType = (lat: number, lon: number, windDir: string): string => {
     const dir = windDir.toUpperCase();
