@@ -3,6 +3,32 @@ import { storage } from './storage';
 import { SMSService } from './sms-service';
 import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
+import { db } from './db';
+import { userAlerts, notificationSettings } from '@shared/schema';
+import { eq, and } from 'drizzle-orm';
+
+/**
+ * Returns the current HH:MM in a given IANA timezone.
+ * Falls back to server local time if the timezone is invalid.
+ */
+function currentTimeInTz(timezone: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date());
+    const h = parts.find(p => p.type === 'hour')?.value ?? '00';
+    const m = parts.find(p => p.type === 'minute')?.value ?? '00';
+    // Intl can return '24' for midnight — normalise to '00'
+    const hh = h === '24' ? '00' : h.padStart(2, '0');
+    return `${hh}:${m.padStart(2, '0')}`;
+  } catch {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  }
+}
 
 export class NotificationScheduler {
   private static initialized = false;
@@ -19,7 +45,10 @@ export class NotificationScheduler {
       console.warn('⚠️ SMS service not properly configured');
     }
 
-    // Every minute: check user_alerts for both primary and secondary times
+    // One-time backfill: migrate existing notification_settings rows into user_alerts
+    await this.backfillLegacySettings();
+
+    // Every minute: check all active user_alerts, respecting per-alert timezones
     cron.schedule('* * * * *', async () => {
       await this.checkUserAlerts();
     });
@@ -28,41 +57,114 @@ export class NotificationScheduler {
     console.log('🔔 Notification scheduler initialized');
   }
 
+  /**
+   * Migrate legacy notification_settings rows (smsEnabled or pushEnabled) that
+   * don't yet have a corresponding user_alerts entry. Runs once at startup.
+   */
+  private static async backfillLegacySettings(): Promise<void> {
+    try {
+      const legacy = await db.select().from(notificationSettings);
+      let migrated = 0;
+
+      for (const row of legacy) {
+        if (!row.locationId) continue;
+        if (!row.smsEnabled && !row.pushEnabled) continue;
+
+        // Check if this user already has any user_alerts rows
+        const existing = await db
+          .select({ id: userAlerts.id })
+          .from(userAlerts)
+          .where(eq(userAlerts.userId, row.userId))
+          .limit(1);
+
+        if (existing.length > 0) continue; // already migrated
+
+        const channels: string[] = [];
+        if (row.smsEnabled) channels.push('sms');
+        if (row.pushEnabled) channels.push('push');
+
+        await db.insert(userAlerts).values({
+          userId: row.userId,
+          locationId: row.locationId,
+          label: 'Daily surf report',
+          alertType: 'daily_report',
+          deliveryChannels: channels,
+          frequency: 'once_daily',
+          notificationTime: row.notificationTime ?? '08:00',
+          notificationTimeTwo: null,
+          timezone: row.timezone ?? 'America/New_York',
+          phoneNumber: row.phoneNumber ?? null,
+          active: true,
+          updatedAt: new Date(),
+        });
+
+        migrated++;
+        console.log(`🔄 Migrated legacy alert for user ${row.userId}`);
+      }
+
+      if (migrated > 0) {
+        console.log(`✅ Backfilled ${migrated} legacy notification setting(s) into user_alerts`);
+      }
+    } catch (error) {
+      console.error('Error during legacy settings backfill:', error);
+    }
+  }
+
+  /**
+   * Called every minute. For each active alert, compute the current time in
+   * that alert's stored timezone and compare against notificationTime /
+   * notificationTimeTwo. Dispatches channels only when the times match.
+   */
   private static async checkUserAlerts(): Promise<void> {
     try {
-      const now = new Date();
-      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      // Fetch all active alerts with location name + user email
+      const allActive = await storage.getAllActiveUserAlerts();
+      if (allActive.length === 0) return;
 
-      const alerts = await storage.getActiveUserAlertsForTime(currentTime);
-      if (alerts.length === 0) return;
+      // Group by timezone so we call currentTimeInTz once per unique tz
+      const tzCache = new Map<string, string>();
+      const getTime = (tz: string) => {
+        if (!tzCache.has(tz)) tzCache.set(tz, currentTimeInTz(tz));
+        return tzCache.get(tz)!;
+      };
 
-      console.log(`🔔 Processing ${alerts.length} alert(s) for time ${currentTime}`);
+      const due = allActive.filter(alert => {
+        const localTime = getTime(alert.timezone);
+        return (
+          alert.notificationTime === localTime ||
+          (alert.frequency === 'twice_daily' && alert.notificationTimeTwo === localTime)
+        );
+      });
 
-      for (const alert of alerts) {
+      if (due.length === 0) return;
+
+      console.log(`🔔 Processing ${due.length} alert(s)`);
+
+      for (const alert of due) {
         const channels = alert.deliveryChannels ?? [];
         const promises: Promise<boolean>[] = [];
 
         if (channels.includes('sms') && alert.phoneNumber) {
-          console.log(`📱 SMS alert → ${alert.phoneNumber} (${alert.locationName})`);
+          console.log(`📱 SMS → ${alert.phoneNumber} (${alert.locationName})`);
           promises.push(
             SMSService.sendDailyConditions(alert.userId, alert.phoneNumber, alert.locationId)
-              .then(ok => { console.log(ok ? `✅ SMS sent` : `❌ SMS failed`); return ok; })
+              .then(ok => { console.log(ok ? '✅ SMS sent' : '❌ SMS failed'); return ok; })
           );
         }
 
         if (channels.includes('email') && alert.userEmail) {
-          console.log(`✉️  Email alert → ${alert.userEmail} (${alert.locationName})`);
+          console.log(`✉️  Email → ${alert.userEmail} (${alert.locationName})`);
           promises.push(
             EmailService.sendDailyConditions(alert.userEmail, alert.locationId)
-              .then(ok => { console.log(ok ? `✅ Email sent` : `❌ Email failed`); return ok; })
+              .then(ok => { console.log(ok ? '✅ Email sent' : '❌ Email failed'); return ok; })
           );
         }
 
         if (channels.includes('push')) {
-          console.log(`🔔 Push alert → user ${alert.userId} (${alert.locationName})`);
+          console.log(`🔔 Push → user ${alert.userId} (${alert.locationName})`);
           promises.push(
             this.sendPushConditions(alert.userId, alert.locationId, alert.locationName)
-              .then(ok => { console.log(ok ? `✅ Push sent` : `❌ Push failed`); return ok; })
+              .then(ok => { console.log(ok ? '✅ Push sent' : '❌ Push failed'); return ok; })
           );
         }
 
@@ -127,6 +229,13 @@ export class NotificationScheduler {
       }
       if (channels.includes('push')) {
         promises.push(pushNotificationService.sendTestNotificationToUser(userId));
+      }
+      if (channels.includes('email')) {
+        const allActive = await storage.getAllActiveUserAlerts();
+        const withEmail = allActive.find(a => a.id === firstActive.id);
+        if (withEmail?.userEmail) {
+          promises.push(EmailService.sendDailyConditions(withEmail.userEmail, firstActive.locationId));
+        }
       }
       if (promises.length === 0) return false;
 

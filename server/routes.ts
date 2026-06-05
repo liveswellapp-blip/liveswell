@@ -2879,7 +2879,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
-      const updated = await storage.updateUserAlert(id, userId, req.body);
+      const { updateUserAlertSchema } = await import("@shared/schema");
+      // Strip any fields the client should not be able to set
+      const { userId: _uid, id: _id, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
+      const parsed = updateUserAlertSchema.safeParse(safeBody);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
+      const updated = await storage.updateUserAlert(id, userId, parsed.data);
       if (!updated) return res.status(404).json({ message: "Alert not found" });
       res.json(updated);
     } catch (error) {

@@ -90,6 +90,7 @@ export interface IStorage {
   deleteUserAlert(id: number, userId: string): Promise<boolean>;
   toggleUserAlert(id: number, userId: string, active: boolean): Promise<UserAlert | undefined>;
   getActiveUserAlertsForTime(time: string): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
+  getAllActiveUserAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -699,6 +700,32 @@ export class DatabaseStorage implements IStorage {
         )
       );
     return result;
+  }
+
+  async getAllActiveUserAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]> {
+    return db
+      .select({
+        id: userAlerts.id,
+        userId: userAlerts.userId,
+        locationId: userAlerts.locationId,
+        label: userAlerts.label,
+        alertType: userAlerts.alertType,
+        deliveryChannels: userAlerts.deliveryChannels,
+        frequency: userAlerts.frequency,
+        notificationTime: userAlerts.notificationTime,
+        notificationTimeTwo: userAlerts.notificationTimeTwo,
+        timezone: userAlerts.timezone,
+        phoneNumber: userAlerts.phoneNumber,
+        active: userAlerts.active,
+        createdAt: userAlerts.createdAt,
+        updatedAt: userAlerts.updatedAt,
+        locationName: locations.name,
+        userEmail: users.email,
+      })
+      .from(userAlerts)
+      .innerJoin(locations, eq(locations.id, userAlerts.locationId))
+      .innerJoin(users, eq(users.id, userAlerts.userId))
+      .where(eq(userAlerts.active, true));
   }
 }
 
