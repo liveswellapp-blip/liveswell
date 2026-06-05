@@ -2848,6 +2848,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── User Alerts CRUD ──────────────────────────────────────────────────────
+  app.get("/api/user-alerts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const alerts = await storage.getUserAlerts(userId);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching user alerts:", error);
+      res.status(500).json({ message: "Failed to fetch alerts" });
+    }
+  });
+
+  app.post("/api/user-alerts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { insertUserAlertSchema } = await import("@shared/schema");
+      const parsed = insertUserAlertSchema.safeParse({ ...req.body, userId });
+      if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
+      const alert = await storage.createUserAlert(parsed.data);
+      res.status(201).json(alert);
+    } catch (error) {
+      console.error("Error creating alert:", error);
+      res.status(500).json({ message: "Failed to create alert" });
+    }
+  });
+
+  app.put("/api/user-alerts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
+      const updated = await storage.updateUserAlert(id, userId, req.body);
+      if (!updated) return res.status(404).json({ message: "Alert not found" });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating alert:", error);
+      res.status(500).json({ message: "Failed to update alert" });
+    }
+  });
+
+  app.delete("/api/user-alerts/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
+      const deleted = await storage.deleteUserAlert(id, userId);
+      if (!deleted) return res.status(404).json({ message: "Alert not found" });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting alert:", error);
+      res.status(500).json({ message: "Failed to delete alert" });
+    }
+  });
+
+  app.patch("/api/user-alerts/:id/toggle", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
+      const { active } = req.body;
+      if (typeof active !== "boolean") return res.status(400).json({ message: "active must be boolean" });
+      const updated = await storage.toggleUserAlert(id, userId, active);
+      if (!updated) return res.status(404).json({ message: "Alert not found" });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error toggling alert:", error);
+      res.status(500).json({ message: "Failed to toggle alert" });
+    }
+  });
+
   // Helper function to determine wind type based on coastline orientation
   const getWindType = (lat: number, lon: number, windDir: string): string => {
     const dir = windDir.toUpperCase();

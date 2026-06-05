@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql } from "drizzle-orm";
 
@@ -83,6 +83,13 @@ export interface IStorage {
   addPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
   removePushSubscription(userId: string, endpoint: string): Promise<boolean>;
   removeAllUserPushSubscriptions(userId: string): Promise<boolean>;
+
+  getUserAlerts(userId: string): Promise<(UserAlert & { locationName: string; locationCity: string })[]>;
+  createUserAlert(alert: InsertUserAlert): Promise<UserAlert>;
+  updateUserAlert(id: number, userId: string, updates: UpdateUserAlert): Promise<UserAlert | undefined>;
+  deleteUserAlert(id: number, userId: string): Promise<boolean>;
+  toggleUserAlert(id: number, userId: string, active: boolean): Promise<UserAlert | undefined>;
+  getActiveUserAlertsForTime(time: string): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -600,6 +607,98 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, userId));
     return result.rowCount > 0;
+  }
+
+  async getUserAlerts(userId: string): Promise<(UserAlert & { locationName: string; locationCity: string })[]> {
+    const result = await db
+      .select({
+        id: userAlerts.id,
+        userId: userAlerts.userId,
+        locationId: userAlerts.locationId,
+        label: userAlerts.label,
+        alertType: userAlerts.alertType,
+        deliveryChannels: userAlerts.deliveryChannels,
+        frequency: userAlerts.frequency,
+        notificationTime: userAlerts.notificationTime,
+        notificationTimeTwo: userAlerts.notificationTimeTwo,
+        timezone: userAlerts.timezone,
+        phoneNumber: userAlerts.phoneNumber,
+        active: userAlerts.active,
+        createdAt: userAlerts.createdAt,
+        updatedAt: userAlerts.updatedAt,
+        locationName: locations.name,
+        locationCity: locations.city,
+      })
+      .from(userAlerts)
+      .innerJoin(locations, eq(locations.id, userAlerts.locationId))
+      .where(eq(userAlerts.userId, userId))
+      .orderBy(userAlerts.createdAt);
+    return result;
+  }
+
+  async createUserAlert(alert: InsertUserAlert): Promise<UserAlert> {
+    const [result] = await db.insert(userAlerts).values({ ...alert, updatedAt: new Date() }).returning();
+    return result;
+  }
+
+  async updateUserAlert(id: number, userId: string, updates: UpdateUserAlert): Promise<UserAlert | undefined> {
+    const [result] = await db
+      .update(userAlerts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(userAlerts.id, id), eq(userAlerts.userId, userId)))
+      .returning();
+    return result;
+  }
+
+  async deleteUserAlert(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(userAlerts)
+      .where(and(eq(userAlerts.id, id), eq(userAlerts.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async toggleUserAlert(id: number, userId: string, active: boolean): Promise<UserAlert | undefined> {
+    const [result] = await db
+      .update(userAlerts)
+      .set({ active, updatedAt: new Date() })
+      .where(and(eq(userAlerts.id, id), eq(userAlerts.userId, userId)))
+      .returning();
+    return result;
+  }
+
+  async getActiveUserAlertsForTime(time: string): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]> {
+    const result = await db
+      .select({
+        id: userAlerts.id,
+        userId: userAlerts.userId,
+        locationId: userAlerts.locationId,
+        label: userAlerts.label,
+        alertType: userAlerts.alertType,
+        deliveryChannels: userAlerts.deliveryChannels,
+        frequency: userAlerts.frequency,
+        notificationTime: userAlerts.notificationTime,
+        notificationTimeTwo: userAlerts.notificationTimeTwo,
+        timezone: userAlerts.timezone,
+        phoneNumber: userAlerts.phoneNumber,
+        active: userAlerts.active,
+        createdAt: userAlerts.createdAt,
+        updatedAt: userAlerts.updatedAt,
+        locationName: locations.name,
+        userEmail: users.email,
+      })
+      .from(userAlerts)
+      .innerJoin(locations, eq(locations.id, userAlerts.locationId))
+      .innerJoin(users, eq(users.id, userAlerts.userId))
+      .where(
+        and(
+          eq(userAlerts.active, true),
+          or(
+            eq(userAlerts.notificationTime, time),
+            eq(userAlerts.notificationTimeTwo, time)
+          )
+        )
+      );
+    return result;
   }
 }
 

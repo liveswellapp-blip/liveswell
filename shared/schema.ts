@@ -88,6 +88,23 @@ export const notificationSettings = pgTable("notification_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const userAlerts = pgTable("user_alerts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  locationId: integer("location_id").references(() => locations.id).notNull(),
+  label: text("label"),
+  alertType: text("alert_type").notNull().default("daily_report"),
+  deliveryChannels: text("delivery_channels").array().notNull().default(sql`ARRAY[]::text[]`),
+  frequency: text("frequency").notNull().default("once_daily"),
+  notificationTime: text("notification_time").notNull().default("08:00"),
+  notificationTimeTwo: text("notification_time_two"),
+  timezone: text("timezone").notNull().default("America/New_York"),
+  phoneNumber: text("phone_number"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const pushSubscriptions = pgTable("push_subscriptions", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -168,8 +185,24 @@ export type InsertFavorite = z.infer<typeof insertFavoriteSchema>;
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 export type UpdateUserProfile = z.infer<typeof updateUserProfileSchema>;
+export const insertUserAlertSchema = createInsertSchema(userAlerts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateUserAlertSchema = createInsertSchema(userAlerts).omit({
+  id: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
+
 export type NotificationSettings = typeof notificationSettings.$inferSelect;
 export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
 export type UpdateNotificationSettings = z.infer<typeof updateNotificationSettingsSchema>;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type UserAlert = typeof userAlerts.$inferSelect;
+export type InsertUserAlert = z.infer<typeof insertUserAlertSchema>;
+export type UpdateUserAlert = z.infer<typeof updateUserAlertSchema>;
