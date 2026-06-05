@@ -30,6 +30,57 @@ export interface TideThresholds {
 
 export type AlertThresholds = SwellThresholds | WindThresholds | TideThresholds;
 
+// ─── Timezone resolver (lat/lon → IANA tz, covers all US surf spots) ─────────
+/**
+ * Returns the IANA timezone for a coastal surf location.
+ * Mirrors the same regional boundaries used in the wind classifier.
+ * Handles DST correctly for all US coasts; international locations fall back to UTC.
+ */
+function resolveTimezone(lat: number, lon: number): string {
+  if (lat > 54 && lon < -130) return 'America/Anchorage';
+  if (lon < -140)              return 'Pacific/Honolulu';
+  if (lon < -114)              return 'America/Los_Angeles';
+  if (lon >= -114 && lon < -100) return 'America/Denver';
+  if (lon >= -100 && lon < -85)  return 'America/Chicago';
+  if (lon >= -85  && lon < -60 && lat > 24) return 'America/New_York';
+  return 'UTC';
+}
+
+/**
+ * Converts a station-local datetime string ("YYYY-MM-DD HH:MM" in IANA tz)
+ * to a UTC timestamp in milliseconds.
+ * Uses Intl.DateTimeFormat to compute the exact offset including DST.
+ */
+function stationLocalToUtcMs(isoRaw: string, timezone: string): number {
+  const [datePart, timePart] = isoRaw.split(' ');
+  const [yr, mo, dy] = datePart.split('-').map(Number);
+  const [hh, mm] = timePart.split(':').map(Number);
+
+  // Treat the local datetime as if it were UTC (our "probe" timestamp)
+  const probeUtcMs = Date.UTC(yr, mo - 1, dy, hh, mm);
+
+  // Format that probe UTC moment in the target timezone to find what local clock it shows
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone, hour12: false,
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric',
+  });
+  const parts = fmt.formatToParts(new Date(probeUtcMs));
+  const p: Record<string, number> = {};
+  for (const part of parts) {
+    if (part.type !== 'literal') p[part.type] = parseInt(part.value);
+  }
+
+  // The local time shown in the target timezone for probeUtcMs
+  const shownLocalMs = Date.UTC(p.year, p.month - 1, p.day, (p.hour ?? 0) % 24, p.minute ?? 0);
+
+  // UTC offset at this moment: shownLocalMs - probeUtcMs (e.g. -5h for EST, -4h for EDT)
+  const offsetMs = shownLocalMs - probeUtcMs;
+
+  // Correct UTC = probeUtcMs - offsetMs
+  return probeUtcMs - offsetMs;
+}
+
 // ─── Wind-type classifier (mirrors routes.ts getWindType) ────────────────────
 function getWindType(lat: number, lon: number, windDir: string): string {
   const dir = windDir.toUpperCase();
@@ -84,19 +135,19 @@ export function evaluateWindAlert(
 }
 
 /**
- * Evaluates tide alerts using absolute timestamps.
+ * Evaluates tide alerts using DST-correct absolute timestamps.
  *
  * Prefers `tide.isoRaw` ("YYYY-MM-DD HH:MM" in station local time, from NOAA lst_ldt),
- * which includes the full date — correctly handling next-day tides (e.g. "01:30 AM
- * tomorrow") without collapsing them to today's date.
+ * converted to UTC via `stationLocalToUtcMs` which uses Intl.DateTimeFormat to apply
+ * the exact timezone offset at that moment — including DST transitions.
  *
- * UTC conversion uses a longitude-derived offset (accurate to ±1h including DST for all
- * US coastal locations). Falls back to the display-time string when isoRaw is absent
- * (e.g. generated/fallback tide data), using today's date in that timezone.
+ * Falls back to the display time string + today's date in the resolved timezone when
+ * isoRaw is absent (generated/fallback tide data).
  */
 export function evaluateTideAlert(
   weatherData: any,
   t: TideThresholds,
+  lat: number,
   lon: number,
 ): boolean {
   const tides: Array<{ time: string; height: string; isoRaw?: string }> =
@@ -105,36 +156,33 @@ export function evaluateTideAlert(
   const now = Date.now();
   const windowMs = t.windowMinutes * 60 * 1000;
 
-  // Approximate UTC offset from longitude — accurate for all US coastal surf spots
-  const utcOffsetHours = Math.round(lon / 15);
+  // Resolve the IANA timezone for this surf location (handles DST correctly)
+  const timezone = resolveTimezone(lat, lon);
 
   for (const tide of tides) {
     try {
       let tideDateMs: number;
 
       if (tide.isoRaw) {
-        // Parse "YYYY-MM-DD HH:MM" in station local time → UTC
-        // Using isoRaw preserves the full date, so next-day tides are handled correctly.
-        const m = tide.isoRaw.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
-        if (!m) continue;
-        const [, yr, mo, dy, hh, mm] = m.map(Number);
-        // local → UTC: subtract the UTC offset
-        tideDateMs = Date.UTC(yr, mo - 1, dy, hh - utcOffsetHours, mm);
+        // Preferred path: use the full NOAA datetime including the date component,
+        // so next-day tides (e.g. "2026-06-06 01:30") are never confused with today's.
+        tideDateMs = stationLocalToUtcMs(tide.isoRaw, timezone);
       } else {
-        // Fallback: parse display string "h:mm AM/PM" and use today in the location TZ
+        // Fallback: parse display string "h:mm AM/PM" and anchor to today's date
+        // in the resolved IANA timezone.
         const fm = tide.time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
         if (!fm) continue;
         let h = parseInt(fm[1]);
-        const mm = parseInt(fm[2]);
+        const m = parseInt(fm[2]);
         const ampm = fm[3].toUpperCase();
         if (ampm === 'PM' && h !== 12) h += 12;
         else if (ampm === 'AM' && h === 12) h = 0;
-        // "Today" in the location's approximate local timezone
-        const locationNow = new Date(now + utcOffsetHours * 3_600_000);
-        tideDateMs = Date.UTC(
-          locationNow.getUTCFullYear(), locationNow.getUTCMonth(), locationNow.getUTCDate(),
-          h - utcOffsetHours, mm,
-        );
+
+        // Get today's date string in the location's timezone
+        const localDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: timezone })
+          .format(new Date(now));  // "en-CA" gives "YYYY-MM-DD" format
+        const isoFallback = `${localDateStr} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        tideDateMs = stationLocalToUtcMs(isoFallback, timezone);
       }
 
       const diff = tideDateMs - now;
@@ -281,7 +329,7 @@ export class ConditionMonitor {
           } else if (alert.alertType === 'wind') {
             triggered = evaluateWindAlert(weatherData, thresholds as WindThresholds, lat, lon);
           } else if (alert.alertType === 'tide') {
-            triggered = evaluateTideAlert(weatherData, thresholds as TideThresholds, lon);
+            triggered = evaluateTideAlert(weatherData, thresholds as TideThresholds, lat, lon);
           }
 
           if (!triggered) continue;
