@@ -841,6 +841,7 @@ export default function NotificationSettings() {
       </div>
 
       <AlertFormDialog
+        key={`${dialogOpen ? "open" : "closed"}-${editAlert?.id ?? "new"}`}
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         initialData={editInitial}
