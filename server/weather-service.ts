@@ -337,14 +337,19 @@ export async function fetchTideData(lat: number, lon: number) {
           const highs = predictions.predictions.filter((p: any) => p.type === 'H').slice(0, 2);
           const lows = predictions.predictions.filter((p: any) => p.type === 'L').slice(0, 2);
           
+          // h.t from NOAA is "YYYY-MM-DD HH:MM" in the station's local (lst_ldt) timezone.
+          // We store isoRaw so the condition monitor can compare absolute timestamps
+          // without losing the date component (needed for next-day tides).
           tideHigh = highs.map((h: any) => ({
             time: new Date(h.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-            height: parseFloat(h.v).toFixed(1)
+            height: parseFloat(h.v).toFixed(1),
+            isoRaw: h.t,   // "YYYY-MM-DD HH:MM" in station local time
           }));
           
           tideLow = lows.map((l: any) => ({
             time: new Date(l.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-            height: parseFloat(l.v).toFixed(1)
+            height: parseFloat(l.v).toFixed(1),
+            isoRaw: l.t,   // "YYYY-MM-DD HH:MM" in station local time
           }));
         }
       }

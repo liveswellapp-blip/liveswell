@@ -84,43 +84,58 @@ export function evaluateWindAlert(
 }
 
 /**
- * Evaluates tide alerts in a timezone-correct way.
- * Tide time strings (e.g. "7:15 AM") are in the station's local time (lst_ldt from NOAA).
- * We approximate that timezone from longitude — accurate to within ~30 min for all
- * coastal surf locations (no inland political timezone quirks to worry about).
+ * Evaluates tide alerts using absolute timestamps.
+ *
+ * Prefers `tide.isoRaw` ("YYYY-MM-DD HH:MM" in station local time, from NOAA lst_ldt),
+ * which includes the full date — correctly handling next-day tides (e.g. "01:30 AM
+ * tomorrow") without collapsing them to today's date.
+ *
+ * UTC conversion uses a longitude-derived offset (accurate to ±1h including DST for all
+ * US coastal locations). Falls back to the display-time string when isoRaw is absent
+ * (e.g. generated/fallback tide data), using today's date in that timezone.
  */
-export function evaluateTideAlert(weatherData: any, t: TideThresholds, lon: number): boolean {
-  const tides: Array<{ time: string; height: string }> =
+export function evaluateTideAlert(
+  weatherData: any,
+  t: TideThresholds,
+  lon: number,
+): boolean {
+  const tides: Array<{ time: string; height: string; isoRaw?: string }> =
     t.tideType === 'high' ? (weatherData.tideHigh ?? []) : (weatherData.tideLow ?? []);
+
   const now = Date.now();
   const windowMs = t.windowMinutes * 60 * 1000;
 
-  // Approximate UTC offset from longitude: works well for US coasts (ET/CT/MT/PT/HT)
+  // Approximate UTC offset from longitude — accurate for all US coastal surf spots
   const utcOffsetHours = Math.round(lon / 15);
-
-  // "Today" in the location's approximate local timezone
-  const locationNowMs = now + utcOffsetHours * 3600_000;
-  const locationNow = new Date(locationNowMs);
 
   for (const tide of tides) {
     try {
-      const match = tide.time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-      if (!match) continue;
-      let h = parseInt(match[1]);
-      const m = parseInt(match[2]);
-      const ampm = match[3].toUpperCase();
-      if (ampm === 'PM' && h !== 12) h += 12;
-      else if (ampm === 'AM' && h === 12) h = 0;
+      let tideDateMs: number;
 
-      // Build the tide moment as a UTC timestamp:
-      // local h → UTC by subtracting the offset
-      const tideDateMs = Date.UTC(
-        locationNow.getUTCFullYear(),
-        locationNow.getUTCMonth(),
-        locationNow.getUTCDate(),
-        h - utcOffsetHours,
-        m,
-      );
+      if (tide.isoRaw) {
+        // Parse "YYYY-MM-DD HH:MM" in station local time → UTC
+        // Using isoRaw preserves the full date, so next-day tides are handled correctly.
+        const m = tide.isoRaw.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
+        if (!m) continue;
+        const [, yr, mo, dy, hh, mm] = m.map(Number);
+        // local → UTC: subtract the UTC offset
+        tideDateMs = Date.UTC(yr, mo - 1, dy, hh - utcOffsetHours, mm);
+      } else {
+        // Fallback: parse display string "h:mm AM/PM" and use today in the location TZ
+        const fm = tide.time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (!fm) continue;
+        let h = parseInt(fm[1]);
+        const mm = parseInt(fm[2]);
+        const ampm = fm[3].toUpperCase();
+        if (ampm === 'PM' && h !== 12) h += 12;
+        else if (ampm === 'AM' && h === 12) h = 0;
+        // "Today" in the location's approximate local timezone
+        const locationNow = new Date(now + utcOffsetHours * 3_600_000);
+        tideDateMs = Date.UTC(
+          locationNow.getUTCFullYear(), locationNow.getUTCMonth(), locationNow.getUTCDate(),
+          h - utcOffsetHours, mm,
+        );
+      }
 
       const diff = tideDateMs - now;
       // Fire if tide is approaching (within window) or just passed (within 5 min)
@@ -154,12 +169,16 @@ function buildTriggerReason(alertType: string, thresholds: any, weatherData: any
 }
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────
+/**
+ * Dispatches a condition alert across all configured channels.
+ * Returns true if at least one channel delivered successfully.
+ */
 async function dispatchConditionAlert(
   alert: any,
   weatherData: any,
   locationName: string,
   triggerReason: string,
-): Promise<void> {
+): Promise<boolean> {
   const channels: string[] = alert.deliveryChannels ?? [];
   const promises: Promise<boolean>[] = [];
 
@@ -167,7 +186,8 @@ async function dispatchConditionAlert(
     console.log(`📱 Condition SMS → ${alert.phoneNumber} (${locationName}): ${triggerReason}`);
     promises.push(
       SMSService.sendConditionAlert(alert.phoneNumber, locationName, triggerReason, alert.locationId)
-        .then(ok => { console.log(ok ? '✅ SMS sent' : '❌ SMS failed'); return ok; }),
+        .then(ok => { console.log(ok ? '✅ SMS sent' : '❌ SMS failed'); return ok; })
+        .catch(() => false),
     );
   }
 
@@ -175,7 +195,8 @@ async function dispatchConditionAlert(
     console.log(`✉️  Condition email → ${alert.userEmail} (${locationName}): ${triggerReason}`);
     promises.push(
       EmailService.sendConditionAlert(alert.userEmail, locationName, triggerReason, alert.locationId)
-        .then(ok => { console.log(ok ? '✅ Email sent' : '❌ Email failed'); return ok; }),
+        .then(ok => { console.log(ok ? '✅ Email sent' : '❌ Email failed'); return ok; })
+        .catch(() => false),
     );
   }
 
@@ -186,11 +207,14 @@ async function dispatchConditionAlert(
         alert.userId,
         `🌊 ${locationName} Alert`,
         triggerReason,
-      ).then(ok => { console.log(ok ? '✅ Push sent' : '❌ Push failed'); return ok; }),
+      ).then(ok => { console.log(ok ? '✅ Push sent' : '❌ Push failed'); return ok; })
+        .catch(() => false),
     );
   }
 
-  if (promises.length > 0) await Promise.all(promises);
+  if (promises.length === 0) return false;
+  const results = await Promise.all(promises);
+  return results.some(ok => ok);
 }
 
 // ─── ConditionMonitor ────────────────────────────────────────────────────────
@@ -265,8 +289,14 @@ export class ConditionMonitor {
           const triggerReason = buildTriggerReason(alert.alertType, thresholds, weatherData);
           console.log(`🚨 Alert triggered: ${alert.alertType} for ${location.name} — ${triggerReason}`);
 
-          await dispatchConditionAlert(alert, weatherData, location.name, triggerReason);
-          await storage.updateAlertLastFiredAt(alert.id, new Date());
+          const delivered = await dispatchConditionAlert(alert, weatherData, location.name, triggerReason);
+          // Only mark lastFiredAt when at least one channel delivered, so a delivery
+          // failure doesn't silently burn the cooldown window.
+          if (delivered) {
+            await storage.updateAlertLastFiredAt(alert.id, new Date());
+          } else {
+            console.warn(`⚠️ Alert ${alert.id} triggered but no channel delivered — cooldown NOT advanced`);
+          }
         }
       }
     } catch (error) {
