@@ -27,6 +27,13 @@ interface AlertTriggerLog {
   conditionSnapshot: any | null;
 }
 
+interface RecentActivityEntry extends AlertTriggerLog {
+  alertType: string;
+  locationName: string;
+  locationCity: string;
+  alertLabel: string | null;
+}
+
 interface UserAlert {
   id: number;
   userId: string;
@@ -969,6 +976,12 @@ export default function NotificationSettings() {
     queryKey: ["/api/favorites"],
   });
 
+  const { data: recentActivity = [], isLoading: activityLoading } = useQuery<RecentActivityEntry[]>({
+    queryKey: ["/api/user-alerts/recent-activity"],
+    queryFn: () => fetch("/api/user-alerts/recent-activity").then(r => r.json()),
+    staleTime: 60_000,
+  });
+
   const toggleMutation = useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
       apiRequest(`/api/user-alerts/${id}/toggle`, { method: "PATCH", body: { active } }),
@@ -1102,6 +1115,50 @@ export default function NotificationSettings() {
                 </div>
               </section>
             )}
+
+            <section>
+              <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <History size={11} /> Recent Activity
+              </h2>
+              {activityLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-14 rounded-xl animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
+                  ))}
+                </div>
+              ) : recentActivity.length === 0 ? (
+                <div className="rounded-xl px-4 py-5 flex items-center gap-3" style={CARD}>
+                  <History size={16} className="text-slate-600 shrink-0" />
+                  <p className="text-[12px] text-slate-600">No alerts have fired yet — this list will fill up once your alerts trigger.</p>
+                </div>
+              ) : (
+                <div className="rounded-xl overflow-hidden" style={CARD}>
+                  {recentActivity.map((entry, idx) => {
+                    const typeInfo = ALERT_TYPES.find(t => t.id === entry.alertType) ?? ALERT_TYPES[0];
+                    const TypeIcon = typeInfo.icon;
+                    const displayName = entry.alertLabel || entry.locationName;
+                    return (
+                      <div key={entry.id}
+                        className="flex items-start gap-3 px-4 py-3"
+                        style={idx < recentActivity.length - 1 ? { borderBottom: "1px solid rgba(255,255,255,0.05)" } : {}}>
+                        <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                          style={{ background: `${typeInfo.color}18`, border: `1px solid ${typeInfo.color}28` }}>
+                          <TypeIcon size={11} style={{ color: typeInfo.color }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <span className="text-[12px] font-semibold text-white truncate">{displayName}</span>
+                            <span className="text-[10px] text-slate-500 shrink-0">{entry.locationCity}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 leading-snug">{entry.triggerReason}</p>
+                        </div>
+                        <span className="text-[10px] text-slate-600 shrink-0 mt-0.5">{relativeTime(entry.firedAt)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           </>
         )}
       </div>

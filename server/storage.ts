@@ -96,6 +96,7 @@ export interface IStorage {
   updateAlertLastFiredAt(id: number, firedAt: Date): Promise<void>;
   logAlertTrigger(alertId: number, triggerReason: string, conditionSnapshot?: any): Promise<AlertTriggerLog>;
   getAlertTriggerLog(alertId: number, userId: string, limit?: number): Promise<AlertTriggerLog[]>;
+  getRecentAlertTriggerLogs(userId: string, limit?: number): Promise<(AlertTriggerLog & { alertType: string; locationName: string; locationCity: string; alertLabel: string | null })[]>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -854,6 +855,28 @@ export class DatabaseStorage implements IStorage {
       .where(eq(alertTriggerLog.alertId, alertId))
       .orderBy(sql`${alertTriggerLog.firedAt} DESC`)
       .limit(limit);
+  }
+
+  async getRecentAlertTriggerLogs(userId: string, limit: number = 20): Promise<(AlertTriggerLog & { alertType: string; locationName: string; locationCity: string; alertLabel: string | null })[]> {
+    const result = await db
+      .select({
+        id: alertTriggerLog.id,
+        alertId: alertTriggerLog.alertId,
+        firedAt: alertTriggerLog.firedAt,
+        triggerReason: alertTriggerLog.triggerReason,
+        conditionSnapshot: alertTriggerLog.conditionSnapshot,
+        alertType: userAlerts.alertType,
+        alertLabel: userAlerts.label,
+        locationName: locations.name,
+        locationCity: locations.city,
+      })
+      .from(alertTriggerLog)
+      .innerJoin(userAlerts, eq(userAlerts.id, alertTriggerLog.alertId))
+      .innerJoin(locations, eq(locations.id, userAlerts.locationId))
+      .where(eq(userAlerts.userId, userId))
+      .orderBy(sql`${alertTriggerLog.firedAt} DESC`)
+      .limit(limit);
+    return result;
   }
 }
 

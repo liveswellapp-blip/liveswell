@@ -3048,6 +3048,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/user-alerts/recent-activity", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const log = await storage.getRecentAlertTriggerLogs(userId, 20);
+      res.json(log);
+    } catch (error) {
+      console.error("Error fetching recent alert activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
+    }
+  });
+
   // Helper function to determine wind type based on coastline orientation
   const getWindType = (lat: number, lon: number, windDir: string): string => {
     const dir = windDir.toUpperCase();
