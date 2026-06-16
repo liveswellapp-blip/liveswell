@@ -833,24 +833,22 @@ export default function NotificationSettings() {
             <ChevronLeft size={14} />
             Profile
           </button>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
-                <Bell size={18} className="text-amber-400" />
-              </div>
-              <div>
-                <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
-                <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
-              </div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+              style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
+              <Bell size={18} className="text-amber-400" />
             </div>
-            <button onClick={openCreate}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
-              style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
-              <Plus size={14} />
-              Add Alert
-            </button>
+            <div>
+              <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
+              <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
+            </div>
           </div>
+          <button onClick={openCreate}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+            style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
+            <Plus size={14} />
+            Add Alert
+          </button>
         </div>
       </div>
 
