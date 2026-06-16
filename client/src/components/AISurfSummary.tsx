@@ -54,10 +54,7 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
                 "radial-gradient(ellipse at 20% 50%, #10b981 0%, transparent 60%), radial-gradient(ellipse at 80% 50%, #0ea5e9 0%, transparent 60%)",
             }}
           />
-          <div className="relative flex items-start gap-3">
-            <span className="mt-0.5 text-emerald-400 text-xs font-bold tracking-widest uppercase shrink-0 opacity-70">
-              ✦ AI
-            </span>
+          <div className="relative">
             <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
               {data.summary}
             </p>
