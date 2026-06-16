@@ -180,19 +180,30 @@ const SEL: React.CSSProperties  = { background: "rgba(0,0,0,0.4)", border: "1px 
 const INPUT_CLS = "w-full h-9 rounded-xl px-3 text-[13px] text-slate-200 outline-none focus:ring-1 focus:ring-emerald-500/40";
 
 // ─── Channel badge ────────────────────────────────────────────────────────────
+const BADGE_STYLE = {
+  background: "rgba(100,116,139,0.1)",
+  border: "1px solid rgba(100,116,139,0.18)",
+  color: "#94a3b8",
+} as const;
+
+const BADGE_ERROR_STYLE = {
+  background: "rgba(239,68,68,0.1)",
+  border: "1px solid rgba(239,68,68,0.22)",
+  color: "#f87171",
+} as const;
+
 function ChannelBadge({ ch, unverified }: { ch: string; unverified?: boolean }) {
-  const map: Record<string, { icon: any; label: string; color: string }> = {
-    push:  { icon: Smartphone,    label: "Push",  color: "#a78bfa" },
-    sms:   { icon: MessageSquare, label: "SMS",   color: "#34d399" },
-    email: { icon: Mail,          label: "Email", color: "#38bdf8" },
+  const map: Record<string, { icon: any; label: string }> = {
+    push:  { icon: Smartphone,    label: "Push"  },
+    sms:   { icon: MessageSquare, label: "SMS"   },
+    email: { icon: Mail,          label: "Email" },
   };
   const cfg = map[ch];
   if (!cfg) return null;
   const Icon = cfg.icon;
-  const color = unverified ? "#f59e0b" : cfg.color;
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold"
-      style={{ background: `${color}18`, border: `1px solid ${color}30`, color }}>
+      style={unverified ? BADGE_ERROR_STYLE : BADGE_STYLE}>
       <Icon size={9} />
       {cfg.label}
       {unverified && <span className="ml-0.5">⚠</span>}
@@ -206,7 +217,7 @@ function AlertTypeBadge({ alertType }: { alertType: string }) {
   const Icon = t.icon;
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold"
-      style={{ background: `${t.color}15`, border: `1px solid ${t.color}25`, color: t.color }}>
+      style={BADGE_STYLE}>
       <Icon size={9} />
       {t.label}
     </span>
