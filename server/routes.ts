@@ -18,6 +18,8 @@ import {
   trackOpenWeatherUsage 
 } from './rate-limiter';
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
+import { SMSService } from "./sms-service";
+import { EmailService } from "./email-service";
 import { findNearbyStations } from "./noaa-integration";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { 
@@ -312,7 +314,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get users" });
     }
   });
-  
+
+  // ── Admin: smoke-test SMS and/or email delivery ──────────────────────────
+  app.post("/api/admin/test-alert", requireAdminAuth, async (req, res) => {
+    try {
+      const {
+        channel,          // 'sms' | 'email' | 'both'
+        toPhone,          // E.164 phone number for SMS
+        toEmail,          // email address for email
+        locationId,       // numeric location ID to fetch conditions for
+      } = req.body;
+
+      const locId = parseInt(locationId, 10);
+      if (!locId || isNaN(locId)) {
+        return res.status(400).json({ message: "locationId is required" });
+      }
+
+      const results: Record<string, boolean> = {};
+
+      if ((channel === 'sms' || channel === 'both') && toPhone) {
+        console.log(`🔧 Admin test SMS → ${toPhone} (locationId ${locId})`);
+        results.sms = await SMSService.sendDailyConditions('admin-test', toPhone, locId);
+      }
+
+      if ((channel === 'email' || channel === 'both') && toEmail) {
+        console.log(`🔧 Admin test email → ${toEmail} (locationId ${locId})`);
+        results.email = await EmailService.sendDailyConditions(toEmail, locId);
+      }
+
+      if (Object.keys(results).length === 0) {
+        return res.status(400).json({
+          message: "No valid channel/recipient combination. Provide toPhone for sms or toEmail for email.",
+        });
+      }
+
+      res.json({
+        success: Object.values(results).some(ok => ok),
+        results,
+      });
+    } catch (error) {
+      console.error("Error in admin test-alert:", error);
+      res.status(500).json({ message: "Test alert failed" });
+    }
+  });
+
   app.get("/api/admin/users/:userId", requireAdminAuth, async (req, res) => {
     try {
       const { userId } = req.params;

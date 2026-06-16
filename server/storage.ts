@@ -91,6 +91,7 @@ export interface IStorage {
   toggleUserAlert(id: number, userId: string, active: boolean): Promise<UserAlert | undefined>;
   getActiveUserAlertsForTime(time: string): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
   getAllActiveUserAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
+  getActiveDailyReportAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
   getActiveConditionAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]>;
   updateAlertLastFiredAt(id: number, firedAt: Date): Promise<void>;
   logAlertTrigger(alertId: number, triggerReason: string, conditionSnapshot?: any): Promise<AlertTriggerLog>;
@@ -739,6 +740,40 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(locations, eq(locations.id, userAlerts.locationId))
       .innerJoin(users, eq(users.id, userAlerts.userId))
       .where(eq(userAlerts.active, true));
+  }
+
+  async getActiveDailyReportAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]> {
+    return db
+      .select({
+        id: userAlerts.id,
+        userId: userAlerts.userId,
+        locationId: userAlerts.locationId,
+        label: userAlerts.label,
+        alertType: userAlerts.alertType,
+        deliveryChannels: userAlerts.deliveryChannels,
+        frequency: userAlerts.frequency,
+        notificationTime: userAlerts.notificationTime,
+        notificationTimeTwo: userAlerts.notificationTimeTwo,
+        timezone: userAlerts.timezone,
+        phoneNumber: userAlerts.phoneNumber,
+        active: userAlerts.active,
+        thresholds: userAlerts.thresholds,
+        lastFiredAt: userAlerts.lastFiredAt,
+        cooldownHours: userAlerts.cooldownHours,
+        createdAt: userAlerts.createdAt,
+        updatedAt: userAlerts.updatedAt,
+        locationName: locations.name,
+        userEmail: users.email,
+      })
+      .from(userAlerts)
+      .innerJoin(locations, eq(locations.id, userAlerts.locationId))
+      .innerJoin(users, eq(users.id, userAlerts.userId))
+      .where(
+        and(
+          eq(userAlerts.active, true),
+          eq(userAlerts.alertType, 'daily_report')
+        )
+      );
   }
 
   async getActiveConditionAlerts(): Promise<(UserAlert & { locationName: string; userEmail: string | null })[]> {

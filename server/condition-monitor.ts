@@ -266,17 +266,128 @@ async function dispatchConditionAlert(
   return results.some(ok => ok);
 }
 
+// ─── Timezone helpers for daily report scheduling ────────────────────────────
+
+/** Returns the current wall-clock time as "HH:MM" in the given IANA timezone. */
+function getCurrentTimeInTz(timezone: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone, hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(new Date()).replace(/^24/, '00');
+  } catch {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(new Date()).replace(/^24/, '00');
+  }
+}
+
+/** Returns today's date as "YYYY-MM-DD" in the given IANA timezone. */
+function getCurrentDateInTz(timezone: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date());
+  } catch {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(new Date());
+  }
+}
+
+// ─── Daily report dispatcher ─────────────────────────────────────────────────
+/**
+ * Dispatches a daily surf report across SMS and/or email channels.
+ * Returns true if at least one channel delivered.
+ */
+async function dispatchDailyReport(alert: any): Promise<boolean> {
+  const channels: string[] = alert.deliveryChannels ?? [];
+  const promises: Promise<boolean>[] = [];
+
+  if (channels.includes('sms') && alert.phoneNumber) {
+    console.log(`📱 Daily report SMS → ${alert.phoneNumber} (${alert.locationName})`);
+    promises.push(
+      SMSService.sendDailyConditions(alert.userId, alert.phoneNumber, alert.locationId)
+        .then(ok => { console.log(ok ? '✅ SMS sent' : '❌ SMS failed'); return ok; })
+        .catch(() => false),
+    );
+  }
+
+  if (channels.includes('email') && alert.userEmail) {
+    console.log(`✉️  Daily report email → ${alert.userEmail} (${alert.locationName})`);
+    promises.push(
+      EmailService.sendDailyConditions(alert.userEmail, alert.locationId)
+        .then(ok => { console.log(ok ? '✅ Email sent' : '❌ Email failed'); return ok; })
+        .catch(() => false),
+    );
+  }
+
+  if (promises.length === 0) {
+    console.warn(`⚠️ Daily report alert ${alert.id} has no deliverable channels (no SMS number or email)`);
+    return false;
+  }
+
+  const results = await Promise.all(promises);
+  return results.some(ok => ok);
+}
+
 // ─── ConditionMonitor ────────────────────────────────────────────────────────
 export class ConditionMonitor {
   private static initialized = false;
 
   static async initialize(): Promise<void> {
     if (this.initialized) return;
-    // Run immediately on startup, then every 20 minutes
+    // Condition alerts: run immediately on startup, then every 20 minutes
     await this.checkConditionAlerts();
     cron.schedule('*/20 * * * *', () => this.checkConditionAlerts());
+    // Daily report scheduler: runs every minute, fires reports at user-configured times
+    cron.schedule('* * * * *', () => this.checkDailyReportAlerts());
     this.initialized = true;
-    console.log('🌊 Condition monitor initialized (runs every 20 min)');
+    console.log('🌊 Condition monitor initialized (condition alerts every 20 min, daily reports every 1 min)');
+  }
+
+  static async checkDailyReportAlerts(): Promise<void> {
+    try {
+      const dailyAlerts = await storage.getActiveDailyReportAlerts();
+      if (dailyAlerts.length === 0) return;
+
+      for (const alert of dailyAlerts) {
+        const tz = alert.timezone || 'America/New_York';
+        const currentTime = getCurrentTimeInTz(tz);
+        const todayInTz = getCurrentDateInTz(tz);
+
+        // Check if current minute matches either configured time
+        const timesMatch =
+          alert.notificationTime === currentTime ||
+          (alert.frequency === 'twice_daily' && alert.notificationTimeTwo === currentTime);
+
+        if (!timesMatch) continue;
+
+        // Dedup: skip if already fired today in this timezone
+        if (alert.lastFiredAt) {
+          const lastFiredDateInTz = new Intl.DateTimeFormat('en-CA', { timeZone: tz })
+            .format(new Date(alert.lastFiredAt));
+          if (lastFiredDateInTz === todayInTz) {
+            // Allow twice_daily second fire if it's a different time
+            if (alert.frequency !== 'twice_daily' || alert.notificationTimeTwo !== currentTime) {
+              continue;
+            }
+            // For twice_daily, only skip if we already fired within the last 60 minutes
+            const minutesSinceLastFire = (Date.now() - new Date(alert.lastFiredAt).getTime()) / 60000;
+            if (minutesSinceLastFire < 60) {
+              continue;
+            }
+          }
+        }
+
+        console.log(`📅 Daily report due: alert ${alert.id} for ${alert.locationName} at ${currentTime} ${tz}`);
+        const delivered = await dispatchDailyReport(alert);
+
+        if (delivered) {
+          await storage.updateAlertLastFiredAt(alert.id, new Date());
+          await storage.logAlertTrigger(alert.id, `Daily report sent at ${currentTime} ${tz}`).catch(() => {});
+        } else {
+          console.warn(`⚠️ Daily report alert ${alert.id} — all channels failed`);
+        }
+      }
+    } catch (error) {
+      console.error('Error in daily report scheduler:', error);
+    }
   }
 
   static async checkConditionAlerts(): Promise<void> {

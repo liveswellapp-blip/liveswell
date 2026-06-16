@@ -15,6 +15,7 @@ if (!resendApiKey) {
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'LiveSwell <onboarding@resend.dev>';
+console.log(`📧 Email from-address: ${FROM_EMAIL}${process.env.RESEND_FROM_EMAIL ? '' : ' (set RESEND_FROM_EMAIL secret to use a verified domain)'}`);
 
 export class EmailService {
   static isConfigured(): boolean {
