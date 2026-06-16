@@ -1,4 +1,3 @@
-import * as cron from 'node-cron';
 import { storage } from './storage';
 import { SMSService } from './sms-service';
 import { EmailService } from './email-service';
@@ -6,30 +5,7 @@ import { pushNotificationService } from './push-service';
 import { ConditionMonitor } from './condition-monitor';
 import { db } from './db';
 import { userAlerts, notificationSettings } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
-
-/**
- * Returns the current HH:MM in a given IANA timezone.
- * Falls back to server local time if the timezone is invalid.
- */
-function currentTimeInTz(timezone: string): string {
-  try {
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    }).formatToParts(new Date());
-    const h = parts.find(p => p.type === 'hour')?.value ?? '00';
-    const m = parts.find(p => p.type === 'minute')?.value ?? '00';
-    // Intl can return '24' for midnight — normalise to '00'
-    const hh = h === '24' ? '00' : h.padStart(2, '0');
-    return `${hh}:${m.padStart(2, '0')}`;
-  } catch {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-  }
-}
+import { eq } from 'drizzle-orm';
 
 export class NotificationScheduler {
   private static initialized = false;
@@ -46,16 +22,12 @@ export class NotificationScheduler {
       console.warn('⚠️ SMS service not properly configured');
     }
 
-    // Initialize condition-based alert monitor (runs every 20 min)
+    // Initialize condition-based alert monitor (runs every 20 min for condition alerts,
+    // every 1 min for daily reports — this is the single owner of daily report dispatch)
     await ConditionMonitor.initialize();
 
     // One-time backfill: migrate existing notification_settings rows into user_alerts
     await this.backfillLegacySettings();
-
-    // Every minute: check all active user_alerts, respecting per-alert timezones
-    cron.schedule('* * * * *', async () => {
-      await this.checkUserAlerts();
-    });
 
     this.initialized = true;
     console.log('🔔 Notification scheduler initialized');
@@ -111,97 +83,6 @@ export class NotificationScheduler {
       }
     } catch (error) {
       console.error('Error during legacy settings backfill:', error);
-    }
-  }
-
-  /**
-   * Called every minute. For each active alert, compute the current time in
-   * that alert's stored timezone and compare against notificationTime /
-   * notificationTimeTwo. Dispatches channels only when the times match.
-   */
-  private static async checkUserAlerts(): Promise<void> {
-    try {
-      // Fetch all active alerts with location name + user email
-      const allActive = await storage.getAllActiveUserAlerts();
-      if (allActive.length === 0) return;
-
-      // Group by timezone so we call currentTimeInTz once per unique tz
-      const tzCache = new Map<string, string>();
-      const getTime = (tz: string) => {
-        if (!tzCache.has(tz)) tzCache.set(tz, currentTimeInTz(tz));
-        return tzCache.get(tz)!;
-      };
-
-      const due = allActive.filter(alert => {
-        // Condition alerts (swell/wind/tide) are handled by ConditionMonitor
-        if (alert.alertType !== 'daily_report') return false;
-        const localTime = getTime(alert.timezone);
-        return (
-          alert.notificationTime === localTime ||
-          (alert.frequency === 'twice_daily' && alert.notificationTimeTwo === localTime)
-        );
-      });
-
-      if (due.length === 0) return;
-
-      console.log(`🔔 Processing ${due.length} alert(s)`);
-
-      for (const alert of due) {
-        const channels = alert.deliveryChannels ?? [];
-        const promises: Promise<boolean>[] = [];
-
-        if (channels.includes('sms') && alert.phoneNumber) {
-          console.log(`📱 SMS → ${alert.phoneNumber} (${alert.locationName})`);
-          promises.push(
-            SMSService.sendDailyConditions(alert.userId, alert.phoneNumber, alert.locationId)
-              .then(ok => { console.log(ok ? '✅ SMS sent' : '❌ SMS failed'); return ok; })
-          );
-        }
-
-        if (channels.includes('email') && alert.userEmail) {
-          console.log(`✉️  Email → ${alert.userEmail} (${alert.locationName})`);
-          promises.push(
-            EmailService.sendDailyConditions(alert.userEmail, alert.locationId)
-              .then(ok => { console.log(ok ? '✅ Email sent' : '❌ Email failed'); return ok; })
-          );
-        }
-
-        if (channels.includes('push')) {
-          console.log(`🔔 Push → user ${alert.userId} (${alert.locationName})`);
-          promises.push(
-            this.sendPushConditions(alert.userId, alert.locationId, alert.locationName)
-              .then(ok => { console.log(ok ? '✅ Push sent' : '❌ Push failed'); return ok; })
-          );
-        }
-
-        if (promises.length > 0) await Promise.all(promises);
-      }
-    } catch (error) {
-      console.error('Error in notification scheduler:', error);
-    }
-  }
-
-  private static async sendPushConditions(userId: string, locationId: number, locationName: string): Promise<boolean> {
-    try {
-      const conditions = await storage.getSurfConditions(locationId);
-      if (!conditions) return false;
-
-      return await pushNotificationService.sendSurfConditionNotification(userId, locationName, {
-        waveHeight: conditions.waveHeight || '0',
-        wavePeriod: conditions.wavePeriod || 0,
-        waveDirection: conditions.waveDirection || 'N/A',
-        windSpeed: conditions.windSpeed || '0',
-        windDirection: conditions.windDirection || 'N/A',
-        waterTemp: conditions.waterTemp || 'N/A',
-        tideHeight: conditions.tideHeight || '0',
-        tideStatus: conditions.tideStatus || 'Unknown',
-        uvIndex: conditions.uvIndex || 0,
-        sunrise: conditions.sunrise || 'N/A',
-        sunset: conditions.sunset || 'N/A',
-      });
-    } catch (error) {
-      console.error('Error sending push conditions:', error);
-      return false;
     }
   }
 

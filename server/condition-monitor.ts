@@ -332,8 +332,35 @@ async function dispatchDailyReport(alert: any): Promise<boolean> {
     );
   }
 
+  if (channels.includes('push')) {
+    console.log(`🔔 Daily report push → user ${alert.userId} (${alert.locationName})`);
+    promises.push(
+      (async () => {
+        try {
+          const conditions = await storage.getSurfConditions(alert.locationId);
+          if (!conditions) { console.log('❌ Push failed (no conditions)'); return false; }
+          const ok = await pushNotificationService.sendSurfConditionNotification(alert.userId, alert.locationName, {
+            waveHeight: conditions.waveHeight || '0',
+            wavePeriod: conditions.wavePeriod || 0,
+            waveDirection: conditions.waveDirection || 'N/A',
+            windSpeed: conditions.windSpeed || '0',
+            windDirection: conditions.windDirection || 'N/A',
+            waterTemp: conditions.waterTemp || 'N/A',
+            tideHeight: conditions.tideHeight || '0',
+            tideStatus: conditions.tideStatus || 'Unknown',
+            uvIndex: conditions.uvIndex || 0,
+            sunrise: conditions.sunrise || 'N/A',
+            sunset: conditions.sunset || 'N/A',
+          });
+          console.log(ok ? '✅ Push sent' : '❌ Push failed');
+          return ok;
+        } catch { console.log('❌ Push failed (error)'); return false; }
+      })(),
+    );
+  }
+
   if (promises.length === 0) {
-    console.warn(`⚠️ Daily report alert ${alert.id} has no deliverable channels (no SMS number or email)`);
+    console.warn(`⚠️ Daily report alert ${alert.id} has no deliverable channels (no SMS number, email, or push subscribers)`);
     return false;
   }
 
