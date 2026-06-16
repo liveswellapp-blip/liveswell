@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import {
   Bell, Plus, MapPin, Clock, Trash2, Pencil, Mail, MessageSquare, Smartphone,
-  Waves, Wind, Droplets, AlertCircle, History, ChevronLeft,
+  Waves, Wind, Droplets, AlertCircle, History, ChevronLeft, CheckCircle2, ShieldCheck,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -41,6 +41,7 @@ interface UserAlert {
   notificationTimeTwo: string | null;
   timezone: string;
   phoneNumber: string | null;
+  phoneVerified: boolean;
   active: boolean;
   thresholds: any | null;
   lastFiredAt: string | null;
@@ -172,7 +173,7 @@ const SEL: React.CSSProperties  = { background: "rgba(0,0,0,0.4)", border: "1px 
 const INPUT_CLS = "w-full h-9 rounded-xl px-3 text-[13px] text-slate-200 outline-none focus:ring-1 focus:ring-emerald-500/40";
 
 // ─── Channel badge ────────────────────────────────────────────────────────────
-function ChannelBadge({ ch }: { ch: string }) {
+function ChannelBadge({ ch, unverified }: { ch: string; unverified?: boolean }) {
   const map: Record<string, { icon: any; label: string; color: string }> = {
     push:  { icon: Smartphone,    label: "Push",  color: "#a78bfa" },
     sms:   { icon: MessageSquare, label: "SMS",   color: "#34d399" },
@@ -181,11 +182,13 @@ function ChannelBadge({ ch }: { ch: string }) {
   const cfg = map[ch];
   if (!cfg) return null;
   const Icon = cfg.icon;
+  const color = unverified ? "#f59e0b" : cfg.color;
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold"
-      style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}30`, color: cfg.color }}>
+      style={{ background: `${color}18`, border: `1px solid ${color}30`, color }}>
       <Icon size={9} />
       {cfg.label}
+      {unverified && <span className="ml-0.5">⚠</span>}
     </span>
   );
 }
@@ -359,8 +362,21 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
             </div>
           )}
           <div className="flex flex-wrap gap-1 ml-3.5">
-            {(alert.deliveryChannels ?? []).map(ch => <ChannelBadge key={ch} ch={ch} />)}
+            {(alert.deliveryChannels ?? []).map(ch => (
+              <ChannelBadge
+                key={ch}
+                ch={ch}
+                unverified={ch === "sms" && !!alert.phoneNumber && !alert.phoneVerified}
+              />
+            ))}
           </div>
+          {alert.deliveryChannels?.includes("sms") && alert.phoneNumber && !alert.phoneVerified && (
+            <div className="flex items-center gap-1.5 ml-3.5 mt-1 px-2 py-1 rounded-lg"
+              style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
+              <AlertCircle size={10} className="text-amber-400 shrink-0" />
+              <span className="text-[10px] text-amber-400">Phone not verified — SMS paused. Edit alert to verify.</span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           <Switch checked={alert.active} onCheckedChange={onToggle} />
@@ -387,16 +403,73 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favorites }: {
+function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favorites, initialPhoneVerified }: {
   open: boolean;
   onClose: () => void;
   initialData?: Partial<AlertFormState>;
   editId?: number;
   userEmail?: string | null;
   favorites: Location[];
+  initialPhoneVerified?: boolean;
 }) {
   const { toast } = useToast();
   const [form, setForm] = useState<AlertFormState>({ ...BLANK_FORM, ...initialData });
+
+  // Phone verification state
+  const [phoneVerifiedLocal, setPhoneVerifiedLocal] = useState(initialPhoneVerified ?? false);
+  const [verifyStep, setVerifyStep] = useState<"idle" | "code_sent" | "verified">(
+    initialPhoneVerified ? "verified" : "idle"
+  );
+  const [verifyCode, setVerifyCode] = useState("");
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [isConfirmingCode, setIsConfirmingCode] = useState(false);
+  const prevPhone = useRef(initialData?.phoneNumber ?? "");
+
+  const handlePhoneChange = (val: string) => {
+    patch("phoneNumber", val);
+    if (val !== prevPhone.current) {
+      prevPhone.current = val;
+      setPhoneVerifiedLocal(false);
+      setVerifyStep("idle");
+      setVerifyCode("");
+    }
+  };
+
+  const handleSendCode = async () => {
+    const phone = form.phoneNumber.trim();
+    if (!phone) {
+      toast({ title: "Enter a phone number first", variant: "destructive" });
+      return;
+    }
+    setIsSendingCode(true);
+    try {
+      await apiRequest("/api/alerts/verify-phone/send", { method: "POST", body: { phoneNumber: phone } });
+      setVerifyStep("code_sent");
+      toast({ title: "Code sent", description: "Check your phone for a 6-digit code." });
+    } catch {
+      toast({ title: "Couldn't send code", description: "Make sure the number is in E.164 format, e.g. +15551234567.", variant: "destructive" });
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleConfirmCode = async () => {
+    if (!verifyCode.trim()) return;
+    setIsConfirmingCode(true);
+    try {
+      await apiRequest("/api/alerts/verify-phone/confirm", {
+        method: "POST",
+        body: { phoneNumber: form.phoneNumber.trim(), code: verifyCode.trim() },
+      });
+      setPhoneVerifiedLocal(true);
+      setVerifyStep("verified");
+      toast({ title: "Phone verified!", description: "SMS alerts are ready to go." });
+    } catch {
+      toast({ title: "Incorrect code", description: "Try again or resend.", variant: "destructive" });
+    } finally {
+      setIsConfirmingCode(false);
+    }
+  };
 
   const patch = (k: keyof AlertFormState, v: any) => setForm(f => ({ ...f, [k]: v }));
   const patchCh = (ch: keyof typeof BLANK_FORM.channels, v: boolean) =>
@@ -451,6 +524,10 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
     }
     if (channels.includes("sms") && !form.phoneNumber.trim()) {
       toast({ title: "Phone required", description: "Enter your phone number for SMS alerts.", variant: "destructive" });
+      return;
+    }
+    if (channels.includes("sms") && form.phoneNumber.trim() && !phoneVerifiedLocal) {
+      toast({ title: "Verify your number", description: "Tap the Verify button to confirm your phone before saving.", variant: "destructive" });
       return;
     }
 
@@ -758,13 +835,85 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
                   <Switch checked={form.channels.sms} onCheckedChange={v => patchCh("sms", v)} />
                 </div>
                 {form.channels.sms && (
-                  <div className="px-3 pb-3 pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    <input className={INPUT_CLS} style={{ ...SEL, marginTop: 4 }}
-                      placeholder="+1 (555) 000-0000"
-                      value={form.phoneNumber}
-                      onChange={e => patch("phoneNumber", e.target.value)}
-                      type="tel"
-                    />
+                  <div className="px-3 pb-3 pt-0.5 space-y-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                    {/* Phone number + Verify / Verified row */}
+                    {verifyStep === "verified" ? (
+                      /* Verified state: locked display + Change link */
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 flex items-center gap-2 px-3 h-9 rounded-xl text-[13px] text-emerald-300"
+                          style={{ ...SEL, opacity: 0.7 }}>
+                          <ShieldCheck size={13} className="text-emerald-400 shrink-0" />
+                          <span className="truncate">{form.phoneNumber}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setVerifyStep("idle");
+                            setPhoneVerifiedLocal(false);
+                            setVerifyCode("");
+                          }}
+                          className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold shrink-0 transition-opacity hover:opacity-80"
+                          style={{ background: "rgba(100,116,139,0.15)", border: "1px solid rgba(100,116,139,0.3)", color: "#94a3b8" }}>
+                          Change
+                        </button>
+                      </div>
+                    ) : (
+                      /* Unverified / editing state: editable input + Verify button */
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          className={INPUT_CLS}
+                          style={{ ...SEL, flex: 1 }}
+                          placeholder="+15551234567"
+                          value={form.phoneNumber}
+                          onChange={e => handlePhoneChange(e.target.value)}
+                          type="tel"
+                        />
+                        <button
+                          onClick={handleSendCode}
+                          disabled={isSendingCode || !form.phoneNumber.trim()}
+                          className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40"
+                          style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", color: "#34d399" }}>
+                          {isSendingCode ? "Sending…" : verifyStep === "code_sent" ? "Resend" : "Verify"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Code entry (shown after code is sent) */}
+                    {verifyStep === "code_sent" && (
+                      <div className="rounded-xl p-2.5 space-y-2"
+                        style={{ background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                        <p className="text-[11px] text-slate-400">Enter the 6-digit code sent to your phone:</p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            className={INPUT_CLS}
+                            style={{ ...SEL, flex: 1, letterSpacing: "0.2em", fontSize: "16px", textAlign: "center" }}
+                            placeholder="123456"
+                            value={verifyCode}
+                            onChange={e => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            maxLength={6}
+                            inputMode="numeric"
+                          />
+                          <button
+                            onClick={handleConfirmCode}
+                            disabled={isConfirmingCode || verifyCode.length < 6}
+                            className="px-3 py-2 rounded-xl text-[12px] font-bold shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40 text-white"
+                            style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
+                            {isConfirmingCode ? "…" : "Confirm"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {verifyStep === "verified" && (
+                      <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl"
+                        style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                        <CheckCircle2 size={11} className="text-emerald-400" />
+                        <span className="text-[11px] text-emerald-400">Verified. SMS alerts will fire to this number.</span>
+                      </div>
+                    )}
+
+                    {verifyStep === "idle" && form.phoneNumber.trim() && (
+                      <p className="text-[10px] text-slate-500">Use E.164 format, e.g. +15551234567. Tap Verify to confirm your number.</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -971,6 +1120,7 @@ export default function NotificationSettings() {
         editId={editAlert?.id}
         userEmail={userEmail}
         favorites={favorites}
+        initialPhoneVerified={editAlert?.phoneVerified ?? false}
       />
 
       <Footer />

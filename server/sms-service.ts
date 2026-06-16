@@ -15,6 +15,16 @@ if (!accountSid || !authToken || !twilioPhoneNumber) {
 
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
+// ─── Phone Verification State (in-memory, short-lived) ───────────────────────
+// Key: `${userId}:${phone}` → {code, expiresAt}
+const pendingCodes = new Map<string, { code: string; expiresAt: number }>();
+// Key: `${userId}:${phone}` → expiresAt (30 min after verification)
+const verifiedPhones = new Map<string, number>();
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/\s/g, '').toLowerCase();
+}
+
 interface SurfConditionsData {
   waveHeight: string;
   wavePeriod: number;
@@ -31,6 +41,65 @@ interface SurfConditionsData {
 }
 
 export class SMSService {
+  // ─── Phone Verification ─────────────────────────────────────────────────────
+
+  static async sendVerificationCode(userId: string, phoneNumber: string): Promise<boolean> {
+    if (!client || !twilioPhoneNumber) {
+      console.error('Twilio not configured — cannot send verification SMS');
+      return false;
+    }
+    const key = `${userId}:${normalizePhone(phoneNumber)}`;
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    pendingCodes.set(key, { code, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min TTL
+    try {
+      await client.messages.create({
+        body: `Your LiveSwell verification code is: ${code}\n\nIt expires in 10 minutes.`,
+        from: twilioPhoneNumber,
+        to: phoneNumber,
+      });
+      console.log(`📱 Verification code sent to ${phoneNumber}`);
+      return true;
+    } catch (error) {
+      console.error('Error sending verification SMS:', error);
+      pendingCodes.delete(key);
+      return false;
+    }
+  }
+
+  static verifyCode(userId: string, phoneNumber: string, code: string): boolean {
+    const key = `${userId}:${normalizePhone(phoneNumber)}`;
+    const entry = pendingCodes.get(key);
+    if (!entry) return false;
+    if (Date.now() > entry.expiresAt) {
+      pendingCodes.delete(key);
+      return false;
+    }
+    if (entry.code !== code.trim()) return false;
+    pendingCodes.delete(key);
+    // Mark verified for 30 minutes so the alert save can pick it up
+    verifiedPhones.set(key, Date.now() + 30 * 60 * 1000);
+    return true;
+  }
+
+  static isPhoneVerified(userId: string, phoneNumber: string): boolean {
+    const key = `${userId}:${normalizePhone(phoneNumber)}`;
+    const expiresAt = verifiedPhones.get(key);
+    if (!expiresAt) return false;
+    if (Date.now() > expiresAt) {
+      verifiedPhones.delete(key);
+      return false;
+    }
+    return true;
+  }
+
+  static clearVerifiedPhone(userId: string, phoneNumber: string): void {
+    const key = `${userId}:${normalizePhone(phoneNumber)}`;
+    verifiedPhones.delete(key);
+    pendingCodes.delete(key);
+  }
+
+  // ─── SMS Delivery ───────────────────────────────────────────────────────────
+
   static async sendDailyConditions(userId: string, phoneNumber: string, locationId: number): Promise<boolean> {
     if (!client || !twilioPhoneNumber) {
       console.error('Twilio not configured - cannot send SMS');

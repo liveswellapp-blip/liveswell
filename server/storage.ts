@@ -629,6 +629,7 @@ export class DatabaseStorage implements IStorage {
         notificationTimeTwo: userAlerts.notificationTimeTwo,
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
+        phoneVerified: userAlerts.phoneVerified,
         active: userAlerts.active,
         thresholds: userAlerts.thresholds,
         lastFiredAt: userAlerts.lastFiredAt,
@@ -647,6 +648,15 @@ export class DatabaseStorage implements IStorage {
 
   async createUserAlert(alert: InsertUserAlert): Promise<UserAlert> {
     const [result] = await db.insert(userAlerts).values({ ...alert, updatedAt: new Date() }).returning();
+    return result;
+  }
+
+  async getUserAlertById(id: number, userId: string): Promise<UserAlert | undefined> {
+    const [result] = await db
+      .select()
+      .from(userAlerts)
+      .where(and(eq(userAlerts.id, id), eq(userAlerts.userId, userId)))
+      .limit(1);
     return result;
   }
 
@@ -689,6 +699,7 @@ export class DatabaseStorage implements IStorage {
         notificationTimeTwo: userAlerts.notificationTimeTwo,
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
+        phoneVerified: userAlerts.phoneVerified,
         active: userAlerts.active,
         thresholds: userAlerts.thresholds,
         lastFiredAt: userAlerts.lastFiredAt,
@@ -727,6 +738,7 @@ export class DatabaseStorage implements IStorage {
         notificationTimeTwo: userAlerts.notificationTimeTwo,
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
+        phoneVerified: userAlerts.phoneVerified,
         active: userAlerts.active,
         thresholds: userAlerts.thresholds,
         lastFiredAt: userAlerts.lastFiredAt,
@@ -756,6 +768,7 @@ export class DatabaseStorage implements IStorage {
         notificationTimeTwo: userAlerts.notificationTimeTwo,
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
+        phoneVerified: userAlerts.phoneVerified,
         active: userAlerts.active,
         thresholds: userAlerts.thresholds,
         lastFiredAt: userAlerts.lastFiredAt,
@@ -790,6 +803,7 @@ export class DatabaseStorage implements IStorage {
         notificationTimeTwo: userAlerts.notificationTimeTwo,
         timezone: userAlerts.timezone,
         phoneNumber: userAlerts.phoneNumber,
+        phoneVerified: userAlerts.phoneVerified,
         active: userAlerts.active,
         thresholds: userAlerts.thresholds,
         lastFiredAt: userAlerts.lastFiredAt,

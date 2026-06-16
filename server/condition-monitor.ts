@@ -231,13 +231,15 @@ async function dispatchConditionAlert(
   const channels: string[] = alert.deliveryChannels ?? [];
   const promises: Promise<boolean>[] = [];
 
-  if (channels.includes('sms') && alert.phoneNumber) {
+  if (channels.includes('sms') && alert.phoneNumber && alert.phoneVerified) {
     console.log(`📱 Condition SMS → ${alert.phoneNumber} (${locationName}): ${triggerReason}`);
     promises.push(
       SMSService.sendConditionAlert(alert.phoneNumber, locationName, triggerReason, alert.locationId)
         .then(ok => { console.log(ok ? '✅ SMS sent' : '❌ SMS failed'); return ok; })
         .catch(() => false),
     );
+  } else if (channels.includes('sms') && alert.phoneNumber && !alert.phoneVerified) {
+    console.log(`⚠️  Skipping SMS for alert ${alert.id} — phone number not verified`);
   }
 
   if (channels.includes('email') && alert.userEmail) {
@@ -314,13 +316,15 @@ async function dispatchDailyReport(alert: any): Promise<boolean> {
   const channels: string[] = alert.deliveryChannels ?? [];
   const promises: Promise<boolean>[] = [];
 
-  if (channels.includes('sms') && alert.phoneNumber) {
+  if (channels.includes('sms') && alert.phoneNumber && alert.phoneVerified) {
     console.log(`📱 Daily report SMS → ${alert.phoneNumber} (${alert.locationName})`);
     promises.push(
       SMSService.sendDailyConditions(alert.userId, alert.phoneNumber, alert.locationId)
         .then(ok => { console.log(ok ? '✅ SMS sent' : '❌ SMS failed'); return ok; })
         .catch(() => false),
     );
+  } else if (channels.includes('sms') && alert.phoneNumber && !alert.phoneVerified) {
+    console.log(`⚠️  Skipping daily report SMS for alert ${alert.id} — phone number not verified`);
   }
 
   if (channels.includes('email') && alert.userEmail) {

@@ -111,7 +111,7 @@ export class NotificationScheduler {
       const channels = firstActive.deliveryChannels ?? [];
       const promises: Promise<boolean>[] = [];
 
-      if (channels.includes('sms') && firstActive.phoneNumber) {
+      if (channels.includes('sms') && firstActive.phoneNumber && firstActive.phoneVerified) {
         promises.push(SMSService.sendDailyConditions(userId, firstActive.phoneNumber, firstActive.locationId));
       }
       if (channels.includes('push')) {

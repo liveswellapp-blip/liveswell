@@ -100,6 +100,7 @@ export const userAlerts = pgTable("user_alerts", {
   notificationTimeTwo: text("notification_time_two"),
   timezone: text("timezone").notNull().default("America/New_York"),
   phoneNumber: text("phone_number"),
+  phoneVerified: boolean("phone_verified").notNull().default(false),
   active: boolean("active").notNull().default(true),
   // Condition-based alert fields
   thresholds: jsonb("thresholds"),

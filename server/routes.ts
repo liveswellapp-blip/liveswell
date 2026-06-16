@@ -2909,7 +2909,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { insertUserAlertSchema } = await import("@shared/schema");
-      const parsed = insertUserAlertSchema.safeParse({ ...req.body, userId });
+      const { SMSService } = await import("./sms-service");
+      // Strip client-supplied phoneVerified — server determines this
+      const { phoneVerified: _pv, ...bodyWithoutVerified } = req.body;
+      const phoneNumber = bodyWithoutVerified.phoneNumber;
+      const serverPhoneVerified = phoneNumber
+        ? SMSService.isPhoneVerified(userId, phoneNumber)
+        : false;
+      const parsed = insertUserAlertSchema.safeParse({ ...bodyWithoutVerified, userId, phoneVerified: serverPhoneVerified });
       if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
       const alert = await storage.createUserAlert(parsed.data);
       res.status(201).json(alert);
@@ -2925,9 +2932,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
       const { updateUserAlertSchema } = await import("@shared/schema");
-      // Strip any fields the client should not be able to set
-      const { userId: _uid, id: _id, createdAt: _ca, updatedAt: _ua, ...safeBody } = req.body;
-      const parsed = updateUserAlertSchema.safeParse(safeBody);
+      const { SMSService } = await import("./sms-service");
+      // Strip fields the client should not control
+      const { userId: _uid, id: _id, createdAt: _ca, updatedAt: _ua, phoneVerified: _pv, ...safeBody } = req.body;
+
+      // Compute durable phoneVerified:
+      // - If no SMS channel or no phone number → false
+      // - If phone number matches the existing DB record → preserve DB value (durable)
+      // - If phone number changed → check recent verification cache (fresh proof required)
+      const newPhone: string | null = safeBody.phoneNumber ?? null;
+      const hasSms = Array.isArray(safeBody.deliveryChannels)
+        ? safeBody.deliveryChannels.includes('sms')
+        : false;
+      let serverPhoneVerified = false;
+      if (hasSms && newPhone) {
+        const existing = await storage.getUserAlertById(id, userId);
+        const oldPhone: string | null = existing?.phoneNumber ?? null;
+        const normalOld = oldPhone?.replace(/\s/g, '').toLowerCase() ?? null;
+        const normalNew = newPhone.replace(/\s/g, '').toLowerCase();
+        if (normalOld && normalOld === normalNew) {
+          // Phone unchanged — trust existing DB state
+          serverPhoneVerified = existing?.phoneVerified ?? false;
+        } else {
+          // Phone changed — require fresh in-process verification
+          serverPhoneVerified = SMSService.isPhoneVerified(userId, newPhone);
+        }
+      }
+
+      const parsed = updateUserAlertSchema.safeParse({ ...safeBody, phoneVerified: serverPhoneVerified });
       if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
       const updated = await storage.updateUserAlert(id, userId, parsed.data);
       if (!updated) return res.status(404).json({ message: "Alert not found" });
@@ -2935,6 +2967,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating alert:", error);
       res.status(500).json({ message: "Failed to update alert" });
+    }
+  });
+
+  // ── Phone Verification ─────────────────────────────────────────────────────
+  app.post("/api/alerts/verify-phone/send", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { phoneNumber } = req.body;
+      if (!phoneNumber || typeof phoneNumber !== "string" || !phoneNumber.trim()) {
+        return res.status(400).json({ message: "phoneNumber is required" });
+      }
+      const { SMSService } = await import("./sms-service");
+      const ok = await SMSService.sendVerificationCode(userId, phoneNumber.trim());
+      if (!ok) return res.status(503).json({ message: "SMS service unavailable. Check that Twilio is configured." });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error sending verification code:", error);
+      res.status(500).json({ message: "Failed to send verification code" });
+    }
+  });
+
+  app.post("/api/alerts/verify-phone/confirm", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { phoneNumber, code } = req.body;
+      if (!phoneNumber || !code) {
+        return res.status(400).json({ message: "phoneNumber and code are required" });
+      }
+      const { SMSService } = await import("./sms-service");
+      const ok = SMSService.verifyCode(userId, phoneNumber.trim(), String(code).trim());
+      if (!ok) return res.status(400).json({ message: "Invalid or expired code" });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error confirming verification code:", error);
+      res.status(500).json({ message: "Failed to confirm code" });
     }
   });
 
