@@ -372,9 +372,9 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
           </div>
           {alert.deliveryChannels?.includes("sms") && alert.phoneNumber && !alert.phoneVerified && (
             <div className="flex items-center gap-1.5 ml-3.5 mt-1 px-2 py-1 rounded-lg"
-              style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-              <AlertCircle size={10} className="text-amber-400 shrink-0" />
-              <span className="text-[10px] text-amber-400">Phone not verified — SMS paused. Edit alert to verify.</span>
+              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <AlertCircle size={10} className="text-red-400 shrink-0" />
+              <span className="text-[10px] text-red-400">Phone not verified — SMS paused. Edit alert to verify.</span>
             </div>
           )}
         </div>
