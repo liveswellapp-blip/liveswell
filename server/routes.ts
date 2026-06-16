@@ -2918,6 +2918,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : false;
       const parsed = insertUserAlertSchema.safeParse({ ...bodyWithoutVerified, userId, phoneVerified: serverPhoneVerified });
       if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
+
+      // Enforce one condition alert per surf spot per user
+      if (parsed.data.alertType !== 'daily_report') {
+        const existingAlerts = await storage.getUserAlerts(userId);
+        const conflict = existingAlerts.find(
+          a => a.locationId === parsed.data.locationId && a.alertType !== 'daily_report'
+        );
+        if (conflict) {
+          return res.status(409).json({
+            message: "You already have a condition alert for this spot. Edit the existing alert to change its settings.",
+            existingAlertId: conflict.id,
+          });
+        }
+      }
+
       const alert = await storage.createUserAlert(parsed.data);
       res.status(201).json(alert);
     } catch (error) {
@@ -2961,6 +2976,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const parsed = updateUserAlertSchema.safeParse({ ...safeBody, phoneVerified: serverPhoneVerified });
       if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
+
+      // Enforce one condition alert per surf spot per user (exclude current alert from check)
+      const newAlertType = parsed.data.alertType;
+      const newLocationId = parsed.data.locationId;
+      if (newAlertType && newAlertType !== 'daily_report' && newLocationId != null) {
+        const allAlerts = await storage.getUserAlerts(userId);
+        const conflict = allAlerts.find(
+          a => a.id !== id && a.locationId === newLocationId && a.alertType !== 'daily_report'
+        );
+        if (conflict) {
+          return res.status(409).json({
+            message: "You already have a condition alert for this spot. Edit the existing alert to change its settings.",
+            existingAlertId: conflict.id,
+          });
+        }
+      }
+
       const updated = await storage.updateUserAlert(id, userId, parsed.data);
       if (!updated) return res.status(404).json({ message: "Alert not found" });
       res.json(updated);

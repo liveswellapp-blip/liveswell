@@ -415,7 +415,7 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favorites, initialPhoneVerified }: {
+function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favorites, initialPhoneVerified, existingAlerts }: {
   open: boolean;
   onClose: () => void;
   initialData?: Partial<AlertFormState>;
@@ -423,6 +423,7 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
   userEmail?: string | null;
   favorites: Location[];
   initialPhoneVerified?: boolean;
+  existingAlerts: UserAlert[];
 }) {
   const { toast } = useToast();
   const [form, setForm] = useState<AlertFormState>({ ...BLANK_FORM, ...initialData });
@@ -489,6 +490,13 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
 
   const selectedLocation = favorites.find(l => l.id === form.locationId);
 
+  // Detect if the selected spot already has a condition alert (excluding the alert being edited)
+  const conditionConflict = form.alertType !== "daily_report" && form.locationId != null
+    ? existingAlerts.find(
+        a => a.locationId === form.locationId && a.alertType !== "daily_report" && a.id !== editId
+      ) ?? null
+    : null;
+
   const handlePushToggle = async (val: boolean) => {
     if (val) {
       if (!pushNotifications.isSupported()) {
@@ -511,7 +519,13 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
       toast({ title: "Alert created", description: "Your alert is now active." });
       onClose();
     },
-    onError: () => toast({ title: "Error", description: "Failed to create alert.", variant: "destructive" }),
+    onError: (err: any) => {
+      if (String(err?.message ?? "").startsWith("409")) {
+        toast({ title: "Spot already has a condition alert", description: "Edit your existing condition alert for this spot instead.", variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: "Failed to create alert.", variant: "destructive" });
+      }
+    },
   });
 
   const updateMutation = useMutation({
@@ -527,6 +541,10 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
   const handleSave = () => {
     if (!form.locationId) {
       toast({ title: "Pick a spot", description: "Select a surf spot for this alert.", variant: "destructive" });
+      return;
+    }
+    if (conditionConflict) {
+      toast({ title: "Spot already has a condition alert", description: "Edit your existing condition alert for this spot instead.", variant: "destructive" });
       return;
     }
     const channels = Object.entries(form.channels).filter(([, v]) => v).map(([k]) => k);
@@ -645,6 +663,16 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
             </Select>
             {favorites.length === 0 && (
               <p className="text-[10px] text-amber-400 mt-1">Save some spots as favorites first.</p>
+            )}
+            {conditionConflict && (
+              <div className="flex items-start gap-2 mt-2 px-3 py-2 rounded-xl"
+                style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <AlertCircle size={12} className="text-red-400 mt-0.5 shrink-0" />
+                <p className="text-[11px] text-red-400 leading-snug">
+                  This spot already has a condition alert ({ALERT_TYPES.find(t => t.id === conditionConflict.alertType)?.label ?? conditionConflict.alertType}).
+                  Edit that alert to update its settings, or delete it first to create a new one.
+                </p>
+              </div>
             )}
           </div>
 
@@ -1177,6 +1205,7 @@ export default function NotificationSettings() {
         userEmail={userEmail}
         favorites={favorites}
         initialPhoneVerified={editAlert?.phoneVerified ?? false}
+        existingAlerts={alerts}
       />
 
       <Footer />
