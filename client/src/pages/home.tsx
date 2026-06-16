@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import CurrentConditions from "@/components/CurrentConditions";
-
-
+import AISurfSummary from "@/components/AISurfSummary";
 import ForecastSection from "@/components/ForecastSection";
 import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
@@ -179,6 +178,7 @@ export default function Home() {
       {currentLocation ? (
         <div className="w-full">
           <CurrentConditions location={currentLocation} />
+          <AISurfSummary location={currentLocation} />
           <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
           <NearbySpots location={currentLocation} />

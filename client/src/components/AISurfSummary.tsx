@@ -1,7 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, AlertCircle } from "lucide-react";
 import { Location } from "@/types/weather";
 
 interface AISurfSummaryProps {
@@ -21,57 +19,56 @@ interface AISummaryResponse {
 export default function AISurfSummary({ location }: AISurfSummaryProps) {
   const { data, isLoading, error } = useQuery<AISummaryResponse>({
     queryKey: [`/api/locations/${location.id}/ai-summary`],
-    staleTime: 30 * 60 * 1000, // Cache for 30 minutes
-    retry: 1, // Only retry once if it fails
+    staleTime: 30 * 60 * 1000,
+    retry: 1,
   });
 
   if (isLoading) {
     return (
-      <Card className="mb-8 bg-gradient-to-br from-emerald-50/50 to-blue-50/50 dark:from-emerald-950/20 dark:to-blue-950/20 border-emerald-200 dark:border-emerald-800" data-testid="card-ai-summary-loading">
-        <CardContent className="pt-6 space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-        </CardContent>
-      </Card>
+      <div className="px-4 sm:px-6 lg:px-8 pb-2">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative rounded-2xl overflow-hidden bg-[#030912]/80 border border-emerald-500/10 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 text-emerald-400/40 text-xs font-bold tracking-widest uppercase shrink-0">✦ AI</div>
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3.5 w-full bg-white/5" />
+                <Skeleton className="h-3.5 w-5/6 bg-white/5" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
-  if (error) {
-    return (
-      <Card className="mb-8 bg-gradient-to-br from-red-50/50 to-orange-50/50 dark:from-red-950/20 dark:to-orange-950/20 border-red-200 dark:border-red-800" data-testid="card-ai-summary-error">
-        <CardContent className="pt-6">
-          <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            Unable to generate AI surf summary at this time. Please try again later.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!data) {
-    return null;
-  }
+  if (error || !data) return null;
 
   return (
-    <Card className="mb-8 bg-gradient-to-br from-emerald-50/50 to-blue-50/50 dark:from-emerald-950/20 dark:to-blue-950/20 border-emerald-200 dark:border-emerald-800" data-testid="card-ai-summary">
-      <CardContent className="pt-6">
-        <div 
-          className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 whitespace-pre-line"
-          data-testid="text-ai-summary-content"
-        >
-          {data.summary}
+    <div className="px-4 sm:px-6 lg:px-8 pb-2">
+      <div className="max-w-7xl mx-auto">
+        <div className="relative rounded-2xl overflow-hidden bg-[#030912]/80 border border-emerald-500/10 px-5 py-4">
+          <div
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage:
+                "radial-gradient(ellipse at 20% 50%, #10b981 0%, transparent 60%), radial-gradient(ellipse at 80% 50%, #0ea5e9 0%, transparent 60%)",
+            }}
+          />
+          <div className="relative flex items-start gap-3">
+            <span className="mt-0.5 text-emerald-400 text-xs font-bold tracking-widest uppercase shrink-0 opacity-70">
+              ✦ AI
+            </span>
+            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+              {data.summary}
+            </p>
+          </div>
+          <div className="relative mt-3 flex items-center gap-1.5">
+            <span className="text-[10px] text-slate-600">
+              Updated {new Date(data.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
         </div>
-        <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-800">
-          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1" data-testid="text-ai-generated-timestamp">
-            <Sparkles className="w-3 h-3" />
-            AI-generated report • Updated {new Date(data.generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

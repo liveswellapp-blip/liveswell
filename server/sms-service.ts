@@ -2,6 +2,7 @@ import twilio from 'twilio';
 import { storage } from './storage';
 import type { Location } from '@shared/schema';
 import { fetchWeatherData } from './weather-service';
+import { generateNotificationSummary } from './ai-service';
 
 // Initialize Twilio client
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -80,8 +81,17 @@ export class SMSService {
         dataTimestamp: timestamp,
       };
 
+      // Try AI summary (non-blocking — falls back gracefully)
+      let aiSentence: string | null = null;
+      try {
+        aiSentence = await Promise.race([
+          generateNotificationSummary(locationId, 'daily'),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
+        ]);
+      } catch { /* fall through */ }
+
       // Format the SMS message
-      const message = SMSService.formatConditionsMessage(location, conditions);
+      const message = SMSService.formatConditionsMessage(location, conditions, aiSentence);
 
       // Send SMS via Twilio
       const result = await client.messages.create({
@@ -120,7 +130,7 @@ export class SMSService {
     }
   }
 
-  static formatConditionsMessage(location: Location, conditions: SurfConditionsData): string {
+  static formatConditionsMessage(location: Location, conditions: SurfConditionsData, aiSentence?: string | null): string {
     // Convert UV index to description
     const getUVDescription = (uvIndex: number): string => {
       if (uvIndex <= 2) return 'Low';
@@ -135,8 +145,9 @@ export class SMSService {
     // Format low tides
     const lowTides = conditions.tideLow.map(tide => `${tide.time} (${tide.height}ft)`).join(', ');
 
-    return `🌊 ${location.name} Surf Report
+    const aiLine = aiSentence ? `\n${aiSentence}\n` : '';
 
+    return `🌊 ${location.name} Surf Report${aiLine}
 Live Conditions (${conditions.dataTimestamp}):
 Waves: ${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}
 Wind: ${conditions.windSpeed}mph ${conditions.windDirection}

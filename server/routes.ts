@@ -3131,34 +3131,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         surfDataSummary.today.windDirection
       );
 
-      // Generate AI summary in structured format
-      const prompt = `Generate a surf report for ${surfDataSummary.location.name} in this EXACT format:
+      // Build tomorrow outlook string
+      let tomorrowOutlook = '';
+      if (surfDataSummary.tomorrow) {
+        const tmr = surfDataSummary.tomorrow;
+        const tmrWindType = getWindType(
+          parseFloat(location.latitude),
+          parseFloat(location.longitude),
+          tmr.morningWindDir
+        );
+        tomorrowOutlook = `Tomorrow looks like ${tmr.waveHeightRange}ft @ ${tmr.avgWavePeriod}s from the ${tmr.waveDirection} with ${tmrWindType} winds in the morning.`;
+      }
 
-Waves are around ${surfDataSummary.today.waveHeightRange} with a ${surfDataSummary.today.wavePeriod} sec period out of the ${surfDataSummary.today.waveDirection}. Winds are ${windType} at ${surfDataSummary.today.windSpeed} mph out of the ${surfDataSummary.today.windDirection} with a ${surfDataSummary.today.tideStatus.toLowerCase()} tide${surfDataSummary.today.nextTide ? ` to ${surfDataSummary.today.nextTide.type} at ${surfDataSummary.today.nextTide.time}` : ''}.
+      const prompt = `Write a surf conditions summary for ${surfDataSummary.location.name}, ${surfDataSummary.location.region}.
 
-IMPORTANT INSTRUCTIONS:
-1. Use the EXACT sentence structure shown above with all the provided values
-2. Keep factual and concise - no extra commentary
-3. Do not add any additional analysis or paragraphs
+CURRENT DATA:
+- Waves: ${surfDataSummary.today.waveHeightRange} @ ${surfDataSummary.today.wavePeriod}s from ${surfDataSummary.today.waveDirection}
+- Wind: ${windType} at ${surfDataSummary.today.windSpeed}mph from ${surfDataSummary.today.windDirection}
+- Tide: ${surfDataSummary.today.tideStatus}${surfDataSummary.today.nextTide ? `, next ${surfDataSummary.today.nextTide.type} tide at ${surfDataSummary.today.nextTide.time}` : ''}
+${surfDataSummary.buoys.primary ? `- Buoy ${surfDataSummary.buoys.primary.stationId}: ${surfDataSummary.buoys.primary.waveHeight}ft @ ${surfDataSummary.buoys.primary.wavePeriod}s` : ''}
+${surfDataSummary.buoys.backup ? `- Buoy ${surfDataSummary.buoys.backup.stationId}: ${surfDataSummary.buoys.backup.waveHeight}ft @ ${surfDataSummary.buoys.backup.wavePeriod}s` : ''}
 
-REFERENCE DATA:
-${surfDataSummary.buoys.primary ? `- Primary Buoy ${surfDataSummary.buoys.primary.stationId}: ${surfDataSummary.buoys.primary.waveHeight}ft @ ${surfDataSummary.buoys.primary.wavePeriod}s` : ''}
-${surfDataSummary.buoys.backup ? `- Backup Buoy ${surfDataSummary.buoys.backup.stationId}: ${surfDataSummary.buoys.backup.waveHeight}ft @ ${surfDataSummary.buoys.backup.wavePeriod}s` : ''}`;
+Write 2 sentences. First sentence: describe current wave size, period, direction, and wind quality honestly — use surf community language (e.g. "clean", "choppy", "glassy", "firing", "mushy"). Second sentence: mention tide timing and, if data is available, a brief tomorrow outlook. No hype, no fluff. Just what a knowledgeable local would say.`;
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: "You are a surf forecaster. Generate reports using ONLY the exact format provided. Fill in bracketed placeholders with appropriate values based on the data. Do not add extra commentary or deviate from the format."
+            content: "You are a veteran surf forecaster who speaks plainly. Write exactly 2 sentences. No bullet points, no markdown, no emojis. Use real surf terminology. Be specific about conditions — never vague."
           },
           {
             role: "user",
             content: prompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 300,
+        temperature: 0.5,
+        max_tokens: 120,
       });
 
       const summary = completion.choices[0]?.message?.content || "Unable to generate surf summary at this time.";

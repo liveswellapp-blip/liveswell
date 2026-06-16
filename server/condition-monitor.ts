@@ -10,6 +10,7 @@ import { SMSService } from './sms-service';
 import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
 import { fetchWeatherData } from './weather-service';
+import { generateNotificationSummary } from './ai-service';
 
 // ─── Threshold types ─────────────────────────────────────────────────────────
 export interface SwellThresholds {
@@ -337,7 +338,18 @@ export class ConditionMonitor {
           const triggerReason = buildTriggerReason(alert.alertType, thresholds, weatherData);
           console.log(`🚨 Alert triggered: ${alert.alertType} for ${location.name} — ${triggerReason}`);
 
-          const delivered = await dispatchConditionAlert(alert, weatherData, location.name, triggerReason);
+          // Try to enrich with an AI-written hook (3s timeout, falls back to triggerReason)
+          let aiMessage: string | null = null;
+          try {
+            aiMessage = await Promise.race([
+              generateNotificationSummary(alert.locationId, alert.alertType as 'swell' | 'wind' | 'tide', triggerReason),
+              new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
+            ]);
+          } catch { /* fall through */ }
+
+          const notificationBody = aiMessage ?? triggerReason;
+
+          const delivered = await dispatchConditionAlert(alert, weatherData, location.name, notificationBody);
           // Only mark lastFiredAt when at least one channel delivered, so a delivery
           // failure doesn't silently burn the cooldown window.
           if (delivered) {

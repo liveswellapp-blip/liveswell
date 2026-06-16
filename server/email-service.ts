@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import { storage } from './storage';
 import { fetchWeatherData } from './weather-service';
 import type { Location } from '@shared/schema';
+import { generateNotificationSummary } from './ai-service';
 
 const resendApiKey = process.env.RESEND_API_KEY;
 
@@ -59,10 +60,20 @@ export class EmailService {
       const uvIndex = weatherData.uvIndex || 0;
       const uvDesc = uvIndex <= 2 ? 'Low' : uvIndex <= 5 ? 'Moderate' : uvIndex <= 7 ? 'High' : 'Very High';
 
+      // Try AI summary (non-blocking, 3s timeout)
+      let aiSentence: string | null = null;
+      try {
+        aiSentence = await Promise.race([
+          generateNotificationSummary(locationId, 'daily'),
+          new Promise<null>(resolve => setTimeout(() => resolve(null), 3000)),
+        ]);
+      } catch { /* fall through */ }
+
       const subject = `🌊 ${location.name} Surf Report — ${now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}`;
 
-      const text = `🌊 ${location.name} Surf Report
+      const aiBlock = aiSentence ? `\n${aiSentence}\n` : '';
 
+      const text = `🌊 ${location.name} Surf Report${aiBlock}
 Updated: ${timestamp}
 
 ━━━━━━━━━━━━━━━━━━━━
@@ -102,13 +113,18 @@ LiveSwell · Manage alerts at liveswell.app`;
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:24px 16px;">
     <tr><td>
       <div style="background:linear-gradient(160deg,#030912 0%,#091a35 100%);border:1px solid rgba(16,185,129,0.15);border-radius:16px;padding:24px;margin-bottom:16px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:${aiSentence ? '12px' : '20px'};">
           <span style="font-size:24px;">🌊</span>
           <div>
             <div style="font-size:18px;font-weight:900;color:#fff;">${location.name}</div>
             <div style="font-size:12px;color:#64748b;">Surf Report · ${timestamp}</div>
           </div>
         </div>
+
+        ${aiSentence ? `<div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+          <span style="font-size:9px;color:#10b981;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;opacity:0.7;">✦ AI</span>
+          <div style="font-size:13px;color:#cbd5e1;margin-top:4px;line-height:1.5;">${aiSentence}</div>
+        </div>` : ''}
 
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
           <tr>
