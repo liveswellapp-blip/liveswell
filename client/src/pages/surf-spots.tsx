@@ -419,15 +419,15 @@ export default function SurfSpots() {
       <Header />
 
       {/* ── Hero ── */}
-      <div className="relative overflow-hidden px-4 pt-6 pb-5"
-        style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}>
-        <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 1200 120" preserveAspectRatio="none">
-          {[0, 18, 36].map(o => (
-            <path key={o} d={`M0 ${60 + o} Q300 ${50 + o} 600 ${60 + o} T1200 ${60 + o}`} stroke="#10b981" strokeWidth="1.5" fill="none" />
-          ))}
-        </svg>
-        <div className="relative max-w-2xl mx-auto">
-          <h1 className="text-white font-black text-2xl leading-tight mb-3">Global Surf Spots</h1>
+      <div className="px-4 pt-6 pb-5" style={{ background: "#030912", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-3"
+            style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">229 Surf Spots Worldwide</span>
+          </div>
+          <h1 className="text-white font-black text-3xl leading-tight mb-1">Global Surf Spots</h1>
+          <p className="text-slate-500 text-[12px] mb-4">Explore breaks across 6 continents</p>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
