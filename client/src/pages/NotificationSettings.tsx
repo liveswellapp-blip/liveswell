@@ -98,11 +98,46 @@ const TIMEZONES = [
   { value: "Pacific/Honolulu",    label: "Hawaii (HST)" },
 ];
 
-const ALERT_TYPES: { id: AlertTypeId; label: string; icon: any; color: string; desc: string }[] = [
-  { id: "daily_report", label: "Daily Report",  icon: Bell,    color: "#f59e0b", desc: "Scheduled surf conditions" },
-  { id: "swell",        label: "Swell Alert",   icon: Waves,   color: "#10b981", desc: "Wave height & period" },
-  { id: "wind",         label: "Wind Alert",    icon: Wind,    color: "#38bdf8", desc: "Wind speed & direction" },
-  { id: "tide",         label: "Tide Alert",    icon: Droplets, color: "#a78bfa", desc: "High or low tide timing" },
+const ALERT_TYPES: { id: AlertTypeId; label: string; icon: any; color: string; desc: string; detail: string; bullets?: string[] }[] = [
+  {
+    id: "daily_report",
+    label: "Daily Report",
+    icon: Bell,
+    color: "#f59e0b",
+    desc: "Full conditions summary, delivered on schedule",
+    detail: "You'll receive a full surf report for your chosen spot at the exact time(s) you set. Each report includes:",
+    bullets: [
+      "🌊 Live wave height, period & direction from the nearest NOAA buoy",
+      "💨 Wind speed, gusts & onshore/offshore classification",
+      "🌊 Tide stage with next high & low tide times",
+      "🤖 AI-written surf summary in plain language",
+      "☀️ Sunrise & sunset times",
+    ],
+  },
+  {
+    id: "swell",
+    label: "Swell Alert",
+    icon: Waves,
+    color: "#10b981",
+    desc: "Fires when waves hit your target height or period",
+    detail: "Sends a one-time alert when buoy data crosses your threshold (e.g. waves above 4 ft with a 12 s period). A cooldown prevents repeat notifications.",
+  },
+  {
+    id: "wind",
+    label: "Wind Alert",
+    icon: Wind,
+    color: "#38bdf8",
+    desc: "Fires when wind speed drops into your ideal range",
+    detail: "Sends an alert when wind speed falls at or below your limit — useful for catching glassy early-morning windows before onshore winds fill in.",
+  },
+  {
+    id: "tide",
+    label: "Tide Alert",
+    icon: Droplets,
+    color: "#a78bfa",
+    desc: "Fires when the tide reaches high or low",
+    detail: "Sends an alert as the tide approaches its next high or low — handy for spots that only work at a specific tide stage.",
+  },
 ];
 
 function generateTimeOptions() {
@@ -483,6 +518,25 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
                 );
               })}
             </div>
+
+            {/* Detail callout for selected type */}
+            {(() => {
+              const selected = ALERT_TYPES.find(t => t.id === form.alertType);
+              if (!selected) return null;
+              return (
+                <div className="mt-2 rounded-xl px-3 py-2.5 text-[11px] leading-relaxed"
+                  style={{ background: `${selected.color}0d`, border: `1px solid ${selected.color}25` }}>
+                  <p className="text-slate-300">{selected.detail}</p>
+                  {selected.bullets && (
+                    <ul className="mt-2 space-y-1">
+                      {selected.bullets.map((b, i) => (
+                        <li key={i} className="text-slate-400">{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Location */}
