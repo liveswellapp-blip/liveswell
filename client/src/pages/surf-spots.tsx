@@ -421,11 +421,6 @@ export default function SurfSpots() {
       {/* ── Hero ── */}
       <div className="px-4 pt-6 pb-5" style={{ background: "#030912", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div className="max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-3"
-            style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">229 Surf Spots Worldwide</span>
-          </div>
           <h1 className="text-white font-black text-3xl leading-tight mb-1">Global Surf Spots</h1>
           <p className="text-slate-500 text-[12px] mb-4">Explore breaks across 6 continents</p>
           <div className="flex gap-2">
