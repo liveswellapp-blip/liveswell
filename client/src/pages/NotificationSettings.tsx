@@ -341,27 +341,15 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
               <span className="text-[11px] text-slate-500">{alert.locationName}, {alert.locationCity}</span>
             </div>
           )}
-          <div className="flex items-center gap-2 ml-3.5 mb-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 ml-3.5 mb-1.5 flex-wrap">
             <AlertTypeBadge alertType={alert.alertType} />
-            {isCondition && (
-              <span className="text-[10px] text-slate-600">{alert.cooldownHours}h cooldown</span>
+            {scheduleText && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold"
+                style={{ background: "rgba(100,116,139,0.1)", border: "1px solid rgba(100,116,139,0.18)", color: "#94a3b8" }}>
+                {isCondition ? <Waves size={9} /> : <Clock size={9} />}
+                {scheduleText}
+              </span>
             )}
-          </div>
-          {scheduleText && (
-            <div className="flex items-center gap-1 ml-3.5 mb-1.5">
-              {isCondition
-                ? <Waves size={10} className="text-slate-500" />
-                : <Clock size={10} className="text-slate-500" />}
-              <span className="text-[11px] text-slate-400">{scheduleText}</span>
-            </div>
-          )}
-          {isCondition && alert.lastFiredAt && (
-            <div className="flex items-center gap-1 ml-3.5 mb-1.5">
-              <AlertCircle size={10} className="text-amber-500" />
-              <span className="text-[11px] text-amber-400">Triggered {relativeTime(alert.lastFiredAt)}</span>
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1 ml-3.5">
             {(alert.deliveryChannels ?? []).map(ch => (
               <ChannelBadge
                 key={ch}
@@ -370,6 +358,12 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
               />
             ))}
           </div>
+          {isCondition && alert.lastFiredAt && (
+            <div className="flex items-center gap-1 ml-3.5 mb-1.5">
+              <AlertCircle size={10} className="text-amber-500" />
+              <span className="text-[11px] text-amber-400">Triggered {relativeTime(alert.lastFiredAt)}</span>
+            </div>
+          )}
           {alert.deliveryChannels?.includes("sms") && alert.phoneNumber && !alert.phoneVerified && (
             <div className="flex items-center gap-1.5 ml-3.5 mt-1 px-2 py-1 rounded-lg"
               style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
