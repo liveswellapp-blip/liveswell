@@ -1,9 +1,10 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { MapPin, Globe, Shield, RefreshCw, Trash2, Download } from "lucide-react";
+import { MapPin, Globe, Shield, RefreshCw, Trash2, Download, ChevronLeft } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 const CARD = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" };
 const SEP  = { borderColor: "rgba(255,255,255,0.06)" };
@@ -33,19 +34,29 @@ export default function Settings() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [units, setUnits] = useState("imperial");
   const [language, setLanguage] = useState("en");
+  const [, navigate] = useLocation();
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
       <Header />
       <div className="px-5 pt-6 pb-4" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
-        <div className="flex items-center gap-3 max-w-2xl mx-auto">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-            style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.15)" }}>
-            <Globe size={18} className="text-slate-400" />
-          </div>
-          <div>
-            <h1 className="text-white font-black text-xl leading-tight">Preferences</h1>
-            <p className="text-slate-500 text-[11px] mt-0.5">Customize your LiveSwell experience</p>
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => navigate("/profile")}
+            className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-[12px] mb-4 transition-colors"
+          >
+            <ChevronLeft size={14} />
+            Profile
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+              style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.15)" }}>
+              <Globe size={18} className="text-slate-400" />
+            </div>
+            <div>
+              <h1 className="text-white font-black text-xl leading-tight">Preferences</h1>
+              <p className="text-slate-500 text-[11px] mt-0.5">Customize your LiveSwell experience</p>
+            </div>
           </div>
         </div>
       </div>

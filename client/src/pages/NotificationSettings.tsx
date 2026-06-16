@@ -827,11 +827,11 @@ export default function NotificationSettings() {
       <div className="px-5 pt-6 pb-4" style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
         <div className="max-w-2xl mx-auto">
           <button
-            onClick={() => navigate("/settings")}
+            onClick={() => navigate("/profile")}
             className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-[12px] mb-4 transition-colors"
           >
             <ChevronLeft size={14} />
-            Settings
+            Profile
           </button>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
