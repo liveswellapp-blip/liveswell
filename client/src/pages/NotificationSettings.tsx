@@ -1054,15 +1054,9 @@ export default function NotificationSettings() {
             <ChevronLeft size={14} />
             Profile
           </button>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-              style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
-              <Bell size={18} className="text-amber-400" />
-            </div>
-            <div>
-              <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
-              <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
-            </div>
+          <div className="mb-4">
+            <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
+            <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
           </div>
           <button onClick={openCreate}
             className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
@@ -1112,8 +1106,8 @@ export default function NotificationSettings() {
 
             {dailyAlerts.length > 0 && (
               <section className={conditionAlerts.length === 0 ? "pt-2" : ""}>
-                <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                  <Clock size={11} /> Daily Reports
+                <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                  Daily Reports
                 </h2>
                 <div className="space-y-3">
                   {dailyAlerts.map(a => (
@@ -1128,8 +1122,8 @@ export default function NotificationSettings() {
             )}
 
             <section>
-              <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                <History size={11} /> Recent Activity
+              <h2 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">
+                Recent Activity
               </h2>
               {activityLoading ? (
                 <div className="space-y-2">
