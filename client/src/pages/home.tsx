@@ -177,8 +177,8 @@ export default function Home() {
       
       {currentLocation ? (
         <div className="w-full">
-          <AISurfSummary location={currentLocation} />
           <CurrentConditions location={currentLocation} />
+          <AISurfSummary location={currentLocation} />
           <ForecastSection location={currentLocation} />
           <DetailedData location={currentLocation} />
           <NearbySpots location={currentLocation} />
