@@ -290,6 +290,21 @@ function getCurrentDateInTz(timezone: string): string {
   }
 }
 
+/**
+ * Returns true if a specific slot (HH:MM) already fired today in the given IANA timezone.
+ * Uses the recorded lastFiredAt timestamp: if its date-in-tz is today AND its
+ * time-in-tz matches the slotTime exactly, the slot is considered done.
+ * This is order-agnostic — it doesn't matter which slot fired first.
+ */
+function slotFiredToday(lastFiredAt: Date, alertTz: string, slotTime: string, todayInTz: string): boolean {
+  const lastFiredDateInTz = new Intl.DateTimeFormat('en-CA', { timeZone: alertTz }).format(lastFiredAt);
+  if (lastFiredDateInTz !== todayInTz) return false;
+  const lastFiredTimeInTz = new Intl.DateTimeFormat('en-US', {
+    timeZone: alertTz, hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(lastFiredAt).replace(/^24/, '00');
+  return lastFiredTimeInTz === slotTime;
+}
+
 // ─── Daily report dispatcher ─────────────────────────────────────────────────
 /**
  * Dispatches a daily surf report across SMS and/or email channels.
@@ -351,38 +366,52 @@ export class ConditionMonitor {
         const currentTime = getCurrentTimeInTz(tz);
         const todayInTz = getCurrentDateInTz(tz);
 
-        // Check if current minute matches either configured time
-        const timesMatch =
-          alert.notificationTime === currentTime ||
-          (alert.frequency === 'twice_daily' && alert.notificationTimeTwo === currentTime);
+        // Build the list of slots that match this exact minute.
+        // Both notificationTime and notificationTimeTwo are peer slots —
+        // neither is "primary"; the check is fully order-agnostic.
+        const matchingSlots: string[] = [];
+        if (alert.notificationTime === currentTime) {
+          matchingSlots.push(alert.notificationTime);
+        }
+        if (
+          alert.frequency === 'twice_daily' &&
+          alert.notificationTimeTwo &&
+          alert.notificationTimeTwo === currentTime &&
+          !matchingSlots.includes(alert.notificationTimeTwo)
+        ) {
+          matchingSlots.push(alert.notificationTimeTwo);
+        }
 
-        if (!timesMatch) continue;
+        if (matchingSlots.length === 0) continue;
 
-        // Dedup: skip if already fired today in this timezone
-        if (alert.lastFiredAt) {
-          const lastFiredDateInTz = new Intl.DateTimeFormat('en-CA', { timeZone: tz })
-            .format(new Date(alert.lastFiredAt));
-          if (lastFiredDateInTz === todayInTz) {
-            // Allow twice_daily second fire if it's a different time
-            if (alert.frequency !== 'twice_daily' || alert.notificationTimeTwo !== currentTime) {
-              continue;
-            }
-            // For twice_daily, only skip if we already fired within the last 60 minutes
-            const minutesSinceLastFire = (Date.now() - new Date(alert.lastFiredAt).getTime()) / 60000;
-            if (minutesSinceLastFire < 60) {
+        for (const slot of matchingSlots) {
+          // Slot-based idempotency: skip if this exact slot already fired today.
+          // For once_daily we use a simple date-only guard (any fire today = done).
+          // For twice_daily we check whether lastFiredAt maps to THIS slot's time,
+          // so both slots can fire independently regardless of ordering.
+          if (alert.lastFiredAt) {
+            if (alert.frequency === 'once_daily') {
+              const lastFiredDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz })
+                .format(new Date(alert.lastFiredAt));
+              if (lastFiredDate === todayInTz) {
+                console.log(`⏭️ Alert ${alert.id} (once_daily) already fired today — skipping`);
+                continue;
+              }
+            } else if (slotFiredToday(new Date(alert.lastFiredAt), tz, slot, todayInTz)) {
+              console.log(`⏭️ Alert ${alert.id} slot ${slot} already fired today — skipping`);
               continue;
             }
           }
-        }
 
-        console.log(`📅 Daily report due: alert ${alert.id} for ${alert.locationName} at ${currentTime} ${tz}`);
-        const delivered = await dispatchDailyReport(alert);
+          console.log(`📅 Daily report due: alert ${alert.id} for ${alert.locationName} at ${slot} ${tz}`);
+          const delivered = await dispatchDailyReport(alert);
 
-        if (delivered) {
-          await storage.updateAlertLastFiredAt(alert.id, new Date());
-          await storage.logAlertTrigger(alert.id, `Daily report sent at ${currentTime} ${tz}`).catch(() => {});
-        } else {
-          console.warn(`⚠️ Daily report alert ${alert.id} — all channels failed`);
+          if (delivered) {
+            await storage.updateAlertLastFiredAt(alert.id, new Date());
+            await storage.logAlertTrigger(alert.id, `Daily report sent at ${slot} ${tz}`).catch(() => {});
+          } else {
+            console.warn(`⚠️ Daily report alert ${alert.id} slot ${slot} — all channels failed`);
+          }
         }
       }
     } catch (error) {
