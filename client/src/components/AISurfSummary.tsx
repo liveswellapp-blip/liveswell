@@ -55,7 +55,7 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
             }}
           />
           <div className="relative">
-            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+            <p className="text-xs text-slate-400 leading-relaxed whitespace-pre-line">
               {data.summary}
             </p>
           </div>
