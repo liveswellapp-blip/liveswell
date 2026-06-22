@@ -1108,8 +1108,18 @@ export default function NotificationSettings() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => apiRequest(`/api/user-alerts/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ["/api/user-alerts"] });
+      const nextVerif = new Set(dismissedVerificationIds);
+      if (nextVerif.delete(id)) {
+        setDismissedVerificationIds(nextVerif);
+        saveDismissedIds(nextVerif);
+      }
+      const nextSms = new Set(dismissedSmsRemovedIds);
+      if (nextSms.delete(id)) {
+        setDismissedSmsRemovedIds(nextSms);
+        saveDismissedSmsRemovedIds(nextSms);
+      }
       toast({ title: "Alert deleted" });
     },
     onError: () => toast({ title: "Error", description: "Failed to delete alert.", variant: "destructive" }),
