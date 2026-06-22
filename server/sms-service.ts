@@ -37,7 +37,40 @@ interface SurfConditionsData {
   dataTimestamp: string;
 }
 
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
 export class SMSService {
+  private static sendAttempts = new Map<string, number[]>();
+
+  // ─── Rate Limiting ───────────────────────────────────────────────────────────
+
+  static getRateLimitInfo(userId: string, phoneNumber: string): { allowed: boolean; waitSeconds: number } {
+    const phone = normalizePhone(phoneNumber);
+    const key = `${userId}:${phone}`;
+    const now = Date.now();
+    const timestamps = (SMSService.sendAttempts.get(key) ?? []).filter(
+      ts => now - ts < RATE_LIMIT_WINDOW_MS,
+    );
+    if (timestamps.length >= RATE_LIMIT_MAX) {
+      const oldestInWindow = timestamps[0];
+      const waitSeconds = Math.ceil((RATE_LIMIT_WINDOW_MS - (now - oldestInWindow)) / 1000);
+      return { allowed: false, waitSeconds };
+    }
+    return { allowed: true, waitSeconds: 0 };
+  }
+
+  private static recordSendAttempt(userId: string, phoneNumber: string): void {
+    const phone = normalizePhone(phoneNumber);
+    const key = `${userId}:${phone}`;
+    const now = Date.now();
+    const timestamps = (SMSService.sendAttempts.get(key) ?? []).filter(
+      ts => now - ts < RATE_LIMIT_WINDOW_MS,
+    );
+    timestamps.push(now);
+    SMSService.sendAttempts.set(key, timestamps);
+  }
+
   // ─── Phone Verification ─────────────────────────────────────────────────────
 
   static async sendVerificationCode(userId: string, phoneNumber: string): Promise<boolean> {
@@ -48,6 +81,9 @@ export class SMSService {
     const phone = normalizePhone(phoneNumber);
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min TTL
+
+    // Record this attempt for rate limiting (before sending so partial failures still count)
+    SMSService.recordSendAttempt(userId, phoneNumber);
 
     // Delete any existing pending token for this user+phone, then insert fresh one
     await db.delete(phoneVerificationTokens).where(

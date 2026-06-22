@@ -469,8 +469,23 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
       await apiRequest("/api/alerts/verify-phone/send", { method: "POST", body: { phoneNumber: phone } });
       setVerifyStep("code_sent");
       toast({ title: "Code sent", description: "Check your phone for a 6-digit code." });
-    } catch {
-      toast({ title: "Couldn't send code", description: "Make sure the number is in E.164 format, e.g. +15551234567.", variant: "destructive" });
+    } catch (err: any) {
+      const msg: string = err?.message ?? "";
+      if (msg.startsWith("429:")) {
+        try {
+          const body = JSON.parse(msg.slice(4).trim());
+          const waitMinutes = body.waitSeconds ? Math.ceil(body.waitSeconds / 60) : 10;
+          toast({
+            title: "Too many attempts",
+            description: `Please wait ${waitMinutes} minute${waitMinutes !== 1 ? "s" : ""} before requesting another code.`,
+            variant: "destructive",
+          });
+        } catch {
+          toast({ title: "Too many attempts", description: "Please wait a few minutes before requesting another code.", variant: "destructive" });
+        }
+      } else {
+        toast({ title: "Couldn't send code", description: "Make sure the number is in E.164 format, e.g. +15551234567.", variant: "destructive" });
+      }
     } finally {
       setIsSendingCode(false);
     }

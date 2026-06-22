@@ -3011,6 +3011,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "phoneNumber is required" });
       }
       const { SMSService } = await import("./sms-service");
+
+      const rateLimit = SMSService.getRateLimitInfo(userId, phoneNumber.trim());
+      if (!rateLimit.allowed) {
+        const waitMinutes = Math.ceil(rateLimit.waitSeconds / 60);
+        return res.status(429).json({
+          message: `Too many attempts. Please wait ${waitMinutes} minute${waitMinutes !== 1 ? "s" : ""} before requesting another code.`,
+          waitSeconds: rateLimit.waitSeconds,
+        });
+      }
+
       const ok = await SMSService.sendVerificationCode(userId, phoneNumber.trim());
       if (!ok) return res.status(503).json({ message: "SMS service unavailable. Check that Twilio is configured." });
       res.json({ success: true });
