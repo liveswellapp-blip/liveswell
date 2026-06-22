@@ -340,8 +340,18 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
       ? `${formatTime(alert.notificationTime)} & ${formatTime(alert.notificationTimeTwo)} · Twice daily`
       : `${formatTime(alert.notificationTime)} · Once daily`;
 
+  const needsVerification =
+    alert.active &&
+    alert.deliveryChannels?.includes("sms") &&
+    !!alert.phoneNumber &&
+    !alert.phoneVerified;
+
+  const cardStyle = needsVerification
+    ? { background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.3)" }
+    : { ...CARD, opacity: alert.active ? 1 : 0.55 };
+
   return (
-    <div className="rounded-2xl p-4" style={{ ...CARD, opacity: alert.active ? 1 : 0.55 }}>
+    <div className="rounded-2xl p-4" style={cardStyle}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
@@ -1068,6 +1078,9 @@ export default function NotificationSettings() {
 
   const conditionAlerts = alerts.filter(a => a.alertType !== "daily_report");
   const dailyAlerts = alerts.filter(a => a.alertType === "daily_report");
+  const unverifiedActiveAlerts = alerts.filter(
+    a => a.active && a.deliveryChannels?.includes("sms") && !!a.phoneNumber && !a.phoneVerified
+  );
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
@@ -1096,6 +1109,31 @@ export default function NotificationSettings() {
       </div>
 
       <div className="flex-1 px-5 max-w-2xl mx-auto w-full space-y-6">
+        {unverifiedActiveAlerts.length > 0 && (
+          <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
+            style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)" }}>
+            <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-amber-300">
+                {unverifiedActiveAlerts.length === 1
+                  ? "1 active alert needs phone verification"
+                  : `${unverifiedActiveAlerts.length} active alerts need phone verification`}
+              </p>
+              <p className="text-[12px] text-amber-500/80 mt-0.5">
+                SMS messages won't be sent until you verify your number. Tap an alert below to verify.
+              </p>
+              {unverifiedActiveAlerts.length === 1 && (
+                <button
+                  onClick={() => openEdit(unverifiedActiveAlerts[0])}
+                  className="mt-2 text-[12px] font-semibold text-amber-400 hover:text-amber-300 transition-colors underline underline-offset-2"
+                >
+                  Verify now →
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="space-y-3 pt-2">
             {[1, 2].map(i => (
