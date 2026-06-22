@@ -2914,7 +2914,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { phoneVerified: _pv, ...bodyWithoutVerified } = req.body;
       const phoneNumber = bodyWithoutVerified.phoneNumber;
       const serverPhoneVerified = phoneNumber
-        ? SMSService.isPhoneVerified(userId, phoneNumber)
+        ? await SMSService.isPhoneVerified(userId, phoneNumber)
         : false;
       const parsed = insertUserAlertSchema.safeParse({ ...bodyWithoutVerified, userId, phoneVerified: serverPhoneVerified });
       if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
@@ -2970,7 +2970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           serverPhoneVerified = existing?.phoneVerified ?? false;
         } else {
           // Phone changed — require fresh in-process verification
-          serverPhoneVerified = SMSService.isPhoneVerified(userId, newPhone);
+          serverPhoneVerified = await SMSService.isPhoneVerified(userId, newPhone);
         }
       }
 
@@ -3028,7 +3028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "phoneNumber and code are required" });
       }
       const { SMSService } = await import("./sms-service");
-      const ok = SMSService.verifyCode(userId, phoneNumber.trim(), String(code).trim());
+      const ok = await SMSService.verifyCode(userId, phoneNumber.trim(), String(code).trim());
       if (!ok) return res.status(400).json({ message: "Invalid or expired code" });
       res.json({ success: true });
     } catch (error) {

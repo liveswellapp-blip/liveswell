@@ -3,6 +3,9 @@ import { storage } from './storage';
 import type { Location } from '@shared/schema';
 import { fetchWeatherData } from './weather-service';
 import { generateNotificationSummary } from './ai-service';
+import { db } from './db';
+import { phoneVerificationTokens, verifiedPhones as verifiedPhonesTable } from '@shared/schema';
+import { and, eq, gt } from 'drizzle-orm';
 
 // Initialize Twilio client
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -14,12 +17,6 @@ if (!accountSid || !authToken || !twilioPhoneNumber) {
 }
 
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
-
-// ─── Phone Verification State (in-memory, short-lived) ───────────────────────
-// Key: `${userId}:${phone}` → {code, expiresAt}
-const pendingCodes = new Map<string, { code: string; expiresAt: number }>();
-// Key: `${userId}:${phone}` → expiresAt (30 min after verification)
-const verifiedPhones = new Map<string, number>();
 
 function normalizePhone(phone: string): string {
   return phone.replace(/\s/g, '').toLowerCase();
@@ -48,9 +45,16 @@ export class SMSService {
       console.error('Twilio not configured — cannot send verification SMS');
       return false;
     }
-    const key = `${userId}:${normalizePhone(phoneNumber)}`;
+    const phone = normalizePhone(phoneNumber);
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    pendingCodes.set(key, { code, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min TTL
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min TTL
+
+    // Delete any existing pending token for this user+phone, then insert fresh one
+    await db.delete(phoneVerificationTokens).where(
+      and(eq(phoneVerificationTokens.userId, userId), eq(phoneVerificationTokens.phone, phone))
+    );
+    await db.insert(phoneVerificationTokens).values({ userId, phone, code, expiresAt });
+
     try {
       await client.messages.create({
         body: `Your LiveSwell verification code is: ${code}\n\nIt expires in 10 minutes.`,
@@ -61,41 +65,59 @@ export class SMSService {
       return true;
     } catch (error) {
       console.error('Error sending verification SMS:', error);
-      pendingCodes.delete(key);
+      // Clean up the token if SMS failed to send
+      await db.delete(phoneVerificationTokens).where(
+        and(eq(phoneVerificationTokens.userId, userId), eq(phoneVerificationTokens.phone, phone))
+      );
       return false;
     }
   }
 
-  static verifyCode(userId: string, phoneNumber: string, code: string): boolean {
-    const key = `${userId}:${normalizePhone(phoneNumber)}`;
-    const entry = pendingCodes.get(key);
+  static async verifyCode(userId: string, phoneNumber: string, code: string): Promise<boolean> {
+    const phone = normalizePhone(phoneNumber);
+    const now = new Date();
+
+    const [entry] = await db.select()
+      .from(phoneVerificationTokens)
+      .where(and(
+        eq(phoneVerificationTokens.userId, userId),
+        eq(phoneVerificationTokens.phone, phone),
+        gt(phoneVerificationTokens.expiresAt, now),
+      ))
+      .limit(1);
+
     if (!entry) return false;
-    if (Date.now() > entry.expiresAt) {
-      pendingCodes.delete(key);
-      return false;
-    }
     if (entry.code !== code.trim()) return false;
-    pendingCodes.delete(key);
-    // Mark verified for 30 minutes so the alert save can pick it up
-    verifiedPhones.set(key, Date.now() + 30 * 60 * 1000);
+
+    // Delete the used token
+    await db.delete(phoneVerificationTokens).where(eq(phoneVerificationTokens.id, entry.id));
+
+    // Persist the verified status — upsert by deleting + inserting
+    await db.delete(verifiedPhonesTable).where(
+      and(eq(verifiedPhonesTable.userId, userId), eq(verifiedPhonesTable.phone, phone))
+    );
+    await db.insert(verifiedPhonesTable).values({ userId, phone, verifiedAt: now });
+
     return true;
   }
 
-  static isPhoneVerified(userId: string, phoneNumber: string): boolean {
-    const key = `${userId}:${normalizePhone(phoneNumber)}`;
-    const expiresAt = verifiedPhones.get(key);
-    if (!expiresAt) return false;
-    if (Date.now() > expiresAt) {
-      verifiedPhones.delete(key);
-      return false;
-    }
-    return true;
+  static async isPhoneVerified(userId: string, phoneNumber: string): Promise<boolean> {
+    const phone = normalizePhone(phoneNumber);
+    const [row] = await db.select()
+      .from(verifiedPhonesTable)
+      .where(and(eq(verifiedPhonesTable.userId, userId), eq(verifiedPhonesTable.phone, phone)))
+      .limit(1);
+    return !!row;
   }
 
-  static clearVerifiedPhone(userId: string, phoneNumber: string): void {
-    const key = `${userId}:${normalizePhone(phoneNumber)}`;
-    verifiedPhones.delete(key);
-    pendingCodes.delete(key);
+  static async clearVerifiedPhone(userId: string, phoneNumber: string): Promise<void> {
+    const phone = normalizePhone(phoneNumber);
+    await db.delete(verifiedPhonesTable).where(
+      and(eq(verifiedPhonesTable.userId, userId), eq(verifiedPhonesTable.phone, phone))
+    );
+    await db.delete(phoneVerificationTokens).where(
+      and(eq(phoneVerificationTokens.userId, userId), eq(phoneVerificationTokens.phone, phone))
+    );
   }
 
   // ─── SMS Delivery ───────────────────────────────────────────────────────────

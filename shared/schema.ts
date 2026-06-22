@@ -129,6 +129,21 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const phoneVerificationTokens = pgTable("phone_verification_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  phone: text("phone").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+}, (table) => [index("IDX_phone_verification_tokens_user_phone").on(table.userId, table.phone)]);
+
+export const verifiedPhones = pgTable("verified_phones", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  phone: text("phone").notNull(),
+  verifiedAt: timestamp("verified_at").defaultNow().notNull(),
+}, (table) => [index("IDX_verified_phones_user_phone").on(table.userId, table.phone)]);
+
 export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
