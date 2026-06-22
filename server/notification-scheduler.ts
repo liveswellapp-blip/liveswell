@@ -4,8 +4,9 @@ import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
 import { ConditionMonitor } from './condition-monitor';
 import { db } from './db';
-import { userAlerts, notificationSettings } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { userAlerts, notificationSettings, users, locations } from '@shared/schema';
+import { eq, and, lt, sql } from 'drizzle-orm';
+import * as cron from 'node-cron';
 
 export class NotificationScheduler {
   private static initialized = false;
@@ -28,6 +29,14 @@ export class NotificationScheduler {
 
     // One-time backfill: migrate existing notification_settings rows into user_alerts
     await this.backfillLegacySettings();
+
+    // Run immediately on startup to catch anything overdue, then daily at 02:00 UTC
+    await this.disableUnverifiedSmsChannels();
+    cron.schedule('0 2 * * *', () => {
+      this.disableUnverifiedSmsChannels().catch(err =>
+        console.error('Error in disableUnverifiedSmsChannels job:', err)
+      );
+    });
 
     this.initialized = true;
     console.log('🔔 Notification scheduler initialized');
@@ -83,6 +92,68 @@ export class NotificationScheduler {
       }
     } catch (error) {
       console.error('Error during legacy settings backfill:', error);
+    }
+  }
+
+  /**
+   * Finds alerts where SMS is a delivery channel but the phone has not been verified
+   * within 24 hours of the alert being created. Removes 'sms' from deliveryChannels
+   * and sends the user an email explaining why.
+   */
+  static async disableUnverifiedSmsChannels(): Promise<void> {
+    try {
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      const stale = await db
+        .select({
+          id: userAlerts.id,
+          userId: userAlerts.userId,
+          label: userAlerts.label,
+          deliveryChannels: userAlerts.deliveryChannels,
+          phoneNumber: userAlerts.phoneNumber,
+          createdAt: userAlerts.createdAt,
+          locationName: locations.name,
+          userEmail: users.email,
+        })
+        .from(userAlerts)
+        .innerJoin(locations, eq(locations.id, userAlerts.locationId))
+        .innerJoin(users, eq(users.id, userAlerts.userId))
+        .where(
+          and(
+            eq(userAlerts.phoneVerified, false),
+            lt(userAlerts.createdAt, cutoff),
+            sql`'sms' = ANY(${userAlerts.deliveryChannels})`
+          )
+        );
+
+      if (stale.length === 0) return;
+
+      console.log(`📵 Disabling SMS channel on ${stale.length} unverified alert(s)...`);
+
+      for (const alert of stale) {
+        const updatedChannels = (alert.deliveryChannels ?? []).filter(c => c !== 'sms');
+
+        await db
+          .update(userAlerts)
+          .set({ deliveryChannels: updatedChannels, updatedAt: new Date() })
+          .where(eq(userAlerts.id, alert.id));
+
+        console.log(`📵 Removed SMS channel from alert ${alert.id} (user ${alert.userId})`);
+
+        if (alert.userEmail && alert.phoneNumber) {
+          const label = alert.label || alert.locationName;
+          await EmailService.sendSmsDisabledNotification(
+            alert.userEmail,
+            label,
+            alert.locationName,
+            alert.phoneNumber,
+          ).catch(err => console.error(`Failed to send SMS-disabled email for alert ${alert.id}:`, err));
+        }
+      }
+
+      console.log(`✅ SMS channel cleanup complete (${stale.length} alert(s) updated)`);
+    } catch (error) {
+      console.error('Error in disableUnverifiedSmsChannels:', error);
     }
   }
 

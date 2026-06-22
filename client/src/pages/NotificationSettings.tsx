@@ -346,9 +346,16 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
     !!alert.phoneNumber &&
     !alert.phoneVerified;
 
+  const smsAutoRemoved =
+    !alert.deliveryChannels?.includes("sms") &&
+    !!alert.phoneNumber &&
+    !alert.phoneVerified;
+
   const cardStyle = needsVerification
     ? { background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.3)" }
-    : { ...CARD, opacity: alert.active ? 1 : 0.55 };
+    : smsAutoRemoved
+      ? { background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", opacity: alert.active ? 1 : 0.55 }
+      : { ...CARD, opacity: alert.active ? 1 : 0.55 };
 
   return (
     <div className="rounded-2xl p-4" style={cardStyle}>
@@ -397,6 +404,13 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
               style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
               <AlertCircle size={10} className="text-red-400 shrink-0" />
               <span className="text-[10px] text-red-400">Phone not verified — SMS paused. Edit alert to verify.</span>
+            </div>
+          )}
+          {smsAutoRemoved && (
+            <div className="flex items-center gap-1.5 ml-3.5 mt-1 px-2 py-1 rounded-lg"
+              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <AlertCircle size={10} className="text-red-400 shrink-0" />
+              <span className="text-[10px] text-red-400">SMS removed — phone number was never verified. Edit alert to re-add SMS.</span>
             </div>
           )}
         </div>
@@ -1096,6 +1110,9 @@ export default function NotificationSettings() {
   const unverifiedActiveAlerts = alerts.filter(
     a => a.active && a.deliveryChannels?.includes("sms") && !!a.phoneNumber && !a.phoneVerified
   );
+  const smsRemovedAlerts = alerts.filter(
+    a => !a.deliveryChannels?.includes("sms") && !!a.phoneNumber && !a.phoneVerified
+  );
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
@@ -1124,6 +1141,30 @@ export default function NotificationSettings() {
       </div>
 
       <div className="flex-1 px-5 max-w-2xl mx-auto w-full space-y-6">
+        {smsRemovedAlerts.length > 0 && (
+          <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
+            style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)" }}>
+            <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-red-300">
+                {smsRemovedAlerts.length === 1
+                  ? "SMS removed from 1 alert — phone was never verified"
+                  : `SMS removed from ${smsRemovedAlerts.length} alerts — phone was never verified`}
+              </p>
+              <p className="text-[12px] text-red-500/80 mt-0.5">
+                The 24-hour verification window passed. Edit an alert to re-add SMS and verify your number.
+              </p>
+              {smsRemovedAlerts.length === 1 && (
+                <button
+                  onClick={() => openEdit(smsRemovedAlerts[0])}
+                  className="mt-2 text-[12px] font-semibold text-red-400 hover:text-red-300 transition-colors underline underline-offset-2"
+                >
+                  Re-add SMS →
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         {unverifiedActiveAlerts.length > 0 && (
           <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
             style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.3)" }}>

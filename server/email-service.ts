@@ -188,6 +188,89 @@ LiveSwell · Manage alerts at liveswell.app`;
     }
   }
 
+  static async sendSmsDisabledNotification(
+    toEmail: string,
+    alertLabel: string,
+    locationName: string,
+    phoneNumber: string,
+  ): Promise<boolean> {
+    if (!resend) {
+      console.warn('Resend not configured — cannot send SMS-disabled notification');
+      return false;
+    }
+
+    try {
+      const subject = `📵 SMS paused on your "${alertLabel}" alert`;
+
+      const text = `Hi,
+
+Your phone number ${phoneNumber} wasn't verified within 24 hours, so SMS delivery has been automatically paused on your "${alertLabel}" alert for ${locationName}.
+
+Your alert is still active and will continue delivering via any other channels you set up (email, push). SMS will resume as soon as you verify your number.
+
+To re-enable SMS:
+1. Open LiveSwell and go to Alerts
+2. Edit the "${alertLabel}" alert
+3. Verify your phone number
+
+—
+LiveSwell · Manage alerts at liveswell.app`;
+
+      const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#030912;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e2e8f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <tr><td>
+      <div style="background:linear-gradient(160deg,#030912 0%,#0f1e35 100%);border:1px solid rgba(239,68,68,0.25);border-radius:16px;padding:24px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <span style="font-size:28px;">📵</span>
+          <div>
+            <div style="font-size:18px;font-weight:900;color:#fff;">SMS Paused</div>
+            <div style="font-size:12px;color:#64748b;">${locationName} · ${alertLabel}</div>
+          </div>
+        </div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:16px;margin-bottom:16px;">
+          <div style="font-size:13px;color:#fca5a5;line-height:1.6;">
+            Your number <strong style="color:#f87171;">${phoneNumber}</strong> wasn't verified within 24 hours, so SMS delivery has been automatically paused on this alert.
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:16px;">
+          <div style="font-size:11px;color:#94a3b8;line-height:1.8;">
+            Your alert is still active and will continue delivering via any other channels you set up. SMS resumes as soon as you verify your number.
+          </div>
+        </div>
+        <a href="https://liveswell.app/alerts" style="display:block;text-align:center;background:linear-gradient(135deg,#059669,#10b981);color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-size:13px;font-weight:700;">Re-enable SMS →</a>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#334155;">
+        LiveSwell · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">Manage your alerts</a>
+      </div>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      const result = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: toEmail,
+        subject,
+        text,
+        html,
+      });
+
+      if (result.error) {
+        console.error(`❌ Resend SMS-disabled email error: ${result.error.message}`);
+        return false;
+      }
+
+      console.log(`✅ SMS-disabled notification sent to ${toEmail} (id: ${result.data?.id})`);
+      return true;
+    } catch (error) {
+      console.error('Error sending SMS-disabled notification:', error);
+      return false;
+    }
+  }
+
   static async sendConditionAlert(
     toEmail: string,
     locationName: string,
