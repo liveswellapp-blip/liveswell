@@ -1038,6 +1038,7 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
 }
 
 const LS_KEY = "liveswell_dismissed_verification_ids";
+const LS_KEY_SMS_REMOVED = "liveswell_dismissed_sms_removed_ids";
 
 function loadDismissedIds(): Set<number> {
   try {
@@ -1055,6 +1056,22 @@ function saveDismissedIds(ids: Set<number>) {
   } catch {}
 }
 
+function loadDismissedSmsRemovedIds(): Set<number> {
+  try {
+    const raw = localStorage.getItem(LS_KEY_SMS_REMOVED);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw) as number[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissedSmsRemovedIds(ids: Set<number>) {
+  try {
+    localStorage.setItem(LS_KEY_SMS_REMOVED, JSON.stringify([...ids]));
+  } catch {}
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { toast } = useToast();
@@ -1063,6 +1080,7 @@ export default function NotificationSettings() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editAlert, setEditAlert] = useState<UserAlert | null>(null);
   const [dismissedVerificationIds, setDismissedVerificationIds] = useState<Set<number>>(loadDismissedIds);
+  const [dismissedSmsRemovedIds, setDismissedSmsRemovedIds] = useState<Set<number>>(loadDismissedSmsRemovedIds);
 
   const { data: alerts = [], isLoading } = useQuery<UserAlert[]>({
     queryKey: ["/api/user-alerts"],
@@ -1144,6 +1162,17 @@ export default function NotificationSettings() {
     saveDismissedIds(next);
   };
 
+  const showSmsRemovedBanner =
+    smsRemovedAlerts.length > 0 &&
+    smsRemovedAlerts.some(a => !dismissedSmsRemovedIds.has(a.id));
+
+  const handleDismissSmsRemovedBanner = () => {
+    const next = new Set(dismissedSmsRemovedIds);
+    smsRemovedAlerts.forEach(a => next.add(a.id));
+    setDismissedSmsRemovedIds(next);
+    saveDismissedSmsRemovedIds(next);
+  };
+
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
       <Header />
@@ -1171,7 +1200,7 @@ export default function NotificationSettings() {
       </div>
 
       <div className="flex-1 px-5 max-w-2xl mx-auto w-full space-y-6">
-        {smsRemovedAlerts.length > 0 && (
+        {showSmsRemovedBanner && (
           <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
             style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)" }}>
             <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
@@ -1193,6 +1222,13 @@ export default function NotificationSettings() {
                 </button>
               )}
             </div>
+            <button
+              onClick={handleDismissSmsRemovedBanner}
+              className="shrink-0 p-1 rounded-lg text-red-500 hover:text-red-300 hover:bg-red-400/10 transition-colors"
+              title="Dismiss"
+            >
+              <X size={14} />
+            </button>
           </div>
         )}
         {showVerificationBanner && (
