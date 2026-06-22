@@ -3012,7 +3012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { SMSService } = await import("./sms-service");
 
-      const rateLimit = SMSService.getRateLimitInfo(userId, phoneNumber.trim());
+      const rateLimit = await SMSService.getRateLimitInfo(userId, phoneNumber.trim());
       if (!rateLimit.allowed) {
         const waitMinutes = Math.ceil(rateLimit.waitSeconds / 60);
         return res.status(429).json({

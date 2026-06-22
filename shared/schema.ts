@@ -144,6 +144,13 @@ export const verifiedPhones = pgTable("verified_phones", {
   verifiedAt: timestamp("verified_at").defaultNow().notNull(),
 }, (table) => [index("IDX_verified_phones_user_phone").on(table.userId, table.phone)]);
 
+export const smsRateLimits = pgTable("sms_rate_limits", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  phone: text("phone").notNull(),
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+}, (table) => [index("IDX_sms_rate_limits_user_phone_sent").on(table.userId, table.phone, table.sentAt)]);
+
 export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,

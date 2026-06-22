@@ -4,8 +4,8 @@ import type { Location } from '@shared/schema';
 import { fetchWeatherData } from './weather-service';
 import { generateNotificationSummary } from './ai-service';
 import { db } from './db';
-import { phoneVerificationTokens, verifiedPhones as verifiedPhonesTable } from '@shared/schema';
-import { and, eq, gt } from 'drizzle-orm';
+import { phoneVerificationTokens, verifiedPhones as verifiedPhonesTable, smsRateLimits } from '@shared/schema';
+import { and, eq, gt, gte, lt, asc } from 'drizzle-orm';
 
 // Initialize Twilio client
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -41,34 +41,45 @@ const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 export class SMSService {
-  private static sendAttempts = new Map<string, number[]>();
-
   // ─── Rate Limiting ───────────────────────────────────────────────────────────
 
-  static getRateLimitInfo(userId: string, phoneNumber: string): { allowed: boolean; waitSeconds: number } {
+  static async getRateLimitInfo(userId: string, phoneNumber: string): Promise<{ allowed: boolean; waitSeconds: number }> {
     const phone = normalizePhone(phoneNumber);
-    const key = `${userId}:${phone}`;
-    const now = Date.now();
-    const timestamps = (SMSService.sendAttempts.get(key) ?? []).filter(
-      ts => now - ts < RATE_LIMIT_WINDOW_MS,
-    );
-    if (timestamps.length >= RATE_LIMIT_MAX) {
-      const oldestInWindow = timestamps[0];
-      const waitSeconds = Math.ceil((RATE_LIMIT_WINDOW_MS - (now - oldestInWindow)) / 1000);
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
+
+    const rows = await db
+      .select({ sentAt: smsRateLimits.sentAt })
+      .from(smsRateLimits)
+      .where(
+        and(
+          eq(smsRateLimits.userId, userId),
+          eq(smsRateLimits.phone, phone),
+          gte(smsRateLimits.sentAt, windowStart),
+        ),
+      )
+      .orderBy(asc(smsRateLimits.sentAt));
+
+    if (rows.length >= RATE_LIMIT_MAX) {
+      const oldestInWindow = rows[0].sentAt.getTime();
+      const waitSeconds = Math.ceil((RATE_LIMIT_WINDOW_MS - (Date.now() - oldestInWindow)) / 1000);
       return { allowed: false, waitSeconds };
     }
     return { allowed: true, waitSeconds: 0 };
   }
 
-  private static recordSendAttempt(userId: string, phoneNumber: string): void {
+  private static async recordSendAttempt(userId: string, phoneNumber: string): Promise<void> {
     const phone = normalizePhone(phoneNumber);
-    const key = `${userId}:${phone}`;
-    const now = Date.now();
-    const timestamps = (SMSService.sendAttempts.get(key) ?? []).filter(
-      ts => now - ts < RATE_LIMIT_WINDOW_MS,
+    await db.insert(smsRateLimits).values({ userId, phone, sentAt: new Date() });
+
+    // Prune rows older than the window to keep the table tidy
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
+    await db.delete(smsRateLimits).where(
+      and(
+        eq(smsRateLimits.userId, userId),
+        eq(smsRateLimits.phone, phone),
+        lt(smsRateLimits.sentAt, windowStart),
+      ),
     );
-    timestamps.push(now);
-    SMSService.sendAttempts.set(key, timestamps);
   }
 
   // ─── Phone Verification ─────────────────────────────────────────────────────
@@ -83,7 +94,7 @@ export class SMSService {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min TTL
 
     // Record this attempt for rate limiting (before sending so partial failures still count)
-    SMSService.recordSendAttempt(userId, phoneNumber);
+    await SMSService.recordSendAttempt(userId, phoneNumber);
 
     // Delete any existing pending token for this user+phone, then insert fresh one
     await db.delete(phoneVerificationTokens).where(
