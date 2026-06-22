@@ -439,9 +439,10 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favorites, initialPhoneVerified, existingAlerts }: {
+function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, existingAlerts }: {
   open: boolean;
   onClose: () => void;
+  onSaveSuccess?: (alertId: number) => void;
   initialData?: Partial<AlertFormState>;
   editId?: number;
   userEmail?: string | null;
@@ -572,6 +573,7 @@ function AlertFormDialog({ open, onClose, initialData, editId, userEmail, favori
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user-alerts"] });
       toast({ title: "Alert updated" });
+      if (editId != null) onSaveSuccess?.(editId);
       onClose();
     },
     onError: () => toast({ title: "Error", description: "Failed to update alert.", variant: "destructive" }),
@@ -1173,6 +1175,18 @@ export default function NotificationSettings() {
     saveDismissedSmsRemovedIds(next);
   };
 
+  const handleAlertSaveSuccess = (alertId: number) => {
+    const nextVerif = new Set(dismissedVerificationIds);
+    nextVerif.delete(alertId);
+    setDismissedVerificationIds(nextVerif);
+    saveDismissedIds(nextVerif);
+
+    const nextSms = new Set(dismissedSmsRemovedIds);
+    nextSms.delete(alertId);
+    setDismissedSmsRemovedIds(nextSms);
+    saveDismissedSmsRemovedIds(nextSms);
+  };
+
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
       <Header />
@@ -1367,6 +1381,7 @@ export default function NotificationSettings() {
         key={`${dialogOpen ? "open" : "closed"}-${editAlert?.id ?? "new"}`}
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
+        onSaveSuccess={handleAlertSaveSuccess}
         initialData={editInitial}
         editId={editAlert?.id}
         userEmail={userEmail}
