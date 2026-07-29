@@ -150,6 +150,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Protected monitoring endpoints - require admin authentication
   app.get("/api/health", requireAdminAuth, healthCheck);
   app.get("/api/metrics", requireAdminAuth, getMetrics);
+
+  // Daily API usage forecast
+  app.get("/api/admin/usage-forecast", requireAdminAuth, async (req, res) => {
+    try {
+      const [condAlerts, dailyAlerts] = await Promise.all([
+        storage.getActiveConditionAlerts(),
+        storage.getActiveDailyReportAlerts(),
+      ]);
+      const uniqueLocations = new Set([
+        ...condAlerts.map((a: any) => a.locationId),
+        ...dailyAlerts.map((a: any) => a.locationId),
+      ]);
+      const checksPerDay = Math.floor((24 * 60) / 20); // 72 cycles/day
+      const estimatedCallsPerDay = uniqueLocations.size * checksPerDay;
+      const dailyLimit = 1000;
+      const remainingQuota = Math.max(0, dailyLimit - estimatedCallsPerDay);
+      // How many more unique locations could be added before hitting the cap
+      const capacityRemaining = checksPerDay > 0
+        ? Math.floor(remainingQuota / checksPerDay)
+        : null;
+
+      res.json({
+        uniqueLocations: uniqueLocations.size,
+        checksPerDay,
+        estimatedCallsPerDay,
+        dailyLimit,
+        remainingQuota,
+        capacityRemaining,
+        utilizationPct: dailyLimit > 0
+          ? Math.round((estimatedCallsPerDay / dailyLimit) * 100)
+          : 0,
+      });
+    } catch (error) {
+      console.error("Usage forecast failed:", error);
+      res.status(500).json({ message: "Failed to compute usage forecast" });
+    }
+  });
   
   // Error logging endpoints
   app.get("/api/admin/error-logs", requireAdminAuth, async (req, res) => {

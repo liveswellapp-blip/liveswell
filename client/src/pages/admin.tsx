@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Shield, Activity, Users, Database, Globe, BarChart3, AlertTriangle, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Shield, Activity, Users, Database, Globe, BarChart3, AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp } from "lucide-react";
 import UserDatabase from "@/components/UserDatabase";
 import ErrorLogs from "@/components/ErrorLogs";
 import SurfSpotsMonitoring from "@/components/SurfSpotsMonitoring";
@@ -57,6 +57,16 @@ interface ApiMetrics {
   };
 }
 
+interface UsageForecast {
+  uniqueLocations: number;
+  checksPerDay: number;
+  estimatedCallsPerDay: number;
+  dailyLimit: number;
+  remainingQuota: number;
+  capacityRemaining: number | null;
+  utilizationPct: number;
+}
+
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -104,6 +114,13 @@ export default function AdminDashboard() {
   // Metrics query - only run when authenticated
   const { data: metricsData, isLoading: metricsLoading } = useQuery<ApiMetrics>({
     queryKey: ['/api/metrics'],
+    enabled: isAuthenticated,
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  // Daily API usage forecast - only run when authenticated
+  const { data: forecastData } = useQuery<UsageForecast>({
+    queryKey: ['/api/admin/usage-forecast'],
     enabled: isAuthenticated,
     refetchInterval: 60000, // Refresh every minute
   });
@@ -386,6 +403,75 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Daily API Usage Forecast */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5" />
+              <span>Daily API Usage Forecast</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {forecastData ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-secondary rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold">{forecastData.uniqueLocations}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Monitored locations</div>
+                  </div>
+                  <div className="bg-secondary rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold">{forecastData.estimatedCallsPerDay.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Est. calls / day</div>
+                  </div>
+                  <div className="bg-secondary rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold">{forecastData.dailyLimit.toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Daily cap (free tier)</div>
+                  </div>
+                  <div className={`rounded-lg p-3 text-center ${forecastData.remainingQuota <= 0 ? 'bg-red-100 dark:bg-red-900/30' : forecastData.utilizationPct >= 80 ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
+                    <div className={`text-2xl font-bold ${forecastData.remainingQuota <= 0 ? 'text-red-600' : forecastData.utilizationPct >= 80 ? 'text-yellow-600' : 'text-green-600'}`}>
+                      {forecastData.remainingQuota.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">Remaining quota</div>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Quota utilization</span>
+                    <span>{forecastData.utilizationPct}%</span>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${forecastData.utilizationPct >= 90 ? 'bg-red-500' : forecastData.utilizationPct >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                      style={{ width: `${Math.min(forecastData.utilizationPct, 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Plain-English explanation */}
+                <div className={`rounded-md p-3 text-sm ${forecastData.remainingQuota <= 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : forecastData.utilizationPct >= 80 ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'}`}>
+                  {forecastData.remainingQuota <= 0 ? (
+                    <p>⚠️ <strong>Over the daily cap.</strong> At {forecastData.uniqueLocations} monitored location{forecastData.uniqueLocations !== 1 ? 's' : ''}, the estimated {forecastData.estimatedCallsPerDay.toLocaleString()} calls/day exceeds the {forecastData.dailyLimit.toLocaleString()} free-tier limit. Weather data may fall back to demo data until the counter resets at midnight UTC.</p>
+                  ) : forecastData.utilizationPct >= 80 ? (
+                    <p>⚠️ <strong>Approaching the daily cap ({forecastData.utilizationPct}% used).</strong> You have room for roughly {forecastData.capacityRemaining ?? 0} more monitored location{(forecastData.capacityRemaining ?? 0) !== 1 ? 's' : ''} before hitting the {forecastData.dailyLimit.toLocaleString()}-call free-tier limit.</p>
+                  ) : forecastData.uniqueLocations === 0 ? (
+                    <p>✅ <strong>No locations monitored yet.</strong> The {forecastData.dailyLimit.toLocaleString()} daily call quota is fully available. Each new unique surf spot adds {forecastData.checksPerDay} calls/day.</p>
+                  ) : (
+                    <p>✅ <strong>Well within limits.</strong> {forecastData.uniqueLocations} location{forecastData.uniqueLocations !== 1 ? 's' : ''} × {forecastData.checksPerDay} checks/day = {forecastData.estimatedCallsPerDay.toLocaleString()} calls. You can add {forecastData.capacityRemaining ?? 0} more location{(forecastData.capacityRemaining ?? 0) !== 1 ? 's' : ''} before reaching the {forecastData.dailyLimit.toLocaleString()} free-tier cap.</p>
+                  )}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  Checks run every 20 min ({forecastData.checksPerDay} cycles/day). Estimate resets at midnight UTC.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading forecast...</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Additional Admin Tools */}
         <Card>
