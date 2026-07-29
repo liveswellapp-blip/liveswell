@@ -79,20 +79,30 @@ export async function initWeatherCache(): Promise<void> {
     const now = Date.now();
     let loaded = 0;
     let stale = 0;
+    const staleKeys: string[] = [];
 
     for (const row of rows) {
       const fetchedAtMs = new Date(row.fetchedAt).getTime();
       if (now - fetchedAtMs > WEATHER_CACHE_TTL_MS) {
         stale++;
-        continue; // skip stale entries — they'll be evicted lazily
+        staleKeys.push(row.cacheKey);
+        continue; // skip stale entries — purged below
       }
       weatherCache.set(row.cacheKey, { data: row.data, fetchedAt: fetchedAtMs });
       loaded++;
     }
 
+    // Delete stale rows from DB so the table doesn't grow unbounded
+    if (staleKeys.length > 0) {
+      const { inArray } = await import('drizzle-orm');
+      await db
+        .delete(weatherCacheEntries)
+        .where(inArray(weatherCacheEntries.cacheKey, staleKeys));
+    }
+
     console.log(
       `🌊 Weather cache hydrated: ${loaded} location(s) loaded from DB` +
-        (stale > 0 ? `, ${stale} stale entr${stale === 1 ? 'y' : 'ies'} skipped` : '')
+        (stale > 0 ? `, ${stale} stale entr${stale === 1 ? 'y' : 'ies'} purged` : '')
     );
   } catch (err) {
     console.warn('⚠️  Weather cache hydration failed (non-fatal):', err);
