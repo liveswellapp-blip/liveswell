@@ -378,6 +378,29 @@ export class ConditionMonitor {
 
   static async initialize(): Promise<void> {
     if (this.initialized) return;
+
+    // Log monitored location count so operators can predict daily API usage.
+    // Condition alerts run every 20 min → 72 checks/day per unique location.
+    try {
+      const [condAlerts, dailyAlerts] = await Promise.all([
+        storage.getActiveConditionAlerts(),
+        storage.getActiveDailyReportAlerts(),
+      ]);
+      const uniqueLocations = new Set([
+        ...condAlerts.map((a: any) => a.locationId),
+        ...dailyAlerts.map((a: any) => a.locationId),
+      ]);
+      const checksPerDay = Math.floor((24 * 60) / 20); // 72 per location
+      const estimatedCalls = uniqueLocations.size * checksPerDay;
+      console.log(
+        `📍 Condition monitor: ${uniqueLocations.size} unique location(s) monitored` +
+        ` → ~${estimatedCalls} OpenWeatherMap API calls/day (${checksPerDay} cycles × ${uniqueLocations.size} location(s)).` +
+        ` Free tier limit: 1,000/day.`,
+      );
+    } catch (err) {
+      console.warn('⚠️ Could not compute monitored location count:', err);
+    }
+
     // Condition alerts: run immediately on startup, then every 20 minutes
     await this.checkConditionAlerts();
     cron.schedule('*/20 * * * *', () => this.checkConditionAlerts());

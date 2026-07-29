@@ -8,6 +8,39 @@ if (API_KEY === "demo_key" || !API_KEY || API_KEY.length < 10) {
   console.log("✅ OpenWeather API key configured - real weather data available");
 }
 
+// ─── In-memory weather cache ──────────────────────────────────────────────────
+// Caches fetchWeatherData results per location for WEATHER_CACHE_TTL_MS so that
+// multiple alerts at the same location share a single API call per check cycle.
+interface WeatherCacheEntry {
+  data: any;
+  fetchedAt: number;
+}
+const weatherCache = new Map<string, WeatherCacheEntry>();
+const WEATHER_CACHE_TTL_MS = 18 * 60 * 1000; // 18 minutes
+
+/** Returns cached weather data for the given coordinates, or null if stale/absent. */
+function getCachedWeather(lat: number, lon: number): any | null {
+  const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+  const entry = weatherCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > WEATHER_CACHE_TTL_MS) {
+    weatherCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+/** Stores weather data in the in-memory cache. */
+function setCachedWeather(lat: number, lon: number, data: any): void {
+  const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+  weatherCache.set(key, { data, fetchedAt: Date.now() });
+}
+
+/** Returns the number of distinct locations currently held in the weather cache. */
+export function getWeatherCacheSize(): number {
+  return weatherCache.size;
+}
+
 interface OpenWeatherMarineResponse {
   coord: { lat: number; lon: number };
   weather: Array<{ main: string; description: string }>;
@@ -472,6 +505,13 @@ export async function generateDemoWeatherData(lat: number, lon: number) {
 }
 
 export async function fetchWeatherData(lat: number, lon: number) {
+  // Return cached data if still fresh (avoids burning API quota on repeated calls)
+  const cached = getCachedWeather(lat, lon);
+  if (cached) {
+    console.log(`📦 Weather cache hit for ${lat.toFixed(3)}, ${lon.toFixed(3)}`);
+    return cached;
+  }
+
   // Check if API key is valid (not demo_key and not empty)
   if (!API_KEY || API_KEY === "demo_key" || API_KEY.length < 10) {
     console.log("Using demo data - API key not configured");
@@ -493,6 +533,12 @@ export async function fetchWeatherData(lat: number, lon: number) {
         { signal: AbortSignal.timeout(5000) }
       ),
     ]);
+
+    if (weatherResponse.status === 429) {
+      console.warn('⚠️  OpenWeatherMap rate limit hit (429) — daily API cap likely reached. Falling back to demo data.');
+      console.warn(`   Current cache size: ${weatherCache.size} location(s). Consider reducing alert frequency or upgrading the API plan.`);
+      return await generateDemoWeatherData(lat, lon);
+    }
 
     if (!weatherResponse.ok) {
       throw new Error(`Weather API error: ${weatherResponse.status}`);
@@ -567,6 +613,7 @@ export async function fetchWeatherData(lat: number, lon: number) {
       backupBuoy: marineData.backupBuoy || null,
     };
 
+    setCachedWeather(lat, lon, result);
     return result;
 
   } catch (error) {
