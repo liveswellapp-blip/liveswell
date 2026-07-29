@@ -3,6 +3,7 @@ import { SMSService } from './sms-service';
 import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
 import { ConditionMonitor } from './condition-monitor';
+import { purgeStaleWeatherCache } from './weather-service';
 import { db } from './db';
 import { userAlerts, notificationSettings, users, locations } from '@shared/schema';
 import { eq, and, lt, sql } from 'drizzle-orm';
@@ -35,6 +36,15 @@ export class NotificationScheduler {
     cron.schedule('0 2 * * *', () => {
       this.disableUnverifiedSmsChannels().catch(err =>
         console.error('Error in disableUnverifiedSmsChannels job:', err)
+      );
+    });
+
+    // Periodically purge stale weather-cache rows so the DB table stays lean
+    // even when the server runs for a long time without restarting.
+    // Runs every 20 minutes (aligned with the condition-alert check cadence).
+    cron.schedule('*/20 * * * *', () => {
+      purgeStaleWeatherCache().catch(err =>
+        console.error('Error in purgeStaleWeatherCache job:', err)
       );
     });
 

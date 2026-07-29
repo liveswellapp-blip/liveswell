@@ -66,6 +66,31 @@ async function persistCacheEntryToDb(
 }
 
 /**
+ * Delete DB rows that are older than WEATHER_CACHE_TTL_MS (18 minutes).
+ * Intended to be called periodically (e.g. after each scheduler cycle) so
+ * the table stays lean even when the server runs for a long time without
+ * restarting.  Fire-and-forget — callers should not await the result.
+ */
+export async function purgeStaleWeatherCache(): Promise<void> {
+  try {
+    const { db } = await import('./db');
+    const { weatherCacheEntries } = await import('../shared/schema');
+    const { lt, sql } = await import('drizzle-orm');
+    const cutoff = new Date(Date.now() - WEATHER_CACHE_TTL_MS);
+    const result = await db
+      .delete(weatherCacheEntries)
+      .where(lt(weatherCacheEntries.fetchedAt, cutoff));
+    // Only log when something was actually deleted to keep logs quiet
+    const deleted = (result as any).rowCount ?? (result as any).changes ?? 0;
+    if (deleted > 0) {
+      console.log(`🧹 Weather cache: purged ${deleted} stale DB row(s)`);
+    }
+  } catch (err) {
+    console.warn('⚠️  Weather cache periodic purge failed (non-fatal):', err);
+  }
+}
+
+/**
  * Hydrate the in-memory weather cache from the database on startup.
  * Entries older than WEATHER_CACHE_TTL_MS are discarded.
  * Logs how many locations were loaded from the persistent cache.
