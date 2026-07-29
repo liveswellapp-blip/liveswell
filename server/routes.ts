@@ -395,6 +395,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: smoke-test push notification delivery to a specific user
+  app.post("/api/admin/push-test", requireAdminAuth, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ message: "userId (string) is required" });
+      }
+
+      // Confirm VAPID key is configured first
+      let vapidPublicKey: string;
+      try {
+        vapidPublicKey = pushNotificationService.getVapidPublicKey();
+      } catch {
+        return res.status(500).json({
+          success: false,
+          message: "VAPID public key not configured — push notifications cannot be delivered",
+        });
+      }
+
+      const subscriptions = await storage.getPushSubscriptions(userId);
+      if (subscriptions.length === 0) {
+        return res.status(200).json({
+          success: false,
+          message: "No push subscriptions registered for this user — cannot deliver test notification",
+          vapidKeyConfigured: true,
+          subscriptionCount: 0,
+        });
+      }
+
+      const sent = await pushNotificationService.sendTestNotificationToUser(userId);
+      res.json({
+        success: sent,
+        message: sent
+          ? `Test push notification delivered to ${subscriptions.length} subscription(s)`
+          : "Push notification failed to deliver — check deployment logs for details",
+        vapidKeyConfigured: true,
+        subscriptionCount: subscriptions.length,
+        vapidKeyLength: vapidPublicKey.length,
+      });
+    } catch (error) {
+      console.error("Admin push-test error:", error);
+      res.status(500).json({ message: "Push notification smoke test failed" });
+    }
+  });
+
   app.get("/api/admin/users/:userId", requireAdminAuth, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -3406,6 +3451,33 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     } catch (error) {
       console.error("Error getting VAPID key:", error);
       res.status(500).json({ message: "Failed to get VAPID key" });
+    }
+  });
+
+  // Push notification health/smoke-test endpoint (public — no auth required)
+  // Confirms the VAPID public key is present and structurally valid after every deploy.
+  app.get("/api/push/vapid-public-key", generalApiLimiter, (req, res) => {
+    try {
+      const publicKey = pushNotificationService.getVapidPublicKey();
+
+      // Structural sanity check: VAPID public keys are URL-safe base64, typically 87-88 chars
+      const isValid = publicKey.length > 50 && /^[A-Za-z0-9\-_]+=*$/.test(publicKey);
+      if (!isValid) {
+        console.error("[ERROR] /api/push/vapid-public-key: key appears malformed");
+        return res.status(500).json({
+          ok: false,
+          message: "VAPID public key is present but appears malformed",
+        });
+      }
+
+      res.json({
+        ok: true,
+        publicKey,
+        keyLength: publicKey.length,
+      });
+    } catch (error) {
+      console.error("Error getting VAPID public key:", error);
+      res.status(500).json({ ok: false, message: "VAPID public key not configured" });
     }
   });
 

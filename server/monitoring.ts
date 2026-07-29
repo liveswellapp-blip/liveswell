@@ -13,6 +13,7 @@ interface HealthStatus {
     database: 'healthy' | 'unhealthy';
     openweather: 'healthy' | 'degraded' | 'unhealthy';
     noaa: 'healthy' | 'degraded' | 'unhealthy';
+    pushNotifications: 'healthy' | 'degraded' | 'unhealthy';
   };
   performance: {
     memoryUsage: NodeJS.MemoryUsage;
@@ -82,23 +83,25 @@ export async function healthCheck(req: Request, res: Response) {
     // Test database connection
     const dbStatus = await testDatabaseConnection();
     
-    // Test external APIs
+    // Test external APIs and local services
     const [openweatherStatus, noaaStatus] = await Promise.allSettled([
       testOpenWeatherAPI(),
       testNOAAAPI()
     ]);
+    const pushStatus = testPushNotificationService();
     
     const responseTime = Date.now() - startTime;
     updateResponseTimeHistory(responseTime);
     
     const health: HealthStatus = {
-      status: determineOverallHealth(dbStatus, openweatherStatus, noaaStatus),
+      status: determineOverallHealth(dbStatus, openweatherStatus, noaaStatus, pushStatus),
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       services: {
         database: dbStatus,
         openweather: openweatherStatus.status === 'fulfilled' ? openweatherStatus.value : 'unhealthy',
-        noaa: noaaStatus.status === 'fulfilled' ? noaaStatus.value : 'unhealthy'
+        noaa: noaaStatus.status === 'fulfilled' ? noaaStatus.value : 'unhealthy',
+        pushNotifications: pushStatus
       },
       performance: {
         memoryUsage: process.memoryUsage(),
@@ -194,6 +197,28 @@ async function testOpenWeatherAPI(): Promise<'healthy' | 'degraded' | 'unhealthy
 }
 
 /**
+ * Test Push Notification service (VAPID key presence and format)
+ */
+function testPushNotificationService(): 'healthy' | 'degraded' | 'unhealthy' {
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (!publicKey || !privateKey) {
+    console.error('[ERROR] Push notification health check failed: VAPID keys not configured');
+    return 'unhealthy';
+  }
+
+  // VAPID public keys are URL-safe base64 encoded; typical length is 87–88 chars
+  const looksValid = publicKey.length > 50 && /^[A-Za-z0-9\-_]+=*$/.test(publicKey);
+  if (!looksValid) {
+    console.error('[ERROR] Push notification health check failed: VAPID_PUBLIC_KEY appears malformed');
+    return 'degraded';
+  }
+
+  return 'healthy';
+}
+
+/**
  * Test NOAA API
  */
 async function testNOAAAPI(): Promise<'healthy' | 'degraded' | 'unhealthy'> {
@@ -219,14 +244,19 @@ async function testNOAAAPI(): Promise<'healthy' | 'degraded' | 'unhealthy'> {
  * Determine overall system health
  */
 function determineOverallHealth(
-  db: string, 
-  openweather: PromiseSettledResult<string>, 
-  noaa: PromiseSettledResult<string>
+  db: string,
+  openweather: PromiseSettledResult<string>,
+  noaa: PromiseSettledResult<string>,
+  push: string
 ): 'healthy' | 'degraded' | 'unhealthy' {
   if (db === 'unhealthy') {
     return 'unhealthy'; // Database is critical
   }
-  
+
+  if (push === 'unhealthy') {
+    return 'unhealthy'; // Push notifications are critical for user alerts
+  }
+
   const owStatus = openweather.status === 'fulfilled' ? openweather.value : 'unhealthy';
   const noaaStatus = noaa.status === 'fulfilled' ? noaa.value : 'unhealthy';
   
@@ -234,7 +264,7 @@ function determineOverallHealth(
     return 'degraded'; // App works with demo data
   }
   
-  if (owStatus === 'healthy' && noaaStatus === 'healthy') {
+  if (owStatus === 'healthy' && noaaStatus === 'healthy' && push === 'healthy') {
     return 'healthy';
   }
   
