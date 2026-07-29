@@ -1,33 +1,45 @@
-import { Resend } from 'resend';
+import { ReplitConnectors } from '@replit/connectors-sdk';
 import { storage } from './storage';
 import { fetchWeatherData } from './weather-service';
 import type { Location } from '@shared/schema';
 import { generateNotificationSummary } from './ai-service';
 
-const resendApiKey = process.env.RESEND_API_KEY;
-
-if (!resendApiKey) {
-  console.warn('⚠️  RESEND_API_KEY not configured — email notifications will be disabled');
-} else {
-  console.log('✅ Resend email service configured');
-}
-
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'LiveSwell <onboarding@resend.dev>';
 console.log(`📧 Email from-address: ${FROM_EMAIL}${process.env.RESEND_FROM_EMAIL ? '' : ' (set RESEND_FROM_EMAIL secret to use a verified domain)'}`);
+console.log('✅ Resend email service configured via Replit Connectors');
+
+async function sendEmail(payload: {
+  from: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<{ id?: string; error?: string }> {
+  const connectors = new ReplitConnectors();
+  const response = await connectors.proxy('resend', '/emails', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    return { error: body };
+  }
+
+  const data = await response.json() as { id?: string; statusCode?: number; message?: string; name?: string };
+  if (data.statusCode && data.statusCode >= 400) {
+    return { error: data.message ?? JSON.stringify(data) };
+  }
+  return { id: data.id };
+}
 
 export class EmailService {
   static isConfigured(): boolean {
-    return resend !== null;
+    return true;
   }
 
   static async sendDailyConditions(toEmail: string, locationId: number): Promise<boolean> {
-    if (!resend) {
-      console.error('Resend not configured — cannot send email');
-      return false;
-    }
-
     try {
       const location = await storage.getLocation(locationId);
       if (!location) {
@@ -167,7 +179,7 @@ LiveSwell · Manage alerts at liveswell.app`;
 </body>
 </html>`;
 
-      const result = await resend.emails.send({
+      const result = await sendEmail({
         from: FROM_EMAIL,
         to: toEmail,
         subject,
@@ -176,11 +188,11 @@ LiveSwell · Manage alerts at liveswell.app`;
       });
 
       if (result.error) {
-        console.error(`❌ Resend email error: ${result.error.message}`);
+        console.error(`❌ Resend email error: ${result.error}`);
         return false;
       }
 
-      console.log(`✅ Email sent to ${toEmail} for ${location.name} (id: ${result.data?.id})`);
+      console.log(`✅ Email sent to ${toEmail} for ${location.name} (id: ${result.id})`);
       return true;
     } catch (error) {
       console.error('Error sending email:', error);
@@ -194,11 +206,6 @@ LiveSwell · Manage alerts at liveswell.app`;
     locationName: string,
     phoneNumber: string,
   ): Promise<boolean> {
-    if (!resend) {
-      console.warn('Resend not configured — cannot send SMS-disabled notification');
-      return false;
-    }
-
     try {
       const subject = `📵 SMS paused on your "${alertLabel}" alert`;
 
@@ -250,7 +257,7 @@ LiveSwell · Manage alerts at liveswell.app`;
 </body>
 </html>`;
 
-      const result = await resend.emails.send({
+      const result = await sendEmail({
         from: FROM_EMAIL,
         to: toEmail,
         subject,
@@ -259,11 +266,11 @@ LiveSwell · Manage alerts at liveswell.app`;
       });
 
       if (result.error) {
-        console.error(`❌ Resend SMS-disabled email error: ${result.error.message}`);
+        console.error(`❌ Resend SMS-disabled email error: ${result.error}`);
         return false;
       }
 
-      console.log(`✅ SMS-disabled notification sent to ${toEmail} (id: ${result.data?.id})`);
+      console.log(`✅ SMS-disabled notification sent to ${toEmail} (id: ${result.id})`);
       return true;
     } catch (error) {
       console.error('Error sending SMS-disabled notification:', error);
@@ -277,11 +284,6 @@ LiveSwell · Manage alerts at liveswell.app`;
     triggerReason: string,
     locationId: number,
   ): Promise<boolean> {
-    if (!resend) {
-      console.error('Resend not configured — cannot send condition alert email');
-      return false;
-    }
-
     try {
       const now = new Date();
       const timestamp = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -324,7 +326,7 @@ LiveSwell · Manage alerts at liveswell.app`;
 </body>
 </html>`;
 
-      const result = await resend.emails.send({
+      const result = await sendEmail({
         from: FROM_EMAIL,
         to: toEmail,
         subject,
@@ -333,11 +335,11 @@ LiveSwell · Manage alerts at liveswell.app`;
       });
 
       if (result.error) {
-        console.error(`❌ Resend condition alert error: ${result.error.message}`);
+        console.error(`❌ Resend condition alert error: ${result.error}`);
         return false;
       }
 
-      console.log(`✅ Condition alert email sent to ${toEmail} (id: ${result.data?.id})`);
+      console.log(`✅ Condition alert email sent to ${toEmail} (id: ${result.id})`);
       return true;
     } catch (error) {
       console.error('Error sending condition alert email:', error);
