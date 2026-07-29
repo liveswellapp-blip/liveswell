@@ -8,9 +8,10 @@ if (API_KEY === "demo_key" || !API_KEY || API_KEY.length < 10) {
   console.log("✅ OpenWeather API key configured - real weather data available");
 }
 
-// ─── In-memory weather cache ──────────────────────────────────────────────────
+// ─── In-memory + persistent weather cache ────────────────────────────────────
 // Caches fetchWeatherData results per location for WEATHER_CACHE_TTL_MS so that
 // multiple alerts at the same location share a single API call per check cycle.
+// The cache is also persisted to the DB so it survives server restarts.
 interface WeatherCacheEntry {
   data: any;
   fetchedAt: number;
@@ -30,15 +31,72 @@ function getCachedWeather(lat: number, lon: number): any | null {
   return entry.data;
 }
 
-/** Stores weather data in the in-memory cache. */
+/** Stores weather data in the in-memory cache and persists it to the DB. */
 function setCachedWeather(lat: number, lon: number, data: any): void {
   const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
-  weatherCache.set(key, { data, fetchedAt: Date.now() });
+  const fetchedAt = Date.now();
+  weatherCache.set(key, { data, fetchedAt });
+  // Persist to DB asynchronously — don't block the caller
+  persistCacheEntryToDb(key, data, new Date(fetchedAt)).catch((err) =>
+    console.warn(`⚠️  Weather cache DB write failed for ${key}:`, err)
+  );
 }
 
 /** Returns the number of distinct locations currently held in the weather cache. */
 export function getWeatherCacheSize(): number {
   return weatherCache.size;
+}
+
+// ─── DB persistence helpers ──────────────────────────────────────────────────
+
+async function persistCacheEntryToDb(
+  cacheKey: string,
+  data: any,
+  fetchedAt: Date
+): Promise<void> {
+  const { db } = await import('./db');
+  const { weatherCacheEntries } = await import('../shared/schema');
+  await db
+    .insert(weatherCacheEntries)
+    .values({ cacheKey, data, fetchedAt })
+    .onConflictDoUpdate({
+      target: weatherCacheEntries.cacheKey,
+      set: { data, fetchedAt },
+    });
+}
+
+/**
+ * Hydrate the in-memory weather cache from the database on startup.
+ * Entries older than WEATHER_CACHE_TTL_MS are discarded.
+ * Logs how many locations were loaded from the persistent cache.
+ */
+export async function initWeatherCache(): Promise<void> {
+  try {
+    const { db } = await import('./db');
+    const { weatherCacheEntries } = await import('../shared/schema');
+    const rows = await db.select().from(weatherCacheEntries);
+
+    const now = Date.now();
+    let loaded = 0;
+    let stale = 0;
+
+    for (const row of rows) {
+      const fetchedAtMs = new Date(row.fetchedAt).getTime();
+      if (now - fetchedAtMs > WEATHER_CACHE_TTL_MS) {
+        stale++;
+        continue; // skip stale entries — they'll be evicted lazily
+      }
+      weatherCache.set(row.cacheKey, { data: row.data, fetchedAt: fetchedAtMs });
+      loaded++;
+    }
+
+    console.log(
+      `🌊 Weather cache hydrated: ${loaded} location(s) loaded from DB` +
+        (stale > 0 ? `, ${stale} stale entr${stale === 1 ? 'y' : 'ies'} skipped` : '')
+    );
+  } catch (err) {
+    console.warn('⚠️  Weather cache hydration failed (non-fatal):', err);
+  }
 }
 
 interface OpenWeatherMarineResponse {

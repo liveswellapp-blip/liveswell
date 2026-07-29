@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeSurfSpots } from "./storage";
 import { NotificationScheduler } from "./notification-scheduler";
+import { initWeatherCache } from "./weather-service";
 
 // Validate required environment variables for production
 function validateEnvironment() {
@@ -107,6 +108,9 @@ app.use((req, res, next) => {
     
     // Initialize surf spots database on startup
     await initializeSurfSpots();
+
+    // Hydrate weather cache from DB (entries fetched before restart are reused)
+    await initWeatherCache();
     
     // Initialize notification scheduler
     await NotificationScheduler.initialize();

@@ -144,6 +144,12 @@ export const verifiedPhones = pgTable("verified_phones", {
   verifiedAt: timestamp("verified_at").defaultNow().notNull(),
 }, (table) => [index("IDX_verified_phones_user_phone").on(table.userId, table.phone)]);
 
+export const weatherCacheEntries = pgTable("weather_cache_entries", {
+  cacheKey: varchar("cache_key").primaryKey(), // "lat.toFixed(3),lon.toFixed(3)"
+  data: jsonb("data").notNull(),
+  fetchedAt: timestamp("fetched_at").notNull(),
+});
+
 export const smsRateLimits = pgTable("sms_rate_limits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
