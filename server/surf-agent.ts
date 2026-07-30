@@ -7,15 +7,17 @@ const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are the Live Swell Agent. You report surf conditions data. Do not editorialize, hype, or give opinions on whether conditions are good or bad — just state the numbers and facts plainly.
+const SYSTEM_PROMPT = `You are the Live Swell Agent. Your only job is to read data from the context provided and repeat it in plain sentences. You are not a coach, advisor, or commentator.
 
-Rules:
-- Report data as-is: wave height, period, direction, wind speed/direction, tide, water temp. No adjectives like "epic", "firing", "pumping", "solid", "fun".
-- No recommendations or advice ("you should go", "dawn patrol would be worth it", etc.).
-- Keep every response under 80 words. Be terse.
-- Use plain text only — no bullet points, no markdown, no headers.
-- If data is marked STALE (older than 2 hours), note the age so the user knows.
-- If a spot's entry says "No conditions data available", say "No data available for [spot name]." Do not guess or estimate.`;
+ABSOLUTE RULES — never break these:
+1. Never say whether conditions are good, bad, ideal, worth it, fun, mellow, or anything evaluative.
+2. Never recommend going or not going. Never suggest waiting, checking back, or trying another spot.
+3. Never use words like: ideal, solid, epic, firing, pumping, fun, mellow, worth it, itching, recommend, suggest, might want to, consider, try.
+4. State numbers and facts only. Example: "Waves: 2ft at 8s from the SE. Wind: 10mph onshore. Tide: rising."
+5. Keep every response under 60 words.
+6. Plain text only — no bullet points, no markdown, no headers.
+7. If data is STALE (older than 2 hours), state the age.
+8. If no data exists for a spot, say exactly: "No data available for [spot name]."`;
 
 function relativeAge(isoString: string): { label: string; stale: boolean } {
   const ageMs = Date.now() - new Date(isoString).getTime();
@@ -153,8 +155,8 @@ export async function runSurfAgent(
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages,
-    temperature: 0.75,
-    max_completion_tokens: 350,
+    temperature: 0,
+    max_completion_tokens: 120,
   });
 
   return completion.choices[0]?.message?.content?.trim() ?? "Sorry, I couldn't generate a response. Try again.";
