@@ -1,5 +1,6 @@
 import webpush from 'web-push';
 import { storage } from './storage';
+import { trackPushResult } from './monitoring';
 
 interface PushNotificationPayload {
   title: string;
@@ -105,6 +106,7 @@ class PushNotificationService {
         payloadSize: payloadString.length,
       });
       
+      trackPushResult('sent');
       return { success: true, shouldDelete: false };
     } catch (error: any) {
       console.error('[ERROR] Failed to send push notification', {
@@ -118,6 +120,9 @@ class PushNotificationService {
       
       if (shouldDelete) {
         console.log('[INFO] Subscription expired or invalid, marking for cleanup');
+        trackPushResult('cleanedUp');
+      } else {
+        trackPushResult('failed');
       }
 
       return { success: false, shouldDelete };

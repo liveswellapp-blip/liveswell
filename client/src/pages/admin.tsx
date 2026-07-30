@@ -55,6 +55,11 @@ interface ApiMetrics {
     failedRequests: number;
     averageResponseTime: number;
   };
+  pushNotifications: {
+    sentToday: number;
+    failedToday: number;
+    cleanedUpToday: number;
+  };
 }
 
 interface UsageForecast {
@@ -403,6 +408,61 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Push Notification Delivery Stats */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Activity className="h-5 w-5" />
+              <span>Push Notification Delivery (Today)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {metricsData ? (() => {
+              const push = metricsData.pushNotifications ?? { sentToday: 0, failedToday: 0, cleanedUpToday: 0 };
+              const total = push.sentToday + push.failedToday;
+              const successRate = total > 0 ? Math.round((push.sentToday / total) * 100) : null;
+              const hasFailures = push.failedToday > 0;
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-secondary rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-green-600">{push.sentToday}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Delivered</div>
+                    </div>
+                    <div className={`rounded-lg p-3 text-center ${hasFailures ? 'bg-red-100 dark:bg-red-900/30' : 'bg-secondary'}`}>
+                      <div className={`text-2xl font-bold ${hasFailures ? 'text-red-600' : ''}`}>{push.failedToday}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Failed (transient)</div>
+                    </div>
+                    <div className="bg-secondary rounded-lg p-3 text-center">
+                      <div className="text-2xl font-bold text-yellow-600">{push.cleanedUpToday}</div>
+                      <div className="text-xs text-muted-foreground mt-1">Cleaned up (expired)</div>
+                    </div>
+                  </div>
+                  {total > 0 && (
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Delivery success rate</span>
+                        <span>{successRate}%</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all ${successRate !== null && successRate < 70 ? 'bg-red-500' : successRate !== null && successRate < 90 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                          style={{ width: `${successRate ?? 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Counts reset at midnight UTC with the daily metrics reset. "Cleaned up" means the subscription was expired or invalid (410/404) and has been removed.
+                  </p>
+                </div>
+              );
+            })() : (
+              <p className="text-sm text-muted-foreground">Loading push metrics...</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Daily API Usage Forecast */}
         <Card>

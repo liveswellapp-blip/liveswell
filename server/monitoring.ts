@@ -40,6 +40,11 @@ interface ApiMetrics {
     failedRequests: number;
     averageResponseTime: number;
   };
+  pushNotifications: {
+    sentToday: number;
+    failedToday: number;
+    cleanedUpToday: number;
+  };
 }
 
 // Error logging interfaces
@@ -62,7 +67,8 @@ interface ErrorLog {
 let metrics: ApiMetrics = {
   requests: { total: 0, successful: 0, failed: 0, rateLimit: 0 },
   openweather: { requestsToday: 0, dailyLimit: 1000, remainingCalls: 1000 },
-  noaa: { requestsToday: 0, failedRequests: 0, averageResponseTime: 0 }
+  noaa: { requestsToday: 0, failedRequests: 0, averageResponseTime: 0 },
+  pushNotifications: { sentToday: 0, failedToday: 0, cleanedUpToday: 0 }
 };
 
 let responseTimeHistory: number[] = [];
@@ -336,12 +342,28 @@ export function errorTrackingMiddleware(error: Error, req: Request, res: Respons
 }
 
 /**
+ * Track push notification delivery results
+ */
+export function trackPushResult(result: 'sent' | 'failed' | 'cleanedUp') {
+  if (result === 'sent') {
+    metrics.pushNotifications.sentToday++;
+  } else if (result === 'failed') {
+    metrics.pushNotifications.failedToday++;
+  } else if (result === 'cleanedUp') {
+    metrics.pushNotifications.cleanedUpToday++;
+  }
+}
+
+/**
  * Reset daily metrics (call this daily via cron or scheduler)
  */
 export function resetDailyMetrics() {
   metrics.openweather.requestsToday = 0;
   metrics.noaa.requestsToday = 0;
   metrics.noaa.failedRequests = 0;
+  metrics.pushNotifications.sentToday = 0;
+  metrics.pushNotifications.failedToday = 0;
+  metrics.pushNotifications.cleanedUpToday = 0;
   
   console.log('Daily metrics reset completed');
 }
