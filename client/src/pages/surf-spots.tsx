@@ -417,12 +417,11 @@ export default function SurfSpots() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
       <Header />
-
       {/* ── Hero ── */}
       <div className="px-4 pt-6 pb-5" style={{ background: "#030912", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div className="max-w-2xl mx-auto">
           <h1 className="text-white font-black text-3xl leading-tight mb-1">Global Surf Spots</h1>
-          <p className="text-slate-500 text-[12px] mb-4">Explore breaks across 6 continents</p>
+          <p className="text-slate-500 text-[12px] mb-4">Explore surf breaks worldwide.</p>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -491,7 +490,6 @@ export default function SurfSpots() {
           )}
         </div>
       </div>
-
       {/* ── Content ── */}
       <main className="flex-1 px-4 pt-5 pb-6 max-w-2xl mx-auto w-full space-y-6">
 
@@ -550,9 +548,7 @@ export default function SurfSpots() {
           </div>
         )}
       </main>
-
       <Footer />
-
       <SearchModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
