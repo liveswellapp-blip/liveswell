@@ -1,21 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Shield, Activity, Users, Database, Globe, BarChart3,
+  Shield, Activity, Database, Globe, BarChart3,
   AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp,
-  Bell, LayoutDashboard, LogOut, Menu, X,
+  Bell, LayoutDashboard, Users,
 } from "lucide-react";
+import AdminNav, { AdminSection } from "@/components/AdminNav";
 import UserDatabase from "@/components/UserDatabase";
 import ErrorLogs from "@/components/ErrorLogs";
 import SurfSpotsMonitoring from "@/components/SurfSpotsMonitoring";
 import LiveAlertTest from "@/components/LiveAlertTest";
 
-type AdminView = 'dashboard' | 'users' | 'errors' | 'surfspots' | 'alerts';
+type AdminView = AdminSection;
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -50,20 +52,21 @@ interface UsageForecast {
   utilizationPct: number;
 }
 
-const NAV_ITEMS: { id: AdminView; label: string; icon: React.ReactNode; short: string }[] = [
-  { id: 'dashboard', label: 'Dashboard',       icon: <LayoutDashboard className="h-5 w-5" />, short: 'Home'    },
-  { id: 'alerts',    label: 'Alert Testing',   icon: <Bell className="h-5 w-5" />,            short: 'Alerts'  },
-  { id: 'users',     label: 'User Database',   icon: <Users className="h-5 w-5" />,           short: 'Users'   },
-  { id: 'errors',    label: 'Error Logs',      icon: <AlertTriangle className="h-5 w-5" />,   short: 'Errors'  },
-  { id: 'surfspots', label: 'Surf Spots',      icon: <Globe className="h-5 w-5" />,           short: 'Spots'   },
-];
-
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [activeView, setActiveView] = useState<AdminView>('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [location] = useLocation();
   const { toast } = useToast();
+
+  // Read ?view= query param so links from other pages (e.g. user detail back button) land on the right section
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view') as AdminView | null;
+    if (view && ['dashboard','alerts','users','errors','surfspots'].includes(view)) {
+      setActiveView(view);
+    }
+  }, [location]);
 
   const loginMutation = useMutation({
     mutationFn: async (creds: { username: string; password: string }) => {
@@ -184,65 +187,6 @@ export default function AdminDashboard() {
     );
   }
 
-  // ── Floating sidebar nav ──────────────────────────────────────────────────
-  const Sidebar = () => (
-    <>
-      {/* Desktop: fixed left sidebar */}
-      <aside className="hidden md:flex fixed left-4 top-1/2 -translate-y-1/2 z-50 flex-col gap-1 bg-background/95 backdrop-blur border rounded-2xl shadow-xl p-2 w-52">
-        <div className="flex items-center gap-2 px-3 py-2 mb-1 border-b">
-          <Shield className="h-4 w-4 text-blue-500 shrink-0" />
-          <span className="font-semibold text-sm truncate">LiveSwell Admin</span>
-        </div>
-        {NAV_ITEMS.map(item => (
-          <button
-            key={item.id}
-            onClick={() => setActiveView(item.id)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors w-full text-left
-              ${activeView === item.id
-                ? 'bg-blue-600 text-white'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-          >
-            {item.icon}
-            {item.label}
-          </button>
-        ))}
-        <div className="mt-1 border-t pt-1">
-          <button
-            onClick={() => setIsAuthenticated(false)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors w-full text-left"
-            data-testid="button-admin-logout"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile: floating bottom bar */}
-      <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 bg-background/95 backdrop-blur border rounded-2xl shadow-xl px-2 py-2">
-        {NAV_ITEMS.map(item => (
-          <button
-            key={item.id}
-            onClick={() => setActiveView(item.id)}
-            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors
-              ${activeView === item.id
-                ? 'bg-blue-600 text-white'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-          >
-            {item.icon}
-            {item.short}
-          </button>
-        ))}
-        <button
-          onClick={() => setIsAuthenticated(false)}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-        >
-          <LogOut className="h-5 w-5" />
-          Out
-        </button>
-      </nav>
-    </>
-  );
 
   // ── Page title bar ────────────────────────────────────────────────────────
   const pageTitle: Record<AdminView, string> = {
@@ -535,7 +479,12 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {NAV_ITEMS.filter(n => n.id !== 'dashboard').map(item => (
+            {([ 
+              { id: 'alerts'    as AdminView, label: 'Alert Testing',   icon: <Bell className="h-5 w-5" />          },
+              { id: 'users'     as AdminView, label: 'User Database',   icon: <Users className="h-5 w-5" />         },
+              { id: 'errors'    as AdminView, label: 'Error Logs',      icon: <AlertTriangle className="h-5 w-5" /> },
+              { id: 'surfspots' as AdminView, label: 'Surf Spots',      icon: <Globe className="h-5 w-5" />         },
+            ]).map(item => (
               <Button
                 key={item.id}
                 variant="outline"
@@ -559,25 +508,18 @@ export default function AdminDashboard() {
   // ── Layout wrapper ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
+      <AdminNav
+        activeSection={activeView}
+        onSectionChange={setActiveView}
+        onLogout={() => setIsAuthenticated(false)}
+      />
 
       {/* Main content — offset right on desktop to clear sidebar */}
       <div className="md:pl-60 pb-24 md:pb-6">
         <div className="container mx-auto max-w-6xl px-4 py-6">
-          {/* Page header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6">
             <h1 className="text-2xl font-bold text-foreground">{pageTitle[activeView]}</h1>
-            {/* Mobile logout shortcut in header */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden text-muted-foreground"
-              onClick={() => setIsAuthenticated(false)}
-            >
-              <LogOut className="h-4 w-4 mr-1" /> Logout
-            </Button>
           </div>
-
           {renderContent()}
         </div>
       </div>

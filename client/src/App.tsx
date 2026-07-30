@@ -13,6 +13,7 @@ import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin";
+import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -33,6 +34,7 @@ function Router() {
       )}
       
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/users/:userId" component={AdminUserDetail} />
       
       {(isLoading || !isAuthenticated) ? (
         <Route component={Landing} />
