@@ -4,6 +4,29 @@ import { fetchWeatherData } from './weather-service';
 import type { Location } from '@shared/schema';
 import { generateNotificationSummary } from './ai-service';
 
+// ─── Session quality rater ────────────────────────────────────────────────────
+/**
+ * Rates surf session quality based on wave height, period, and wind speed.
+ * Returns a label, hex colour, and emoji for use in email templates.
+ *
+ * Good  — waves ≥ 3 ft AND period ≥ 10 s AND wind < 15 mph
+ * Fair  — waves ≥ 2 ft AND wind < 25 mph
+ * Poor  — anything else (small, blown-out, or combo)
+ */
+function rateSession(
+  waveHeightFt: number,
+  wavePeriodSec: number,
+  windSpeedMph: number,
+): { label: 'Good' | 'Fair' | 'Poor'; color: string; bg: string; emoji: string } {
+  if (waveHeightFt >= 3 && wavePeriodSec >= 10 && windSpeedMph < 15) {
+    return { label: 'Good', color: '#10b981', bg: 'rgba(16,185,129,0.12)', emoji: '✅' };
+  }
+  if (waveHeightFt >= 2 && windSpeedMph < 25) {
+    return { label: 'Fair', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', emoji: '〜' };
+  }
+  return { label: 'Poor', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', emoji: '⚠️' };
+}
+
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'LiveSwell <onboarding@resend.dev>';
 console.log(`📧 Email from-address: ${FROM_EMAIL}${process.env.RESEND_FROM_EMAIL ? '' : ' (set RESEND_FROM_EMAIL secret to use a verified domain)'}`);
 console.log('✅ Resend email service configured via Replit Connectors');
@@ -73,6 +96,13 @@ export class EmailService {
       const uvIndex = weatherData.uvIndex || 0;
       const uvDesc = uvIndex <= 2 ? 'Low' : uvIndex <= 5 ? 'Moderate' : uvIndex <= 7 ? 'High' : 'Very High';
 
+      // Session quality rating
+      const sessionRating = rateSession(
+        parseFloat(String(weatherData.waveHeight ?? 0)),
+        Number(weatherData.wavePeriod ?? 0),
+        parseFloat(String(weatherData.windSpeed ?? 0)),
+      );
+
       // Try AI summary (non-blocking, 3s timeout)
       let aiSentence: string | null = null;
       try {
@@ -87,6 +117,7 @@ export class EmailService {
       const aiBlock = aiSentence ? `\n${aiSentence}\n` : '';
 
       const text = `🌊 ${location.name} Surf Report${aiBlock}
+Session: ${sessionRating.emoji} ${sessionRating.label}
 Updated: ${timestamp}
 
 ━━━━━━━━━━━━━━━━━━━━
@@ -126,12 +157,13 @@ LiveSwell · Manage alerts at liveswell.app`;
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:24px 16px;">
     <tr><td>
       <div style="background:linear-gradient(160deg,#030912 0%,#091a35 100%);border:1px solid rgba(16,185,129,0.15);border-radius:16px;padding:24px;margin-bottom:16px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:${aiSentence ? '12px' : '20px'};">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
           <span style="font-size:24px;">🌊</span>
           <div>
             <div style="font-size:18px;font-weight:900;color:#fff;">${location.name}</div>
             <div style="font-size:12px;color:#64748b;">Surf Report · ${timestamp}</div>
           </div>
+          <span style="margin-left:auto;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:0.05em;background:${sessionRating.bg};color:${sessionRating.color};border:1px solid ${sessionRating.color}40;">${sessionRating.emoji} ${sessionRating.label}</span>
         </div>
 
         ${aiSentence ? `<div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:12px 14px;margin-bottom:16px;">
@@ -289,15 +321,67 @@ LiveSwell · Manage alerts at liveswell.app`;
       const timestamp = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
       const subject = `🚨 Surf Alert: ${triggerReason} at ${locationName}`;
 
+      // Fetch live conditions to show in the alert email
+      let weatherData: any = null;
+      try {
+        const location = await storage.getLocation(locationId);
+        if (location) {
+          weatherData = await fetchWeatherData(
+            parseFloat(location.latitude),
+            parseFloat(location.longitude),
+          );
+        }
+      } catch { /* non-blocking — fall back to trigger-reason-only layout */ }
+
+      const rating = weatherData
+        ? rateSession(
+            parseFloat(String(weatherData.waveHeight ?? 0)),
+            Number(weatherData.wavePeriod ?? 0),
+            parseFloat(String(weatherData.windSpeed ?? 0)),
+          )
+        : null;
+
+      const conditionsText = weatherData
+        ? `
+━━━━━━━━━━━━━━━━━━━━
+CURRENT CONDITIONS
+━━━━━━━━━━━━━━━━━━━━
+Waves:  ${weatherData.waveHeight}ft · ${weatherData.wavePeriod}s · ${weatherData.waveDirection}
+Wind:   ${weatherData.windSpeed} mph ${weatherData.windDirection}
+Tide:   ${weatherData.tideStatus ?? 'N/A'}${rating ? `\nSession: ${rating.emoji} ${rating.label}` : ''}
+`
+        : '';
+
       const text = `🌊 LiveSwell Condition Alert
 
 ${triggerReason} at ${locationName}
 Triggered at: ${timestamp}
-
-Open the app to see full conditions.
+${conditionsText}
+Open the app to see the full forecast.
 
 —
 LiveSwell · Manage alerts at liveswell.app`;
+
+      const conditionsHtml = weatherData ? `
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+          <tr>
+            <td style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;width:48%;">
+              <div style="font-size:10px;color:#10b981;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Waves</div>
+              <div style="font-size:24px;font-weight:900;color:#10b981;">${weatherData.waveHeight}<span style="font-size:13px;font-weight:600;">ft</span></div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:3px;">${weatherData.wavePeriod}s · ${weatherData.waveDirection}</div>
+            </td>
+            <td width="4%"></td>
+            <td style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;width:48%;">
+              <div style="font-size:10px;color:#38bdf8;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Wind</div>
+              <div style="font-size:24px;font-weight:900;color:#38bdf8;">${weatherData.windSpeed}<span style="font-size:13px;font-weight:600;">mph</span></div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:3px;">${weatherData.windDirection} · Tide: ${weatherData.tideStatus ?? 'N/A'}</div>
+            </td>
+          </tr>
+        </table>` : '';
+
+      const ratingHtml = rating
+        ? `<span style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:0.05em;background:${rating.bg};color:${rating.color};border:1px solid ${rating.color}40;">${rating.emoji} ${rating.label}</span>`
+        : '';
 
       const html = `<!DOCTYPE html>
 <html>
@@ -306,17 +390,19 @@ LiveSwell · Manage alerts at liveswell.app`;
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:24px 16px;">
     <tr><td>
       <div style="background:linear-gradient(160deg,#030912 0%,#0f1e35 100%);border:1px solid rgba(245,158,11,0.25);border-radius:16px;padding:24px;margin-bottom:16px;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <span style="font-size:28px;">🚨</span>
-          <div>
+          <div style="flex:1;">
             <div style="font-size:18px;font-weight:900;color:#fff;">Surf Alert Triggered</div>
             <div style="font-size:12px;color:#64748b;">${locationName} · ${timestamp}</div>
           </div>
+          ${ratingHtml}
         </div>
-        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px;margin-bottom:16px;">
           <div style="font-size:14px;font-weight:700;color:#fbbf24;">${triggerReason}</div>
         </div>
-        <a href="https://liveswell.app" style="display:block;text-align:center;background:linear-gradient(135deg,#059669,#10b981);color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-size:13px;font-weight:700;">View Full Conditions</a>
+        ${conditionsHtml}
+        <a href="https://liveswell.app" style="display:block;text-align:center;background:linear-gradient(135deg,#059669,#10b981);color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-size:13px;font-weight:700;">View Full Forecast →</a>
       </div>
       <div style="text-align:center;font-size:11px;color:#334155;">
         LiveSwell · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">Manage your alerts</a>

@@ -312,12 +312,32 @@ Sunrise: ${conditions.sunrise} | Sunset: ${conditions.sunset} | UV: ${conditions
       const now = new Date();
       const timestamp = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
+      // Attempt to include a compact conditions snapshot + session rating
+      let conditionsLine = '';
+      try {
+        const { storage } = await import('./storage');
+        const { fetchWeatherData } = await import('./weather-service');
+        const location = await storage.getLocation(locationId);
+        if (location) {
+          const wd = await fetchWeatherData(parseFloat(location.latitude), parseFloat(location.longitude));
+          if (wd) {
+            const wh = parseFloat(String(wd.waveHeight ?? 0));
+            const wp = Number(wd.wavePeriod ?? 0);
+            const ws = parseFloat(String(wd.windSpeed ?? 0));
+            let rating = 'Poor';
+            if (wh >= 3 && wp >= 10 && ws < 15) rating = 'Good ✅';
+            else if (wh >= 2 && ws < 25) rating = 'Fair 〜';
+            conditionsLine = `\nWaves: ${wd.waveHeight}ft · ${wd.wavePeriod}s · Wind: ${wd.windSpeed}mph\nSession: ${rating}`;
+          }
+        }
+      } catch { /* non-blocking fallback */ }
+
       const message = `🚨 LiveSwell Alert
 
 ${triggerReason} at ${locationName}
-Triggered: ${timestamp}
+Triggered: ${timestamp}${conditionsLine}
 
-Open the app for full conditions.`;
+Open the app for full forecast.`;
 
       const result = await client.messages.create({
         body: message,
