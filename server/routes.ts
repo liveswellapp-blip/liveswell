@@ -3725,7 +3725,9 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
         .filter(c => c?.lastUpdated)
         .map(c => new Date(c!.lastUpdated!).getTime());
       const oldestUpdatedAt = timestamps.length > 0 ? new Date(Math.min(...timestamps)).toISOString() : null;
-      res.json({ oldestUpdatedAt, hasSpots: true });
+      // Count spots that have no conditions data at all (never loaded or load failing)
+      const missingSpotCount = conditions.filter(c => !c?.lastUpdated).length;
+      res.json({ oldestUpdatedAt, hasSpots: true, missingSpotCount });
     } catch (error) {
       console.error("Conditions freshness error:", error);
       res.status(500).json({ message: "Failed to get conditions freshness" });

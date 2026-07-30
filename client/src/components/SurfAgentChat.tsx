@@ -35,7 +35,7 @@ export default function SurfAgentChat() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: freshness } = useQuery<{ oldestUpdatedAt: string | null; hasSpots?: boolean }>({
+  const { data: freshness } = useQuery<{ oldestUpdatedAt: string | null; hasSpots?: boolean; missingSpotCount?: number }>({
     queryKey: ["/api/agent/conditions-freshness"],
     enabled: open,
     staleTime: 60_000,
@@ -149,6 +149,26 @@ export default function SurfAgentChat() {
   }, [open]);
 
   const isEmpty = allMessages.length === 0 && !historyLoading;
+
+  // Detect assistant replies that indicate missing conditions data.
+  // The agent's system prompt requires it to say "I don't have current data for [spot]"
+  // when conditions are unavailable — we match those phrases here.
+  const NO_DATA_PATTERN =
+    /I don't have current data|no conditions data|don't have.*data for|haven't loaded|no data available|conditions.*not.*available|no surf data/i;
+  const NO_DATA_THRESHOLD = 2;
+
+  const noDataReplyCount = allMessages.filter(
+    (m) => m.role === "assistant" && !m.pending && NO_DATA_PATTERN.test(m.content)
+  ).length;
+
+  // Show the in-conversation warning when:
+  //  • at least one saved spot is missing conditions data (missingSpotCount > 0), AND
+  //  • the agent has replied with a no-data answer at least NO_DATA_THRESHOLD times
+  //  Using missingSpotCount (not oldestUpdatedAt === null) so the warning fires even
+  //  when some spots have data but one or more are still missing.
+  const showNoDataWarning =
+    !!(freshness?.hasSpots && (freshness?.missingSpotCount ?? 0) > 0) &&
+    noDataReplyCount >= NO_DATA_THRESHOLD;
 
   return (
     <>
@@ -301,6 +321,48 @@ export default function SurfAgentChat() {
                 <p className="text-white font-medium text-sm">Hey, I'm the Live Swell Agent</p>
                 <p className="text-zinc-500 text-xs mt-1">Ask me about your spots, conditions, or when to paddle out</p>
               </div>
+              {freshness?.hasSpots && (freshness?.missingSpotCount ?? 0) > 0 && (
+                <div className="w-full flex items-start gap-2 bg-amber-950/40 border border-amber-700/50 rounded-lg px-3 py-2.5">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4 text-amber-400 shrink-0 mt-0.5"
+                  >
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-amber-300 text-xs font-medium leading-snug">Conditions haven't loaded yet</p>
+                    <p className="text-amber-500/80 text-xs mt-0.5 leading-snug">Try refreshing your spots to get the latest data.</p>
+                  </div>
+                  <button
+                    onClick={() => refreshMutation.mutate()}
+                    disabled={refreshMutation.isPending}
+                    className="text-xs text-amber-400 hover:text-amber-200 font-medium shrink-0 flex items-center gap-1 disabled:opacity-50 transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={`w-3 h-3 ${refreshMutation.isPending ? "animate-spin" : ""}`}
+                    >
+                      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                      <path d="M21 3v5h-5" />
+                    </svg>
+                    {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
+                  </button>
+                </div>
+              )}
               <div className="w-full grid grid-cols-1 gap-2">
                 {QUICK_PROMPTS.map((prompt) => (
                   <button
@@ -349,6 +411,52 @@ export default function SurfAgentChat() {
               </div>
             </div>
           ))}
+
+          {/* In-conversation no-data warning — shown after repeated no-data replies */}
+          {showNoDataWarning && !isTyping && (
+            <div className="flex items-start gap-2 bg-amber-950/40 border border-amber-700/50 rounded-xl px-3 py-2.5 mx-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4 text-amber-400 shrink-0 mt-0.5"
+              >
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-amber-300 text-xs font-medium leading-snug">Conditions still haven't loaded</p>
+                <p className="text-amber-500/80 text-xs mt-0.5 leading-snug">
+                  Your spots don't have any conditions data yet. Refreshing may fix this.
+                </p>
+              </div>
+              <button
+                onClick={() => refreshMutation.mutate()}
+                disabled={refreshMutation.isPending}
+                className="text-xs text-amber-400 hover:text-amber-200 font-medium shrink-0 flex items-center gap-1 disabled:opacity-50 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`w-3 h-3 ${refreshMutation.isPending ? "animate-spin" : ""}`}
+                >
+                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                  <path d="M21 3v5h-5" />
+                </svg>
+                {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
+              </button>
+            </div>
+          )}
 
           {/* Typing indicator */}
           {isTyping && (
