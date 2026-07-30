@@ -152,6 +152,16 @@ export const agentConversations = pgTable("agent_conversations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [index("IDX_agent_conversations_user_id").on(table.userId)]);
 
+// SMS-specific conversation threads (keyed by phone number, not userId)
+export const agentSmsThreads = pgTable("agent_sms_threads", {
+  id: serial("id").primaryKey(),
+  phoneNumber: text("phone_number").notNull().unique(),
+  messages: jsonb("messages").notNull().default(sql`'[]'::jsonb`),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [index("IDX_agent_sms_threads_phone").on(table.phoneNumber)]);
+
+export type AgentSmsThread = typeof agentSmsThreads.$inferSelect;
+
 export const weatherCacheEntries = pgTable("weather_cache_entries", {
   cacheKey: varchar("cache_key").primaryKey(), // "lat.toFixed(3),lon.toFixed(3)"
   data: jsonb("data").notNull(),

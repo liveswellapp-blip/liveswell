@@ -3713,6 +3713,22 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     }
   });
 
+  // ── Twilio inbound SMS webhook ────────────────────────────────────────────
+  // express.urlencoded is already mounted globally in index.ts so Twilio's
+  // form-encoded body is available on req.body here.
+  app.post("/api/twilio/incoming", async (req, res) => {
+    try {
+      const { handleIncomingSms } = await import("./twilio-webhook");
+      await handleIncomingSms(req, res);
+    } catch (error) {
+      console.error("Twilio incoming SMS handler error:", error);
+      // Always reply with valid TwiML so Twilio doesn't retry indefinitely
+      res.type("text/xml").send(
+        `<?xml version="1.0" encoding="UTF-8"?><Response><Message>Sorry, something went wrong. Please try again.</Message></Response>`,
+      );
+    }
+  });
+
   // Add error handling middleware (should be last)
   app.use(errorTrackingMiddleware);
   

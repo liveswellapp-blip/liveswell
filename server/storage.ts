@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
@@ -925,6 +925,45 @@ export class DatabaseStorage implements IStorage {
 
   async clearAgentHistory(userId: string): Promise<void> {
     await db.delete(agentConversations).where(eq(agentConversations.userId, userId));
+  }
+
+  // ── SMS thread storage (keyed by phone number) ──────────────────────────
+  async getSmsThread(phone: string): Promise<{ messages: any[]; updatedAt: Date } | null> {
+    const [row] = await db
+      .select()
+      .from(agentSmsThreads)
+      .where(eq(agentSmsThreads.phoneNumber, phone))
+      .limit(1);
+    if (!row) return null;
+    return { messages: row.messages as any[], updatedAt: row.updatedAt };
+  }
+
+  async upsertSmsThread(phone: string, messages: any[]): Promise<void> {
+    const existing = await db
+      .select({ phoneNumber: agentSmsThreads.phoneNumber })
+      .from(agentSmsThreads)
+      .where(eq(agentSmsThreads.phoneNumber, phone))
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(agentSmsThreads)
+        .set({ messages, updatedAt: new Date() })
+        .where(eq(agentSmsThreads.phoneNumber, phone));
+    } else {
+      await db
+        .insert(agentSmsThreads)
+        .values({ phoneNumber: phone, messages, updatedAt: new Date() });
+    }
+  }
+
+  async lookupUserByPhone(phone: string): Promise<string | null> {
+    const [row] = await db
+      .select({ userId: verifiedPhonesTable.userId })
+      .from(verifiedPhonesTable)
+      .where(eq(verifiedPhonesTable.phone, phone))
+      .limit(1);
+    return row?.userId ?? null;
   }
 
   async getRecentAlertTriggerLogs(userId: string, limit: number = 20): Promise<(AlertTriggerLog & { alertType: string; locationName: string; locationCity: string; alertLabel: string | null })[]> {

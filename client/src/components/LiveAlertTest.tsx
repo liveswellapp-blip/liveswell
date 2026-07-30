@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Send, FlaskConical } from "lucide-react";
+import { Send, FlaskConical, MessageSquareReply, Copy, CheckCheck } from "lucide-react";
 
 interface SurfSpot {
   id: number;
@@ -26,6 +26,65 @@ interface TestAlertResult {
 }
 
 type Channel = "sms" | "email" | "both";
+
+function TwoWaySmsSetup() {
+  const [copied, setCopied] = useState(false);
+  const webhookUrl = `${window.location.origin}/api/twilio/incoming`;
+
+  const copy = () => {
+    navigator.clipboard.writeText(webhookUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <Card className="mb-8 border-blue-200 dark:border-blue-800">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center space-x-2 text-base">
+          <MessageSquareReply className="h-5 w-5 text-blue-600" />
+          <span>Two-Way SMS — Twilio Webhook Setup</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <p className="text-muted-foreground">
+          Users can reply to SMS alerts and get AI-powered surf answers. To enable it, set
+          the <strong>A MESSAGE COMES IN</strong> webhook in your{" "}
+          <a
+            href="https://console.twilio.com/us1/develop/phone-numbers/manage/incoming"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline hover:text-blue-500"
+          >
+            Twilio phone number settings
+          </a>
+          :
+        </p>
+        <div className="flex items-center gap-2 rounded-md border bg-muted px-3 py-2 font-mono text-xs break-all">
+          <span className="flex-1 select-all">{webhookUrl}</span>
+          <button
+            type="button"
+            onClick={copy}
+            className="shrink-0 p-1 rounded hover:bg-accent"
+            title="Copy URL"
+          >
+            {copied ? (
+              <CheckCheck className="h-4 w-4 text-green-600" />
+            ) : (
+              <Copy className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+        </div>
+        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+          <li>Method: <strong className="text-foreground">HTTP POST</strong></li>
+          <li>STOP / UNSUBSCRIBE replies automatically disable SMS alerts for that user</li>
+          <li>HELP replies return a list of example questions</li>
+          <li>Unrecognised phone numbers receive a sign-up prompt</li>
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function LiveAlertTest() {
   const { toast } = useToast();
@@ -110,6 +169,8 @@ export default function LiveAlertTest() {
   };
 
   return (
+    <>
+    <TwoWaySmsSetup />
     <Card className="mb-8">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
@@ -210,5 +271,6 @@ export default function LiveAlertTest() {
         </form>
       </CardContent>
     </Card>
+    </>
   );
 }
