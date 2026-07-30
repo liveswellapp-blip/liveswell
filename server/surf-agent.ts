@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
-import { fetchWeatherData, fetchTideData } from "./weather-service";
+import { fetchWeatherData, fetchTideData, fetchAgentForecast, type AgentForecastDay } from "./weather-service";
 
 const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -95,13 +95,16 @@ function formatConditionsLine(spot: { name: string; conditions: any }): string {
   return lines.join('\n');
 }
 
-function formatForecastLines(spot: { name: string; forecast?: any[] }): string {
+function formatForecastLines(spot: { name: string; forecast?: AgentForecastDay[] }): string {
   if (!spot.forecast?.length) return `${spot.name}\nNo forecast available.`;
-  const lines = spot.forecast.map((d: any) => {
-    const h = d.waveHeight != null ? `${parseFloat(d.waveHeight).toFixed(1)}ft` : '?ft';
-    const p = d.wavePeriod != null ? ` at ${d.wavePeriod}s` : '';
-    const dir = d.waveDirection ? `, ${d.waveDirection}` : '';
-    return `${d.date} - ${h}${p}${dir}`;
+  const lines = spot.forecast.map((d: AgentForecastDay) => {
+    const wave = [d.waveHeight, d.wavePeriod, d.waveDirection].filter(Boolean).join(' · ');
+    const wind = d.windSpeed ? `Wind ${d.windSpeed}${d.windDirection ? ' ' + d.windDirection : ''}` : '';
+    const tideStr = d.tides
+      .map(t => `${t.type === 'High' ? 'HT' : 'LT'} ${t.time} ${t.height}ft`)
+      .join(' · ');
+    const parts = [wave, wind, tideStr].filter(Boolean).join(' | ');
+    return `${d.date} — ${parts}`;
   });
   return `${spot.name} Forecast\n${lines.join('\n')}`;
 }
@@ -245,7 +248,25 @@ export async function runSurfAgent(
 
   if (intent === 'forecast') {
     if (matchedSpots.length === 0) return "No forecast data available for the requested spot(s).";
-    return matchedSpots.map(formatForecastLines).join('\n\n');
+    // Fetch forecast data for matched spots — done here (after intent is known) to avoid
+    // paying the latency cost on every conditions query.
+    const forecastSpots = await Promise.all(
+      matchedSpots.map(async (s) => {
+        const loc = favoriteLocations.find(l => l.name === s.name);
+        if (!loc) return { ...s, forecast: [] as AgentForecastDay[] };
+        try {
+          const forecast = await fetchAgentForecast(
+            parseFloat(loc.latitude),
+            parseFloat(loc.longitude),
+          );
+          return { ...s, forecast };
+        } catch (err) {
+          console.warn(`⚠️  Forecast fetch failed for ${s.name}:`, err);
+          return { ...s, forecast: [] as AgentForecastDay[] };
+        }
+      }),
+    );
+    return forecastSpots.map(formatForecastLines).join('\n\n');
   }
 
   // intent === 'other' — return the model's plain-text answer (facts only)

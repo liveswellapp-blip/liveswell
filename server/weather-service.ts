@@ -787,3 +787,149 @@ export async function fetchNWSWind(lat: number, lon: number): Promise<{
     return null;
   }
 }
+
+// ── Multi-day forecast for the AI agent ──────────────────────────────────────
+
+export interface AgentForecastDay {
+  date: string;          // "Tomorrow", "Wednesday, Aug 1"
+  waveHeight: string;    // "2.4ft"
+  wavePeriod: string;    // "8s"
+  waveDirection: string; // "SE"
+  windSpeed: string;     // "12mph"
+  windDirection: string; // "NE"
+  tides: Array<{ type: 'High' | 'Low'; time: string; height: string }>;
+}
+
+/** Fetch 5-day surf forecast using Open-Meteo Marine (waves) + OWM (wind) + NOAA (tides). */
+export async function fetchAgentForecast(lat: number, lon: number): Promise<AgentForecastDay[]> {
+  const timezone = getTimezone(lat, lon);
+
+  // NOAA tide station lookup (US coastal coverage)
+  const tideStationMap = [
+    { latRange: [29, 31], lonRange: [-82, -80], stationId: '8720218' },
+    { latRange: [27, 29], lonRange: [-81, -79], stationId: '8721604' },
+    { latRange: [25, 27], lonRange: [-81, -79], stationId: '8723214' },
+    { latRange: [33, 35], lonRange: [-79, -77], stationId: '8665530' },
+    { latRange: [35, 37], lonRange: [-77, -75], stationId: '8652587' },
+    { latRange: [37, 39], lonRange: [-77, -75], stationId: '8594900' },
+    { latRange: [39, 41], lonRange: [-76, -74], stationId: '8594900' },
+    { latRange: [41, 43], lonRange: [-72, -70], stationId: '8461490' },
+    { latRange: [43, 45], lonRange: [-71, -69], stationId: '8443970' },
+    { latRange: [32, 34], lonRange: [-118, -116], stationId: '9410170' },
+    { latRange: [34, 36], lonRange: [-120, -118], stationId: '9411340' },
+    { latRange: [36, 38], lonRange: [-123, -121], stationId: '9413450' },
+    { latRange: [37, 39], lonRange: [-123, -121], stationId: '9414290' },
+    { latRange: [25, 27], lonRange: [-83, -81], stationId: '8724580' },
+    { latRange: [27, 29], lonRange: [-85, -82], stationId: '8726520' },
+    { latRange: [29, 31], lonRange: [-88, -85], stationId: '8729840' },
+    { latRange: [29, 31], lonRange: [-95, -92], stationId: '8771450' },
+  ];
+  const tideStation = tideStationMap.find(
+    s => lat >= s.latRange[0] && lat <= s.latRange[1] && lon >= s.lonRange[0] && lon <= s.lonRange[1]
+  );
+
+  // Build date strings for the forecast window
+  const today = new Date();
+  const toYMD = (d: Date) => d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+  const endDate = new Date(today.getTime() + 6 * 86_400_000);
+  const beginStr = toYMD(today).replace(/-/g, '');
+  const endStr   = toYMD(endDate).replace(/-/g, '');
+
+  // Run all three data sources in parallel
+  const [marineResult, windResult, tideResult] = await Promise.allSettled([
+    fetch(
+      `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}` +
+      `&daily=wave_height_max,wave_direction_dominant,wave_period_max&timezone=auto&forecast_days=6`,
+      { signal: AbortSignal.timeout(8000) }
+    ).then(r => r.ok ? r.json() : null).catch(() => null),
+
+    (API_KEY && API_KEY.length >= 10 && API_KEY !== 'demo_key')
+      ? fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`,
+          { signal: AbortSignal.timeout(8000) }
+        ).then(r => r.ok ? r.json() : null).catch(() => null)
+      : Promise.resolve(null),
+
+    tideStation
+      ? fetch(
+          `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter` +
+          `?begin_date=${beginStr}&end_date=${endStr}&station=${tideStation.stationId}` +
+          `&product=predictions&datum=MLLW&units=english&time_zone=lst_ldt&format=json&interval=hilo`,
+          { signal: AbortSignal.timeout(8000) }
+        ).then(r => r.ok ? r.json() : null).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+
+  // ── Parse wave data (Open-Meteo daily arrays, index 0 = today) ──
+  const marineData = marineResult.status === 'fulfilled' ? marineResult.value : null;
+  const rawHeights    = marineData?.daily?.wave_height_max    ?? [];
+  const rawPeriods    = marineData?.daily?.wave_period_max    ?? [];
+  const rawDirections = marineData?.daily?.wave_direction_dominant ?? [];
+
+  // ── Parse wind data (OWM 3-hour, group by local calendar day) ──
+  const windData = windResult.status === 'fulfilled' ? windResult.value : null;
+  const windByDay = new Map<string, { speed: number; deg: number }>();
+  if (windData?.list) {
+    const grouped = new Map<string, any[]>();
+    for (const item of windData.list) {
+      const localStr = new Date(item.dt * 1000).toLocaleDateString('en-US', { timeZone: timezone });
+      if (!grouped.has(localStr)) grouped.set(localStr, []);
+      grouped.get(localStr)!.push(item);
+    }
+    for (const [dateStr, items] of grouped) {
+      const afternoon = items.filter(item => {
+        const h = new Date(new Date(item.dt * 1000).toLocaleString('en-US', { timeZone: timezone })).getHours();
+        return h >= 12 && h < 18;
+      });
+      const pool = afternoon.length > 0 ? afternoon : items;
+      const avgSpeed = pool.reduce((s: number, i: any) => s + (i.wind?.speed ?? 0), 0) / pool.length;
+      const avgDeg   = pool.reduce((s: number, i: any) => s + (i.wind?.deg   ?? 0), 0) / pool.length;
+      windByDay.set(dateStr, { speed: avgSpeed, deg: avgDeg });
+    }
+  }
+
+  // ── Parse tide data (NOAA hilo predictions, group by YYYY-MM-DD prefix) ──
+  const tideData = tideResult.status === 'fulfilled' ? tideResult.value : null;
+  const tidesByDate = new Map<string, Array<{ type: 'High' | 'Low'; time: string; height: string }>>();
+  if (tideData?.predictions) {
+    for (const p of tideData.predictions) {
+      const dateKey = p.t.split(' ')[0]; // "YYYY-MM-DD"
+      if (!tidesByDate.has(dateKey)) tidesByDate.set(dateKey, []);
+      tidesByDate.get(dateKey)!.push({
+        type: p.type === 'H' ? 'High' : 'Low',
+        time: new Date(p.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+        height: parseFloat(p.v).toFixed(1),
+      });
+    }
+  }
+
+  // ── Assemble 5-day forecast (days 1–5, skipping today at index 0) ──
+  const days: AgentForecastDay[] = [];
+  for (let i = 1; i <= 5; i++) {
+    const dayDate = new Date(today.getTime() + i * 86_400_000);
+    const isoDate = toYMD(dayDate);
+    const label = i === 1
+      ? 'Tomorrow'
+      : dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    // Wave
+    const heightM = rawHeights[i];
+    const waveHeight = heightM != null ? `${(heightM * 3.28084).toFixed(1)}ft` : '?ft';
+    const wavePeriod = rawPeriods[i] != null ? `${Math.round(rawPeriods[i])}s` : '?s';
+    const waveDirDeg = rawDirections[i];
+    const waveDirection = waveDirDeg != null ? getWindDirection(waveDirDeg) : '';
+
+    // Wind (match by locale date string to align with how we keyed the map)
+    const localDateStr = dayDate.toLocaleDateString('en-US', { timeZone: timezone });
+    const wind = windByDay.get(localDateStr);
+    const windSpeed     = wind ? `${Math.round(wind.speed)}mph` : '';
+    const windDirection = wind ? getWindDirection(wind.deg) : '';
+
+    // Tides
+    const tides = tidesByDate.get(isoDate) ?? [];
+
+    days.push({ date: label, waveHeight, wavePeriod, waveDirection, windSpeed, windDirection, tides });
+  }
+
+  return days;
+}
