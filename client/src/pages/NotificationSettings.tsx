@@ -3,7 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Bell, Plus, MapPin, Clock, Trash2, Pencil, Mail, MessageSquare, Smartphone,
   Waves, Wind, Droplets, AlertCircle, History, ChevronLeft, CheckCircle2, ShieldCheck, X,
@@ -631,17 +633,9 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const preview = previewSentence(form, selectedLocation?.name ?? "");
+  const isMobile = useIsMobile();
 
-  return (
-    <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto"
-        style={{ background: "#0d1b2e", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0" }}>
-        <DialogHeader>
-          <DialogTitle className="text-white text-base font-bold">
-            {editId ? "Edit Alert" : "Add Alert"}
-          </DialogTitle>
-        </DialogHeader>
-
+  const formBody = (
         <div className="space-y-4 pt-1">
           {/* Alert type selector */}
           <div>
@@ -1034,6 +1028,45 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
             {isPending ? "Saving…" : editId ? "Save Changes" : "Create Alert"}
           </button>
         </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={v => { if (!v) onClose(); }} shouldScaleBackground={false}>
+        <DrawerContent
+          className="outline-none"
+          style={{
+            background: "#0d1b2e",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "#e2e8f0",
+            maxHeight: "92dvh",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <DrawerHeader className="px-4 pt-3 pb-0 shrink-0">
+            <DrawerTitle className="text-white text-base font-bold text-left">
+              {editId ? "Edit Alert" : "Add Alert"}
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-8 pt-2 flex-1">
+            {formBody}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto"
+        style={{ background: "#0d1b2e", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0" }}>
+        <DialogHeader>
+          <DialogTitle className="text-white text-base font-bold">
+            {editId ? "Edit Alert" : "Add Alert"}
+          </DialogTitle>
+        </DialogHeader>
+        {formBody}
       </DialogContent>
     </Dialog>
   );
