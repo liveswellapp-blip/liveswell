@@ -53,6 +53,7 @@ interface Metrics {
     };
     uptime: number;
   };
+  lastReset?: string;
   timestamp: string;
 }
 
@@ -292,6 +293,12 @@ export default function MonitoringDashboard() {
                 <div className="font-medium">{metrics?.requests.failed || 0}</div>
               </div>
             </div>
+
+            {metrics?.lastReset && (
+              <div className="text-xs text-muted-foreground pt-1 border-t">
+                Reset at {new Date(metrics.lastReset).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC', hour12: false })} UTC
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

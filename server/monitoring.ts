@@ -45,6 +45,7 @@ interface ApiMetrics {
     failedToday: number;
     cleanedUpToday: number;
   };
+  lastReset: string;
 }
 
 // Error logging interfaces
@@ -68,7 +69,8 @@ let metrics: ApiMetrics = {
   requests: { total: 0, successful: 0, failed: 0, rateLimit: 0 },
   openweather: { requestsToday: 0, dailyLimit: 1000, remainingCalls: 1000 },
   noaa: { requestsToday: 0, failedRequests: 0, averageResponseTime: 0 },
-  pushNotifications: { sentToday: 0, failedToday: 0, cleanedUpToday: 0 }
+  pushNotifications: { sentToday: 0, failedToday: 0, cleanedUpToday: 0 },
+  lastReset: new Date().toISOString()
 };
 
 let responseTimeHistory: number[] = [];
@@ -364,6 +366,7 @@ export function resetDailyMetrics() {
   metrics.pushNotifications.sentToday = 0;
   metrics.pushNotifications.failedToday = 0;
   metrics.pushNotifications.cleanedUpToday = 0;
+  metrics.lastReset = new Date().toISOString();
   
   console.log('Daily metrics reset completed');
 }
