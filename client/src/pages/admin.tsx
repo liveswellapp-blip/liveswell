@@ -10,6 +10,7 @@ import { Shield, Activity, Users, Database, Globe, BarChart3, AlertTriangle, Che
 import UserDatabase from "@/components/UserDatabase";
 import ErrorLogs from "@/components/ErrorLogs";
 import SurfSpotsMonitoring from "@/components/SurfSpotsMonitoring";
+import LiveAlertTest from "@/components/LiveAlertTest";
 
 interface AdminSession {
   isAuthenticated: boolean;
@@ -532,6 +533,9 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Live Alert Test Panel */}
+        <LiveAlertTest />
 
         {/* Additional Admin Tools */}
         <Card>
