@@ -43,6 +43,10 @@ interface Metrics {
     requestsToday: number;
     failedRequests: number;
     averageResponseTime: number;
+    lastRequestAt?: string;
+    lastSuccessAt?: string;
+    idleMinutes: number | null;
+    stale: boolean;
   };
   performance: {
     averageResponseTime: number;
@@ -283,16 +287,54 @@ export default function MonitoringDashboard() {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">NOAA Requests</span>
                 <div className="font-medium">{metrics?.noaa.requestsToday || 0}</div>
               </div>
               <div>
-                <span className="text-muted-foreground">Failed Requests</span>
-                <div className="font-medium">{metrics?.requests.failed || 0}</div>
+                <span className="text-muted-foreground">NOAA Failures</span>
+                <div className={`font-medium ${(metrics?.noaa.failedRequests || 0) > 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
+                  {metrics?.noaa.failedRequests || 0}
+                </div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">NOAA Error Rate</span>
+                <div className={`font-medium ${
+                  metrics?.noaa.requestsToday && metrics.noaa.requestsToday > 0
+                    ? (metrics.noaa.failedRequests / metrics.noaa.requestsToday) >= 0.5
+                      ? 'text-red-600 dark:text-red-400'
+                      : (metrics.noaa.failedRequests / metrics.noaa.requestsToday) >= 0.1
+                        ? 'text-yellow-600 dark:text-yellow-400'
+                        : ''
+                    : ''
+                }`}>
+                  {metrics?.noaa.requestsToday
+                    ? `${Math.round((metrics.noaa.failedRequests / metrics.noaa.requestsToday) * 100)}%`
+                    : '—'}
+                </div>
               </div>
             </div>
+
+            {/* NOAA freshness indicator */}
+            {metrics?.noaa && (
+              <div className="flex items-center justify-between text-xs pt-1 border-t">
+                <span className="text-muted-foreground">
+                  NOAA last activity:{' '}
+                  {metrics.noaa.idleMinutes === null
+                    ? 'no calls today'
+                    : metrics.noaa.idleMinutes < 60
+                      ? `${metrics.noaa.idleMinutes}m ago`
+                      : `${Math.floor(metrics.noaa.idleMinutes / 60)}h ${metrics.noaa.idleMinutes % 60}m ago`}
+                </span>
+                {metrics.noaa.stale && (
+                  <span className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 font-medium">
+                    <AlertTriangle className="w-3 h-3" />
+                    Counter may be stale
+                  </span>
+                )}
+              </div>
+            )}
 
             {metrics?.lastReset && (
               <div className="text-xs text-muted-foreground pt-1 border-t">

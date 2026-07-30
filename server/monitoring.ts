@@ -39,6 +39,8 @@ interface ApiMetrics {
     requestsToday: number;
     failedRequests: number;
     averageResponseTime: number;
+    lastRequestAt?: string;
+    lastSuccessAt?: string;
   };
   pushNotifications: {
     sentToday: number;
@@ -68,7 +70,7 @@ interface ErrorLog {
 let metrics: ApiMetrics = {
   requests: { total: 0, successful: 0, failed: 0, rateLimit: 0 },
   openweather: { requestsToday: 0, dailyLimit: 1000, remainingCalls: 1000 },
-  noaa: { requestsToday: 0, failedRequests: 0, averageResponseTime: 0 },
+  noaa: { requestsToday: 0, failedRequests: 0, averageResponseTime: 0, lastRequestAt: undefined, lastSuccessAt: undefined },
   pushNotifications: { sentToday: 0, failedToday: 0, cleanedUpToday: 0 },
   lastReset: new Date().toISOString()
 };
@@ -137,13 +139,28 @@ export async function healthCheck(req: Request, res: Response) {
  * Metrics Endpoint
  * GET /api/metrics
  */
+// Number of minutes without a NOAA call before the counter is considered stale
+const NOAA_STALE_THRESHOLD_MINUTES = 240; // 4 hours
+
 export function getMetrics(req: Request, res: Response) {
   const averageResponseTime = responseTimeHistory.length > 0 
     ? responseTimeHistory.reduce((a, b) => a + b, 0) / responseTimeHistory.length 
     : 0;
 
+  const now = Date.now();
+  const lastNoaaMs = metrics.noaa.lastRequestAt ? new Date(metrics.noaa.lastRequestAt).getTime() : null;
+  const noaaIdleMinutes = lastNoaaMs !== null ? Math.floor((now - lastNoaaMs) / 60000) : null;
+  // Stale: calls were recorded today but nothing in the past threshold window
+  const noaaStale = metrics.noaa.requestsToday > 0 &&
+    (noaaIdleMinutes === null || noaaIdleMinutes >= NOAA_STALE_THRESHOLD_MINUTES);
+
   res.json({
     ...metrics,
+    noaa: {
+      ...metrics.noaa,
+      idleMinutes: noaaIdleMinutes,
+      stale: noaaStale
+    },
     performance: {
       averageResponseTime: Math.round(averageResponseTime),
       memoryUsage: process.memoryUsage(),
@@ -295,6 +312,12 @@ export function trackRequest(success: boolean, source: 'openweather' | 'noaa' | 
     metrics.openweather.requestsToday++;
   } else if (source === 'noaa') {
     metrics.noaa.requestsToday++;
+    metrics.noaa.lastRequestAt = new Date().toISOString();
+    if (!success) {
+      metrics.noaa.failedRequests++;
+    } else {
+      metrics.noaa.lastSuccessAt = new Date().toISOString();
+    }
   }
 }
 
@@ -363,6 +386,8 @@ export function resetDailyMetrics() {
   metrics.openweather.requestsToday = 0;
   metrics.noaa.requestsToday = 0;
   metrics.noaa.failedRequests = 0;
+  metrics.noaa.lastRequestAt = undefined;
+  metrics.noaa.lastSuccessAt = undefined;
   metrics.pushNotifications.sentToday = 0;
   metrics.pushNotifications.failedToday = 0;
   metrics.pushNotifications.cleanedUpToday = 0;
