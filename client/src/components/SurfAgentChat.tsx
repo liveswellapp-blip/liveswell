@@ -353,23 +353,6 @@ export default function SurfAgentChat() {
               key={msg.id ?? `local-${i}`}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center mr-2 mt-0.5 shrink-0">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-3 h-3 text-emerald-400"
-                  >
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </div>
-              )}
               <div
                 className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                   msg.role === "user"
