@@ -12,8 +12,27 @@ interface PushNotificationPayload {
 }
 
 class PushNotificationService {
+  /** Stores the init error when VAPID keys are missing or invalid. */
+  private initError: Error | null = null;
+
   constructor() {
     this.setupWebPush();
+  }
+
+  /**
+   * Returns true when the service initialised successfully and push
+   * notifications can be delivered.
+   */
+  isOperational(): boolean {
+    return this.initError === null;
+  }
+
+  /**
+   * Returns the initialisation error, or null when healthy.
+   * Used by the push health monitor to report the root cause.
+   */
+  getInitError(): Error | null {
+    return this.initError;
   }
 
   private setupWebPush() {
@@ -24,7 +43,12 @@ class PushNotificationService {
     // Generate ephemeral keys for development if not provided
     if (!publicKey || !privateKey) {
       if (process.env.NODE_ENV === 'production') {
-        throw new Error('VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables are required in production');
+        // In production, record the error but do NOT throw — the server must
+        // stay up long enough for the health monitor to send an alert email.
+        const err = new Error('VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY environment variables are required in production');
+        this.initError = err;
+        console.error('[ERROR] Push notification service: VAPID keys missing in production. Push notifications are disabled until keys are configured.');
+        return;
       }
       
       console.warn('[WARNING] Using ephemeral VAPID keys for development. Push notifications will not persist across server restarts.');
@@ -35,13 +59,18 @@ class PushNotificationService {
       process.env.VAPID_PRIVATE_KEY = vapidKeys.privateKey;
     }
 
-    webpush.setVapidDetails(
-      'mailto:admin@liveswell.app',
-      process.env.VAPID_PUBLIC_KEY!,
-      process.env.VAPID_PRIVATE_KEY!
-    );
-    
-    console.log('[INFO] Push notification service initialized with VAPID keys');
+    try {
+      webpush.setVapidDetails(
+        'mailto:admin@liveswell.app',
+        process.env.VAPID_PUBLIC_KEY!,
+        process.env.VAPID_PRIVATE_KEY!
+      );
+      console.log('[INFO] Push notification service initialized with VAPID keys');
+    } catch (err) {
+      // webpush.setVapidDetails throws for malformed keys — record, don't crash.
+      this.initError = err instanceof Error ? err : new Error(String(err));
+      console.error('[ERROR] Push notification service: VAPID key validation failed —', this.initError.message);
+    }
   }
 
   /**

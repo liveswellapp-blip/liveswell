@@ -4,6 +4,7 @@ import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
 import { ConditionMonitor } from './condition-monitor';
 import { purgeStaleWeatherCache } from './weather-service';
+import { runPushHealthCheck } from './push-health-monitor';
 import { db } from './db';
 import { userAlerts, notificationSettings, users, locations } from '@shared/schema';
 import { eq, and, lt, sql } from 'drizzle-orm';
@@ -45,6 +46,23 @@ export class NotificationScheduler {
     cron.schedule('*/20 * * * *', () => {
       purgeStaleWeatherCache().catch(err =>
         console.error('Error in purgeStaleWeatherCache job:', err)
+      );
+    });
+
+    // ── Push notification health monitoring ──────────────────────────────────
+    // Run once on startup (after a 5-second delay to allow VAPID setup to
+    // complete) so any post-deploy misconfiguration triggers an immediate alert.
+    setTimeout(() => {
+      runPushHealthCheck('startup').catch(err =>
+        console.error('Error in startup push health check:', err)
+      );
+    }, 5000);
+
+    // Also check every 6 hours to catch runtime degradation (e.g. env var
+    // accidentally cleared, service restart with missing secrets).
+    cron.schedule('0 */6 * * *', () => {
+      runPushHealthCheck('scheduled').catch(err =>
+        console.error('Error in scheduled push health check:', err)
       );
     });
 

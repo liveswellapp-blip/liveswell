@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeSurfSpots } from "./storage";
 import { NotificationScheduler } from "./notification-scheduler";
 import { initWeatherCache } from "./weather-service";
+import { runPushHealthCheck } from "./push-health-monitor";
 
 // Validate required environment variables for production
 function validateEnvironment() {
@@ -87,7 +88,17 @@ app.use((req, res, next) => {
   try {
     // Validate environment variables
     validateEnvironment();
-    
+
+    // ── Push notification preflight ──────────────────────────────────────────
+    // Run as early as possible — before the scheduler and before any fatal
+    // startup step — so a missing/malformed VAPID key after a deploy always
+    // triggers an alert email even if something later in startup also fails.
+    // push-service.ts is now non-fatal (records init errors instead of
+    // throwing), so this check is guaranteed to reach the email send path.
+    runPushHealthCheck('startup').catch(err =>
+      console.error('[push-health-monitor] Startup preflight failed:', err)
+    );
+
     // Add some sample error logs for demonstration
     const { logError } = await import('./monitoring');
     logError('info', 'Server startup initiated', { 
