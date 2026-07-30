@@ -31,6 +31,27 @@ Preferred communication style: Simple, everyday language.
 - **Integration**: Real-time NOAA marine data and comprehensive surf forecasting with multiple data overlays.
 - **AI Surf Summary**: Intelligent wind classification system that accurately determines onshore/offshore/sideshore conditions based on coastline orientation (East Coast, West Coast, Gulf Coast) and real-time wind direction.
 
+## Email Deliverability Setup
+
+### Verified Sending Domain (Resend)
+Outbound emails (daily surf reports, condition alerts, SMS-disabled notices) are sent via the **Resend** integration.
+
+**Production sender address** is controlled by the `RESEND_FROM_EMAIL` Replit Secret.  
+Current value: `LiveSwell <alerts@liveswell.io>` (set in Replit Secrets panel).
+
+**To change or re-verify the domain:**
+1. Go to [resend.com/domains](https://resend.com/domains) and add / verify your domain.
+2. Add the DNS records Resend provides (MX, TXT/DKIM, TXT/SPF, CNAME) at your DNS provider.
+3. Wait for Resend to show the domain as **Verified** (usually < 10 min).
+4. Update the `RESEND_FROM_EMAIL` secret in Replit to `Display Name <you@yourdomain.com>`.
+5. Restart the server — the startup log will confirm the address with `📧 Email from-address: ...`.
+
+**Fallback behaviour:** If `RESEND_FROM_EMAIL` is not set, the server falls back to `onboarding@resend.dev` (Resend's shared test address). The startup log will print a warning in this case. This fallback must not be used in production.
+
+**Relevant files:**
+- `server/email-service.ts` — reads `RESEND_FROM_EMAIL`, all `sendEmail()` calls use `FROM_EMAIL`
+- Replit Secrets panel — where `RESEND_FROM_EMAIL` is stored
+
 ## External Dependencies
 
 ### Core Infrastructure

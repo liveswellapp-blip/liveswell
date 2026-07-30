@@ -27,8 +27,18 @@ function rateSession(
   return { label: 'Poor', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', emoji: '⚠️' };
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'LiveSwell <onboarding@resend.dev>';
-console.log(`📧 Email from-address: ${FROM_EMAIL}${process.env.RESEND_FROM_EMAIL ? '' : ' (set RESEND_FROM_EMAIL secret to use a verified domain)'}`);
+const FALLBACK_FROM = 'LiveSwell <onboarding@resend.dev>';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || FALLBACK_FROM;
+
+if (process.env.RESEND_FROM_EMAIL) {
+  console.log(`📧 Email from-address: ${FROM_EMAIL} (verified domain)`);
+} else {
+  console.warn(
+    `⚠️  RESEND_FROM_EMAIL is not set — falling back to shared test address "${FALLBACK_FROM}". ` +
+    `Emails may be rejected or spam-filtered in production. ` +
+    `Set the RESEND_FROM_EMAIL secret to a verified Resend domain address.`,
+  );
+}
 console.log('✅ Resend email service configured via Replit Connectors');
 
 async function sendEmail(payload: {
