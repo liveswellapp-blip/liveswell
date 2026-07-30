@@ -6,9 +6,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { createHash } from 'crypto';
 
-// Admin credentials configuration
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'austin.rose8593';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Soccer4life!';
+// Admin credentials — must be set as environment secrets (no hardcoded fallbacks)
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+  throw new Error('ADMIN_USERNAME and ADMIN_PASSWORD environment secrets must be set.');
+}
 
 // Session-based admin authentication
 interface AdminSession {
