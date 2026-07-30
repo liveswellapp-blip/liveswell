@@ -25,6 +25,11 @@ export class NotificationScheduler {
       console.warn('⚠️ SMS service not properly configured');
     }
 
+    const emailHealthy = await EmailService.checkHealth();
+    if (!emailHealthy) {
+      console.warn('⚠️ Email service health-check failed — emails may not be delivered until the connector is restored');
+    }
+
     // Initialize condition-based alert monitor (runs every 20 min for condition alerts,
     // every 1 min for daily reports — this is the single owner of daily report dispatch)
     await ConditionMonitor.initialize();

@@ -41,35 +41,73 @@ if (process.env.RESEND_FROM_EMAIL) {
 }
 console.log('✅ Resend email service configured via Replit Connectors');
 
-async function sendEmail(payload: {
-  from: string;
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}): Promise<{ id?: string; error?: string }> {
-  const connectors = new ReplitConnectors();
-  const response = await connectors.proxy('resend', '/emails', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+async function sendEmail(
+  payload: { from: string; to: string; subject: string; text: string; html: string },
+  retries = 2,
+): Promise<{ id?: string; error?: string }> {
+  let lastError: string | undefined;
 
-  if (!response.ok) {
-    const body = await response.text();
-    return { error: body };
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const connectors = new ReplitConnectors();
+    const response = await connectors.proxy('resend', '/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    // Transient server-side errors (5xx) — wait briefly and retry
+    if (!response.ok) {
+      const body = await response.text();
+      if (response.status >= 500 && attempt < retries) {
+        console.warn(`⚠️  Resend transient error (${response.status}) on attempt ${attempt}/${retries} — retrying…`);
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        lastError = body;
+        continue;
+      }
+      return { error: body };
+    }
+
+    const data = await response.json() as { id?: string; statusCode?: number; message?: string; name?: string };
+    if (data.statusCode && data.statusCode >= 400) {
+      return { error: data.message ?? JSON.stringify(data) };
+    }
+    return { id: data.id };
   }
 
-  const data = await response.json() as { id?: string; statusCode?: number; message?: string; name?: string };
-  if (data.statusCode && data.statusCode >= 400) {
-    return { error: data.message ?? JSON.stringify(data) };
-  }
-  return { id: data.id };
+  return { error: lastError ?? 'Unknown error after retries' };
 }
 
 export class EmailService {
   static isConfigured(): boolean {
     return true;
+  }
+
+  /**
+   * Lightweight startup health-check: calls GET /domains on the Resend connector
+   * to verify the connector proxy is reachable and the API key is valid.
+   * Returns true when the connector responds with a 2xx, false otherwise.
+   * Logs the outcome so it appears alongside the SMS / push checks at startup.
+   */
+  static async checkHealth(): Promise<boolean> {
+    try {
+      const connectors = new ReplitConnectors();
+      const response = await connectors.proxy('resend', '/domains', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        console.log('✅ Email (Resend) connector healthy — delivery is operational');
+        return true;
+      }
+
+      const body = await response.text().catch(() => '(unreadable)');
+      console.error(`❌ Email (Resend) connector health-check failed (HTTP ${response.status}): ${body}`);
+      return false;
+    } catch (err) {
+      console.error('❌ Email (Resend) connector health-check threw an error:', err);
+      return false;
+    }
   }
 
   static async sendDailyConditions(toEmail: string, locationId: number): Promise<boolean> {
