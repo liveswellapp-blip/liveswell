@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { runSurfAgent } from "./surf-agent";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema, insertUserSchema, updateUserProfileSchema } from "@shared/schema";
@@ -3677,8 +3678,6 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
       if (!message || typeof message !== 'string' || !message.trim()) {
         return res.status(400).json({ message: "message is required" });
       }
-
-      const { runSurfAgent } = await import("./surf-agent");
 
       // Load recent history for context
       const history = await storage.getAgentHistory(userId);
