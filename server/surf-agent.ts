@@ -7,17 +7,53 @@ const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are the Live Swell Agent. Your only job is to read data from the context provided and repeat it in plain sentences. You are not a coach, advisor, or commentator.
+const SYSTEM_PROMPT = `You are the Live Swell Agent — a data reporter. You only relay numbers from the context. You never evaluate, advise, or comment.
 
-ABSOLUTE RULES — never break these:
-1. Never say whether conditions are good, bad, ideal, worth it, fun, mellow, or anything evaluative.
-2. Never recommend going or not going. Never suggest waiting, checking back, or trying another spot.
-3. Never use words like: ideal, solid, epic, firing, pumping, fun, mellow, worth it, itching, recommend, suggest, might want to, consider, try.
-4. State numbers and facts only. Example: "Waves: 2ft at 8s from the SE. Wind: 10mph onshore. Tide: rising."
-5. Keep every response under 60 words.
-6. Plain text only — no bullet points, no markdown, no headers.
-7. If data is STALE (older than 2 hours), state the age.
-8. If no data exists for a spot, say exactly: "No data available for [spot name]."`;
+OUTPUT FORMAT — use this exact structure when reporting conditions:
+[Spot]: [X]ft at [X]s from the [direction]. Wind [X]mph [direction]. Tide [rising/falling/high/low] at [X]ft. Water [X]°F.
+
+For forecasts list each day: [Day]: [X]ft at [X]s.
+If no data: 'No data available for [spot].'
+If stale, append: '(data from [X] ago)'
+
+NEVER add any sentence beyond direct data readings. No opinions, no advice, no suggestions.`;
+
+// Sentence-level filters: always remove these regardless of whether they contain numbers
+const ADVISORY_PATTERNS = [
+  /\bif you\b/i,
+  /\bconsider\b/i,
+  /\brecommend\b/i,
+  /\bwait for\b/i,
+  /\bcheck (back|out another)\b/i,
+  /\btry another\b/i,
+  /\byou (should|might|could|may)\b/i,
+  /\bmight want to\b/i,
+  /\bhead (to|out)\b/i,
+  /\bworth (it|a)\b/i,
+  /\bcraving\b/i,
+  /\bitching\b/i,
+];
+
+// Opinion-only patterns — only strip the sentence if it contains NO numeric data
+const OPINION_NO_DATA_PATTERNS = [
+  /\b(not ideal|not great|not the best|perfect for|great for|good for|bad for)\b/i,
+  /\b(ideal for|epic|firing|pumping)\b/i,
+];
+
+function stripOpinions(text: string): string {
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const hasNumbers = (s: string) => /\d/.test(s);
+
+  const clean = sentences.filter(s => {
+    // Always strip advisory sentences
+    if (ADVISORY_PATTERNS.some(p => p.test(s))) return false;
+    // Strip opinion sentences only if they carry no numeric data
+    if (!hasNumbers(s) && OPINION_NO_DATA_PATTERNS.some(p => p.test(s))) return false;
+    return true;
+  });
+
+  return (clean.length > 0 ? clean : sentences).join(' ').trim();
+}
 
 function relativeAge(isoString: string): { label: string; stale: boolean } {
   const ageMs = Date.now() - new Date(isoString).getTime();
@@ -159,5 +195,6 @@ export async function runSurfAgent(
     max_completion_tokens: 120,
   });
 
-  return completion.choices[0]?.message?.content?.trim() ?? "Sorry, I couldn't generate a response. Try again.";
+  const raw = completion.choices[0]?.message?.content?.trim() ?? "Sorry, I couldn't generate a response. Try again.";
+  return stripOpinions(raw);
 }
