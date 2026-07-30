@@ -3732,6 +3732,45 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     }
   });
 
+  // ── Agent: on-demand conditions refresh ──────────────────────────────────
+  app.post("/api/agent/refresh-conditions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getUserFavorites(userId);
+      if (favorites.length === 0) {
+        return res.json({ refreshed: 0, message: "No saved spots to refresh" });
+      }
+
+      let refreshed = 0;
+      let errors = 0;
+
+      await Promise.all(favorites.map(async (loc: any) => {
+        try {
+          const weatherData = await fetchWeatherData(
+            parseFloat(loc.latitude),
+            parseFloat(loc.longitude)
+          );
+          const existing = await storage.getSurfConditions(loc.id);
+          if (existing) {
+            await storage.updateSurfConditions(loc.id, weatherData);
+          } else {
+            await storage.createSurfConditions({ locationId: loc.id, ...weatherData });
+          }
+          refreshed++;
+        } catch (err) {
+          errors++;
+          console.error(`Failed to refresh conditions for ${loc.name}:`, err);
+        }
+      }));
+
+      console.log(`🔄 Agent conditions refresh for user ${userId}: ${refreshed} updated, ${errors} errors`);
+      res.json({ refreshed, errors, message: `Refreshed ${refreshed} spot${refreshed !== 1 ? "s" : ""}` });
+    } catch (error) {
+      console.error("Conditions refresh error:", error);
+      res.status(500).json({ message: "Failed to refresh conditions" });
+    }
+  });
+
   // ── Twilio inbound SMS webhook ────────────────────────────────────────────
   // express.urlencoded is already mounted globally in index.ts so Twilio's
   // form-encoded body is available on req.body here.

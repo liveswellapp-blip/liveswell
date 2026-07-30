@@ -87,17 +87,47 @@ export interface AgentMessage {
   content: string;
 }
 
+const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+/** Returns true if conditions are missing or older than the stale threshold. */
+function isConditionsStale(conditions: any): boolean {
+  if (!conditions || !conditions.lastUpdated) return true;
+  return Date.now() - new Date(conditions.lastUpdated).getTime() > STALE_THRESHOLD_MS;
+}
+
 export async function runSurfAgent(
   userId: string,
   userMessage: string,
   history: AgentMessage[],
 ): Promise<string> {
-  // Fetch user's saved spots with conditions
+  // Fetch user's saved spots
   const favoriteLocations = await storage.getUserFavorites(userId);
 
+  // Auto-refresh any spot whose conditions are stale (>2h old or missing)
+  // before building the context, so the agent always answers with fresh data.
   const spotsWithConditions = await Promise.all(
     favoriteLocations.map(async (loc) => {
-      const conditions = await storage.getSurfConditions(loc.id);
+      let conditions = await storage.getSurfConditions(loc.id);
+
+      if (isConditionsStale(conditions)) {
+        try {
+          const weatherData = await fetchWeatherData(
+            parseFloat(loc.latitude),
+            parseFloat(loc.longitude),
+          );
+          if (conditions) {
+            conditions = await storage.updateSurfConditions(loc.id, weatherData);
+          } else {
+            conditions = await storage.createSurfConditions({ locationId: loc.id, ...weatherData });
+          }
+          console.log(`🔄 Auto-refreshed stale conditions for ${loc.name}`);
+        } catch (err) {
+          console.warn(`⚠️  Auto-refresh failed for ${loc.name}:`, err);
+          // Fall through — use the stale/missing conditions; the STALE flag in
+          // the context will inform the model and the user.
+        }
+      }
+
       return {
         name: loc.name,
         city: loc.city,

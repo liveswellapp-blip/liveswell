@@ -100,6 +100,16 @@ export default function SurfAgentChat() {
     },
   });
 
+  const refreshMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("/api/agent/refresh-conditions", { method: "POST" });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/agent/conditions-freshness"] });
+    },
+  });
+
   const sendMessage = useCallback(
     (text: string) => {
       const trimmed = text.trim();
@@ -209,6 +219,29 @@ export default function SurfAgentChat() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {isStale && (
+              <button
+                onClick={() => refreshMutation.mutate()}
+                disabled={refreshMutation.isPending}
+                className="text-xs text-amber-500 hover:text-amber-300 px-2 py-1 rounded transition-colors flex items-center gap-1 disabled:opacity-50"
+                title="Refresh conditions"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`w-3 h-3 ${refreshMutation.isPending ? "animate-spin" : ""}`}
+                >
+                  <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                  <path d="M21 3v5h-5" />
+                </svg>
+                {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
+              </button>
+            )}
             {allMessages.length > 0 && (
               <button
                 onClick={() => clearMutation.mutate()}
