@@ -35,7 +35,7 @@ export default function SurfAgentChat() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: freshness } = useQuery<{ oldestUpdatedAt: string | null }>({
+  const { data: freshness } = useQuery<{ oldestUpdatedAt: string | null; hasSpots?: boolean }>({
     queryKey: ["/api/agent/conditions-freshness"],
     enabled: open,
     staleTime: 60_000,
@@ -201,6 +201,8 @@ export default function SurfAgentChat() {
                 <p className={`text-xs mt-0.5 ${isStale ? "text-amber-500" : "text-zinc-500"}`}>
                   {freshnessLabel}{isStale ? " · may be outdated" : ""}
                 </p>
+              ) : freshness?.hasSpots ? (
+                <p className="text-xs text-amber-500 mt-0.5">No conditions loaded yet</p>
               ) : (
                 <p className="text-xs text-zinc-500 mt-0.5">AI · knows your spots</p>
               )}
