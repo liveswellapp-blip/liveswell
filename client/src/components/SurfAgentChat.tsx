@@ -210,21 +210,6 @@ export default function SurfAgentChat() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-4 h-4 text-emerald-400"
-              >
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
             <div>
               <p className="text-sm font-semibold text-white leading-none">Live Swell Agent</p>
               {freshnessLabel ? (
@@ -302,21 +287,6 @@ export default function SurfAgentChat() {
 
           {isEmpty && !historyLoading && (
             <div className="flex flex-col items-center pt-6 pb-2 gap-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="w-8 h-8 text-emerald-400"
-                >
-                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </div>
               <div className="text-center">
                 <p className="text-white font-medium text-sm">Hey, I'm the Live Swell Agent</p>
                 <p className="text-zinc-500 text-xs mt-1">Ask me about your spots, conditions, or when to paddle out</p>

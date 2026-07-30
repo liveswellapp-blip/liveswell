@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
-import { fetchWeatherData } from "./weather-service";
+import { fetchWeatherData, fetchTideData } from "./weather-service";
 
 const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -39,6 +39,27 @@ function relativeAge(isoString: string): { label: string; stale: boolean } {
   return { label: mins > 0 ? `${hours}h ${mins}min ago` : `${hours}h ago`, stale };
 }
 
+function parseTimeToday(timeStr: string): Date {
+  return new Date(`${new Date().toDateString()} ${timeStr}`);
+}
+
+function findNextTide(
+  tideHigh: Array<{ time: string; height: string }> | undefined,
+  tideLow: Array<{ time: string; height: string }> | undefined,
+  tideStatus: string,
+): { label: string; time: string; height: string } | null {
+  const rising = tideStatus?.toLowerCase() === 'rising';
+  const pool = rising ? tideHigh : tideLow;
+  if (!pool?.length) return null;
+  const now = Date.now();
+  const future = pool.filter(t => {
+    const dt = parseTimeToday(t.time);
+    return !isNaN(dt.getTime()) && dt.getTime() > now;
+  });
+  const entry = future.length > 0 ? future[0] : pool[0];
+  return { label: rising ? 'High Tide' : 'Low Tide', time: entry.time, height: entry.height };
+}
+
 function formatConditionsLine(spot: { name: string; conditions: any }): string {
   const c = spot.conditions;
   if (!c) return `${spot.name}\nNo data available.`;
@@ -46,17 +67,21 @@ function formatConditionsLine(spot: { name: string; conditions: any }): string {
   const lines: string[] = [`${spot.name}`];
 
   if (c.waveHeight != null && c.wavePeriod != null) {
-    const dir = c.waveDirection ? `, Direction: ${c.waveDirection}` : '';
+    const dir = c.waveDirection ? `, ${c.waveDirection}` : '';
     lines.push(`Swell - ${parseFloat(c.waveHeight).toFixed(1)}ft at ${c.wavePeriod}s${dir}`);
   }
   if (c.windSpeed != null) {
-    const dir = c.windDirection ? `, Direction: ${c.windDirection}` : '';
-    const gusts = c.windGusts ? `, Gusts: ${Math.round(parseFloat(c.windGusts))}mph` : '';
-    lines.push(`Wind - ${Math.round(parseFloat(c.windSpeed))}mph${dir}${gusts}`);
+    const dir = c.windDirection ? `, ${c.windDirection}` : '';
+    lines.push(`Wind - ${Math.round(parseFloat(c.windSpeed))}mph${dir}`);
   }
   if (c.tideStatus != null) {
-    const height = c.tideHeight != null ? ` at ${parseFloat(c.tideHeight).toFixed(1)}ft` : '';
-    lines.push(`Tide - ${c.tideStatus}${height}`);
+    const next = findNextTide(c.tideHigh, c.tideLow, c.tideStatus);
+    if (next) {
+      lines.push(`Tide - ${c.tideStatus} to ${next.label} at ${next.time} and ${parseFloat(next.height).toFixed(1)}ft`);
+    } else {
+      const height = c.tideHeight != null ? ` at ${parseFloat(c.tideHeight).toFixed(1)}ft` : '';
+      lines.push(`Tide - ${c.tideStatus}${height}`);
+    }
   }
   if (c.waterTemp != null) {
     lines.push(`Water Temp - ${Math.round(parseFloat(c.waterTemp))}°F`);
@@ -75,7 +100,7 @@ function formatForecastLines(spot: { name: string; forecast?: any[] }): string {
   const lines = spot.forecast.map((d: any) => {
     const h = d.waveHeight != null ? `${parseFloat(d.waveHeight).toFixed(1)}ft` : '?ft';
     const p = d.wavePeriod != null ? ` at ${d.wavePeriod}s` : '';
-    const dir = d.waveDirection ? `, Direction: ${d.waveDirection}` : '';
+    const dir = d.waveDirection ? `, ${d.waveDirection}` : '';
     return `${d.date} - ${h}${p}${dir}`;
   });
   return `${spot.name} Forecast\n${lines.join('\n')}`;
@@ -130,6 +155,8 @@ export async function runSurfAgent(
   const spotsWithConditions: SpotData[] = await Promise.all(
     favoriteLocations.map(async (loc) => {
       let conditions = await storage.getSurfConditions(loc.id);
+      let tideArrays: { tideHigh?: any[]; tideLow?: any[] } = {};
+
       if (isConditionsStale(conditions)) {
         try {
           const weatherData = await fetchWeatherData(
@@ -139,12 +166,31 @@ export async function runSurfAgent(
           conditions = conditions
             ? await storage.updateSurfConditions(loc.id, weatherData)
             : await storage.createSurfConditions({ locationId: loc.id, ...weatherData });
+          // Capture tide schedule from fresh weather data (not persisted in DB)
+          tideArrays = { tideHigh: weatherData.tideHigh, tideLow: weatherData.tideLow };
           console.log(`🔄 Auto-refreshed conditions for ${loc.name}`);
         } catch (err) {
           console.warn(`⚠️  Auto-refresh failed for ${loc.name}:`, err);
         }
+      } else {
+        // Conditions are fresh but DB doesn't store tide schedule — fetch it now
+        try {
+          const tideData = await fetchTideData(
+            parseFloat(loc.latitude),
+            parseFloat(loc.longitude),
+          );
+          tideArrays = { tideHigh: tideData.tideHigh, tideLow: tideData.tideLow };
+        } catch {
+          // non-fatal: tide times will fall back to the simple Rising/Falling label
+        }
       }
-      return { name: loc.name, city: loc.city, country: loc.country, conditions };
+
+      return {
+        name: loc.name,
+        city: loc.city,
+        country: loc.country,
+        conditions: conditions ? { ...conditions, ...tideArrays } : conditions,
+      };
     }),
   );
 
