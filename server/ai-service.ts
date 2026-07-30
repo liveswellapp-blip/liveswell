@@ -83,7 +83,7 @@ export async function generateNotificationSummary(
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.7,
-      max_tokens: 60,
+      max_completion_tokens: 60,
     });
 
     const text = completion.choices[0]?.message?.content?.trim() ?? '';
