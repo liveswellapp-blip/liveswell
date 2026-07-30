@@ -11,6 +11,7 @@ import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
 import { fetchWeatherData } from './weather-service';
 import { generateNotificationSummary } from './ai-service';
+import { resetDailyMetrics } from './monitoring';
 
 // ─── Threshold types ─────────────────────────────────────────────────────────
 export interface SwellThresholds {
@@ -406,8 +407,13 @@ export class ConditionMonitor {
     cron.schedule('*/20 * * * *', () => this.checkConditionAlerts());
     // Daily report scheduler: runs every minute, fires reports at user-configured times
     cron.schedule('* * * * *', () => this.checkDailyReportAlerts());
+    // Reset daily API-call counters at midnight UTC
+    cron.schedule('0 0 * * *', () => {
+      resetDailyMetrics();
+      console.log('🔄 Daily metrics reset at midnight UTC');
+    }, { timezone: 'UTC' });
     this.initialized = true;
-    console.log('🌊 Condition monitor initialized (condition alerts every 20 min, daily reports every 1 min)');
+    console.log('🌊 Condition monitor initialized (condition alerts every 20 min, daily reports every 1 min, metrics reset at midnight UTC)');
   }
 
   static async checkDailyReportAlerts(): Promise<void> {
