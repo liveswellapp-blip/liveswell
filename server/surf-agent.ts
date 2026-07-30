@@ -20,8 +20,27 @@ When answering about conditions:
 - Mention wind quality (offshore = clean, onshore = choppy)
 - Consider tide timing relative to wave quality
 - Flag anything exceptional (unusually large swell, perfect glassy morning, etc.)
+- If any spot's data is marked STALE (older than 2 hours), proactively note this in your answer so the user knows the information may not reflect current conditions.
 
 Keep responses under 150 words unless comparing multiple spots or the user asks for detail.`;
+
+function relativeAge(isoString: string): { label: string; stale: boolean } {
+  const ageMs = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.round(ageMs / 60_000);
+  const stale = ageMs > 2 * 60 * 60 * 1000; // > 2 hours
+
+  let label: string;
+  if (minutes < 1) {
+    label = 'just now';
+  } else if (minutes < 60) {
+    label = `${minutes} min ago`;
+  } else {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    label = mins > 0 ? `${hours}h ${mins}min ago` : `${hours}h ago`;
+  }
+  return { label, stale };
+}
 
 function buildConditionsContext(spots: Array<{
   name: string;
@@ -44,11 +63,19 @@ function buildConditionsContext(spots: Array<{
     const tide = c.tideStatus ?? 'unknown';
     const tideHeight = c.tideHeight ? ` ${parseFloat(c.tideHeight).toFixed(1)}ft` : '';
     const waterTemp = c.waterTemp ? ` ${parseFloat(c.waterTemp).toFixed(0)}°F water` : '';
-    const updated = c.lastUpdated
-      ? `updated ${new Date(c.lastUpdated).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
-      : 'no update time';
 
-    return `- ${s.name} (${s.city}, ${s.country}): ${waveHeight} @ ${wavePeriod} from ${waveDir} | wind ${windSpeed}${windGusts} from ${windDir} | tide ${tide}${tideHeight}${waterTemp} | ${updated}`;
+    let updatedLabel: string;
+    let staleFlag = '';
+    if (c.lastUpdated) {
+      const { label, stale } = relativeAge(c.lastUpdated);
+      updatedLabel = `updated ${label}`;
+      if (stale) staleFlag = ' [STALE]';
+    } else {
+      updatedLabel = 'no update time';
+      staleFlag = ' [STALE]';
+    }
+
+    return `- ${s.name} (${s.city}, ${s.country}): ${waveHeight} @ ${wavePeriod} from ${waveDir} | wind ${windSpeed}${windGusts} from ${windDir} | tide ${tide}${tideHeight}${waterTemp} | ${updatedLabel}${staleFlag}`;
   });
 
   return `User's saved surf spots (current conditions):\n${lines.join('\n')}`;

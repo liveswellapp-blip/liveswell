@@ -35,6 +35,29 @@ export default function SurfAgentChat() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: freshness } = useQuery<{ oldestUpdatedAt: string | null }>({
+    queryKey: ["/api/agent/conditions-freshness"],
+    enabled: open,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+
+  const freshnessLabel = (() => {
+    if (!freshness?.oldestUpdatedAt) return null;
+    const ageMs = Date.now() - new Date(freshness.oldestUpdatedAt).getTime();
+    const minutes = Math.round(ageMs / 60_000);
+    if (minutes < 1) return "Conditions just updated";
+    if (minutes < 60) return `Conditions ${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const timeStr = mins > 0 ? `${hours}h ${mins}m ago` : `${hours}h ago`;
+    return `Conditions ${timeStr}`;
+  })();
+
+  const isStale = freshness?.oldestUpdatedAt
+    ? Date.now() - new Date(freshness.oldestUpdatedAt).getTime() > 2 * 60 * 60 * 1000
+    : false;
+
   // Merge server history + local optimistic messages
   const allMessages: Message[] = [
     ...history,
@@ -174,7 +197,13 @@ export default function SurfAgentChat() {
             </div>
             <div>
               <p className="text-sm font-semibold text-white leading-none">Surf Coach</p>
-              <p className="text-xs text-zinc-500 mt-0.5">AI · knows your spots</p>
+              {freshnessLabel ? (
+                <p className={`text-xs mt-0.5 ${isStale ? "text-amber-500" : "text-zinc-500"}`}>
+                  {freshnessLabel}{isStale ? " · may be outdated" : ""}
+                </p>
+              ) : (
+                <p className="text-xs text-zinc-500 mt-0.5">AI · knows your spots</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-1">

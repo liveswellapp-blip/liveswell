@@ -3713,6 +3713,25 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     }
   });
 
+  app.get("/api/agent/conditions-freshness", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const favorites = await storage.getUserFavorites(userId);
+      if (favorites.length === 0) {
+        return res.json({ oldestUpdatedAt: null });
+      }
+      const conditions = await Promise.all(favorites.map(loc => storage.getSurfConditions(loc.id)));
+      const timestamps = conditions
+        .filter(c => c?.lastUpdated)
+        .map(c => new Date(c!.lastUpdated!).getTime());
+      const oldestUpdatedAt = timestamps.length > 0 ? new Date(Math.min(...timestamps)).toISOString() : null;
+      res.json({ oldestUpdatedAt });
+    } catch (error) {
+      console.error("Conditions freshness error:", error);
+      res.status(500).json({ message: "Failed to get conditions freshness" });
+    }
+  });
+
   // ── Twilio inbound SMS webhook ────────────────────────────────────────────
   // express.urlencoded is already mounted globally in index.ts so Twilio's
   // form-encoded body is available on req.body here.
