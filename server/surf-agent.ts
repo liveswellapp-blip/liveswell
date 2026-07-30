@@ -41,43 +41,44 @@ function relativeAge(isoString: string): { label: string; stale: boolean } {
 
 function formatConditionsLine(spot: { name: string; conditions: any }): string {
   const c = spot.conditions;
-  if (!c) return `${spot.name}: No data available.`;
+  if (!c) return `${spot.name}\nNo data available.`;
 
-  const parts: string[] = [];
+  const lines: string[] = [`${spot.name}`];
+
   if (c.waveHeight != null && c.wavePeriod != null) {
-    const dir = c.waveDirection ? ` ${c.waveDirection}` : '';
-    parts.push(`Waves: ${parseFloat(c.waveHeight).toFixed(1)}ft at ${c.wavePeriod}s${dir}`);
+    const dir = c.waveDirection ? `, Direction: ${c.waveDirection}` : '';
+    lines.push(`Swell - ${parseFloat(c.waveHeight).toFixed(1)}ft at ${c.wavePeriod}s${dir}`);
   }
   if (c.windSpeed != null) {
-    const dir = c.windDirection ? ` ${c.windDirection}` : '';
-    const gusts = c.windGusts ? `, gusts ${Math.round(parseFloat(c.windGusts))}mph` : '';
-    parts.push(`Wind: ${Math.round(parseFloat(c.windSpeed))}mph${dir}${gusts}`);
+    const dir = c.windDirection ? `, Direction: ${c.windDirection}` : '';
+    const gusts = c.windGusts ? `, Gusts: ${Math.round(parseFloat(c.windGusts))}mph` : '';
+    lines.push(`Wind - ${Math.round(parseFloat(c.windSpeed))}mph${dir}${gusts}`);
   }
   if (c.tideStatus != null) {
     const height = c.tideHeight != null ? ` at ${parseFloat(c.tideHeight).toFixed(1)}ft` : '';
-    parts.push(`Tide: ${c.tideStatus}${height}`);
+    lines.push(`Tide - ${c.tideStatus}${height}`);
   }
   if (c.waterTemp != null) {
-    parts.push(`Water: ${Math.round(parseFloat(c.waterTemp))}°F`);
+    lines.push(`Water Temp - ${Math.round(parseFloat(c.waterTemp))}°F`);
   }
 
-  let staleNote = '';
   if (c.lastUpdated) {
     const { label, stale } = relativeAge(c.lastUpdated);
-    if (stale) staleNote = ` (data from ${label})`;
+    if (stale) lines.push(`(data from ${label})`);
   }
 
-  return `${spot.name}: ${parts.join('. ')}.${staleNote}`;
+  return lines.join('\n');
 }
 
 function formatForecastLines(spot: { name: string; forecast?: any[] }): string {
-  if (!spot.forecast?.length) return `${spot.name}: No forecast available.`;
+  if (!spot.forecast?.length) return `${spot.name}\nNo forecast available.`;
   const lines = spot.forecast.map((d: any) => {
     const h = d.waveHeight != null ? `${parseFloat(d.waveHeight).toFixed(1)}ft` : '?ft';
     const p = d.wavePeriod != null ? ` at ${d.wavePeriod}s` : '';
-    return `  ${d.date}: ${h}${p}`;
+    const dir = d.waveDirection ? `, Direction: ${d.waveDirection}` : '';
+    return `${d.date} - ${h}${p}${dir}`;
   });
-  return `${spot.name} forecast:\n${lines.join('\n')}`;
+  return `${spot.name} Forecast\n${lines.join('\n')}`;
 }
 
 // ── Context builder (used by the LLM for intent/spot detection) ───────────────

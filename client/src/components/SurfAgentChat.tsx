@@ -407,7 +407,13 @@ export default function SurfAgentChat() {
                     : "bg-zinc-800 text-zinc-100 rounded-bl-sm"
                 } ${msg.pending ? "opacity-70" : ""}`}
               >
-                {msg.content}
+                {msg.role === "assistant"
+                  ? msg.content.split("\n").map((line, i) => (
+                      <p key={i} className={i === 0 ? "font-semibold mb-1" : "text-zinc-300"}>
+                        {line}
+                      </p>
+                    ))
+                  : msg.content}
               </div>
             </div>
           ))}
