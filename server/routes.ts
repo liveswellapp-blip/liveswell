@@ -3402,7 +3402,7 @@ ${surfDataSummary.buoys.backup ? `- Buoy ${surfDataSummary.buoys.backup.stationI
 Write 2 sentences. First sentence: describe current wave size, period, direction, and wind quality honestly — use surf community language (e.g. "clean", "choppy", "glassy", "firing", "mushy"). Second sentence: mention tide timing and, if data is available, a brief tomorrow outlook. No hype, no fluff. Just what a knowledgeable local would say.`;
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [
           {
             role: "system",
