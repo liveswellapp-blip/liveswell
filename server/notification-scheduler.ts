@@ -6,7 +6,7 @@ import { ConditionMonitor } from './condition-monitor';
 import { purgeStaleWeatherCache } from './weather-service';
 import { runPushHealthCheck } from './push-health-monitor';
 import { db } from './db';
-import { userAlerts, notificationSettings, users, locations } from '@shared/schema';
+import { userAlerts, notificationSettings, users, locations, agentConversations } from '@shared/schema';
 import { eq, and, lt, sql } from 'drizzle-orm';
 import * as cron from 'node-cron';
 
@@ -51,6 +51,17 @@ export class NotificationScheduler {
     cron.schedule('*/20 * * * *', () => {
       purgeStaleWeatherCache().catch(err =>
         console.error('Error in purgeStaleWeatherCache job:', err)
+      );
+    });
+
+    // Nightly cleanup: delete agent_conversations rows older than 24 hours.
+    // The 24-hour window is already enforced at query time (getAgentHistory),
+    // but without deletion the table grows without bound.
+    // Runs at 03:00 UTC daily and once immediately on startup to clear any backlog.
+    await this.purgeStaleAgentConversations();
+    cron.schedule('0 3 * * *', () => {
+      this.purgeStaleAgentConversations().catch(err =>
+        console.error('Error in purgeStaleAgentConversations job:', err)
       );
     });
 
@@ -187,6 +198,26 @@ export class NotificationScheduler {
       console.log(`✅ SMS channel cleanup complete (${stale.length} alert(s) updated)`);
     } catch (error) {
       console.error('Error in disableUnverifiedSmsChannels:', error);
+    }
+  }
+
+  /**
+   * Deletes agent_conversations rows older than 24 hours.
+   * The 24-hour window is already enforced at query time, but without periodic
+   * deletion the table grows without bound.
+   */
+  static async purgeStaleAgentConversations(): Promise<void> {
+    try {
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const result = await db
+        .delete(agentConversations)
+        .where(lt(agentConversations.createdAt, cutoff))
+        .returning({ id: agentConversations.id });
+      if (result.length > 0) {
+        console.log(`🧹 Purged ${result.length} stale agent conversation row(s) older than 24 hours`);
+      }
+    } catch (error) {
+      console.error('Error in purgeStaleAgentConversations:', error);
     }
   }
 
