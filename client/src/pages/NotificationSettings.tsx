@@ -475,12 +475,23 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
     }
   };
 
+  /** Convert common US phone formats to E.164 before sending to the server. */
+  const normalizePhoneNumber = (raw: string): string => {
+    const s = raw.trim();
+    if (s.startsWith("+")) return s; // already E.164 or international — pass through
+    const digits = s.replace(/\D/g, "");
+    if (digits.length === 10) return `+1${digits}`;
+    if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+    return s; // unknown format — let the server validate
+  };
+
   const handleSendCode = async () => {
-    const phone = form.phoneNumber.trim();
-    if (!phone) {
+    const raw = form.phoneNumber.trim();
+    if (!raw) {
       toast({ title: "Enter a phone number first", variant: "destructive" });
       return;
     }
+    const phone = normalizePhoneNumber(raw);
     setIsSendingCode(true);
     try {
       await apiRequest("/api/alerts/verify-phone/send", { method: "POST", body: { phoneNumber: phone } });
@@ -500,8 +511,10 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
         } catch {
           toast({ title: "Too many attempts", description: "Please wait a few minutes before requesting another code.", variant: "destructive" });
         }
+      } else if (msg.includes("503") || msg.toLowerCase().includes("unavailable")) {
+        toast({ title: "SMS service unavailable", description: "Our SMS provider is temporarily down. Please try again in a few minutes.", variant: "destructive" });
       } else {
-        toast({ title: "Couldn't send code", description: "Make sure the number is in E.164 format, e.g. +15551234567.", variant: "destructive" });
+        toast({ title: "Couldn't send code", description: "Check that your phone number is correct and try again.", variant: "destructive" });
       }
     } finally {
       setIsSendingCode(false);
@@ -514,7 +527,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
     try {
       await apiRequest("/api/alerts/verify-phone/confirm", {
         method: "POST",
-        body: { phoneNumber: form.phoneNumber.trim(), code: verifyCode.trim() },
+        body: { phoneNumber: normalizePhoneNumber(form.phoneNumber.trim()), code: verifyCode.trim() },
       });
       setPhoneVerifiedLocal(true);
       setVerifyStep("verified");

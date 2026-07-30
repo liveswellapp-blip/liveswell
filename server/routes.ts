@@ -3092,9 +3092,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!phoneNumber || typeof phoneNumber !== "string" || !phoneNumber.trim()) {
         return res.status(400).json({ message: "phoneNumber is required" });
       }
-      const { SMSService } = await import("./sms-service");
+      const { SMSService, normalizePhone } = await import("./sms-service");
 
-      const rateLimit = await SMSService.getRateLimitInfo(userId, phoneNumber.trim());
+      // Normalise to E.164 on the server as a belt-and-suspenders guard so
+      // Twilio never receives a raw "(904) 801-9154" or "904-801-9154" input.
+      const normalizedPhone = normalizePhone(phoneNumber.trim());
+
+      const rateLimit = await SMSService.getRateLimitInfo(userId, normalizedPhone);
       if (!rateLimit.allowed) {
         const waitMinutes = Math.ceil(rateLimit.waitSeconds / 60);
         return res.status(429).json({
@@ -3103,7 +3107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const ok = await SMSService.sendVerificationCode(userId, phoneNumber.trim());
+      const ok = await SMSService.sendVerificationCode(userId, normalizedPhone);
       if (!ok) return res.status(503).json({ message: "SMS service unavailable. Check that Twilio is configured." });
       res.json({ success: true });
     } catch (error) {

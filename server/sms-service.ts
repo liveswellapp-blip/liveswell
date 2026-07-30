@@ -18,8 +18,23 @@ if (!accountSid || !authToken || !twilioPhoneNumber) {
 
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
-function normalizePhone(phone: string): string {
-  return phone.replace(/\s/g, '').toLowerCase();
+/**
+ * Normalise a phone number to E.164 format.
+ * - Already-E.164 numbers (starting with +) are returned as-is.
+ * - 10-digit US numbers get "+1" prepended.
+ * - 11-digit numbers starting with "1" get "+" prepended.
+ * - Everything else is returned with only whitespace stripped so Twilio
+ *   can surface a meaningful error rather than a silent wrong-number failure.
+ */
+export function normalizePhone(phone: string): string {
+  const stripped = phone.trim();
+  if (stripped.startsWith('+')) return stripped;
+  const digits = stripped.replace(/\D/g, '');
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  // Unknown format — return digits-only with no country code so Twilio
+  // rejects it with a clear error rather than a mangled destination.
+  return stripped.replace(/\s/g, '');
 }
 
 interface SurfConditionsData {
@@ -106,9 +121,9 @@ export class SMSService {
       await client.messages.create({
         body: `Your LiveSwell verification code is: ${code}\n\nIt expires in 10 minutes.`,
         from: twilioPhoneNumber,
-        to: phoneNumber,
+        to: phone,
       });
-      console.log(`📱 Verification code sent to ${phoneNumber}`);
+      console.log(`📱 Verification code sent to ${phone}`);
       return true;
     } catch (error) {
       console.error('Error sending verification SMS:', error);
