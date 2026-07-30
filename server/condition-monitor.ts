@@ -246,7 +246,7 @@ async function dispatchConditionAlert(
   if (channels.includes('email') && alert.userEmail) {
     console.log(`✉️  Condition email → ${alert.userEmail} (${locationName}): ${triggerReason}`);
     promises.push(
-      EmailService.sendConditionAlert(alert.userEmail, locationName, triggerReason, alert.locationId)
+      EmailService.sendConditionAlert(alert.userEmail, locationName, triggerReason, alert.locationId, alert.id)
         .then(ok => { console.log(ok ? '✅ Email sent' : '❌ Email failed'); return ok; })
         .catch(() => false),
     );
@@ -331,7 +331,7 @@ async function dispatchDailyReport(alert: any): Promise<boolean> {
   if (channels.includes('email') && alert.userEmail) {
     console.log(`✉️  Daily report email → ${alert.userEmail} (${alert.locationName})`);
     promises.push(
-      EmailService.sendDailyConditions(alert.userEmail, alert.locationId)
+      EmailService.sendDailyConditions(alert.userEmail, alert.locationId, alert.id)
         .then(ok => { console.log(ok ? '✅ Email sent' : '❌ Email failed'); return ok; })
         .catch(() => false),
     );

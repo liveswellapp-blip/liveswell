@@ -97,6 +97,14 @@ export interface IStorage {
   logAlertTrigger(alertId: number, triggerReason: string, conditionSnapshot?: any): Promise<AlertTriggerLog>;
   getAlertTriggerLog(alertId: number, userId: string, limit?: number): Promise<AlertTriggerLog[]>;
   getRecentAlertTriggerLogs(userId: string, limit?: number): Promise<(AlertTriggerLog & { alertType: string; locationName: string; locationCity: string; alertLabel: string | null })[]>;
+  /**
+   * Removes 'email' from the alert's deliveryChannels for the given alert,
+   * but only if the alert belongs to a user whose email matches tokenEmail.
+   * Returns 'ok' on success, 'not_found' when the alertId doesn't exist,
+   * and 'email_mismatch' when the token email doesn't match the user's email.
+   * If 'email' was the only channel the alert is also deactivated.
+   */
+  disableEmailForAlert(alertId: number, tokenEmail: string): Promise<'ok' | 'not_found' | 'email_mismatch'>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -855,6 +863,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(alertTriggerLog.alertId, alertId))
       .orderBy(sql`${alertTriggerLog.firedAt} DESC`)
       .limit(limit);
+  }
+
+  async disableEmailForAlert(alertId: number, tokenEmail: string): Promise<'ok' | 'not_found' | 'email_mismatch'> {
+    // Join with users to verify ownership by email
+    const [row] = await db
+      .select({
+        id: userAlerts.id,
+        deliveryChannels: userAlerts.deliveryChannels,
+        userEmail: users.email,
+      })
+      .from(userAlerts)
+      .innerJoin(users, eq(users.id, userAlerts.userId))
+      .where(eq(userAlerts.id, alertId))
+      .limit(1);
+
+    if (!row) return 'not_found';
+
+    // Validate the token email against the user's actual email (case-insensitive)
+    if ((row.userEmail ?? '').toLowerCase() !== tokenEmail.toLowerCase()) {
+      return 'email_mismatch';
+    }
+
+    const remaining = (row.deliveryChannels ?? []).filter((ch: string) => ch !== 'email');
+    const nowDeactivate = remaining.length === 0;
+
+    await db
+      .update(userAlerts)
+      .set({
+        deliveryChannels: remaining,
+        ...(nowDeactivate ? { active: false } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(userAlerts.id, alertId));
+
+    return 'ok';
   }
 
   async getRecentAlertTriggerLogs(userId: string, limit: number = 20): Promise<(AlertTriggerLog & { alertType: string; locationName: string; locationCity: string; alertLabel: string | null })[]> {

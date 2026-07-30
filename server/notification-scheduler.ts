@@ -225,7 +225,7 @@ export class NotificationScheduler {
         const allActive = await storage.getAllActiveUserAlerts();
         const withEmail = allActive.find(a => a.id === firstActive.id);
         if (withEmail?.userEmail) {
-          promises.push(EmailService.sendDailyConditions(withEmail.userEmail, firstActive.locationId));
+          promises.push(EmailService.sendDailyConditions(withEmail.userEmail, firstActive.locationId, firstActive.id));
         }
       }
       if (promises.length === 0) return false;

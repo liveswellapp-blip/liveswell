@@ -3549,6 +3549,115 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     }
   });
 
+  // ── Unsubscribe endpoint ─────────────────────────────────────────────────────
+  // Two-step flow so link-prefetchers (mail clients, security scanners) cannot
+  // accidentally unsubscribe a user by fetching the link without intent.
+  //
+  //   GET  /api/unsubscribe?token=...
+  //     → Renders a confirmation page with a <form method="POST"> — no state change.
+  //
+  //   POST /api/unsubscribe  (body: application/x-www-form-urlencoded or JSON)
+  //     → Validates token + email ownership, then removes 'email' from
+  //       deliveryChannels. Also handles RFC 8058 one-click unsubscribe
+  //       (body: List-Unsubscribe=One-Click) sent by mail providers.
+
+  const UNSUB_STYLES = `margin:0;padding:40px 16px;background:#030912;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e2e8f0;text-align:center;`;
+  const UNSUB_WRAP = `max-width:480px;margin:0 auto;`;
+
+  function unsubHtml(title: string, body: string): string {
+    return `<!DOCTYPE html>\n<html>\n<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} · LiveSwell</title></head>\n<body style="${UNSUB_STYLES}">\n  <div style="${UNSUB_WRAP}">${body}\n  </div>\n</body>\n</html>`;
+  }
+
+  // GET — show confirmation page only, never mutate state
+  app.get('/api/unsubscribe', async (req, res) => {
+    const { verifyUnsubscribeToken } = await import('./unsubscribe-token');
+    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    const parsed = verifyUnsubscribeToken(token);
+
+    if (!parsed) {
+      return res.status(400).send(unsubHtml('Invalid Link', `
+    <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+    <h1 style="color:#ef4444;font-size:22px;margin-bottom:8px;">Invalid or Expired Link</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This unsubscribe link is invalid or has already been used. To manage your alerts, visit <a href="https://liveswell.app" style="color:#10b981;">liveswell.app</a>.</p>`));
+    }
+
+    // Confirmation page — form POSTs to this same endpoint
+    res.status(200).send(unsubHtml('Unsubscribe', `
+    <div style="font-size:48px;margin-bottom:16px;">📧</div>
+    <h1 style="color:#e2e8f0;font-size:22px;margin-bottom:8px;">Unsubscribe from alert emails?</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin-bottom:24px;">You'll stop receiving email notifications for this alert. SMS and push notifications won't be affected.</p>
+    <form method="POST" action="/api/unsubscribe">
+      <input type="hidden" name="token" value="${token.replace(/"/g, '&quot;')}">
+      <button type="submit" style="background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">Yes, unsubscribe me</button>
+    </form>
+    <p style="margin-top:20px;"><a href="https://liveswell.app" style="color:#64748b;font-size:13px;">← Keep receiving emails</a></p>`));
+  });
+
+  // POST — executes the unsubscribe (browser form-submit or RFC 8058 one-click)
+  app.post('/api/unsubscribe', async (req, res) => {
+    const { verifyUnsubscribeToken } = await import('./unsubscribe-token');
+
+    // Token comes from form body (browser) or query string (some one-click impls)
+    const rawToken =
+      (typeof req.body?.token === 'string' ? req.body.token : '') ||
+      (typeof req.query.token === 'string' ? req.query.token : '');
+
+    // RFC 8058 one-click: mail provider POSTs body "List-Unsubscribe=One-Click"
+    // without a token — we can't honour it without the signed token, so return 400
+    // (providers fall back to mailto: if this fails)
+    if (!rawToken) {
+      return res.status(400).json({ error: 'Missing token' });
+    }
+
+    const parsed = verifyUnsubscribeToken(rawToken);
+    if (!parsed) {
+      const isHtmlReq = req.accepts('html');
+      if (isHtmlReq) {
+        return res.status(400).send(unsubHtml('Invalid Link', `
+    <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+    <h1 style="color:#ef4444;font-size:22px;margin-bottom:8px;">Invalid or Expired Link</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This unsubscribe link is invalid. To manage your alerts, visit <a href="https://liveswell.app" style="color:#10b981;">liveswell.app</a>.</p>`));
+      }
+      return res.status(400).json({ error: 'Invalid token' });
+    }
+
+    try {
+      const outcome = await storage.disableEmailForAlert(parsed.alertId, parsed.email);
+
+      if (outcome === 'email_mismatch') {
+        console.warn(`⚠️  Unsubscribe token email mismatch for alertId=${parsed.alertId}`);
+        return res.status(403).send(unsubHtml('Invalid Link', `
+    <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+    <h1 style="color:#ef4444;font-size:22px;margin-bottom:8px;">Invalid Link</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This unsubscribe link is not valid for your account.</p>`));
+      }
+
+      if (outcome === 'not_found') {
+        // Alert already deleted — treat as already unsubscribed
+        return res.status(200).send(unsubHtml('Already Unsubscribed', `
+    <div style="font-size:48px;margin-bottom:16px;">✅</div>
+    <h1 style="color:#10b981;font-size:22px;margin-bottom:8px;">Already Unsubscribed</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">You've already been removed from this alert's email list.</p>
+    <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Back to LiveSwell</a></p>`));
+      }
+
+      console.log(`📧 Unsubscribed alertId=${parsed.alertId} email=${parsed.email} from email delivery`);
+
+      return res.status(200).send(unsubHtml('Unsubscribed', `
+    <div style="font-size:48px;margin-bottom:16px;">✅</div>
+    <h1 style="color:#10b981;font-size:22px;margin-bottom:8px;">You've been unsubscribed</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">Email delivery has been disabled for this alert. You won't receive any more emails from it.</p>
+    <p style="color:#64748b;font-size:12px;margin-top:8px;">SMS and push notifications are not affected.</p>
+    <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Manage your alerts on LiveSwell</a></p>`));
+    } catch (error) {
+      console.error('Unsubscribe error:', error);
+      return res.status(500).send(unsubHtml('Error', `
+    <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+    <h1 style="color:#ef4444;font-size:22px;margin-bottom:8px;">Something went wrong</h1>
+    <p style="color:#94a3b8;font-size:14px;">Please try again or <a href="https://liveswell.app" style="color:#10b981;">manage your alerts directly</a>.</p>`));
+    }
+  });
+
   // Add error handling middleware (should be last)
   app.use(errorTrackingMiddleware);
   
