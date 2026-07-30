@@ -1,6 +1,6 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, or, sql, ne } from "drizzle-orm";
+import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -105,6 +105,11 @@ export interface IStorage {
    * If 'email' was the only channel the alert is also deactivated.
    */
   disableEmailForAlert(alertId: number, tokenEmail: string): Promise<'ok' | 'not_found' | 'email_mismatch'>;
+
+  // Agent conversation history
+  getAgentHistory(userId: string): Promise<AgentConversation[]>;
+  addAgentMessage(userId: string, role: 'user' | 'assistant', content: string): Promise<AgentConversation>;
+  clearAgentHistory(userId: string): Promise<void>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -898,6 +903,28 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userAlerts.id, alertId));
 
     return 'ok';
+  }
+
+  // ── Agent conversation history ──────────────────────────────────────────
+  async getAgentHistory(userId: string): Promise<AgentConversation[]> {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return db
+      .select()
+      .from(agentConversations)
+      .where(and(eq(agentConversations.userId, userId), gt(agentConversations.createdAt, cutoff)))
+      .orderBy(agentConversations.createdAt);
+  }
+
+  async addAgentMessage(userId: string, role: 'user' | 'assistant', content: string): Promise<AgentConversation> {
+    const [row] = await db
+      .insert(agentConversations)
+      .values({ userId, role, content })
+      .returning();
+    return row;
+  }
+
+  async clearAgentHistory(userId: string): Promise<void> {
+    await db.delete(agentConversations).where(eq(agentConversations.userId, userId));
   }
 
   async getRecentAlertTriggerLogs(userId: string, limit: number = 20): Promise<(AlertTriggerLog & { alertType: string; locationName: string; locationCity: string; alertLabel: string | null })[]> {

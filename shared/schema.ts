@@ -144,6 +144,14 @@ export const verifiedPhones = pgTable("verified_phones", {
   verifiedAt: timestamp("verified_at").defaultNow().notNull(),
 }, (table) => [index("IDX_verified_phones_user_phone").on(table.userId, table.phone)]);
 
+export const agentConversations = pgTable("agent_conversations", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  role: text("role").notNull(), // 'user' | 'assistant'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("IDX_agent_conversations_user_id").on(table.userId)]);
+
 export const weatherCacheEntries = pgTable("weather_cache_entries", {
   cacheKey: varchar("cache_key").primaryKey(), // "lat.toFixed(3),lon.toFixed(3)"
   data: jsonb("data").notNull(),
@@ -254,3 +262,5 @@ export type InsertUserAlert = z.infer<typeof insertUserAlertSchema>;
 export type UpdateUserAlert = z.infer<typeof updateUserAlertSchema>;
 export type AlertTriggerLog = typeof alertTriggerLog.$inferSelect;
 export type InsertAlertTriggerLog = z.infer<typeof insertAlertTriggerLogSchema>;
+
+export type AgentConversation = typeof agentConversations.$inferSelect;

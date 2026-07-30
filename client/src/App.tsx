@@ -15,33 +15,38 @@ import Landing from "@/pages/landing";
 import AdminDashboard from "@/pages/admin";
 import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
+import SurfAgentChat from "@/components/SurfAgentChat";
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={SurfSpots} />
-          <Route path="/conditions" component={Home} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/notifications" component={NotificationSettings} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/monitoring" component={Monitoring} />
-        </>
-      )}
-      
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/users/:userId" component={AdminUserDetail} />
-      
-      {(isLoading || !isAuthenticated) ? (
-        <Route component={Landing} />
-      ) : (
-        <Route component={NotFound} />
-      )}
-    </Switch>
+    <>
+      <Switch>
+        {isLoading || !isAuthenticated ? (
+          <Route path="/" component={Landing} />
+        ) : (
+          <>
+            <Route path="/" component={SurfSpots} />
+            <Route path="/conditions" component={Home} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/notifications" component={NotificationSettings} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/monitoring" component={Monitoring} />
+          </>
+        )}
+        
+        <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/users/:userId" component={AdminUserDetail} />
+        
+        {(isLoading || !isAuthenticated) ? (
+          <Route component={Landing} />
+        ) : (
+          <Route component={NotFound} />
+        )}
+      </Switch>
+      {isAuthenticated && <SurfAgentChat />}
+    </>
   );
 }
 

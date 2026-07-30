@@ -3658,6 +3658,61 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     }
   });
 
+  // ── AI Surf Agent chat routes ────────────────────────────────────────────
+  app.get("/api/agent/history", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const history = await storage.getAgentHistory(userId);
+      res.json(history);
+    } catch (error) {
+      console.error("Agent history error:", error);
+      res.status(500).json({ message: "Failed to load chat history" });
+    }
+  });
+
+  app.post("/api/agent/chat", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { message } = req.body;
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ message: "message is required" });
+      }
+
+      const { runSurfAgent } = await import("./surf-agent");
+
+      // Load recent history for context
+      const history = await storage.getAgentHistory(userId);
+
+      // Save user message first
+      await storage.addAgentMessage(userId, 'user', message.trim());
+
+      // Run agent
+      const reply = await runSurfAgent(userId, message.trim(), history.map(h => ({
+        role: h.role as 'user' | 'assistant',
+        content: h.content,
+      })));
+
+      // Save assistant reply
+      const saved = await storage.addAgentMessage(userId, 'assistant', reply);
+
+      res.json({ reply, messageId: saved.id });
+    } catch (error) {
+      console.error("Agent chat error:", error);
+      res.status(500).json({ message: "Failed to get response from surf agent" });
+    }
+  });
+
+  app.delete("/api/agent/history", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.clearAgentHistory(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Agent clear history error:", error);
+      res.status(500).json({ message: "Failed to clear chat history" });
+    }
+  });
+
   // Add error handling middleware (should be last)
   app.use(errorTrackingMiddleware);
   
