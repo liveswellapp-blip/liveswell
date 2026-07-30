@@ -7,7 +7,7 @@ const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a knowledgeable and friendly surf coach and ocean conditions expert. You help surfers understand current conditions, plan sessions, and compare spots.
+const SYSTEM_PROMPT = `You are the Live Swell Agent — a knowledgeable and friendly ocean conditions expert. You help surfers understand current conditions, plan sessions, and compare spots.
 
 Your communication style:
 - Concise and direct — surfers don't want walls of text

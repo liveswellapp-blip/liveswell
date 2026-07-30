@@ -196,7 +196,7 @@ export default function SurfAgentChat() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-white leading-none">Surf Coach</p>
+              <p className="text-sm font-semibold text-white leading-none">Live Swell Agent</p>
               {freshnessLabel ? (
                 <p className={`text-xs mt-0.5 ${isStale ? "text-amber-500" : "text-zinc-500"}`}>
                   {freshnessLabel}{isStale ? " · may be outdated" : ""}
@@ -263,7 +263,7 @@ export default function SurfAgentChat() {
                 </svg>
               </div>
               <div className="text-center">
-                <p className="text-white font-medium text-sm">Hey, I'm your surf coach</p>
+                <p className="text-white font-medium text-sm">Hey, I'm the Live Swell Agent</p>
                 <p className="text-zinc-500 text-xs mt-1">Ask me about your spots, conditions, or when to paddle out</p>
               </div>
               <div className="w-full grid grid-cols-1 gap-2">
