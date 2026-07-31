@@ -365,9 +365,10 @@ export default function SurfAgentChat() {
                       const lines = msg.content.split("\n");
                       const SECTION_LABELS = new Set(["Swell", "Wind", "Tides"]);
                       const DAY_RE = /^(Tomorrow|Sun|Mon|Tue|Wed|Thu|Fri|Sat)/;
-                      // Data lines always contain " - " (e.g. "Swell - 1.3ft", "Wind - 2mph")
-                      // Spot name lines are plain text with no " - "
-                      const isDataLine = (l: string) => l.includes(" - ");
+                      // Data lines always start with a known keyword followed by " - "
+                      // Using startsWith avoids false-positives for spot names like "Folly Beach - The Washout"
+                      const DATA_PREFIXES = ["Swell - ", "Wind - ", "Tide - ", "Water Temp - "];
+                      const isDataLine = (l: string) => DATA_PREFIXES.some(p => l.startsWith(p));
                       const isSpotName = (l: string, idx: number) =>
                         idx > 0 &&
                         l !== "" &&
