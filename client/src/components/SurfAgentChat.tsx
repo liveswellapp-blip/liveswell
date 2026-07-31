@@ -361,11 +361,13 @@ export default function SurfAgentChat() {
                 } ${msg.pending ? "opacity-70" : ""}`}
               >
                 {msg.role === "assistant"
-                  ? msg.content.split("\n").map((line, i) => (
-                      <p key={i} className={i === 0 ? "font-semibold mb-1" : "text-zinc-300"}>
-                        {line}
-                      </p>
-                    ))
+                  ? msg.content.split("\n").map((line, i) => {
+                      if (i === 0) return <p key={i} className="font-semibold mb-1">{line}</p>;
+                      if (line === "") return <div key={i} className="h-2" />;
+                      if (line.startsWith("•")) return <p key={i} className="text-zinc-400 text-xs leading-snug pl-1">{line}</p>;
+                      // Day header line (e.g. "Tomorrow", "Sun, Aug 2")
+                      return <p key={i} className="text-zinc-200 font-medium mt-2 mb-0.5">{line}</p>;
+                    })
                   : msg.content}
               </div>
             </div>
