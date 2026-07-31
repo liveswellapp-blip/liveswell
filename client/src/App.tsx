@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
+import Privacy from "@/pages/privacy";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
@@ -32,6 +33,7 @@ function Router() {
             <Route path="/settings" component={Settings} />
             <Route path="/notifications" component={NotificationSettings} />
             <Route path="/profile" component={Profile} />
+            <Route path="/privacy" component={Privacy} />
             <Route path="/monitoring" component={Monitoring} />
           </>
         )}

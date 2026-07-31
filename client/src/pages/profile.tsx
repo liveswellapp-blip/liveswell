@@ -1,4 +1,4 @@
-import { Bell, LogOut, Shield, ChevronRight, Settings, Info } from "lucide-react";
+import { Bell, LogOut, Shield, ChevronRight, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -35,8 +35,7 @@ export default function Profile() {
   const ITEMS = [
     { icon: Bell,     label: "Notifications", value: "Manage alerts", color: "#fbbf24", href: "/notifications" },
     { icon: Settings, label: "Preferences",   value: "",              color: "#94a3b8", href: "/settings" },
-    { icon: Shield,   label: "Privacy",        value: "",              color: "#38bdf8", href: null },
-    { icon: Info,     label: "About",          value: "v1.0.0",        color: "#64748b", href: null },
+    { icon: Shield,   label: "Privacy",        value: "",              color: "#38bdf8", href: "/privacy" },
   ];
 
   const handleLogout = () => {
