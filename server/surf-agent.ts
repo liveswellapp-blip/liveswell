@@ -254,7 +254,7 @@ export async function runSurfAgent(
     const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
     let dayFilter: ((d: AgentForecastDay) => boolean) | null = null;
 
-    if (/\btomorrow\b/.test(msgLower)) {
+    if (/\btomorrows?\b/.test(msgLower)) {
       dayFilter = (d) => d.date === 'Tomorrow';
     } else {
       // Check for a specific day name e.g. "Wednesday"
