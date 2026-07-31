@@ -365,16 +365,39 @@ export default function SurfAgentChat() {
                       const lines = msg.content.split("\n");
                       const SECTION_LABELS = new Set(["Swell", "Wind", "Tides"]);
                       const DAY_RE = /^(Tomorrow|Sun|Mon|Tue|Wed|Thu|Fri|Sat)/;
+                      // Data lines always contain " - " (e.g. "Swell - 1.3ft", "Wind - 2mph")
+                      // Spot name lines are plain text with no " - "
+                      const isDataLine = (l: string) => l.includes(" - ");
+                      const isSpotName = (l: string, idx: number) =>
+                        idx > 0 &&
+                        l !== "" &&
+                        !SECTION_LABELS.has(l) &&
+                        !DAY_RE.test(l) &&
+                        !isDataLine(l);
+
+                      // Track whether previous non-empty line was a blank (spot separator)
+                      let prevWasBlank = false;
                       return lines.map((line, i) => {
-                        if (i === 0)
-                          return <p key={i} className="font-semibold mb-2">{line}</p>;
-                        if (line === "")
-                          return <div key={i} className="h-2" />;
-                        if (SECTION_LABELS.has(line))
-                          return <p key={i} className="font-semibold text-zinc-200 mt-1 mb-0.5">{line}</p>;
-                        if (DAY_RE.test(line))
-                          return <p key={i} className="font-semibold text-zinc-100 mt-3 pt-2 border-t border-zinc-700">{line}</p>;
-                        return <p key={i} className="text-zinc-300 leading-snug">{line}</p>;
+                        const blank = line === "";
+                        const el = (() => {
+                          if (i === 0)
+                            return <p key={i} className="font-semibold mb-2">{line}</p>;
+                          if (blank)
+                            return <div key={i} className="h-1" />;
+                          if (SECTION_LABELS.has(line))
+                            return <p key={i} className="font-semibold text-zinc-200 mt-1 mb-0.5">{line}</p>;
+                          if (DAY_RE.test(line))
+                            return <p key={i} className="font-semibold text-zinc-100 mt-3 pt-2 border-t border-zinc-700">{line}</p>;
+                          if (isSpotName(line, i)) {
+                            const cls = prevWasBlank
+                              ? "font-semibold text-zinc-100 mt-1 pt-2 border-t border-zinc-700"
+                              : "font-semibold text-zinc-100";
+                            return <p key={i} className={cls}>{line}</p>;
+                          }
+                          return <p key={i} className="text-zinc-300 leading-snug">{line}</p>;
+                        })();
+                        prevWasBlank = blank;
+                        return el;
                       });
                     })()
                   : msg.content}

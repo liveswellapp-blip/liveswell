@@ -257,7 +257,7 @@ export async function runSurfAgent(
 
   if (intent === 'conditions' || intent === 'compare') {
     if (matchedSpots.length === 0) return "No data available for the requested spot(s).";
-    return matchedSpots.map(formatConditionsLine).join('\n');
+    return matchedSpots.map(formatConditionsLine).join('\n\n');
   }
 
   if (intent === 'forecast') {
