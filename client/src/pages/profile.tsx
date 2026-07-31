@@ -43,7 +43,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
       <Header />
       <div className="px-5 pt-6 pb-6"
         style={{ background: "linear-gradient(180deg,#041a2e 0%,#030a14 100%)" }}>
