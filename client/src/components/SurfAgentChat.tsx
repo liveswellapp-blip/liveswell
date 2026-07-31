@@ -14,9 +14,9 @@ interface Message {
 
 const QUICK_PROMPTS = [
   "How are my spots looking today?",
-  "Best window this week?",
-  "Compare my spots for tomorrow",
-  "What should I wear in the water?",
+  "What's the forecast for tomorrow?",
+  "Compare my spots right now",
+  "Full forecast for all my spots",
 ];
 
 export default function SurfAgentChat() {
