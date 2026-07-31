@@ -248,17 +248,31 @@ export async function runSurfAgent(
 
   if (intent === 'forecast') {
     if (matchedSpots.length === 0) return "No forecast data available for the requested spot(s).";
-    // Fetch forecast data for matched spots — done here (after intent is known) to avoid
-    // paying the latency cost on every conditions query.
+
+    // Determine which days the user actually wants based on their message
+    const msgLower = userMessage.toLowerCase();
+    const DAY_NAMES = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+    let dayFilter: ((d: AgentForecastDay) => boolean) | null = null;
+
+    if (/\btomorrow\b/.test(msgLower)) {
+      dayFilter = (d) => d.date === 'Tomorrow';
+    } else {
+      // Check for a specific day name e.g. "Wednesday"
+      const namedDay = DAY_NAMES.find(day => msgLower.includes(day));
+      if (namedDay) {
+        dayFilter = (d) => d.date.toLowerCase().startsWith(namedDay.slice(0, 3));
+      }
+    }
+    // No dayFilter → return all 5 days (user asked for the full forecast / this week / etc.)
+
+    // Fetch forecast data for matched spots after intent is known (avoids latency on conditions queries)
     const forecastSpots = await Promise.all(
       matchedSpots.map(async (s) => {
         const loc = favoriteLocations.find(l => l.name === s.name);
         if (!loc) return { ...s, forecast: [] as AgentForecastDay[] };
         try {
-          const forecast = await fetchAgentForecast(
-            parseFloat(loc.latitude),
-            parseFloat(loc.longitude),
-          );
+          const all = await fetchAgentForecast(parseFloat(loc.latitude), parseFloat(loc.longitude));
+          const forecast = dayFilter ? all.filter(dayFilter) : all;
           return { ...s, forecast };
         } catch (err) {
           console.warn(`⚠️  Forecast fetch failed for ${s.name}:`, err);
