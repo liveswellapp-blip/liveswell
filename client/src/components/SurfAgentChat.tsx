@@ -361,13 +361,22 @@ export default function SurfAgentChat() {
                 } ${msg.pending ? "opacity-70" : ""}`}
               >
                 {msg.role === "assistant"
-                  ? msg.content.split("\n").map((line, i) => {
-                      if (i === 0) return <p key={i} className="font-semibold mb-1">{line}</p>;
-                      if (line === "") return <div key={i} className="h-2" />;
-                      if (line.startsWith("•")) return <p key={i} className="text-zinc-400 text-xs leading-snug pl-1">{line}</p>;
-                      // Day header line (e.g. "Tomorrow", "Sun, Aug 2")
-                      return <p key={i} className="text-zinc-200 font-medium mt-2 mb-0.5">{line}</p>;
-                    })
+                  ? (() => {
+                      const lines = msg.content.split("\n");
+                      const SECTION_LABELS = new Set(["Swell", "Wind", "Tides"]);
+                      const DAY_RE = /^(Tomorrow|Sun|Mon|Tue|Wed|Thu|Fri|Sat)/;
+                      return lines.map((line, i) => {
+                        if (i === 0)
+                          return <p key={i} className="font-semibold mb-2">{line}</p>;
+                        if (line === "")
+                          return <div key={i} className="h-2" />;
+                        if (SECTION_LABELS.has(line))
+                          return <p key={i} className="font-semibold text-zinc-200 mt-1 mb-0.5">{line}</p>;
+                        if (DAY_RE.test(line))
+                          return <p key={i} className="font-semibold text-zinc-100 mt-3 pt-2 border-t border-zinc-700">{line}</p>;
+                        return <p key={i} className="text-zinc-300 leading-snug">{line}</p>;
+                      });
+                    })()
                   : msg.content}
               </div>
             </div>

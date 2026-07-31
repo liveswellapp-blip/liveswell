@@ -95,22 +95,32 @@ function formatConditionsLine(spot: { name: string; conditions: any }): string {
   return lines.join('\n');
 }
 
+function formatForecastDay(d: AgentForecastDay): string {
+  const rows: string[] = [];
+  const wave = [d.waveHeight, d.wavePeriod, d.waveDirection].filter(Boolean).join(' · ');
+  if (wave) { rows.push('Swell'); rows.push(wave); rows.push(''); }
+  if (d.windSpeed) {
+    const wind = [d.windSpeed, d.windDirection].filter(Boolean).join(' · ');
+    rows.push('Wind'); rows.push(wind); rows.push('');
+  }
+  if (d.tides.length > 0) {
+    rows.push('Tides');
+    for (const t of d.tides) {
+      rows.push(`${t.type === 'High' ? 'HT' : 'LT'} ${t.time} · ${t.height}ft`);
+    }
+  }
+  return rows.join('\n').trimEnd();
+}
+
 function formatForecastLines(spot: { name: string; forecast?: AgentForecastDay[] }): string {
   if (!spot.forecast?.length) return `${spot.name}\nNo forecast available.`;
-  const sections = spot.forecast.map((d: AgentForecastDay) => {
-    const rows: string[] = [d.date]; // day header line
-    const wave = [d.waveHeight, d.wavePeriod, d.waveDirection].filter(Boolean).join(' · ');
-    if (wave) rows.push(`• ${wave}`);
-    if (d.windSpeed) rows.push(`• Wind ${d.windSpeed}${d.windDirection ? ' ' + d.windDirection : ''}`);
-    if (d.tides.length > 0) {
-      const tideStr = d.tides
-        .map(t => `${t.type === 'High' ? 'HT' : 'LT'} ${t.time} ${t.height}ft`)
-        .join(' · ');
-      rows.push(`• ${tideStr}`);
-    }
-    return rows.join('\n');
-  });
-  return `${spot.name} Forecast\n${sections.join('\n\n')}`;
+  const isSingleDay = spot.forecast.length === 1;
+  if (isSingleDay) {
+    const d = spot.forecast[0];
+    return `${spot.name} Forecast - ${d.date}\n\n${formatForecastDay(d)}`;
+  }
+  const sections = spot.forecast.map((d) => `${d.date}\n${formatForecastDay(d)}`);
+  return `${spot.name} Forecast\n\n${sections.join('\n\n')}`;
 }
 
 // ── Context builder (used by the LLM for intent/spot detection) ───────────────
