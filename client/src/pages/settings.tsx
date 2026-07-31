@@ -1,13 +1,14 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { MapPin, Globe, Shield, RefreshCw, Trash2, Download, ChevronLeft } from "lucide-react";
+import { Globe, MapPin, User, ChevronLeft } from "lucide-react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const CARD = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" };
-const SEP  = { borderColor: "rgba(255,255,255,0.06)" };
 
 function SectionLabel({ icon: Icon, color, label }: { icon: any; color: string; label: string }) {
   return (
@@ -18,23 +19,80 @@ function SectionLabel({ icon: Icon, color, label }: { icon: any; color: string; 
   );
 }
 
-function RowToggle({ label, sub, checked, onChange }: { label: string; sub: string; checked: boolean; onChange: (v: boolean) => void }) {
+function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between py-3">
-      <div>
-        <p className="text-[13px] font-semibold text-slate-200">{label}</p>
-        <p className="text-[11px] text-slate-500 mt-0.5">{sub}</p>
-      </div>
-      <Switch checked={checked} onCheckedChange={onChange} />
+    <div>
+      <p className="text-[11px] text-slate-400 mb-1.5">{label}</p>
+      {children}
     </div>
   );
 }
 
+const INPUT = "w-full h-9 rounded-xl px-3 text-[13px] text-slate-200 outline-none focus:ring-1 focus:ring-emerald-500/50 transition-shadow";
+const INPUT_STYLE = { background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" };
+
 export default function Settings() {
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [units, setUnits] = useState("imperial");
-  const [language, setLanguage] = useState("en");
+  const { user } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Profile fields
+  const [firstName, setFirstName] = useState((user as any)?.firstName || "");
+  const [lastName,  setLastName]  = useState((user as any)?.lastName  || "");
+  const [email,     setEmail]     = useState((user as any)?.email     || "");
+
+  // Prefs from /api/profile
+  const [units,    setUnits]    = useState("imperial");
+  const [language, setLanguage] = useState("en");
+
+  const { data: profile } = useQuery<{ units?: string; language?: string }>({
+    queryKey: ["/api/profile"],
+    queryFn: async () => {
+      const r = await fetch("/api/profile");
+      if (!r.ok) throw new Error("Failed");
+      return r.json();
+    },
+  });
+
+  useEffect(() => {
+    if (profile?.units)    setUnits(profile.units);
+    if (profile?.language) setLanguage(profile.language);
+  }, [profile]);
+
+  const userMutation = useMutation({
+    mutationFn: async () => {
+      const r = await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, email }),
+      });
+      if (!r.ok) throw new Error((await r.json()).message || "Failed");
+    },
+  });
+
+  const prefsMutation = useMutation({
+    mutationFn: async () => {
+      const r = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ units, language }),
+      });
+      if (!r.ok) throw new Error((await r.json()).message || "Failed");
+    },
+  });
+
+  const handleSave = async () => {
+    try {
+      await Promise.all([userMutation.mutateAsync(), prefsMutation.mutateAsync()]);
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      toast({ title: "Preferences saved", description: "Your profile has been updated." });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const saving = userMutation.isPending || prefsMutation.isPending;
 
   return (
     <div className="min-h-screen flex flex-col pb-6" style={{ background: "#030a14" }}>
@@ -63,12 +121,48 @@ export default function Settings() {
 
       <main className="flex-1 px-4 pt-4 max-w-2xl mx-auto w-full space-y-4">
 
+        {/* Profile */}
+        <div className="rounded-2xl p-4" style={CARD}>
+          <SectionLabel icon={User} color="#34d399" label="Profile" />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <FieldRow label="First Name">
+                <input
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  placeholder="First name"
+                />
+              </FieldRow>
+              <FieldRow label="Last Name">
+                <input
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  placeholder="Last name"
+                />
+              </FieldRow>
+            </div>
+            <FieldRow label="Email">
+              <input
+                className={INPUT}
+                style={INPUT_STYLE}
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+              />
+            </FieldRow>
+          </div>
+        </div>
+
         {/* Location & Units */}
         <div className="rounded-2xl p-4" style={CARD}>
-          <SectionLabel icon={MapPin} color="#34d399" label="Location & Units" />
+          <SectionLabel icon={MapPin} color="#22d3ee" label="Units & Language" />
           <div className="space-y-3">
-            <div>
-              <p className="text-[11px] text-slate-400 mb-1.5">Measurement Units</p>
+            <FieldRow label="Measurement Units">
               <Select value={units} onValueChange={setUnits}>
                 <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl"
                   style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -79,9 +173,8 @@ export default function Settings() {
                   <SelectItem value="metric">Metric (m, km/h, °C)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-400 mb-1.5">Language</p>
+            </FieldRow>
+            <FieldRow label="Language">
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger className="h-9 text-[13px] text-slate-200 rounded-xl"
                   style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -94,48 +187,18 @@ export default function Settings() {
                   <SelectItem value="pt">Portuguese</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-        </div>
-
-        {/* Data & Refresh */}
-        <div className="rounded-2xl px-4 pt-4 pb-1" style={CARD}>
-          <SectionLabel icon={RefreshCw} color="#22d3ee" label="Data & Refresh" />
-          <div className="divide-y" style={SEP}>
-            <RowToggle
-              label="Auto-refresh Data"
-              sub="Automatically update conditions every 30 seconds"
-              checked={autoRefresh}
-              onChange={setAutoRefresh}
-            />
-          </div>
-        </div>
-
-        {/* Privacy & Security */}
-        <div className="rounded-2xl p-4" style={CARD}>
-          <SectionLabel icon={Shield} color="#38bdf8" label="Privacy & Security" />
-          <div className="space-y-2">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-white/5"
-              style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
-              <Trash2 size={14} className="text-slate-500" />
-              <span className="text-[13px] text-slate-300">Clear Cache & Data</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors hover:bg-white/5"
-              style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
-              <Download size={14} className="text-slate-500" />
-              <span className="text-[13px] text-slate-300">Export Favorites</span>
-            </button>
-          </div>
-          <div className="mt-4 pt-3 flex items-center justify-between" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <span className="text-[11px] text-slate-600">App Version</span>
-            <span className="text-[11px] text-slate-500">LiveSwell v1.0.0</span>
+            </FieldRow>
           </div>
         </div>
 
         {/* Save */}
-        <button className="w-full h-11 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
-          style={{ background: "linear-gradient(135deg,#059669,#0891b2)" }}>
-          Save Changes
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full h-11 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          style={{ background: "linear-gradient(135deg,#059669,#0891b2)" }}
+        >
+          {saving ? "Saving…" : "Save Changes"}
         </button>
 
       </main>

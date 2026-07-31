@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { runSurfAgent } from "./surf-agent";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { users } from "@shared/schema";
 import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema, insertUserSchema, updateUserProfileSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
@@ -2856,6 +2859,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Profile Routes
+  // Update current user's name / email on the users table
+  app.put("/api/user", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, email } = req.body as {
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+      };
+
+      const updates: Record<string, string> = {};
+      if (typeof firstName === "string") updates.firstName = firstName.trim();
+      if (typeof lastName  === "string") updates.lastName  = lastName.trim();
+      if (typeof email     === "string") updates.email     = email.trim().toLowerCase();
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ message: "No fields to update" });
+      }
+
+      const [updated] = await db
+        .update(users)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      res.json({ firstName: updated.firstName, lastName: updated.lastName, email: updated.email });
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   app.get("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
