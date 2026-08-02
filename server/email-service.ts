@@ -165,6 +165,30 @@ export class EmailService {
 
       const subject = `🌊 ${location.name} Surf Report — ${now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}`;
 
+      // Build unsubscribe URL + headers before constructing HTML so the footer
+      // is injected directly — avoids a brittle post-hoc string replacement.
+      const unsubscribeUrl = alertId
+        ? `${APP_BASE_URL}/api/unsubscribe?token=${createUnsubscribeToken(alertId, toEmail)}`
+        : null;
+
+      const extraHeaders: Record<string, string> = {};
+      if (unsubscribeUrl) {
+        extraHeaders['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
+        extraHeaders['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+      }
+
+      const footerTextLine = unsubscribeUrl
+        ? `LiveSwell · Manage alerts at liveswell.app\nUnsubscribe: ${unsubscribeUrl}`
+        : `LiveSwell · Manage alerts at liveswell.app`;
+
+      const footerHtml = `<div style="text-align:center;font-size:11px;color:#334155;">
+        LiveSwell · <a href="${APP_BASE_URL}" style="color:#10b981;text-decoration:none;">Manage your alerts</a>${
+          unsubscribeUrl
+            ? ` · <a href="${unsubscribeUrl}" style="color:#64748b;text-decoration:underline;">Unsubscribe</a>`
+            : ''
+        }
+      </div>`;
+
       const aiBlock = aiSentence ? `\n${aiSentence}\n` : '';
 
       const text = `🌊 ${location.name} Surf Report${aiBlock}
@@ -199,7 +223,7 @@ Sunset:  ${weatherData.sunset}
 UV Index: ${uvIndex} (${uvDesc})
 
 —
-LiveSwell · Manage alerts at liveswell.app`;
+${footerTextLine}`;
 
       const html = `<!DOCTYPE html>
 <html>
@@ -254,51 +278,18 @@ LiveSwell · Manage alerts at liveswell.app`;
           <span>UV ${uvIndex} (${uvDesc})</span>
         </div>
       </div>
-      <div style="text-align:center;font-size:11px;color:#334155;">
-        LiveSwell · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">Manage your alerts</a>
-      </div>
+      ${footerHtml}
     </td></tr>
   </table>
 </body>
 </html>`;
 
-      // Build unsubscribe URL when an alertId is provided
-      const unsubscribeUrl = alertId
-        ? `${APP_BASE_URL}/api/unsubscribe?token=${createUnsubscribeToken(alertId, toEmail)}`
-        : null;
-
-      const footerText = unsubscribeUrl
-        ? `LiveSwell · Manage alerts at liveswell.app\nUnsubscribe: ${unsubscribeUrl}`
-        : `LiveSwell · Manage alerts at liveswell.app`;
-
-      const footerHtml = `<div style="text-align:center;font-size:11px;color:#334155;">
-        LiveSwell · <a href="${APP_BASE_URL}" style="color:#10b981;text-decoration:none;">Manage your alerts</a>${
-          unsubscribeUrl
-            ? ` · <a href="${unsubscribeUrl}" style="color:#64748b;text-decoration:underline;">Unsubscribe</a>`
-            : ''
-        }
-      </div>`;
-
-      const extraHeaders: Record<string, string> = {};
-      if (unsubscribeUrl) {
-        extraHeaders['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
-        extraHeaders['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
-      }
-
-      const finalText = text.replace('LiveSwell · Manage alerts at liveswell.app', footerText);
-      const finalHtml = unsubscribeUrl
-        ? html.replace(
-            '      <div style="text-align:center;font-size:11px;color:#334155;">\n        LiveSwell · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">Manage your alerts</a>\n      </div>',
-            footerHtml,
-          )
-        : html;
-
       const result = await sendEmail({
         from: FROM_EMAIL,
         to: toEmail,
         subject,
-        text: finalText,
-        html: finalHtml,
+        text,
+        html,
         ...(Object.keys(extraHeaders).length ? { headers: extraHeaders } : {}),
       });
 
@@ -436,6 +427,30 @@ Tide:   ${weatherData.tideStatus ?? 'N/A'}${rating ? `\nSession: ${rating.emoji}
 `
         : '';
 
+      // Build unsubscribe URL + headers before constructing HTML so the footer
+      // is injected directly — avoids a brittle post-hoc string replacement.
+      const unsubscribeUrl = alertId
+        ? `${APP_BASE_URL}/api/unsubscribe?token=${createUnsubscribeToken(alertId, toEmail)}`
+        : null;
+
+      const extraHeaders: Record<string, string> = {};
+      if (unsubscribeUrl) {
+        extraHeaders['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
+        extraHeaders['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+      }
+
+      const footerTextLine = unsubscribeUrl
+        ? `LiveSwell · Manage alerts at liveswell.app\nUnsubscribe: ${unsubscribeUrl}`
+        : `LiveSwell · Manage alerts at liveswell.app`;
+
+      const footerHtml = `<div style="text-align:center;font-size:11px;color:#334155;">
+        LiveSwell · <a href="${APP_BASE_URL}" style="color:#10b981;text-decoration:none;">Manage your alerts</a>${
+          unsubscribeUrl
+            ? ` · <a href="${unsubscribeUrl}" style="color:#64748b;text-decoration:underline;">Unsubscribe</a>`
+            : ''
+        }
+      </div>`;
+
       const text = `🌊 LiveSwell Condition Alert
 
 ${triggerReason} at ${locationName}
@@ -444,7 +459,7 @@ ${conditionsText}
 Open the app to see the full forecast.
 
 —
-LiveSwell · Manage alerts at liveswell.app`;
+${footerTextLine}`;
 
       const conditionsHtml = weatherData ? `
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
@@ -488,51 +503,18 @@ LiveSwell · Manage alerts at liveswell.app`;
         ${conditionsHtml}
         <a href="https://liveswell.app" style="display:block;text-align:center;background:linear-gradient(135deg,#059669,#10b981);color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-size:13px;font-weight:700;">View Full Forecast →</a>
       </div>
-      <div style="text-align:center;font-size:11px;color:#334155;">
-        LiveSwell · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">Manage your alerts</a>
-      </div>
+      ${footerHtml}
     </td></tr>
   </table>
 </body>
 </html>`;
 
-      // Build unsubscribe URL when an alertId is provided
-      const unsubscribeUrl = alertId
-        ? `${APP_BASE_URL}/api/unsubscribe?token=${createUnsubscribeToken(alertId, toEmail)}`
-        : null;
-
-      const footerHtml = `<div style="text-align:center;font-size:11px;color:#334155;">
-        LiveSwell · <a href="${APP_BASE_URL}" style="color:#10b981;text-decoration:none;">Manage your alerts</a>${
-          unsubscribeUrl
-            ? ` · <a href="${unsubscribeUrl}" style="color:#64748b;text-decoration:underline;">Unsubscribe</a>`
-            : ''
-        }
-      </div>`;
-
-      const extraHeaders: Record<string, string> = {};
-      if (unsubscribeUrl) {
-        extraHeaders['List-Unsubscribe'] = `<${unsubscribeUrl}>`;
-        extraHeaders['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
-      }
-
-      const footerText = unsubscribeUrl
-        ? `LiveSwell · Manage alerts at liveswell.app\nUnsubscribe: ${unsubscribeUrl}`
-        : `LiveSwell · Manage alerts at liveswell.app`;
-
-      const finalText = text.replace('LiveSwell · Manage alerts at liveswell.app', footerText);
-      const finalHtml = unsubscribeUrl
-        ? html.replace(
-            '      <div style="text-align:center;font-size:11px;color:#334155;">\n        LiveSwell · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">Manage your alerts</a>\n      </div>',
-            footerHtml,
-          )
-        : html;
-
       const result = await sendEmail({
         from: FROM_EMAIL,
         to: toEmail,
         subject,
-        text: finalText,
-        html: finalHtml,
+        text,
+        html,
         ...(Object.keys(extraHeaders).length ? { headers: extraHeaders } : {}),
       });
 

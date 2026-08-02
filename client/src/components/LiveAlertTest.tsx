@@ -93,6 +93,7 @@ export default function LiveAlertTest() {
   const [toPhone, setToPhone] = useState("");
   const [toEmail, setToEmail] = useState("");
   const [locationId, setLocationId] = useState<string>("");
+  const [alertId, setAlertId] = useState<string>("");
 
   // Fetch surf spots for the dropdown
   const { data: spotsData, isLoading: spotsLoading } = useQuery<SurfSpotsResponse>({
@@ -114,6 +115,7 @@ export default function LiveAlertTest() {
       };
       if (channel === "sms" || channel === "both") body.toPhone = toPhone;
       if (channel === "email" || channel === "both") body.toEmail = toEmail;
+      if (alertId.trim()) body.alertId = parseInt(alertId, 10);
 
       const res = await fetch("/api/admin/test-alert", {
         method: "POST",
@@ -232,6 +234,25 @@ export default function LiveAlertTest() {
                 onChange={(e) => setToEmail(e.target.value)}
                 required={needsEmail}
                 data-testid="input-test-email"
+              />
+            </div>
+          )}
+
+          {/* Alert ID — optional, enables unsubscribe link in test email */}
+          {needsEmail && (
+            <div className="space-y-1.5">
+              <Label htmlFor="test-alert-id">
+                Alert ID{" "}
+                <span className="text-muted-foreground text-xs">(optional — adds unsubscribe link to the email)</span>
+              </Label>
+              <Input
+                id="test-alert-id"
+                type="number"
+                min={1}
+                placeholder="e.g. 42"
+                value={alertId}
+                onChange={(e) => setAlertId(e.target.value)}
+                data-testid="input-test-alert-id"
               />
             </div>
           )}

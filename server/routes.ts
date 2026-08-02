@@ -364,12 +364,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         toPhone,          // E.164 phone number for SMS
         toEmail,          // email address for email
         locationId,       // numeric location ID to fetch conditions for
+        alertId,          // optional: real alert ID — includes unsubscribe link in test email
       } = req.body;
 
       const locId = parseInt(locationId, 10);
       if (!locId || isNaN(locId)) {
         return res.status(400).json({ message: "locationId is required" });
       }
+
+      const parsedAlertId = alertId ? parseInt(alertId, 10) : undefined;
 
       const results: Record<string, boolean> = {};
 
@@ -379,8 +382,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if ((channel === 'email' || channel === 'both') && toEmail) {
-        console.log(`🔧 Admin test email → ${toEmail} (locationId ${locId})`);
-        results.email = await EmailService.sendDailyConditions(toEmail, locId);
+        const logExtra = parsedAlertId ? ` with unsubscribe link (alertId ${parsedAlertId})` : ' (no unsubscribe link — alertId not provided)';
+        console.log(`🔧 Admin test email → ${toEmail} (locationId ${locId})${logExtra}`);
+        results.email = await EmailService.sendDailyConditions(toEmail, locId, parsedAlertId);
       }
 
       if (Object.keys(results).length === 0) {
