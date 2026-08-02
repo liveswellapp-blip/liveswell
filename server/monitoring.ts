@@ -4,6 +4,46 @@
  */
 
 import { Request, Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// ---------------------------------------------------------------------------
+// Persist lastReset across server restarts
+// ---------------------------------------------------------------------------
+const METRICS_STATE_DIR = path.resolve('.');
+const METRICS_STATE_FILE = path.join(METRICS_STATE_DIR, '.metrics-state.json');
+
+function lastMidnightUTC(): string {
+  const now = new Date();
+  const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return midnight.toISOString();
+}
+
+function loadPersistedLastReset(): string {
+  try {
+    if (fs.existsSync(METRICS_STATE_FILE)) {
+      const raw = fs.readFileSync(METRICS_STATE_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.lastReset === 'string') {
+        console.log(`[monitoring] Loaded persisted lastReset: ${parsed.lastReset}`);
+        return parsed.lastReset;
+      }
+    }
+  } catch (err) {
+    console.warn('[monitoring] Could not read metrics state file, using last midnight UTC:', err);
+  }
+  const fallback = lastMidnightUTC();
+  console.log(`[monitoring] No persisted lastReset found, defaulting to last midnight UTC: ${fallback}`);
+  return fallback;
+}
+
+function saveLastReset(iso: string): void {
+  try {
+    fs.writeFileSync(METRICS_STATE_FILE, JSON.stringify({ lastReset: iso }), 'utf8');
+  } catch (err) {
+    console.warn('[monitoring] Could not persist lastReset:', err);
+  }
+}
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -72,7 +112,7 @@ let metrics: ApiMetrics = {
   openweather: { requestsToday: 0, dailyLimit: 1000, remainingCalls: 1000 },
   noaa: { requestsToday: 0, failedRequests: 0, averageResponseTime: 0, lastRequestAt: undefined, lastSuccessAt: undefined },
   pushNotifications: { sentToday: 0, failedToday: 0, cleanedUpToday: 0 },
-  lastReset: new Date().toISOString()
+  lastReset: loadPersistedLastReset()
 };
 
 let responseTimeHistory: number[] = [];
@@ -392,6 +432,7 @@ export function resetDailyMetrics() {
   metrics.pushNotifications.failedToday = 0;
   metrics.pushNotifications.cleanedUpToday = 0;
   metrics.lastReset = new Date().toISOString();
+  saveLastReset(metrics.lastReset);
   
   console.log('Daily metrics reset completed');
 }
