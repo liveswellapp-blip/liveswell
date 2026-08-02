@@ -475,6 +475,19 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
     }
   };
 
+  const handlePhoneBlur = () => {
+    const normalized = normalizePhoneNumber(form.phoneNumber);
+    if (normalized !== form.phoneNumber) {
+      patch("phoneNumber", normalized);
+      if (normalized !== prevPhone.current) {
+        prevPhone.current = normalized;
+        setPhoneVerifiedLocal(false);
+        setVerifyStep("idle");
+        setVerifyCode("");
+      }
+    }
+  };
+
   /** Convert common US phone formats to E.164 before sending to the server. */
   const normalizePhoneNumber = (raw: string): string => {
     const s = raw.trim();
@@ -953,6 +966,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
                           placeholder="+15551234567"
                           value={form.phoneNumber}
                           onChange={e => handlePhoneChange(e.target.value)}
+                          onBlur={handlePhoneBlur}
                           type="tel"
                         />
                         <button
