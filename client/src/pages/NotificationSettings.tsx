@@ -57,6 +57,8 @@ interface UserAlert {
   cooldownHours: number;
   /** True when email was removed via the unsubscribe link (not intentionally disabled). */
   emailUnsubscribed?: boolean;
+  /** True when SMS was removed because the user replied STOP to a text. */
+  smsOptedOut?: boolean;
   createdAt: string;
 }
 
@@ -425,6 +427,13 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
               style={{ background: "rgba(100,116,139,0.1)", border: "1px solid rgba(100,116,139,0.25)" }}>
               <Mail size={10} className="text-slate-400 shrink-0" />
               <span className="text-[10px] text-slate-400">Email paused — unsubscribed. Edit alert to re-enable.</span>
+            </div>
+          )}
+          {!!alert.smsOptedOut && (
+            <div className="flex items-center gap-1.5 ml-3.5 mt-1 px-2 py-1 rounded-lg"
+              style={{ background: "rgba(20,184,166,0.07)", border: "1px solid rgba(20,184,166,0.22)" }}>
+              <MessageSquare size={10} className="text-teal-400 shrink-0" />
+              <span className="text-[10px] text-teal-400">SMS paused — you replied STOP. Use the banner above to re-enable.</span>
             </div>
           )}
         </div>
@@ -1128,6 +1137,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
 const LS_KEY = "liveswell_dismissed_verification_ids";
 const LS_KEY_SMS_REMOVED = "liveswell_dismissed_sms_removed_ids";
 const LS_KEY_EMAIL_UNSUB = "liveswell_dismissed_email_unsub_ids";
+const LS_KEY_SMS_OPT_OUT = "liveswell_dismissed_sms_opt_out";
 
 function loadDismissedIds(): Set<number> {
   try {
@@ -1177,6 +1187,20 @@ function saveDismissedEmailUnsubIds(ids: Set<number>) {
   } catch {}
 }
 
+function loadDismissedSmsOptOutBanner(): boolean {
+  try {
+    return localStorage.getItem(LS_KEY_SMS_OPT_OUT) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function saveDismissedSmsOptOutBanner(dismissed: boolean) {
+  try {
+    localStorage.setItem(LS_KEY_SMS_OPT_OUT, dismissed ? "true" : "false");
+  } catch {}
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { toast } = useToast();
@@ -1187,6 +1211,7 @@ export default function NotificationSettings() {
   const [dismissedVerificationIds, setDismissedVerificationIds] = useState<Set<number>>(loadDismissedIds);
   const [dismissedSmsRemovedIds, setDismissedSmsRemovedIds] = useState<Set<number>>(loadDismissedSmsRemovedIds);
   const [dismissedEmailUnsubIds, setDismissedEmailUnsubIds] = useState<Set<number>>(loadDismissedEmailUnsubIds);
+  const [dismissedSmsOptOutBanner, setDismissedSmsOptOutBanner] = useState<boolean>(loadDismissedSmsOptOutBanner);
 
   const { data: alerts = [], isLoading } = useQuery<UserAlert[]>({
     queryKey: ["/api/user-alerts"],
@@ -1258,6 +1283,20 @@ export default function NotificationSettings() {
     cooldownHours: editAlert.cooldownHours ?? 4,
   } : undefined;
 
+  const reenableSmsMutation = useMutation({
+    mutationFn: () => apiRequest("/api/user-alerts/reenable-sms", { method: "POST" }),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user-alerts"] });
+      setDismissedSmsOptOutBanner(false);
+      saveDismissedSmsOptOutBanner(false);
+      toast({
+        title: "SMS re-enabled",
+        description: data?.message ?? "SMS alerts have been restored.",
+      });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to re-enable SMS alerts.", variant: "destructive" }),
+  });
+
   const conditionAlerts = alerts.filter(a => a.alertType !== "daily_report");
   const dailyAlerts = alerts.filter(a => a.alertType === "daily_report");
   const unverifiedActiveAlerts = alerts.filter(
@@ -1266,6 +1305,16 @@ export default function NotificationSettings() {
   const smsRemovedAlerts = alerts.filter(
     a => !a.deliveryChannels?.includes("sms") && !!a.phoneNumber && !a.phoneVerified
   );
+
+  const smsOptedOutAlerts = alerts.filter(a => !!a.smsOptedOut);
+
+  const showSmsOptOutBanner =
+    smsOptedOutAlerts.length > 0 && !dismissedSmsOptOutBanner;
+
+  const handleDismissSmsOptOutBanner = () => {
+    setDismissedSmsOptOutBanner(true);
+    saveDismissedSmsOptOutBanner(true);
+  };
 
   const emailUnsubscribedAlerts = alerts.filter(
     a => !!a.emailUnsubscribed && !a.deliveryChannels?.includes("email")
@@ -1348,6 +1397,36 @@ export default function NotificationSettings() {
       </div>
 
       <div className="flex-1 px-5 max-w-2xl mx-auto w-full space-y-6">
+        {showSmsOptOutBanner && (
+          <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
+            style={{ background: "rgba(20,184,166,0.07)", border: "1px solid rgba(20,184,166,0.28)" }}>
+            <MessageSquare size={16} className="text-teal-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-teal-300">
+                {smsOptedOutAlerts.length === 1
+                  ? "SMS paused on 1 alert — you replied STOP"
+                  : `SMS paused on ${smsOptedOutAlerts.length} alerts — you replied STOP`}
+              </p>
+              <p className="text-[12px] text-teal-500/80 mt-0.5">
+                Your alerts are still active but won't send texts. Tap below to restore SMS delivery.
+              </p>
+              <button
+                onClick={() => reenableSmsMutation.mutate()}
+                disabled={reenableSmsMutation.isPending}
+                className="mt-2 text-[12px] font-semibold text-teal-400 hover:text-teal-300 transition-colors underline underline-offset-2 disabled:opacity-50"
+              >
+                {reenableSmsMutation.isPending ? "Restoring…" : "Re-enable SMS →"}
+              </button>
+            </div>
+            <button
+              onClick={handleDismissSmsOptOutBanner}
+              className="shrink-0 p-1 rounded-lg text-teal-500 hover:text-teal-300 hover:bg-teal-400/10 transition-colors"
+              title="Dismiss"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
         {showEmailUnsubscribedBanner && (
           <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
             style={{ background: "rgba(14,165,233,0.07)", border: "1px solid rgba(14,165,233,0.25)" }}>

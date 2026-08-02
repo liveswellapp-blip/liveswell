@@ -106,6 +106,13 @@ export interface IStorage {
    */
   disableEmailForAlert(alertId: number, tokenEmail: string): Promise<'ok' | 'not_found' | 'email_mismatch'>;
 
+  /**
+   * Re-adds 'sms' to the deliveryChannels of all alerts for the given user
+   * that have smsOptedOut=true, and clears the smsOptedOut flag.
+   * Returns the number of alerts that were re-enabled.
+   */
+  reenableSmsForUser(userId: string): Promise<number>;
+
   // Agent conversation history
   getAgentHistory(userId: string): Promise<AgentConversation[]>;
   addAgentMessage(userId: string, role: 'user' | 'assistant', content: string): Promise<AgentConversation>;
@@ -656,6 +663,7 @@ export class DatabaseStorage implements IStorage {
         lastFiredAt: userAlerts.lastFiredAt,
         cooldownHours: userAlerts.cooldownHours,
         emailUnsubscribed: userAlerts.emailUnsubscribed,
+        smsOptedOut: userAlerts.smsOptedOut,
         createdAt: userAlerts.createdAt,
         updatedAt: userAlerts.updatedAt,
         locationName: locations.name,
@@ -683,9 +691,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserAlert(id: number, userId: string, updates: UpdateUserAlert): Promise<UserAlert | undefined> {
-    // If the user is re-adding email to deliveryChannels, clear the unsubscribed flag.
+    // Auto-clear unsubscribed flags when the corresponding channel is re-added.
     const hasEmail = Array.isArray(updates.deliveryChannels) && updates.deliveryChannels.includes('email');
-    const extraUpdates = hasEmail ? { emailUnsubscribed: false } : {};
+    const hasSms   = Array.isArray(updates.deliveryChannels) && updates.deliveryChannels.includes('sms');
+    const extraUpdates = {
+      ...(hasEmail ? { emailUnsubscribed: false } : {}),
+      ...(hasSms   ? { smsOptedOut: false }       : {}),
+    };
     const [result] = await db
       .update(userAlerts)
       .set({ ...updates, ...extraUpdates, updatedAt: new Date() })
@@ -915,6 +927,36 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userAlerts.id, alertId));
 
     return 'ok';
+  }
+
+  async reenableSmsForUser(userId: string): Promise<number> {
+    // Find all alerts for this user that were opted out of SMS via STOP
+    const optedOutAlerts = await db
+      .select()
+      .from(userAlerts)
+      .where(and(eq(userAlerts.userId, userId), eq(userAlerts.smsOptedOut, true)));
+
+    let count = 0;
+    for (const alert of optedOutAlerts) {
+      const channels = alert.deliveryChannels ?? [];
+      // Re-add sms if not already present
+      const updated = channels.includes("sms") ? channels : [...channels, "sms"];
+      // Only reactivate the alert if it was deactivated solely because SMS was
+      // the only channel (i.e. it became inactive as a direct consequence of
+      // the STOP opt-out). If the user explicitly paused it before, leave it off.
+      const wasDeactivatedByStop = !alert.active && channels.length === 0;
+      await db
+        .update(userAlerts)
+        .set({
+          deliveryChannels: updated,
+          smsOptedOut: false,
+          ...(wasDeactivatedByStop ? { active: true } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(userAlerts.id, alert.id));
+      count++;
+    }
+    return count;
   }
 
   // ── Agent conversation history ──────────────────────────────────────────

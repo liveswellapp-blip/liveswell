@@ -3228,6 +3228,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── Re-enable SMS for alerts opted out via STOP reply ───────────────────
+  app.post("/api/user-alerts/reenable-sms", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const count = await storage.reenableSmsForUser(userId);
+      if (count === 0) {
+        return res.json({ count: 0, message: "No SMS opt-out alerts found to re-enable." });
+      }
+      console.log(`📱 Re-enabled SMS for ${count} alert(s) for user ${userId}`);
+      res.json({ count, message: `SMS re-enabled on ${count} alert${count !== 1 ? "s" : ""}.` });
+    } catch (error) {
+      console.error("Error re-enabling SMS:", error);
+      res.status(500).json({ message: "Failed to re-enable SMS alerts." });
+    }
+  });
+
   // Helper function to determine wind type based on coastline orientation
   const getWindType = (lat: number, lon: number, windDir: string): string => {
     const dir = windDir.toUpperCase();

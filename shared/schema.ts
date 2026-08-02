@@ -109,6 +109,9 @@ export const userAlerts = pgTable("user_alerts", {
   // Set to true when email is removed via the unsubscribe link so the UI can
   // distinguish "never had email" from "accidentally unsubscribed".
   emailUnsubscribed: boolean("email_unsubscribed").notNull().default(false),
+  // Set to true when SMS is removed because the user replied STOP to a text message.
+  // Lets the UI distinguish "opted out via STOP" from "SMS was never enabled".
+  smsOptedOut: boolean("sms_opted_out").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

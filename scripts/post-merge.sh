@@ -26,6 +26,12 @@ pool.query(\`
 
   -- Phone verification column (Task #11)
   ALTER TABLE user_alerts ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE;
+
+  -- Email unsubscribe flag
+  ALTER TABLE user_alerts ADD COLUMN IF NOT EXISTS email_unsubscribed BOOLEAN NOT NULL DEFAULT FALSE;
+
+  -- SMS opt-out flag: set when user replies STOP to a text message
+  ALTER TABLE user_alerts ADD COLUMN IF NOT EXISTS sms_opted_out BOOLEAN NOT NULL DEFAULT FALSE;
 \`).then(() => { console.log('Migrations applied'); pool.end(); })
   .catch(e => { console.error(e); process.exit(1); });
 "

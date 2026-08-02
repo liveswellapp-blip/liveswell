@@ -139,7 +139,10 @@ async function lookupUserByPhone(phone: string): Promise<string | null> {
 // Handle STOP: deactivate all SMS alert channels for this user
 // ---------------------------------------------------------------------------
 async function handleStop(userId: string): Promise<void> {
-  // Pull all active alerts for the user that include 'sms' as a channel
+  // Only process alerts that are currently active — this preserves the invariant
+  // that smsOptedOut=true is only ever set on alerts that were active at STOP
+  // time, so re-enable can safely reactivate alerts that were deactivated solely
+  // because SMS was their only channel.
   const alerts = await storage.getUserAlerts(userId);
   for (const alert of alerts) {
     if (!alert.active) continue;
@@ -150,6 +153,8 @@ async function handleStop(userId: string): Promise<void> {
     await storage.updateUserAlert(alert.id, userId, {
       deliveryChannels: remaining,
       active: remaining.length > 0 ? alert.active : false,
+      // Mark so the UI can offer a one-click re-enable
+      smsOptedOut: true,
     });
   }
 }
