@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
@@ -110,6 +110,13 @@ export interface IStorage {
   getAgentHistory(userId: string): Promise<AgentConversation[]>;
   addAgentMessage(userId: string, role: 'user' | 'assistant', content: string): Promise<AgentConversation>;
   clearAgentHistory(userId: string): Promise<void>;
+
+  /**
+   * Checks whether the given user/phone is within the inbound SMS rate limit
+   * (10 requests per 10 minutes). If within the limit, records the request and
+   * returns true. If over the limit, returns false without inserting.
+   */
+  checkAndRecordInboundSmsRateLimit(userId: string, phone: string): Promise<boolean>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -969,6 +976,54 @@ export class DatabaseStorage implements IStorage {
       .where(eq(verifiedPhonesTable.phone, phone))
       .limit(1);
     return row?.userId ?? null;
+  }
+
+  // ── Inbound SMS rate limiting ────────────────────────────────────────────
+  /**
+   * Atomically checks and records an inbound SMS request for rate-limiting.
+   *
+   * Uses a per-(userId, phone) PostgreSQL advisory transaction lock so that
+   * concurrent webhook calls are serialized and cannot both read count=9 and
+   * both proceed past the limit. The 'inbound' limitType keeps these rows
+   * separate from outbound verification rows so neither domain cross-throttles
+   * the other.
+   *
+   * Returns true if the request is within the limit (10 req / 10 min) and the
+   * attempt was recorded. Returns false if the limit has been reached.
+   */
+  async checkAndRecordInboundSmsRateLimit(userId: string, phone: string): Promise<boolean> {
+    const LIMIT = 10;
+    const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+    return await db.transaction(async (tx) => {
+      // Advisory lock scoped to this transaction; serialises concurrent calls
+      // for the same (userId, phone) pair so only one proceeds at a time.
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtext(${userId}), hashtext(${phone}))`,
+      );
+
+      const windowStart = new Date(Date.now() - WINDOW_MS);
+
+      const countResult = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(smsRateLimits)
+        .where(
+          and(
+            eq(smsRateLimits.userId, userId),
+            eq(smsRateLimits.phone, phone),
+            eq(smsRateLimits.limitType, 'inbound'),
+            gt(smsRateLimits.sentAt, windowStart),
+          ),
+        );
+
+      const current = Number(countResult[0]?.count ?? 0);
+      if (current >= LIMIT) {
+        return false; // over limit — do not insert
+      }
+
+      await tx.insert(smsRateLimits).values({ userId, phone, limitType: 'inbound' });
+      return true;
+    });
   }
 
   async getRecentAlertTriggerLogs(userId: string, limit: number = 20): Promise<(AlertTriggerLog & { alertType: string; locationName: string; locationCity: string; alertLabel: string | null })[]> {

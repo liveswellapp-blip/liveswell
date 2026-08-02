@@ -175,8 +175,10 @@ export const smsRateLimits = pgTable("sms_rate_limits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   phone: text("phone").notNull(),
+  // 'outbound' = verification SMS sent by the app; 'inbound' = AI-reply webhook
+  limitType: text("limit_type").notNull().default("outbound"),
   sentAt: timestamp("sent_at").defaultNow().notNull(),
-}, (table) => [index("IDX_sms_rate_limits_user_phone_sent").on(table.userId, table.phone, table.sentAt)]);
+}, (table) => [index("IDX_sms_rate_limits_user_phone_type_sent").on(table.userId, table.phone, table.limitType, table.sentAt)]);
 
 export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,

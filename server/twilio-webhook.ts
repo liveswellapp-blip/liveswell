@@ -238,6 +238,17 @@ export async function handleIncomingSms(req: Request, res: Response): Promise<vo
     return;
   }
 
+  // ── 5a. Inbound rate limit (10 req / 10 min per phone) ───────────────────
+  const withinLimit = await storage.checkAndRecordInboundSmsRateLimit(userId, from);
+  if (!withinLimit) {
+    console.warn(`⚠️  Inbound SMS rate limit exceeded for phone ${from} (userId ${userId})`);
+    twimlReply(
+      res,
+      "You're sending messages too quickly. Please wait a few minutes and try again.",
+    );
+    return;
+  }
+
   // ── 6. Load conversation thread ──────────────────────────────────────────
   const history = await getSmsThread(from);
   const isFirstContact = history.length === 0;

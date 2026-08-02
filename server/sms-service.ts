@@ -69,6 +69,7 @@ export class SMSService {
         and(
           eq(smsRateLimits.userId, userId),
           eq(smsRateLimits.phone, phone),
+          eq(smsRateLimits.limitType, 'outbound'),
           gte(smsRateLimits.sentAt, windowStart),
         ),
       )
@@ -84,14 +85,15 @@ export class SMSService {
 
   private static async recordSendAttempt(userId: string, phoneNumber: string): Promise<void> {
     const phone = normalizePhone(phoneNumber);
-    await db.insert(smsRateLimits).values({ userId, phone, sentAt: new Date() });
+    await db.insert(smsRateLimits).values({ userId, phone, limitType: 'outbound', sentAt: new Date() });
 
-    // Prune rows older than the window to keep the table tidy
+    // Prune outbound rows older than the window to keep the table tidy
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS);
     await db.delete(smsRateLimits).where(
       and(
         eq(smsRateLimits.userId, userId),
         eq(smsRateLimits.phone, phone),
+        eq(smsRateLimits.limitType, 'outbound'),
         lt(smsRateLimits.sentAt, windowStart),
       ),
     );
