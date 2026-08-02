@@ -648,6 +648,7 @@ export class DatabaseStorage implements IStorage {
         thresholds: userAlerts.thresholds,
         lastFiredAt: userAlerts.lastFiredAt,
         cooldownHours: userAlerts.cooldownHours,
+        emailUnsubscribed: userAlerts.emailUnsubscribed,
         createdAt: userAlerts.createdAt,
         updatedAt: userAlerts.updatedAt,
         locationName: locations.name,
@@ -675,9 +676,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserAlert(id: number, userId: string, updates: UpdateUserAlert): Promise<UserAlert | undefined> {
+    // If the user is re-adding email to deliveryChannels, clear the unsubscribed flag.
+    const hasEmail = Array.isArray(updates.deliveryChannels) && updates.deliveryChannels.includes('email');
+    const extraUpdates = hasEmail ? { emailUnsubscribed: false } : {};
     const [result] = await db
       .update(userAlerts)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...updates, ...extraUpdates, updatedAt: new Date() })
       .where(and(eq(userAlerts.id, id), eq(userAlerts.userId, userId)))
       .returning();
     return result;
@@ -897,6 +901,7 @@ export class DatabaseStorage implements IStorage {
       .update(userAlerts)
       .set({
         deliveryChannels: remaining,
+        emailUnsubscribed: true,
         ...(nowDeactivate ? { active: false } : {}),
         updatedAt: new Date(),
       })

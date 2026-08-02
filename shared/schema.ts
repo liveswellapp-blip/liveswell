@@ -106,6 +106,9 @@ export const userAlerts = pgTable("user_alerts", {
   thresholds: jsonb("thresholds"),
   lastFiredAt: timestamp("last_fired_at"),
   cooldownHours: integer("cooldown_hours").notNull().default(4),
+  // Set to true when email is removed via the unsubscribe link so the UI can
+  // distinguish "never had email" from "accidentally unsubscribed".
+  emailUnsubscribed: boolean("email_unsubscribed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

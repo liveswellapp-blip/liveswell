@@ -55,6 +55,8 @@ interface UserAlert {
   thresholds: any | null;
   lastFiredAt: string | null;
   cooldownHours: number;
+  /** True when email was removed via the unsubscribe link (not intentionally disabled). */
+  emailUnsubscribed?: boolean;
   createdAt: string;
 }
 
@@ -353,6 +355,9 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
     !!alert.phoneNumber &&
     !alert.phoneVerified;
 
+  const emailUnsubscribed =
+    !!alert.emailUnsubscribed && !alert.deliveryChannels?.includes("email");
+
   const cardStyle = needsVerification
     ? { background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.3)" }
     : smsAutoRemoved
@@ -415,6 +420,13 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
               <span className="text-[10px] text-red-400">SMS removed — phone number was never verified. Edit alert to re-add SMS.</span>
             </div>
           )}
+          {emailUnsubscribed && (
+            <div className="flex items-center gap-1.5 ml-3.5 mt-1 px-2 py-1 rounded-lg"
+              style={{ background: "rgba(100,116,139,0.1)", border: "1px solid rgba(100,116,139,0.25)" }}>
+              <Mail size={10} className="text-slate-400 shrink-0" />
+              <span className="text-[10px] text-slate-400">Email paused — unsubscribed. Edit alert to re-enable.</span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           <Switch checked={alert.active} onCheckedChange={onToggle} />
@@ -441,7 +453,7 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, existingAlerts }: {
+function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, initialEmailUnsubscribed, existingAlerts }: {
   open: boolean;
   onClose: () => void;
   onSaveSuccess?: (alertId: number) => void;
@@ -450,6 +462,8 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
   userEmail?: string | null;
   favorites: Location[];
   initialPhoneVerified?: boolean;
+  /** True when the alert's email was removed via the unsubscribe link. */
+  initialEmailUnsubscribed?: boolean;
   existingAlerts: UserAlert[];
 }) {
   const { toast } = useToast();
@@ -1022,11 +1036,23 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
               <div className="rounded-xl overflow-hidden" style={CARD}>
                 <div className="flex items-center justify-between px-3 py-2.5">
                   <div className="flex items-center gap-2">
-                    <Mail size={13} className="text-sky-400" />
-                    <span className="text-[13px] text-slate-200">Email</span>
+                    <Mail size={13} className={form.channels.email ? "text-sky-400" : initialEmailUnsubscribed ? "text-slate-500" : "text-sky-400"} />
+                    <div>
+                      <span className="text-[13px] text-slate-200">Email</span>
+                      {!form.channels.email && initialEmailUnsubscribed && (
+                        <span className="ml-2 text-[10px] text-slate-500 font-medium">paused — unsubscribed</span>
+                      )}
+                    </div>
                   </div>
                   <Switch checked={form.channels.email} onCheckedChange={v => patchCh("email", v)} />
                 </div>
+                {!form.channels.email && initialEmailUnsubscribed && (
+                  <div className="px-3 pb-2.5 pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      You unsubscribed from email alerts for this alert. Toggle the switch above to re-enable.
+                    </p>
+                  </div>
+                )}
                 {form.channels.email && userEmail && (
                   <div className="px-3 pb-2.5 pt-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                     <p className="text-[11px] text-slate-400 mt-1">Sending to <span className="text-sky-400">{userEmail}</span></p>
@@ -1101,6 +1127,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
 
 const LS_KEY = "liveswell_dismissed_verification_ids";
 const LS_KEY_SMS_REMOVED = "liveswell_dismissed_sms_removed_ids";
+const LS_KEY_EMAIL_UNSUB = "liveswell_dismissed_email_unsub_ids";
 
 function loadDismissedIds(): Set<number> {
   try {
@@ -1134,6 +1161,22 @@ function saveDismissedSmsRemovedIds(ids: Set<number>) {
   } catch {}
 }
 
+function loadDismissedEmailUnsubIds(): Set<number> {
+  try {
+    const raw = localStorage.getItem(LS_KEY_EMAIL_UNSUB);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw) as number[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDismissedEmailUnsubIds(ids: Set<number>) {
+  try {
+    localStorage.setItem(LS_KEY_EMAIL_UNSUB, JSON.stringify([...ids]));
+  } catch {}
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { toast } = useToast();
@@ -1143,6 +1186,7 @@ export default function NotificationSettings() {
   const [editAlert, setEditAlert] = useState<UserAlert | null>(null);
   const [dismissedVerificationIds, setDismissedVerificationIds] = useState<Set<number>>(loadDismissedIds);
   const [dismissedSmsRemovedIds, setDismissedSmsRemovedIds] = useState<Set<number>>(loadDismissedSmsRemovedIds);
+  const [dismissedEmailUnsubIds, setDismissedEmailUnsubIds] = useState<Set<number>>(loadDismissedEmailUnsubIds);
 
   const { data: alerts = [], isLoading } = useQuery<UserAlert[]>({
     queryKey: ["/api/user-alerts"],
@@ -1223,6 +1267,21 @@ export default function NotificationSettings() {
     a => !a.deliveryChannels?.includes("sms") && !!a.phoneNumber && !a.phoneVerified
   );
 
+  const emailUnsubscribedAlerts = alerts.filter(
+    a => !!a.emailUnsubscribed && !a.deliveryChannels?.includes("email")
+  );
+
+  const showEmailUnsubscribedBanner =
+    emailUnsubscribedAlerts.length > 0 &&
+    emailUnsubscribedAlerts.some(a => !dismissedEmailUnsubIds.has(a.id));
+
+  const handleDismissEmailUnsubBanner = () => {
+    const next = new Set(dismissedEmailUnsubIds);
+    emailUnsubscribedAlerts.forEach(a => next.add(a.id));
+    setDismissedEmailUnsubIds(next);
+    saveDismissedEmailUnsubIds(next);
+  };
+
   const showVerificationBanner =
     unverifiedActiveAlerts.length > 0 &&
     unverifiedActiveAlerts.some(a => !dismissedVerificationIds.has(a.id));
@@ -1255,6 +1314,11 @@ export default function NotificationSettings() {
     nextSms.delete(alertId);
     setDismissedSmsRemovedIds(nextSms);
     saveDismissedSmsRemovedIds(nextSms);
+
+    const nextEmailUnsub = new Set(dismissedEmailUnsubIds);
+    nextEmailUnsub.delete(alertId);
+    setDismissedEmailUnsubIds(nextEmailUnsub);
+    saveDismissedEmailUnsubIds(nextEmailUnsub);
   };
 
   return (
@@ -1284,6 +1348,37 @@ export default function NotificationSettings() {
       </div>
 
       <div className="flex-1 px-5 max-w-2xl mx-auto w-full space-y-6">
+        {showEmailUnsubscribedBanner && (
+          <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
+            style={{ background: "rgba(14,165,233,0.07)", border: "1px solid rgba(14,165,233,0.25)" }}>
+            <Mail size={16} className="text-sky-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-sky-300">
+                {emailUnsubscribedAlerts.length === 1
+                  ? "Email paused on 1 alert — you unsubscribed"
+                  : `Email paused on ${emailUnsubscribedAlerts.length} alerts — you unsubscribed`}
+              </p>
+              <p className="text-[12px] text-sky-500/80 mt-0.5">
+                If this was accidental, edit the alert and re-enable the Email toggle.
+              </p>
+              {emailUnsubscribedAlerts.length === 1 && (
+                <button
+                  onClick={() => openEdit(emailUnsubscribedAlerts[0])}
+                  className="mt-2 text-[12px] font-semibold text-sky-400 hover:text-sky-300 transition-colors underline underline-offset-2"
+                >
+                  Re-enable email →
+                </button>
+              )}
+            </div>
+            <button
+              onClick={handleDismissEmailUnsubBanner}
+              className="shrink-0 p-1 rounded-lg text-sky-500 hover:text-sky-300 hover:bg-sky-400/10 transition-colors"
+              title="Dismiss"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
         {showSmsRemovedBanner && (
           <div className="rounded-2xl p-4 flex items-start gap-3 mt-4"
             style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)" }}>
@@ -1457,6 +1552,7 @@ export default function NotificationSettings() {
         userEmail={userEmail}
         favorites={favorites}
         initialPhoneVerified={editAlert?.phoneVerified ?? false}
+        initialEmailUnsubscribed={editAlert?.emailUnsubscribed ?? false}
         existingAlerts={alerts}
       />
 
