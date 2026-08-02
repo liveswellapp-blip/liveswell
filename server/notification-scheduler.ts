@@ -6,7 +6,7 @@ import { ConditionMonitor } from './condition-monitor';
 import { purgeStaleWeatherCache } from './weather-service';
 import { runPushHealthCheck } from './push-health-monitor';
 import { db } from './db';
-import { userAlerts, notificationSettings, users, locations, agentConversations } from '@shared/schema';
+import { userAlerts, notificationSettings, users, locations, agentConversations, agentSmsThreads } from '@shared/schema';
 import { eq, and, lt, sql } from 'drizzle-orm';
 import * as cron from 'node-cron';
 
@@ -62,6 +62,18 @@ export class NotificationScheduler {
     cron.schedule('0 3 * * *', () => {
       this.purgeStaleAgentConversations().catch(err =>
         console.error('Error in purgeStaleAgentConversations job:', err)
+      );
+    });
+
+    // Nightly cleanup: delete agent_sms_threads rows whose updated_at is older
+    // than 7 days. The JSONB messages array is already trimmed to 24 h on every
+    // write (appendSmsThread), but the row itself is never removed, so inactive
+    // threads accumulate indefinitely.
+    // Runs at 03:05 UTC daily and once immediately on startup to clear any backlog.
+    await this.purgeStaleAgentSmsThreads();
+    cron.schedule('5 3 * * *', () => {
+      this.purgeStaleAgentSmsThreads().catch(err =>
+        console.error('Error in purgeStaleAgentSmsThreads job:', err)
       );
     });
 
@@ -218,6 +230,27 @@ export class NotificationScheduler {
       }
     } catch (error) {
       console.error('Error in purgeStaleAgentConversations:', error);
+    }
+  }
+
+  /**
+   * Deletes agent_sms_threads rows where updated_at is older than 7 days.
+   * The JSONB messages array is already trimmed to a 24-hour window on every
+   * write (appendSmsThread in twilio-webhook.ts), but the row itself is never
+   * removed, so inactive threads accumulate indefinitely.
+   */
+  static async purgeStaleAgentSmsThreads(): Promise<void> {
+    try {
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const result = await db
+        .delete(agentSmsThreads)
+        .where(lt(agentSmsThreads.updatedAt, cutoff))
+        .returning({ id: agentSmsThreads.id });
+      if (result.length > 0) {
+        console.log(`🧹 Purged ${result.length} stale SMS thread(s) inactive for more than 7 days`);
+      }
+    } catch (error) {
+      console.error('Error in purgeStaleAgentSmsThreads:', error);
     }
   }
 
