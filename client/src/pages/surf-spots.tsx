@@ -308,8 +308,8 @@ function SavedGrid({ onSelect }: { onSelect: (id: number) => void }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2.5">
-        <Heart size={11} className="text-emerald-400" />
-        <span className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">Saved</span>
+        <Heart size={11} className="text-white" />
+        <span className="text-white text-[10px] font-bold tracking-widest uppercase">Saved</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {favorites.map(loc => (
