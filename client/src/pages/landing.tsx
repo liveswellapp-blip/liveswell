@@ -474,7 +474,12 @@ export default function Landing() {
         </div>
       </div>
       <div className="landing-footer">
-        Data sources: NOAA NDBC · OpenWeatherMap · Open-Meteo Marine · NOAA Tides &amp; Currents
+        <div>Data sources: NOAA NDBC · OpenWeatherMap · Open-Meteo Marine · NOAA Tides &amp; Currents</div>
+        <div style={{ marginTop: 8 }}>
+          <a href="/terms" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "underline" }}>Terms of Service</a>
+          <span style={{ margin: "0 8px", color: "rgba(255,255,255,0.15)" }}>·</span>
+          <a href="/privacy" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "underline" }}>Privacy Policy</a>
+        </div>
       </div>
     </div>
   );
