@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { MapPin, Waves, BarChart3, Wind, Droplets, Sun, Clock, AlertCircle, RefreshCw, Check } from "lucide-react";
+import { Waves, BarChart3, Wind, Droplets, Sun, Clock, AlertCircle, RefreshCw, Check } from "lucide-react";
 import { Location, SurfConditions, ForecastDay } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -213,35 +213,27 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     <div className="w-full">
       {/* ── Location header — above the card ─────────────────────── */}
       <div className="max-w-2xl mx-auto px-4 pt-5 pb-3">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <MapPin className="h-3.5 w-3.5 text-[#94a3b8]" />
-              <span className="text-xs font-semibold text-[#94a3b8]">{location.city}</span>
-            </div>
-            <h1 className="text-white font-black text-3xl leading-tight">{location.name}</h1>
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            {lastUpdated !== "—" && (
-              <span className="text-[9px] text-slate-600">Updated {lastUpdated}</span>
-            )}
-            <button
-              onClick={handleRefresh}
-              disabled={refreshState === "spinning"}
-              aria-label="Refresh conditions"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
-              style={{
-                background: refreshState === "done" ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.07)",
-                border: refreshState === "done" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.12)",
-              }}
-            >
-              {refreshState === "done"
-                ? <Check size={13} className="text-emerald-400" />
-                : <RefreshCw size={13} className={`text-slate-400 ${refreshState === "spinning" ? "animate-spin" : ""}`} />
-              }
-            </button>
-            <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
-          </div>
+        <h1 className="text-white font-black text-3xl leading-tight mb-2">{location.name}</h1>
+        <div className="flex items-center gap-2">
+          {lastUpdated !== "—" && (
+            <span className="text-[9px] text-slate-600">Updated {lastUpdated}</span>
+          )}
+          <button
+            onClick={handleRefresh}
+            disabled={refreshState === "spinning"}
+            aria-label="Refresh conditions"
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
+            style={{
+              background: refreshState === "done" ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.07)",
+              border: refreshState === "done" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.12)",
+            }}
+          >
+            {refreshState === "done"
+              ? <Check size={12} className="text-emerald-400" />
+              : <RefreshCw size={12} className={`text-slate-400 ${refreshState === "spinning" ? "animate-spin" : ""}`} />
+            }
+          </button>
+          <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
         </div>
       </div>
 
