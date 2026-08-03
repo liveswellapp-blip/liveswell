@@ -247,13 +247,20 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
       <div className="max-w-2xl mx-auto px-3 pb-2 space-y-3">
 
-        {/* ── Hero card ─────────────────────────────────────────────── */}
+        {/* ── Swell card ────────────────────────────────────────────── */}
         <div
-          className="rounded-2xl relative overflow-hidden border border-white/[0.08]"
+          className="rounded-xl border border-white/[0.08] overflow-hidden"
           style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}
         >
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <div className="flex items-center gap-1.5">
+              <Waves className="h-3.5 w-3.5 text-[#94a3b8]" />
+              <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]">Swell</span>
+            </div>
+            <span className="text-slate-500 text-[9px]">NOAA / Open-Meteo</span>
+          </div>
 
-          <div className="relative px-5 pt-5 pb-5">
+          <div className="px-3 pb-3">
             {/* Buoy cards */}
             {isLoading ? (
               <div className="grid grid-cols-2 gap-3">
@@ -262,16 +269,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
             ) : (
               <div className={`grid gap-3 ${backupBuoy ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                {/* Buoy #1 / Marine Forecast — Design C */}
+                {/* Buoy #1 / Marine Forecast */}
                 <div className="bg-black/30 rounded-xl p-3 border border-white/[0.08] flex flex-col">
                   {primaryBuoy ? (
                     <>
-                      <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-[#94a3b8]">Waves — Buoy #1</p>
+                      <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-[#94a3b8]">Buoy #1</p>
                       <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}</p>
                       <p className="text-[8px] text-slate-600 mb-2">
                         {primaryBuoy.stationId === 'open-meteo' ? 'Global wave model' : `Station ${primaryBuoy.stationId}`}
                       </p>
-                      {/* Height / Period / Direction rows */}
                       <div className="flex flex-col divide-y divide-white/5 mb-2">
                         <div className="flex items-center justify-between py-1.5">
                           <span className="text-[8px] font-bold text-slate-500 tracking-wider">Height</span>
@@ -298,13 +304,12 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   )}
                 </div>
 
-                {/* Buoy #2 — Design C */}
+                {/* Buoy #2 */}
                 {backupBuoy && (
                   <div className="bg-black/30 rounded-xl p-3 border border-white/[0.08] flex flex-col">
-                    <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-[#94a3b8]">Waves — Buoy #2</p>
+                    <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-[#94a3b8]">Buoy #2</p>
                     <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
                     <p className="text-[8px] text-slate-600 mb-2">Station {backupBuoy.stationId}</p>
-                    {/* Height / Period / Direction rows */}
                     <div className="flex flex-col divide-y divide-white/5 mb-2">
                       <div className="flex items-center justify-between py-1.5">
                         <span className="text-[8px] font-bold text-slate-500 tracking-wider">Height</span>
@@ -327,7 +332,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 )}
               </div>
             )}
-
           </div>
         </div>
 
