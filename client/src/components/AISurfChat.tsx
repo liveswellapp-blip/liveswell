@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Location, SurfConditions } from "@/types/weather";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, X, Send, RefreshCw } from "lucide-react";
+import { MessageCircle, X, Send, RefreshCw, SquarePen } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -150,6 +150,13 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
     setError(null);
   }
 
+  function handleNewChat() {
+    setInput("");
+    setError(null);
+    const contextMsg = buildContextMessage(location, conditions, aiSummary);
+    setMessages([{ role: "assistant", content: contextMsg }]);
+  }
+
   const isBusy = isLoading || isStreaming;
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -207,12 +214,25 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
             <p className="text-sm font-semibold text-white leading-none">Ask about {location.name}</p>
             <p className="text-[11px] text-slate-500 mt-0.5">AI · current conditions</p>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            {messages.length > 1 && (
+              <button
+                onClick={handleNewChat}
+                disabled={isBusy}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="New chat"
+                title="New chat"
+              >
+                <SquarePen className="w-4 h-4" />
+              </button>
+            )}
+            <button
+              onClick={() => setOpen(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
