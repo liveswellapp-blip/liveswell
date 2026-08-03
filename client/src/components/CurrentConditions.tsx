@@ -63,7 +63,7 @@ function StatTile({
 }) {
   return (
     <div
-      className={`${border} border rounded-xl p-3 flex items-start gap-2.5 ${onClick ? "cursor-pointer active:opacity-75" : ""}`}
+      className={`border border-white/[0.08] rounded-xl p-3 flex items-start gap-2.5 ${onClick ? "cursor-pointer active:opacity-75" : ""}`}
       style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}
       onClick={onClick}
     >
@@ -215,7 +215,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
         {/* ── Hero card ─────────────────────────────────────────────── */}
         <div
-          className="rounded-2xl relative overflow-hidden border border-emerald-500/20"
+          className="rounded-2xl relative overflow-hidden border border-white/[0.08]"
           style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}
         >
 
@@ -261,7 +261,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             ) : (
               <div className={`grid gap-3 ${backupBuoy ? 'grid-cols-2' : 'grid-cols-1'}`}>
                 {/* Buoy #1 / Marine Forecast — Design C */}
-                <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
+                <div className="bg-black/30 rounded-xl p-3 border border-white/[0.08] flex flex-col">
                   {primaryBuoy ? (
                     <>
                       <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-[#94a3b8]">Waves — Buoy #1</p>
@@ -298,7 +298,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
                 {/* Buoy #2 — Design C */}
                 {backupBuoy && (
-                  <div className="bg-black/30 rounded-xl p-3 border border-emerald-500/25 flex flex-col">
+                  <div className="bg-black/30 rounded-xl p-3 border border-white/[0.08] flex flex-col">
                     <p className="text-[9px] font-bold uppercase tracking-wider mb-1.5 text-[#94a3b8]">Waves — Buoy #2</p>
                     <p className="text-white text-[10px] font-semibold leading-tight truncate mb-0.5">{backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}</p>
                     <p className="text-[8px] text-slate-600 mb-2">Station {backupBuoy.stationId}</p>
@@ -328,7 +328,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
             {/* ── Wind subcard ──────────────────────────────────────── */}
             {conditions && (
-              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-emerald-500/25">
+              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-white/[0.08]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Wind className="h-3 w-3 text-[#94a3b8]" />
@@ -362,7 +362,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
         {/* ── Tide chart card ───────────────────────────────────────── */}
         {(todayTides.length > 0 || isLoading) && (
-          <div className="rounded-xl border border-emerald-500/15 overflow-hidden" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}>
+          <div className="rounded-xl border border-white/[0.08] overflow-hidden" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}>
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <div className="flex items-center gap-1.5">
                 <BarChart3 className="h-3.5 w-3.5 text-[#94a3b8]" />
@@ -453,7 +453,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       <Dialog open={showBuoyHistoryModal} onOpenChange={v => { if (!v) { setShowBuoyHistoryModal(false); setSelectedBuoyStation(null); } }}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none" aria-describedby={undefined}>
           <div className="rounded-2xl overflow-hidden p-5"
-            style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+            style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(255,255,255,0.08)" }}>
             {buoyHistoryLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-12 w-full rounded-xl bg-white/5" />
@@ -483,7 +483,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
       <Dialog open={showWindDetailsModal} onOpenChange={setShowWindDetailsModal}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none" aria-describedby={undefined}>
           <div className="rounded-2xl overflow-hidden p-5"
-            style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+            style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(255,255,255,0.08)" }}>
             {windDetailsLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-12 w-full rounded-xl bg-white/5" />

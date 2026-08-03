@@ -95,7 +95,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 rounded-2xl overflow-hidden snap-start"
-                style={{ minWidth: "100%", background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                style={{ minWidth: "100%", background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div className="px-4 pt-4 pb-3 border-b border-white/5 flex justify-between">
                   <Skeleton className="h-4 w-16 bg-white/10" />
                 </div>
@@ -128,8 +128,8 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     minWidth: "100%",
                     background: "linear-gradient(160deg, #030912 0%, #091a35 100%)",
                     border: today
-                      ? "1px solid rgba(16,185,129,0.35)"
-                      : "1px solid rgba(16,185,129,0.15)",
+                      ? "1px solid rgba(255,255,255,0.18)"
+                      : "1px solid rgba(255,255,255,0.08)",
                   }}
                 >
                   {/* Day header */}
