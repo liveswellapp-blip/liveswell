@@ -6,7 +6,7 @@ import { ConditionMonitor } from './condition-monitor';
 import { purgeStaleWeatherCache } from './weather-service';
 import { runPushHealthCheck } from './push-health-monitor';
 import { db } from './db';
-import { userAlerts, notificationSettings, users, locations, agentConversations, agentSmsThreads } from '@shared/schema';
+import { userAlerts, notificationSettings, users, locations, agentConversations, agentSmsThreads, smsRateLimits } from '@shared/schema';
 import { eq, and, lt, sql } from 'drizzle-orm';
 import * as cron from 'node-cron';
 
@@ -74,6 +74,17 @@ export class NotificationScheduler {
     cron.schedule('5 3 * * *', () => {
       this.purgeStaleAgentSmsThreads().catch(err =>
         console.error('Error in purgeStaleAgentSmsThreads job:', err)
+      );
+    });
+
+    // Hourly cleanup: delete sms_rate_limits rows older than 1 hour.
+    // Rows are only queried within the 10-minute rate-limit window, so anything
+    // older than 1 hour is unreachable and just wastes storage.
+    // Runs at minute 10 of every hour and once on startup to clear any backlog.
+    await this.purgeStaleRateLimits();
+    cron.schedule('10 * * * *', () => {
+      this.purgeStaleRateLimits().catch(err =>
+        console.error('Error in purgeStaleRateLimits job:', err)
       );
     });
 
@@ -251,6 +262,26 @@ export class NotificationScheduler {
       }
     } catch (error) {
       console.error('Error in purgeStaleAgentSmsThreads:', error);
+    }
+  }
+
+  /**
+   * Deletes sms_rate_limits rows older than 1 hour.
+   * Rows are only queried within a 10-minute sliding window, so anything older
+   * than 1 hour is unreachable and just accumulates storage over time.
+   */
+  static async purgeStaleRateLimits(): Promise<void> {
+    try {
+      const cutoff = new Date(Date.now() - 60 * 60 * 1000); // 1 hour ago
+      const result = await db
+        .delete(smsRateLimits)
+        .where(lt(smsRateLimits.sentAt, cutoff))
+        .returning({ id: smsRateLimits.id });
+      if (result.length > 0) {
+        console.log(`🧹 Purged ${result.length} stale SMS rate-limit row(s) older than 1 hour`);
+      }
+    } catch (error) {
+      console.error('Error in purgeStaleRateLimits:', error);
     }
   }
 
