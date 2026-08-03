@@ -33,11 +33,11 @@ function Router() {
             <Route path="/settings" component={Settings} />
             <Route path="/notifications" component={NotificationSettings} />
             <Route path="/profile" component={Profile} />
-            <Route path="/privacy" component={Privacy} />
             <Route path="/monitoring" component={Monitoring} />
           </>
         )}
         
+        <Route path="/privacy" component={Privacy} />
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/admin/users/:userId" component={AdminUserDetail} />
         
