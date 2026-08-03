@@ -588,7 +588,6 @@ export default function Landing() {
         <div className="landing-features-grid">
           {features.map(f => (
             <div key={f.title} className="landing-feature-card">
-              <div className="landing-feature-icon">{f.icon}</div>
               <div className="landing-feature-title">{f.title}</div>
               <div className="landing-feature-body">{f.body}</div>
             </div>
@@ -622,9 +621,6 @@ export default function Landing() {
       <div className="landing-sms-banner-wrap">
         <div className="landing-sms-banner">
           <div>
-            <div className="landing-sms-eyebrow">
-              <span>📱 SMS Condition Alerts</span>
-            </div>
             <div className="landing-sms-heading">Never miss a swell again</div>
             <p className="landing-sms-body">
               Stop checking the app every morning hoping conditions lined up. Set your thresholds once —
