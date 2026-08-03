@@ -1,4 +1,4 @@
-import { Bell, LogOut, Shield, ChevronRight, Settings } from "lucide-react";
+import { Bell, LogOut, Shield, ChevronRight, Settings, HelpCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -33,9 +33,10 @@ export default function Profile() {
   const email = (user as any)?.email || "";
 
   const ITEMS = [
-    { icon: Bell,     label: "Notifications", value: "Manage alerts", color: "#fbbf24", href: "/notifications" },
-    { icon: Settings, label: "Preferences",   value: "",              color: "#94a3b8", href: "/settings" },
-    { icon: Shield,   label: "Privacy",        value: "",              color: "#38bdf8", href: "/privacy" },
+    { icon: Bell,        label: "Notifications", value: "Manage alerts", color: "#fbbf24", href: "/notifications" },
+    { icon: Settings,    label: "Preferences",   value: "",              color: "#94a3b8", href: "/settings" },
+    { icon: Shield,      label: "Privacy",        value: "",              color: "#38bdf8", href: "/privacy" },
+    { icon: HelpCircle,  label: "Help & Support", value: "",              color: "#34d399", href: "/support" },
   ];
 
   const handleLogout = () => {

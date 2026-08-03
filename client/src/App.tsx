@@ -18,6 +18,8 @@ import AdminDashboard from "@/pages/admin";
 import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
 import SurfAgentChat from "@/components/SurfAgentChat";
+import SupportHome from "@/pages/support/index";
+import SupportCategory from "@/pages/support/category";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -40,6 +42,8 @@ function Router() {
         
         <Route path="/privacy" component={Privacy} />
         <Route path="/terms" component={Terms} />
+        <Route path="/support" component={SupportHome} />
+        <Route path="/support/category/:slug" component={SupportCategory} />
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/admin/users/:userId" component={AdminUserDetail} />
         

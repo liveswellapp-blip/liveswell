@@ -664,6 +664,7 @@ export default function Landing() {
           <div>
             <div className="landing-footer-col-title">App</div>
             <a href="/api/login" className="landing-footer-link" onClick={e => { e.preventDefault(); handleLogin(); }}>Sign In</a>
+            <a href="/support" className="landing-footer-link">Support</a>
             <a href="/terms" className="landing-footer-link">Terms of Service</a>
             <a href="/privacy" className="landing-footer-link">Privacy Policy</a>
           </div>

@@ -4154,6 +4154,67 @@ Do not discuss topics unrelated to surfing or ocean activities.`;
     }
   });
 
+  // ── Support contact form ──────────────────────────────────────────────────
+  app.post("/api/support/contact", async (req, res) => {
+    try {
+      const schema = z.object({
+        name:    z.string().min(1).max(200),
+        email:   z.string().email().max(500),
+        subject: z.string().min(1).max(300),
+        message: z.string().min(1).max(5000),
+      });
+
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: "Invalid request — please fill in all fields correctly." });
+      }
+
+      const { name, email, subject, message } = parsed.data;
+
+      const { ReplitConnectors } = await import("@replit/connectors-sdk");
+      const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "LiveSwell Support <onboarding@resend.dev>";
+      const TO_EMAIL   = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+
+      const htmlBody = `
+<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px;">
+  <h2 style="color: #030a14; margin-top: 0;">New Support Request</h2>
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr><td style="padding: 8px 0; font-weight: 600; color: #374151; width: 100px;">From:</td><td style="padding: 8px 0; color: #111827;">${name} &lt;${email}&gt;</td></tr>
+    <tr><td style="padding: 8px 0; font-weight: 600; color: #374151;">Subject:</td><td style="padding: 8px 0; color: #111827;">${subject}</td></tr>
+  </table>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;" />
+  <p style="color: #374151; line-height: 1.7; white-space: pre-wrap;">${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;" />
+  <p style="font-size: 12px; color: #9ca3af;">Sent via the LiveSwell support centre · Reply directly to ${email}</p>
+</div>`;
+
+      const connectors = new ReplitConnectors();
+      const response = await connectors.proxy("resend", "/emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from:     FROM_EMAIL,
+          to:       TO_EMAIL,
+          reply_to: email,
+          subject:  `[Support] ${subject} — from ${name}`,
+          html:     htmlBody,
+          text:     `Support request from ${name} <${email}>\nSubject: ${subject}\n\n${message}`,
+        }),
+      });
+
+      if (response.status >= 400) {
+        console.error("❌ Support contact email failed:", response.status);
+        return res.status(500).json({ message: "Failed to send message. Please try again later." });
+      }
+
+      console.log(`✅ Support contact email sent from ${email} — subject: ${subject}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Support contact error:", error);
+      res.status(500).json({ message: "Failed to send message. Please try again later." });
+    }
+  });
+
   // ── Twilio inbound SMS webhook ────────────────────────────────────────────
   // express.urlencoded is already mounted globally in index.ts so Twilio's
   // form-encoded body is available on req.body here.
