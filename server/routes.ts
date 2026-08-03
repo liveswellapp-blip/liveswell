@@ -1788,6 +1788,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const waveMin = Math.floor(waveHeight);
             const waveMax = Math.ceil(waveHeight + 0.5);
             
+            const demoDate = new Date(); demoDate.setDate(demoDate.getDate() + i);
+            const { sunrise: demoSunrise, sunset: demoSunset } = getSunriseSunset(lat, lon, demoDate, timezone);
             dailyForecasts.push({
               date: getDayName(i),
               waveHeight: `~${waveMin}-${waveMax} ft`,
@@ -1796,7 +1798,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               windSpeed: i > 2 ? "TBD" : `${Math.round(windSpeed)} mph`,
               windDirection: i > 2 ? "TBD" : getWindDirection(45 + i * 60),
               icon: "🌊",
-              tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` }))
+              tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` })),
+              sunrise: demoSunrise,
+              sunset: demoSunset,
             });
           }
           
@@ -1871,6 +1875,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const waveMin = Math.floor(waveHeight);
             const waveMax = Math.ceil(waveHeight + 0.5);
             
+            const fbDate = new Date(); fbDate.setDate(fbDate.getDate() + i);
+            const { sunrise: fbSunrise, sunset: fbSunset } = getSunriseSunset(lat, lon, fbDate, timezone);
             dailyForecasts.push({
               date: getDayName(i),
               waveHeight: `~${waveMin}-${waveMax} ft`,
@@ -1879,7 +1885,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               windSpeed: i > 2 ? "TBD" : `${Math.round(windSpeed)} mph`,
               windDirection: i > 2 ? "TBD" : getWindDirection(45 + i * 60),
               icon: "🌊",
-              tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` }))
+              tides: tides.map(tide => ({ ...tide, time: `Est. ${tide.time}` })),
+              sunrise: fbSunrise,
+              sunset: fbSunset,
             });
           }
           
@@ -2106,6 +2114,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
+          const dayDate = new Date(); dayDate.setDate(dayDate.getDate() + dayOffset);
+          const { sunrise, sunset } = getSunriseSunset(lat, lon, dayDate, timezone);
           dailyForecasts.push({
             date: getDayName(dayOffset),
             waveHeight: useRealData ? `${waveMin}-${waveMax} ft` : `~${waveMin}-${waveMax} ft`,
@@ -2114,7 +2124,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             windSpeed: dayOffset > 2 ? "TBD" : `${Math.round(avgWindSpeed)} mph`,
             windDirection: dayOffset > 2 ? "TBD" : getWindDirection(avgWindDeg),
             icon: "🌊",
-            tides: tides.map(tide => ({ ...tide, time: useRealData && dayOffset <= 2 ? tide.time : `Est. ${tide.time}` }))
+            tides: tides.map(tide => ({ ...tide, time: useRealData && dayOffset <= 2 ? tide.time : `Est. ${tide.time}` })),
+            sunrise,
+            sunset,
           });
           
           dayOffset++;
@@ -2130,6 +2142,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get forecast" });
     }
   });
+
+  // ── Sunrise / sunset calculation (NOAA simplified algorithm) ──────────────
+  function getSunriseSunset(lat: number, lon: number, date: Date, timezone: string): { sunrise: string; sunset: string } {
+    const rad = Math.PI / 180;
+    const startOfYear = new Date(date.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / 86_400_000);
+
+    // Solar declination (degrees)
+    const declination = 23.45 * Math.sin(rad * ((360 / 365) * (dayOfYear - 81)));
+
+    // Hour angle at horizon
+    const cosH = -Math.tan(rad * lat) * Math.tan(rad * declination);
+    if (cosH > 1 || cosH < -1) return { sunrise: "—", sunset: "—" };
+
+    const H = Math.acos(cosH) / rad; // degrees
+
+    // Equation of time (minutes)
+    const B = rad * ((360 / 365) * (dayOfYear - 81));
+    const eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+
+    // Solar noon in UTC hours
+    const solarNoonUTC = 12 - lon / 15 - eot / 60;
+
+    const sunriseUTC = solarNoonUTC - H / 15;
+    const sunsetUTC  = solarNoonUTC + H / 15;
+
+    const toDate = (utcHours: number) => {
+      const d = new Date(date);
+      const h = Math.floor(utcHours);
+      const m = Math.round((utcHours - h) * 60);
+      d.setUTCHours(h, m, 0, 0);
+      return d;
+    };
+
+    const fmt = (d: Date) =>
+      d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: timezone });
+
+    return { sunrise: fmt(toDate(sunriseUTC)), sunset: fmt(toDate(sunsetUTC)) };
+  }
 
   // Utility functions for detailed forecast
   function degreesToCompass(degrees: number): string {

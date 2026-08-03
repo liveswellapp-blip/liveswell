@@ -43,6 +43,8 @@ export interface ForecastDay {
   windDirection: string;
   icon: string;
   tides: TidePoint[];
+  sunrise?: string;
+  sunset?: string;
 }
 
 export interface NearbySpot extends Location {
