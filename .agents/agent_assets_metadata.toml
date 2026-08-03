@@ -1,0 +1,23 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "7RSyiW38nmn_P_P4L8V-J"
+uri = "file://screenshots/app-store-1-conditions.png"
+type = "image"
+title = "Screenshot 1 — Live Conditions"
+description = "App Store screenshot at 1242×2688px"
+
+[[outputs]]
+id = "oyfU0M40GVIEweoYh3Hp6"
+uri = "file://screenshots/app-store-2-spots.png"
+type = "image"
+title = "Screenshot 2 — Discover Spots"
+description = "App Store screenshot at 1242×2688px"
+
+[[outputs]]
+id = "xWChmLf4ho1qo48THps59"
+uri = "file://screenshots/app-store-3-history.png"
+type = "image"
+title = "Screenshot 3 — Wave History"
+description = "App Store screenshot at 1242×2688px"
