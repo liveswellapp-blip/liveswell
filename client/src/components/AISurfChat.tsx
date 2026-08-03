@@ -308,7 +308,7 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
   );
 }
 
-function buildContextMessage(
+export function buildContextMessage(
   location: Location,
   conditions: SurfConditions | undefined,
   aiSummary?: string,

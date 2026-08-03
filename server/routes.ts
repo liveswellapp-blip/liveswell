@@ -44,6 +44,7 @@ import { apnsService } from "./apns-service";
 import { fcmService } from "./fcm-service";
 import OpenAI from "openai";
 import { generateSurfSummary } from "./ai-summary-helper";
+import { buildConditionsSummary } from "./chat-helpers";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -4102,20 +4103,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
       }
 
       // Build a system prompt scoped to this spot and its current data
-      const conditionsSummary = conditions
-        ? [
-            `- Waves: ${parseFloat(conditions.waveHeight || "0").toFixed(1)} ft @ ${conditions.wavePeriod}s from ${conditions.waveDirection}`,
-            `- Wind: ${Math.round(parseFloat(conditions.windSpeed || "0"))} mph from ${conditions.windDirection}${conditions.windGusts ? `, gusts ${Math.round(parseFloat(conditions.windGusts))} mph` : ""}`,
-            `- Tide: ${conditions.tideStatus}${conditions.tideHeight ? ` at ${parseFloat(conditions.tideHeight).toFixed(1)} ft` : ""}`,
-            `- Water temp: ${conditions.waterTemp ? `${parseFloat(conditions.waterTemp).toFixed(0)}°F` : "unknown"}`,
-            conditions.primaryBuoy
-              ? `- Primary buoy (${conditions.primaryBuoy.stationName || conditions.primaryBuoy.stationId}): ${parseFloat(conditions.primaryBuoy.waveHeight || "0").toFixed(1)} ft @ ${conditions.primaryBuoy.wavePeriod}s from ${conditions.primaryBuoy.waveDirection}`
-              : null,
-            conditions.backupBuoy
-              ? `- Backup buoy (${conditions.backupBuoy.stationName || conditions.backupBuoy.stationId}): ${parseFloat(conditions.backupBuoy.waveHeight || "0").toFixed(1)} ft @ ${conditions.backupBuoy.wavePeriod}s from ${conditions.backupBuoy.waveDirection}`
-              : null,
-          ].filter(Boolean).join("\n")
-        : "Current conditions data is unavailable right now.";
+      const conditionsSummary = buildConditionsSummary(conditions);
 
       const systemPrompt = `You are a knowledgeable surf coach and local expert for ${location.name}${(location as any).region ? `, ${(location as any).region}` : ""}. \
 You help surfers understand current conditions and decide whether and when to paddle out. \
