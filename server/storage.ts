@@ -656,13 +656,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addApnsDeviceToken(userId: string, deviceToken: string): Promise<ApnsDeviceToken> {
-    // Upsert: delete any existing row with the same token, then insert fresh
-    await db.delete(apnsDeviceTokens).where(
-      and(eq(apnsDeviceTokens.userId, userId), eq(apnsDeviceTokens.deviceToken, deviceToken))
-    );
+    // Upsert: insert the token; if the (userId, deviceToken) pair already exists,
+    // do nothing so re-registration on every cold launch is idempotent.
     const [row] = await db.insert(apnsDeviceTokens)
       .values({ userId, deviceToken, updatedAt: new Date() })
+      .onConflictDoNothing()
       .returning();
+
+    // onConflictDoNothing returns nothing on a no-op — fetch the existing row.
+    if (!row) {
+      const [existing] = await db.select().from(apnsDeviceTokens).where(
+        and(eq(apnsDeviceTokens.userId, userId), eq(apnsDeviceTokens.deviceToken, deviceToken))
+      );
+      return existing;
+    }
     return row;
   }
 

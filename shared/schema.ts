@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, jsonb, index, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { sql } from 'drizzle-orm';
@@ -177,11 +177,14 @@ export const weatherCacheEntries = pgTable("weather_cache_entries", {
 // APNs device tokens for native iOS push notifications
 export const apnsDeviceTokens = pgTable("apns_device_tokens", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id").notNull(),
   deviceToken: text("device_token").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [index("IDX_apns_device_tokens_user_id").on(table.userId)]);
+}, (table) => [
+  index("IDX_apns_device_tokens_user_id").on(table.userId),
+  unique("UQ_apns_device_tokens_user_token").on(table.userId, table.deviceToken),
+]);
 
 // FCM device tokens for native Android push notifications
 export const fcmDeviceTokens = pgTable("fcm_device_tokens", {
