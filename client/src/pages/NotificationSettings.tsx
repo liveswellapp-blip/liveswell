@@ -478,6 +478,9 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
   const { toast } = useToast();
   const [form, setForm] = useState<AlertFormState>({ ...BLANK_FORM, ...initialData });
 
+  // SMS consent checkbox — must be actively checked by user (Twilio A2P 10DLC requirement)
+  const [smsConsent, setSmsConsent] = useState(false);
+
   // Phone verification state
   const [phoneVerifiedLocal, setPhoneVerifiedLocal] = useState(initialPhoneVerified ?? false);
   const [verifyStep, setVerifyStep] = useState<"idle" | "code_sent" | "verified">(
@@ -969,7 +972,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
                     <MessageSquare size={13} className="text-emerald-400" />
                     <span className="text-[13px] text-slate-200">SMS text message</span>
                   </div>
-                  <Switch checked={form.channels.sms} onCheckedChange={v => patchCh("sms", v)} />
+                  <Switch checked={form.channels.sms} onCheckedChange={v => { patchCh("sms", v); if (!v) setSmsConsent(false); }} />
                 </div>
                 {form.channels.sms && (
                   <div className="px-3 pb-3 pt-0.5 space-y-2" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -1012,7 +1015,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
                           />
                           <button
                             onClick={handleSendCode}
-                            disabled={isSendingCode || !form.phoneNumber.trim() || !!phoneError}
+                            disabled={isSendingCode || !form.phoneNumber.trim() || !!phoneError || !smsConsent}
                             className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40"
                             style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", color: "#34d399" }}>
                             {isSendingCode ? "Sending…" : verifyStep === "code_sent" ? "Resend" : "Verify"}
@@ -1061,8 +1064,36 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
                       </div>
                     )}
 
-                    {verifyStep === "idle" && form.phoneNumber.trim() && (
-                      <p className="text-[10px] text-slate-500">Use E.164 format, e.g. +15551234567. Tap Verify to confirm your number.</p>
+                    {/* Twilio A2P 10DLC — consent checkbox + disclosures (must NOT be pre-checked) */}
+                    {verifyStep !== "verified" && (
+                      <div className="rounded-xl p-3 space-y-2.5 mt-1"
+                        style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                        <label className="flex items-start gap-2.5 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={smsConsent}
+                            onChange={e => setSmsConsent(e.target.checked)}
+                            className="mt-0.5 shrink-0 accent-emerald-500 cursor-pointer"
+                          />
+                          <span className="text-[12px] text-slate-300 leading-snug">
+                            Yes, I want to receive automated SMS alerts from LiveSwell about surf conditions at my saved spots. I understand I may receive multiple messages per day when conditions change.
+                          </span>
+                        </label>
+                        <div className="space-y-1 text-[11px] text-slate-500 pl-5">
+                          <p><strong className="text-slate-400">Message frequency:</strong> Varies by conditions and your alert settings.</p>
+                          <p><strong className="text-slate-400">Standard rates:</strong> Message and data rates may apply.</p>
+                          <p><strong className="text-slate-400">Help &amp; Stop:</strong> Reply HELP for help or STOP to cancel any time.</p>
+                          <p className="pt-0.5">
+                            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-400 underline">Terms of Service</a>
+                            <span className="mx-1.5 text-slate-600">·</span>
+                            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-400 underline">Privacy Policy</a>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {verifyStep === "idle" && form.phoneNumber.trim() && !smsConsent && (
+                      <p className="text-[10px] text-slate-500">Check the box above to enable the Verify button.</p>
                     )}
                   </div>
                 )}

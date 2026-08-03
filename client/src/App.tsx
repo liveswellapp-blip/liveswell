@@ -10,6 +10,7 @@ import Home from "@/pages/home";
 import Settings from "@/pages/settings";
 import Profile from "@/pages/profile";
 import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
@@ -38,6 +39,7 @@ function Router() {
         )}
         
         <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/admin/users/:userId" component={AdminUserDetail} />
         
