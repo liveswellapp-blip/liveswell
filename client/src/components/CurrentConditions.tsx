@@ -68,7 +68,7 @@ function StatTile({
       onClick={onClick}
     >
       <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center flex-shrink-0 border ${border}`}>
-        <Icon className={`h-3.5 w-3.5 ${color}`} />
+        <Icon className="h-3.5 w-3.5 text-white" />
       </div>
       <div className="min-w-0">
         <p className="text-[10px] font-medium leading-tight text-[#ffffff]">{label}</p>
