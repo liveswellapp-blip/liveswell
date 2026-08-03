@@ -4071,6 +4071,89 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     }
   });
 
+  // ── AI Surf Chat endpoint ─────────────────────────────────────────────────
+  // POST /api/chat — accepts { messages, locationId }, fetches live conditions,
+  // builds a system prompt scoped to that spot, and returns an AI reply.
+  app.post("/api/chat", generalApiLimiter, async (req, res) => {
+    try {
+      const { messages, locationId } = req.body;
+
+      if (!locationId || !Array.isArray(messages)) {
+        return res.status(400).json({ message: "locationId and messages array are required" });
+      }
+
+      const locId = parseInt(locationId, 10);
+      if (isNaN(locId)) {
+        return res.status(400).json({ message: "Invalid locationId" });
+      }
+
+      const location = await storage.getLocation(locId);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      // Fetch live conditions for this spot
+      let conditions: any = null;
+      try {
+        const condRes = await fetch(`${req.protocol}://${req.get("host")}/api/locations/${locId}/conditions`);
+        if (condRes.ok) conditions = await condRes.json();
+      } catch {
+        // Proceed without conditions — the AI will note they are unavailable
+      }
+
+      // Build a system prompt scoped to this spot and its current data
+      const conditionsSummary = conditions
+        ? [
+            `- Waves: ${parseFloat(conditions.waveHeight || "0").toFixed(1)} ft @ ${conditions.wavePeriod}s from ${conditions.waveDirection}`,
+            `- Wind: ${Math.round(parseFloat(conditions.windSpeed || "0"))} mph from ${conditions.windDirection}${conditions.windGusts ? `, gusts ${Math.round(parseFloat(conditions.windGusts))} mph` : ""}`,
+            `- Tide: ${conditions.tideStatus}${conditions.tideHeight ? ` at ${parseFloat(conditions.tideHeight).toFixed(1)} ft` : ""}`,
+            `- Water temp: ${conditions.waterTemp ? `${parseFloat(conditions.waterTemp).toFixed(0)}°F` : "unknown"}`,
+            conditions.primaryBuoy
+              ? `- Primary buoy (${conditions.primaryBuoy.stationName || conditions.primaryBuoy.stationId}): ${parseFloat(conditions.primaryBuoy.waveHeight || "0").toFixed(1)} ft @ ${conditions.primaryBuoy.wavePeriod}s from ${conditions.primaryBuoy.waveDirection}`
+              : null,
+            conditions.backupBuoy
+              ? `- Backup buoy (${conditions.backupBuoy.stationName || conditions.backupBuoy.stationId}): ${parseFloat(conditions.backupBuoy.waveHeight || "0").toFixed(1)} ft @ ${conditions.backupBuoy.wavePeriod}s from ${conditions.backupBuoy.waveDirection}`
+              : null,
+          ].filter(Boolean).join("\n")
+        : "Current conditions data is unavailable right now.";
+
+      const systemPrompt = `You are a knowledgeable surf coach and local expert for ${location.name}${(location as any).region ? `, ${(location as any).region}` : ""}. \
+You help surfers understand current conditions and decide whether and when to paddle out. \
+You give honest, practical advice using surf community language — no marketing fluff. \
+Keep answers concise (2-4 sentences) unless the user asks for more detail.
+
+CURRENT CONDITIONS at ${location.name}:
+${conditionsSummary}
+
+Answer questions about these conditions, surf technique, gear selection, safety, or local knowledge. \
+If you don't know something specific to this break, say so honestly. \
+Do not discuss topics unrelated to surfing or ocean activities.`;
+
+      const safeMessages = messages
+        .filter((m: any) => m.role === "user" || m.role === "assistant")
+        .slice(-20)
+        .map((m: any) => ({ role: m.role as "user" | "assistant", content: String(m.content) }));
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...safeMessages,
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      });
+
+      const reply = completion.choices[0]?.message?.content?.trim() || "Sorry, I couldn't generate a response right now.";
+
+      console.log(`✅ AI surf chat reply for location ${locId} (${location.name})`);
+      res.json({ reply });
+    } catch (error) {
+      console.error("❌ AI surf chat error:", error instanceof Error ? error.message : error);
+      res.status(500).json({ message: "Failed to generate response" });
+    }
+  });
+
   // ── Twilio inbound SMS webhook ────────────────────────────────────────────
   // express.urlencoded is already mounted globally in index.ts so Twilio's
   // form-encoded body is available on req.body here.

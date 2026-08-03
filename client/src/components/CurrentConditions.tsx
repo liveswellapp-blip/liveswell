@@ -10,6 +10,7 @@ import WindForecastChart from "@/components/WindForecastChart";
 import { useState, useEffect } from "react";
 import { getLocationTimezone } from "@/lib/timezone";
 import { Button } from "@/components/ui/button";
+import AISurfChat from "@/components/AISurfChat";
 
 interface CurrentConditionsProps {
   location: Location;
@@ -484,6 +485,9 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           </div>
         </DialogContent>
       </Dialog>
+      {/* ── AI Surf Chat ─────────────────────────────────────────────── */}
+      <AISurfChat location={location} conditions={conditions} />
+
       {/* ── Wind Details Modal ──────────────────────────────────────── */}
       <Dialog open={showWindDetailsModal} onOpenChange={setShowWindDetailsModal}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none" aria-describedby={undefined}>
