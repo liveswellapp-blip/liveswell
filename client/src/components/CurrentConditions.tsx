@@ -353,7 +353,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
                   <>
                     <span className="text-slate-600 text-xs">·</span>
-                    <span className="text-[11px] text-[#38bdf8]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                    <span className="text-[#38bdf8] text-[12px]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
                   </>
                 )}
               </div>
