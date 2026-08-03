@@ -328,39 +328,38 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               </div>
             )}
 
-            {/* ── Wind subcard ──────────────────────────────────────── */}
-            {conditions && (
-              <div className="mt-3 bg-black/30 rounded-xl p-3 border border-white/[0.08]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Wind className="h-3 w-3 text-[#94a3b8]" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-[#ffffff]">Wind</span>
-                  </div>
-                  <span className="text-slate-500 text-[9px]">OpenWeatherMap API</span>
-                </div>
-                <div className="mt-2 flex items-end justify-between gap-4">
-                  <div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="font-black text-2xl leading-none text-[#38bdf8]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
-                      <span className="text-xs font-semibold text-[#38bdf8]">mph</span>
-                      <span className="text-sm font-semibold text-[#38bdf8]">{conditions.windDirection}</span>
-                      {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
-                        <>
-                          <span className="text-slate-600 text-xs">·</span>
-                          <span className="text-[11px] text-[#38bdf8]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    className="text-[9px] bg-sky-400/15 border border-sky-400/30 rounded-lg px-3 py-1 hover:bg-sky-400/25 transition-colors shrink-0 text-[#38bdf8]"
-                    onClick={() => setShowWindDetailsModal(true)}
-                  >Wind Forecast</button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
+
+        {/* ── Wind card ─────────────────────────────────────────────── */}
+        {conditions && (
+          <div className="rounded-xl border border-white/[0.08] overflow-hidden" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}>
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <div className="flex items-center gap-1.5">
+                <Wind className="h-3.5 w-3.5 text-[#94a3b8]" />
+                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]">Wind</span>
+              </div>
+              <span className="text-slate-500 text-[9px]">OpenWeatherMap API</span>
+            </div>
+            <div className="px-4 pb-3 flex items-center justify-between gap-4">
+              <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className="font-black text-2xl leading-none text-[#38bdf8]">{Math.round(parseFloat(conditions.windSpeed || "0"))}</span>
+                <span className="text-xs font-semibold text-[#38bdf8]">mph</span>
+                <span className="text-sm font-semibold text-[#38bdf8]">{conditions.windDirection}</span>
+                {conditions.windGusts && parseFloat(conditions.windGusts) > parseFloat(conditions.windSpeed || "0") && (
+                  <>
+                    <span className="text-slate-600 text-xs">·</span>
+                    <span className="text-[11px] text-[#38bdf8]">Gusts {Math.round(parseFloat(conditions.windGusts))} mph</span>
+                  </>
+                )}
+              </div>
+              <button
+                className="text-[9px] bg-sky-400/15 border border-sky-400/30 rounded-lg px-3 py-1.5 hover:bg-sky-400/25 transition-colors shrink-0 text-[#38bdf8]"
+                onClick={() => setShowWindDetailsModal(true)}
+              >Wind Forecast</button>
+            </div>
+          </div>
+        )}
 
         {/* ── Tide chart card ───────────────────────────────────────── */}
         {(todayTides.length > 0 || isLoading) && (
