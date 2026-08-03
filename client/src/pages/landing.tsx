@@ -256,9 +256,18 @@ function PhoneShell({ children, statusBar = true }: { children: ReactNode; statu
 export default function Landing() {
   const handleLogin = () => { window.location.href = "/api/login"; };
 
+  const features = [
+    { icon: "🌊", title: "Live NOAA Buoy Data", body: "Real wave height, period, and direction pulled directly from NOAA's network of offshore buoys — updated every 30 minutes." },
+    { icon: "📅", title: "5-Day Swell Forecast", body: "See what's coming. Daily wave and wind forecasts for your break so you can plan your sessions days in advance." },
+    { icon: "📱", title: "SMS Condition Alerts", body: "Set your own thresholds. When the swell hits your criteria, you get a text — before you even think to check the app." },
+    { icon: "📍", title: "218+ Breaks Worldwide", body: "From Pipeline to Portugal. Search any coastal spot and get the same depth of data as your home break." },
+    { icon: "✨", title: "AI Surf Summary", body: "A plain-English read of current conditions written by AI — wind, swell, tide, all translated into whether it's worth paddling out." },
+    { icon: "🌙", title: "Tide Charts & Sunrise", body: "Full tide curve for the day with high/low times, plus sunrise and sunset so you can time your dawn patrol perfectly." },
+  ];
+
   const screenshots = [
     { label: "Live Conditions",  caption: "Full detail view — waves, wind, tides, and real-time NOAA buoy readings.",   img: screenConditions },
-    { label: "Discover Spots",   caption: "Browse 228+ breaks worldwide with live wave heights and conditions ratings.", img: screenSpots      },
+    { label: "Discover Spots",   caption: "Browse 218+ breaks worldwide with live wave heights and conditions ratings.", img: screenSpots      },
     { label: "Wave History",     caption: "24-hour buoy history — every reading plotted so you can see the swell trend.", img: screenHistory    },
   ];
 
@@ -280,18 +289,22 @@ export default function Landing() {
           padding: 16px 48px;
           display: flex; align-items: center; justify-content: space-between;
           border-bottom: 1px solid rgba(255,255,255,0.05);
+          position: sticky; top: 0; z-index: 50;
+          background: rgba(3,10,20,0.92); backdrop-filter: blur(12px);
         }
         .landing-nav img { height: 36px; object-fit: contain; }
         .landing-nav-btn {
-          background: #34d399; color: #030a14; border: none;
+          background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12);
           border-radius: 8px; padding: 8px 20px;
-          font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer;
+          font-family: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
+          transition: border-color 0.2s, color 0.2s;
         }
+        .landing-nav-btn:hover { border-color: rgba(255,255,255,0.25); color: white; }
 
         /* ── Hero ───────────────────────────────────────────── */
         .landing-hero {
           display: grid; grid-template-columns: 1fr 1fr;
-          gap: 56px; padding: 64px 48px 56px;
+          gap: 56px; padding: 72px 48px 64px;
           align-items: center; max-width: 1280px; margin: 0 auto;
         }
         .landing-eyebrow {
@@ -301,27 +314,29 @@ export default function Landing() {
         }
         .landing-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: #34d399; }
         .landing-eyebrow span { color: #34d399; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; }
-        .landing-h1 { font-size: 52px; font-weight: 900; line-height: 1.1; margin: 0 0 20px; letter-spacing: -1px; }
+        .landing-h1 { font-size: 54px; font-weight: 900; line-height: 1.08; margin: 0 0 20px; letter-spacing: -1.5px; }
         .landing-h1 em { color: #34d399; font-style: normal; }
-        .landing-sub { font-size: 16px; color: rgba(255,255,255,0.55); line-height: 1.7; margin: 0 0 32px; max-width: 440px; }
-        .landing-badges { display: flex; gap: 10px; margin-bottom: 36px; flex-wrap: wrap; }
+        .landing-sub { font-size: 16px; color: rgba(255,255,255,0.55); line-height: 1.75; margin: 0 0 28px; max-width: 460px; }
+        .landing-badges { display: flex; gap: 8px; margin-bottom: 36px; flex-wrap: wrap; }
         .landing-badge {
-          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.7);
+          background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 8px; padding: 5px 11px; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6);
         }
         .landing-cta-row { display: flex; gap: 12px; align-items: center; }
         .landing-cta-btn {
           background: #34d399; color: #030a14; border: none; border-radius: 10px;
-          padding: 14px 32px; font-family: inherit; font-weight: 800; font-size: 15px; cursor: pointer;
+          padding: 15px 36px; font-family: inherit; font-weight: 800; font-size: 15px; cursor: pointer;
+          transition: background 0.2s, transform 0.1s;
         }
+        .landing-cta-btn:hover { background: #2fd494; transform: translateY(-1px); }
         .landing-cta-note { color: rgba(255,255,255,0.3); font-size: 12px; }
 
         /* ── Hero phone ─────────────────────────────────────── */
         .landing-phone-wrap { display: flex; justify-content: center; position: relative; }
         .landing-phone-glow {
           position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-          width: 360px; height: 580px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(52,211,153,0.11) 0%, transparent 70%);
+          width: 400px; height: 600px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(52,211,153,0.13) 0%, transparent 68%);
           pointer-events: none;
         }
 
@@ -331,26 +346,87 @@ export default function Landing() {
           border-bottom: 1px solid rgba(255,255,255,0.05);
           background: rgba(255,255,255,0.015);
         }
-        .landing-stats-inner { max-width: 1280px; margin: 0 auto; padding: 24px 48px; display: flex; }
+        .landing-stats-inner { max-width: 1280px; margin: 0 auto; padding: 28px 48px; display: flex; }
         .landing-stat { flex: 1; text-align: center; }
-        .landing-stat-num { font-size: 26px; font-weight: 900; color: #34d399; }
-        .landing-stat-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; font-weight: 500; }
+        .landing-stat-num { font-size: 28px; font-weight: 900; color: #34d399; }
+        .landing-stat-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; font-weight: 500; }
         .landing-stat-divider { border-right: 1px solid rgba(255,255,255,0.06); }
 
         /* ── Features ───────────────────────────────────────── */
-        .landing-features { max-width: 1280px; margin: 0 auto; padding: 60px 48px 48px; }
-        .landing-features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .landing-features { max-width: 1280px; margin: 0 auto; padding: 72px 48px 56px; }
+        .landing-features-heading { font-size: 34px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 10px; text-align: center; }
+        .landing-features-sub { font-size: 15px; color: rgba(255,255,255,0.45); text-align: center; margin-bottom: 48px; line-height: 1.6; }
+        .landing-features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
         .landing-feature-card {
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 16px; padding: 28px 24px;
+          background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 18px; padding: 28px 24px;
+          transition: border-color 0.2s;
         }
-        .landing-feature-icon { font-size: 28px; margin-bottom: 12px; }
+        .landing-feature-card:hover { border-color: rgba(52,211,153,0.2); }
+        .landing-feature-icon { font-size: 28px; margin-bottom: 14px; }
         .landing-feature-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-        .landing-feature-body { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; }
+        .landing-feature-body { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.65; }
+
+        /* ── How it works ───────────────────────────────────── */
+        .landing-hiw {
+          border-top: 1px solid rgba(255,255,255,0.05);
+          padding: 72px 48px;
+        }
+        .landing-hiw-inner { max-width: 1280px; margin: 0 auto; }
+        .landing-hiw-heading { font-size: 34px; font-weight: 900; letter-spacing: -0.5px; text-align: center; margin-bottom: 10px; }
+        .landing-hiw-sub { font-size: 15px; color: rgba(255,255,255,0.45); text-align: center; margin-bottom: 52px; line-height: 1.6; }
+        .landing-hiw-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; position: relative; }
+        .landing-hiw-connector {
+          position: absolute; top: 28px; left: calc(33.33% + 16px); right: calc(33.33% + 16px);
+          height: 1px; background: linear-gradient(90deg, rgba(52,211,153,0.3), rgba(52,211,153,0.1));
+          pointer-events: none;
+        }
+        .landing-hiw-step { text-align: center; padding: 0 8px; }
+        .landing-hiw-num {
+          width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 20px;
+          background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 18px; font-weight: 900; color: #34d399;
+        }
+        .landing-hiw-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+        .landing-hiw-body { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.65; }
+
+        /* ── SMS banner ─────────────────────────────────────── */
+        .landing-sms-banner {
+          margin: 0 48px 0;
+          border-radius: 20px;
+          background: linear-gradient(135deg, rgba(52,211,153,0.09) 0%, rgba(6,182,212,0.07) 100%);
+          border: 1px solid rgba(52,211,153,0.18);
+          padding: 52px 64px;
+          display: grid; grid-template-columns: 1fr auto;
+          gap: 48px; align-items: center;
+          max-width: 1184px; margin: 0 auto 0; position: relative;
+        }
+        .landing-sms-banner-wrap { padding: 0 48px 72px; max-width: 1280px; margin: 0 auto; }
+        .landing-sms-eyebrow {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+          border-radius: 20px; padding: 4px 12px; margin-bottom: 16px;
+        }
+        .landing-sms-eyebrow span { color: #34d399; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; }
+        .landing-sms-heading { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 14px; }
+        .landing-sms-body { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.7; max-width: 500px; }
+        .landing-sms-example {
+          background: rgba(3,10,20,0.6); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 18px; padding: 20px 24px; min-width: 280px; flex-shrink: 0;
+        }
+        .landing-sms-label { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.3); letter-spacing: 0.1em; margin-bottom: 12px; text-transform: uppercase; }
+        .landing-sms-msg {
+          background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2);
+          border-radius: 12px 12px 4px 12px; padding: 12px 14px;
+          font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.6;
+          margin-bottom: 6px;
+        }
+        .landing-sms-time { font-size: 10px; color: rgba(255,255,255,0.25); text-align: right; }
 
         /* ── Screenshots ────────────────────────────────────── */
         .landing-screenshots {
-          padding: 64px 48px 72px;
+          padding: 72px 48px 80px;
           border-top: 1px solid rgba(255,255,255,0.05);
         }
         .landing-screenshots-heading {
@@ -359,75 +435,123 @@ export default function Landing() {
         }
         .landing-screenshots-sub {
           text-align: center; color: rgba(255,255,255,0.45); font-size: 15px;
-          margin-bottom: 52px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.6;
+          margin-bottom: 56px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.6;
         }
         .landing-screenshots-grid {
           display: grid; grid-template-columns: repeat(3, 280px);
           gap: 48px; justify-content: center;
         }
         .landing-screenshot-item { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .landing-screenshot-label {
-          font-size: 14px; font-weight: 800; color: white; letter-spacing: -0.2px;
-        }
+        .landing-screenshot-label { font-size: 14px; font-weight: 800; color: white; letter-spacing: -0.2px; }
         .landing-screenshot-caption {
           font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.6;
           text-align: center; max-width: 240px;
         }
 
         /* ── Footer ─────────────────────────────────────────── */
-        .landing-footer { text-align: center; padding: 0 48px 48px; color: rgba(255,255,255,0.2); font-size: 11px; }
+        .landing-footer-wrap {
+          border-top: 1px solid rgba(255,255,255,0.06);
+          padding: 48px 48px 40px;
+        }
+        .landing-footer-grid {
+          max-width: 1280px; margin: 0 auto;
+          display: grid; grid-template-columns: 1.4fr 1fr 1fr;
+          gap: 48px; margin-bottom: 40px;
+        }
+        .landing-footer-logo { height: 28px; object-fit: contain; margin-bottom: 12px; display: block; }
+        .landing-footer-tagline { font-size: 12px; color: rgba(255,255,255,0.35); line-height: 1.6; max-width: 220px; }
+        .landing-footer-col-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+        .landing-footer-link {
+          display: block; font-size: 13px; color: rgba(255,255,255,0.4);
+          text-decoration: none; margin-bottom: 8px;
+          transition: color 0.15s;
+        }
+        .landing-footer-link:hover { color: rgba(255,255,255,0.7); }
+        .landing-footer-bottom {
+          max-width: 1280px; margin: 0 auto;
+          border-top: 1px solid rgba(255,255,255,0.05);
+          padding-top: 24px;
+          display: flex; justify-content: space-between; align-items: center;
+          font-size: 11px; color: rgba(255,255,255,0.2);
+        }
 
         /* ── Mobile ─────────────────────────────────────────── */
         @media (max-width: 768px) {
           .landing-nav { padding: 14px 20px; }
           .landing-nav img { height: 28px; }
 
-          .landing-hero { grid-template-columns: 1fr; gap: 0; padding: 32px 20px 28px; }
-          .landing-phone-wrap { display: none; }
+          .landing-hero { grid-template-columns: 1fr; gap: 40px; padding: 36px 20px 32px; }
+          .landing-phone-wrap { justify-content: center; }
           .landing-eyebrow { margin-bottom: 16px; }
-          .landing-h1 { font-size: 36px; letter-spacing: -0.5px; margin-bottom: 14px; }
-          .landing-sub { font-size: 15px; margin-bottom: 24px; max-width: 100%; }
+          .landing-h1 { font-size: 38px; letter-spacing: -1px; margin-bottom: 16px; }
+          .landing-sub { font-size: 15px; margin-bottom: 22px; max-width: 100%; }
           .landing-badges { margin-bottom: 28px; }
           .landing-cta-row { flex-direction: column; align-items: stretch; gap: 10px; }
           .landing-cta-btn { padding: 16px; font-size: 16px; text-align: center; }
           .landing-cta-note { text-align: center; }
 
-          .landing-stats-bar { display: none; }
+          .landing-stats-inner { padding: 20px 24px; flex-wrap: wrap; }
+          .landing-stat { min-width: 50%; padding: 10px 0; }
+          .landing-stat-divider { border-right: none; }
 
-          .landing-features { padding: 32px 20px 32px; }
+          .landing-features { padding: 40px 20px; }
           .landing-features-grid { grid-template-columns: 1fr; gap: 12px; }
-          .landing-feature-card { padding: 20px 18px; }
+          .landing-feature-card { padding: 22px 20px; }
 
-          .landing-screenshots { padding: 40px 0 48px; border-top: none; }
+          .landing-hiw { padding: 40px 20px; }
+          .landing-hiw-grid { grid-template-columns: 1fr; gap: 28px; }
+          .landing-hiw-connector { display: none; }
+
+          .landing-sms-banner-wrap { padding: 0 20px 48px; }
+          .landing-sms-banner { grid-template-columns: 1fr; gap: 28px; padding: 32px 24px; }
+          .landing-sms-heading { font-size: 24px; }
+          .landing-sms-example { min-width: unset; }
+
+          .landing-screenshots { padding: 40px 0 56px; border-top: none; }
           .landing-screenshots-heading { font-size: 26px; padding: 0 20px; }
-          .landing-screenshots-sub { font-size: 14px; padding: 0 24px; margin-bottom: 32px; }
+          .landing-screenshots-sub { font-size: 14px; padding: 0 24px; margin-bottom: 36px; }
           .landing-screenshots-grid {
-            grid-template-columns: 1fr;
-            gap: 40px;
-            padding: 0 20px 16px;
-            justify-content: center;
+            grid-template-columns: 1fr; gap: 40px;
+            padding: 0 20px 16px; justify-content: center;
           }
           .landing-screenshot-item { align-items: center; }
 
-          .landing-footer { padding: 0 20px 40px; }
+          .landing-footer-wrap { padding: 36px 20px 28px; }
+          .landing-footer-grid { grid-template-columns: 1fr; gap: 32px; margin-bottom: 28px; }
+          .landing-footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
         }
       `}</style>
-      {/* Nav */}
+
+      {/* ── Nav ─────────────────────────────────────────────────── */}
       <nav className="landing-nav">
         <img src={logoImage} alt="LiveSwell" />
         <button className="landing-nav-btn" onClick={handleLogin}>Sign In</button>
       </nav>
-      {/* Hero */}
+
+      {/* ── Hero ────────────────────────────────────────────────── */}
       <div className="landing-hero">
         <div>
+          <div className="landing-eyebrow">
+            <div className="landing-eyebrow-dot" />
+            <span>Live · Real-time surf data</span>
+          </div>
           <h1 className="landing-h1">
             Read the Ocean.<br />
             <em>Catch the</em><br />
             Moment.
           </h1>
-          <p className="landing-sub">Live NOAA wave, wind and tide data across 200+ surf locations. No more opinion or inaccurate surf conditions, just real-time data.</p>
+          <p className="landing-sub">
+            Live NOAA buoy data, 5-day forecasts, and real-time tide charts for 218+ breaks worldwide.
+            Know exactly what the ocean is doing before you leave the house.
+          </p>
+          <div className="landing-badges">
+            <span className="landing-badge">🌊 NOAA Buoy Data</span>
+            <span className="landing-badge">📱 SMS Alerts</span>
+            <span className="landing-badge">✨ AI Summaries</span>
+            <span className="landing-badge">📍 218+ Spots</span>
+          </div>
           <div className="landing-cta-row">
-            <button className="landing-cta-btn" onClick={handleLogin}>Sign in with Replit →</button>
+            <button className="landing-cta-btn" onClick={handleLogin}>Get Started Free</button>
             <span className="landing-cta-note">Free · No credit card needed</span>
           </div>
         </div>
@@ -439,7 +563,8 @@ export default function Landing() {
           </PhoneShell>
         </div>
       </div>
-      {/* Stats */}
+
+      {/* ── Stats bar ───────────────────────────────────────────── */}
       <div className="landing-stats-bar">
         <div className="landing-stats-inner">
           {[
@@ -455,7 +580,71 @@ export default function Landing() {
           ))}
         </div>
       </div>
-      {/* Screenshots */}
+
+      {/* ── Features ────────────────────────────────────────────── */}
+      <div className="landing-features">
+        <div className="landing-features-heading">Everything you need before paddling out</div>
+        <p className="landing-features-sub">Real data, no guesswork. Built for surfers who need to know.</p>
+        <div className="landing-features-grid">
+          {features.map(f => (
+            <div key={f.title} className="landing-feature-card">
+              <div className="landing-feature-icon">{f.icon}</div>
+              <div className="landing-feature-title">{f.title}</div>
+              <div className="landing-feature-body">{f.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── How it works ────────────────────────────────────────── */}
+      <div className="landing-hiw">
+        <div className="landing-hiw-inner">
+          <div className="landing-hiw-heading">Up and running in 60 seconds</div>
+          <p className="landing-hiw-sub">No setup, no subscriptions. Just sign in and find your break.</p>
+          <div className="landing-hiw-grid">
+            <div className="landing-hiw-connector" />
+            {[
+              { n: "1", title: "Search your break", body: "Type any beach, point break, or reef. LiveSwell covers 218+ spots across every surfing continent." },
+              { n: "2", title: "Get live conditions", body: "Instantly see real buoy readings, wind speed and direction, tide times, and today's AI surf summary." },
+              { n: "3", title: "Set your alerts", body: "Tell us your conditions — wave height, wind speed — and we'll text you the moment they're met." },
+            ].map(step => (
+              <div key={step.n} className="landing-hiw-step">
+                <div className="landing-hiw-num">{step.n}</div>
+                <div className="landing-hiw-title">{step.title}</div>
+                <div className="landing-hiw-body">{step.body}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── SMS alert banner ────────────────────────────────────── */}
+      <div className="landing-sms-banner-wrap">
+        <div className="landing-sms-banner">
+          <div>
+            <div className="landing-sms-eyebrow">
+              <span>📱 SMS Condition Alerts</span>
+            </div>
+            <div className="landing-sms-heading">Never miss a swell again</div>
+            <p className="landing-sms-body">
+              Stop checking the app every morning hoping conditions lined up. Set your thresholds once —
+              wave height, wind speed, swell direction — and LiveSwell texts you when your break is firing.
+              Your phone buzzes, you grab your board.
+            </p>
+          </div>
+          <div className="landing-sms-example">
+            <div className="landing-sms-label">📩 Text message · 6:14 AM</div>
+            <div className="landing-sms-msg">
+              🌊 <strong>Trestles is firing.</strong><br />
+              4.8 ft @ 14s SW swell · NNE offshore 8 mph · Low tide 6:42 AM<br /><br />
+              Conditions match your alert. Get out there.
+            </div>
+            <div className="landing-sms-time">LiveSwell · Reply STOP to opt out</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Screenshots ─────────────────────────────────────────── */}
       <div className="landing-screenshots">
         <div className="landing-screenshots-heading">See it in action</div>
         <p className="landing-screenshots-sub">
@@ -473,12 +662,34 @@ export default function Landing() {
           ))}
         </div>
       </div>
-      <div className="landing-footer">
-        <div>Data sources: NOAA NDBC · OpenWeatherMap · Open-Meteo Marine · NOAA Tides &amp; Currents</div>
-        <div style={{ marginTop: 8 }}>
-          <a href="/terms" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "underline" }}>Terms of Service</a>
-          <span style={{ margin: "0 8px", color: "rgba(255,255,255,0.15)" }}>·</span>
-          <a href="/privacy" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "underline" }}>Privacy Policy</a>
+
+      {/* ── Footer ──────────────────────────────────────────────── */}
+      <div className="landing-footer-wrap">
+        <div className="landing-footer-grid">
+          <div>
+            <img src={logoImage} alt="LiveSwell" className="landing-footer-logo" />
+            <div className="landing-footer-tagline">
+              Real-time surf conditions powered by NOAA buoy data, open marine forecasts, and AI.
+              Built for surfers who want facts, not opinions.
+            </div>
+          </div>
+          <div>
+            <div className="landing-footer-col-title">App</div>
+            <a href="/api/login" className="landing-footer-link" onClick={e => { e.preventDefault(); handleLogin(); }}>Sign In</a>
+            <a href="/terms" className="landing-footer-link">Terms of Service</a>
+            <a href="/privacy" className="landing-footer-link">Privacy Policy</a>
+          </div>
+          <div>
+            <div className="landing-footer-col-title">Data Sources</div>
+            <span className="landing-footer-link" style={{ cursor: "default" }}>NOAA NDBC Buoys</span>
+            <span className="landing-footer-link" style={{ cursor: "default" }}>NOAA Tides &amp; Currents</span>
+            <span className="landing-footer-link" style={{ cursor: "default" }}>OpenWeatherMap</span>
+            <span className="landing-footer-link" style={{ cursor: "default" }}>Open-Meteo Marine</span>
+          </div>
+        </div>
+        <div className="landing-footer-bottom">
+          <span>© {new Date().getFullYear()} LiveSwell. All rights reserved.</span>
+          <span>Free · No credit card needed</span>
         </div>
       </div>
     </div>
