@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Location, ForecastDay } from "@/types/weather";
 import TideChart from "./TideChart";
 import { useRef, useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Sunrise, Sunset } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ForecastSectionProps {
   location: Location;
@@ -163,13 +163,13 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     <div className="px-4 pb-3 pt-1 flex items-center justify-between border-t border-white/[0.06] mt-1">
                       {day.sunrise && (
                         <div className="flex items-center gap-1.5">
-                          <Sunrise size={11} className="text-amber-400" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Sunrise</span>
                           <span className="text-[11px] text-slate-400">{day.sunrise}</span>
                         </div>
                       )}
                       {day.sunset && (
                         <div className="flex items-center gap-1.5">
-                          <Sunset size={11} className="text-orange-400" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Sunset</span>
                           <span className="text-[11px] text-slate-400">{day.sunset}</span>
                         </div>
                       )}
