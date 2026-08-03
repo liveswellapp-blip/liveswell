@@ -37,5 +37,23 @@
 
     <!-- Permissions -->
 
+    <!-- Network access (required for all web content and API calls) -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Push notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Coarse location — used for nearest surf-spot lookup -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Fine location — improves accuracy for on-the-beach spot detection -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Keep the CPU awake while a background sync completes -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Required by Capacitor's local notifications plugin -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <!-- Vibration feedback for incoming alerts -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>

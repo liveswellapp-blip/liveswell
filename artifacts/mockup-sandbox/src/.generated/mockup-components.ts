@@ -8,6 +8,7 @@ export const modules: ModuleMap = {
   "./components/mockups/conditions-redesign/DashboardGrid.tsx": () => import("../components/mockups/conditions-redesign/DashboardGrid.tsx"),
   "./components/mockups/conditions-redesign/TabsLayout.tsx": () => import("../components/mockups/conditions-redesign/TabsLayout.tsx"),
   "./components/mockups/conditions-redesign/TimelineStory.tsx": () => import("../components/mockups/conditions-redesign/TimelineStory.tsx"),
+  "./components/mockups/buoy-history/BuoyHistory.tsx": () => import("../components/mockups/buoy-history/BuoyHistory.tsx"),
   "./components/mockups/fonts/Fredoka.tsx": () => import("../components/mockups/fonts/Fredoka.tsx"),
   "./components/mockups/fonts/Nunito.tsx": () => import("../components/mockups/fonts/Nunito.tsx"),
   "./components/mockups/fonts/Poppins.tsx": () => import("../components/mockups/fonts/Poppins.tsx"),
