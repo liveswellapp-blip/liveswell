@@ -21,3 +21,31 @@ uri = "file://screenshots/app-store-3-history.png"
 type = "image"
 title = "Screenshot 3 — Wave History"
 description = "App Store screenshot at 1242×2688px"
+
+[[outputs]]
+id = "0_o4-KGkeOR2wwxSg7Qil"
+uri = "file://screenshots/app-store-4-alerts.png"
+type = "image"
+title = "Screenshot 4 — Condition Alerts"
+description = "App Store screenshot at 1242×2688px"
+
+[[outputs]]
+id = "dR3cQcJlCyg-0i5VoQFpZ"
+uri = "file://screenshots/app-store-5-wind.png"
+type = "image"
+title = "Screenshot 5 — Wind Forecast"
+description = "App Store screenshot at 1242×2688px"
+
+[[outputs]]
+id = "rPzl0ybER78NVmObSuMsB"
+uri = "file://screenshots/app-store-6-chat.png"
+type = "image"
+title = "Screenshot 6 — AI Surf Chat"
+description = "App Store screenshot at 1242×2688px"
+
+[[outputs]]
+id = "BRkBu_4ql-WQ2CnUosUTM"
+uri = "file://screenshots/app-store-7-explore.png"
+type = "image"
+title = "Screenshot 7 — Explore Spots"
+description = "App Store screenshot at 1242×2688px"
