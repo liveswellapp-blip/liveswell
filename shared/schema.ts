@@ -174,6 +174,15 @@ export const weatherCacheEntries = pgTable("weather_cache_entries", {
   fetchedAt: timestamp("fetched_at").notNull(),
 });
 
+// APNs device tokens for native iOS push notifications
+export const apnsDeviceTokens = pgTable("apns_device_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  deviceToken: text("device_token").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [index("IDX_apns_device_tokens_user_id").on(table.userId)]);
+
 export const smsRateLimits = pgTable("sms_rate_limits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -282,3 +291,10 @@ export type AlertTriggerLog = typeof alertTriggerLog.$inferSelect;
 export type InsertAlertTriggerLog = z.infer<typeof insertAlertTriggerLogSchema>;
 
 export type AgentConversation = typeof agentConversations.$inferSelect;
+export type ApnsDeviceToken = typeof apnsDeviceTokens.$inferSelect;
+export const insertApnsDeviceTokenSchema = createInsertSchema(apnsDeviceTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertApnsDeviceToken = z.infer<typeof insertApnsDeviceTokenSchema>;

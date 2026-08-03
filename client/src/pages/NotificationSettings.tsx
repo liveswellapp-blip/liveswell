@@ -606,13 +606,19 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
 
   const handlePushToggle = async (val: boolean) => {
     if (val) {
-      if (!pushNotifications.isSupported()) {
-        toast({ title: "Not supported", description: "Push isn't available on this browser.", variant: "destructive" });
+      const supported = await pushNotifications.isSupported();
+      if (!supported) {
+        toast({ title: "Not supported", description: "Push notifications aren't available on this browser.", variant: "destructive" });
         return;
       }
+      // On native iOS the subscribe() call triggers the APNs permission dialog
+      // and registers the device token with the server; it returns null (token
+      // is sent separately via the 'registration' event listener).
+      // On web it returns the VAPID subscription object.
       const sub = await pushNotifications.subscribe();
-      if (!sub) {
-        toast({ title: "Permission denied", description: "Allow notifications in browser settings.", variant: "destructive" });
+      const isIOS = await pushNotifications.isNativeIOS();
+      if (!sub && !isIOS) {
+        toast({ title: "Permission denied", description: "Allow notifications in your settings to enable push alerts.", variant: "destructive" });
         return;
       }
     }

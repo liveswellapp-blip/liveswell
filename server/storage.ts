@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
@@ -641,6 +641,35 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, userId));
     return result.rowCount > 0;
+  }
+
+  // ─── APNs Device Tokens ─────────────────────────────────────────────────────
+
+  async getApnsDeviceTokens(userId: string): Promise<ApnsDeviceToken[]> {
+    return db.select().from(apnsDeviceTokens).where(eq(apnsDeviceTokens.userId, userId));
+  }
+
+  async addApnsDeviceToken(userId: string, deviceToken: string): Promise<ApnsDeviceToken> {
+    // Upsert: delete any existing row with the same token, then insert fresh
+    await db.delete(apnsDeviceTokens).where(
+      and(eq(apnsDeviceTokens.userId, userId), eq(apnsDeviceTokens.deviceToken, deviceToken))
+    );
+    const [row] = await db.insert(apnsDeviceTokens)
+      .values({ userId, deviceToken, updatedAt: new Date() })
+      .returning();
+    return row;
+  }
+
+  async removeApnsDeviceToken(userId: string, deviceToken: string): Promise<boolean> {
+    const result = await db.delete(apnsDeviceTokens).where(
+      and(eq(apnsDeviceTokens.userId, userId), eq(apnsDeviceTokens.deviceToken, deviceToken))
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async removeAllUserApnsDeviceTokens(userId: string): Promise<boolean> {
+    const result = await db.delete(apnsDeviceTokens).where(eq(apnsDeviceTokens.userId, userId));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getUserAlerts(userId: string): Promise<(UserAlert & { locationName: string; locationCity: string })[]> {

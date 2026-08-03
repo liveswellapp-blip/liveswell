@@ -40,6 +40,7 @@ import {
 } from "./weather-service";
 import { pushNotificationService } from "./push-service";
 import { insertPushSubscriptionSchema } from "@shared/schema";
+import { apnsService } from "./apns-service";
 import OpenAI from "openai";
 import { generateSurfSummary } from "./ai-summary-helper";
 
@@ -3632,6 +3633,53 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
       console.error("Error sending test push notification:", error);
       res.status(500).json({ message: "Failed to send test push notification" });
     }
+  });
+
+  // ── APNs device token registration (native iOS) ──────────────────────────────
+
+  // Register a native iOS APNs device token
+  app.post("/api/push/apns-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceToken } = req.body;
+
+      if (!deviceToken || typeof deviceToken !== "string" || deviceToken.trim().length === 0) {
+        return res.status(400).json({ message: "deviceToken is required" });
+      }
+
+      await storage.addApnsDeviceToken(userId, deviceToken.trim());
+      console.log(`[APNs] Device token registered for user ${userId}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[APNs] Error registering device token:", error);
+      res.status(500).json({ message: "Failed to register APNs device token" });
+    }
+  });
+
+  // Remove a native iOS APNs device token (e.g. on sign-out)
+  app.delete("/api/push/apns-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceToken } = req.body;
+
+      if (!deviceToken || typeof deviceToken !== "string") {
+        return res.status(400).json({ message: "deviceToken is required" });
+      }
+
+      const removed = await storage.removeApnsDeviceToken(userId, deviceToken.trim());
+      res.json({ success: removed });
+    } catch (error) {
+      console.error("[APNs] Error removing device token:", error);
+      res.status(500).json({ message: "Failed to remove APNs device token" });
+    }
+  });
+
+  // Return APNs service health (admin only)
+  app.get("/api/push/apns-health", requireAdminAuth, (req, res) => {
+    res.json({
+      operational: apnsService.isOperational(),
+      error: apnsService.getInitError(),
+    });
   });
 
   // ── Unsubscribe endpoint ─────────────────────────────────────────────────────

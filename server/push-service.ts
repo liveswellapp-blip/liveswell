@@ -1,6 +1,7 @@
 import webpush from 'web-push';
 import { storage } from './storage';
 import { trackPushResult } from './monitoring';
+import { apnsService } from './apns-service';
 
 interface PushNotificationPayload {
   title: string;
@@ -130,18 +131,15 @@ class PushNotificationService {
   }
 
   /**
-   * Send notification to a user by user ID
+   * Send notification to a user by user ID (web-push / VAPID).
+   * Returns the total delivery count across all web-push subscriptions.
    */
   async sendNotificationToUser(userId: string, payload: PushNotificationPayload): Promise<number> {
+    let successCount = 0;
+
+    // ── Web-push (VAPID) ──────────────────────────────────────────────────────
     try {
       const subscriptions = await storage.getPushSubscriptions(userId);
-      
-      if (subscriptions.length === 0) {
-        console.log('[INFO] No push subscriptions found for user', { userId });
-        return 0;
-      }
-
-      let successCount = 0;
       const cleanupEndpoints: string[] = [];
 
       for (const subscription of subscriptions) {
@@ -154,18 +152,10 @@ class PushNotificationService {
         };
 
         const result = await this.sendNotificationToSubscription(subscriptionData, payload);
-        
-        if (result.success) {
-          successCount++;
-        } 
-        
-        // Only mark for cleanup if explicitly marked for deletion (404/410 errors)
-        if (result.shouldDelete) {
-          cleanupEndpoints.push(subscription.endpoint);
-        }
+        if (result.success) successCount++;
+        if (result.shouldDelete) cleanupEndpoints.push(subscription.endpoint);
       }
 
-      // Clean up expired/invalid subscriptions (only for 404/410 errors)
       for (const endpoint of cleanupEndpoints) {
         try {
           await storage.removePushSubscription(userId, endpoint);
@@ -175,21 +165,36 @@ class PushNotificationService {
         }
       }
 
-      console.log('[INFO] Push notification batch completed', {
-        userId,
-        totalSubscriptions: subscriptions.length,
-        successCount,
-        cleanedUp: cleanupEndpoints.length,
-      });
-
-      return successCount;
+      if (subscriptions.length > 0) {
+        console.log('[INFO] Web-push batch completed', {
+          userId,
+          totalSubscriptions: subscriptions.length,
+          successCount,
+          cleanedUp: cleanupEndpoints.length,
+        });
+      }
     } catch (error) {
-      console.error('[ERROR] Failed to send push notifications to user', {
+      console.error('[ERROR] Failed to send web-push notifications to user', {
         userId,
         error: error instanceof Error ? error.message : error,
       });
-      return 0;
     }
+
+    // ── APNs (native iOS) ─────────────────────────────────────────────────────
+    if (apnsService.isOperational()) {
+      try {
+        const apnsCount = await apnsService.sendToUser(userId, {
+          title: payload.title,
+          body: payload.body,
+          url: payload.url,
+        });
+        successCount += apnsCount;
+      } catch (error) {
+        console.error('[ERROR] APNs delivery failed for user', { userId, error });
+      }
+    }
+
+    return successCount;
   }
 
   /**
