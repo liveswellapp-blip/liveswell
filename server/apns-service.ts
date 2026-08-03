@@ -12,7 +12,8 @@
  */
 
 import { ApnsClient, Notification } from 'apns2';
-import { storage } from './storage';
+import { storage as defaultStorage } from './storage';
+import type { IStorage } from './storage';
 
 const BUNDLE_ID = process.env.APNS_BUNDLE_ID ?? 'com.liveswell.app';
 
@@ -25,9 +26,11 @@ interface ApnsPayload {
   badge?: number;
 }
 
-class ApnsService {
+export class ApnsService {
   private client: ApnsClient | null = null;
   private initError: string | null = null;
+  /** Overridable in tests to inject a mock storage. */
+  _storage: Pick<IStorage, 'getApnsDeviceTokens' | 'removeApnsDeviceToken'> = defaultStorage;
 
   constructor() {
     this.init();
@@ -115,7 +118,7 @@ class ApnsService {
   async sendToUser(userId: string, payload: ApnsPayload): Promise<number> {
     if (!this.client) return 0;
 
-    const tokens = await storage.getApnsDeviceTokens(userId);
+    const tokens = await this._storage.getApnsDeviceTokens(userId);
     if (tokens.length === 0) return 0;
 
     let successCount = 0;
@@ -134,7 +137,7 @@ class ApnsService {
     // Prune invalid tokens
     for (const token of toDelete) {
       try {
-        await storage.removeApnsDeviceToken(userId, token);
+        await this._storage.removeApnsDeviceToken(userId, token);
       } catch { /* best-effort */ }
     }
 
