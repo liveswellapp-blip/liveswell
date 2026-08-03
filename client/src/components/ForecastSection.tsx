@@ -155,7 +155,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   {/* Compact tide chart */}
                   <div className="px-3 pb-2 mt-auto">
                     {day.tides && day.tides.length > 0 && (
-                      <TideChart tides={day.tides} date={day.date} location={location} />
+                      <TideChart tides={day.tides} date={day.date} location={location} sunrise={day.sunrise} sunset={day.sunset} />
                     )}
                   </div>
                   {/* Sunrise / Sunset */}
