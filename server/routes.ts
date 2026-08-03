@@ -41,6 +41,7 @@ import {
 import { pushNotificationService } from "./push-service";
 import { insertPushSubscriptionSchema } from "@shared/schema";
 import OpenAI from "openai";
+import { generateSurfSummary } from "./ai-summary-helper";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -154,6 +155,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Protected monitoring endpoints - require admin authentication
   app.get("/api/health", requireAdminAuth, healthCheck);
   app.get("/api/metrics", requireAdminAuth, getMetrics);
+
+  // AI summary health-check — probes the live OpenAI model + parameter set so a
+  // model rename or unsupported-parameter regression is caught before users see it.
+  app.get("/api/admin/ai-summary-health", requireAdminAuth, async (_req, res) => {
+    const start = Date.now();
+    try {
+      const { generateSurfSummary, AI_SUMMARY_MODEL } = await import("./ai-summary-helper");
+      const testSummary = await generateSurfSummary(openai, {
+        locationName: "Health Check",
+        region: "Test",
+        prompt:
+          "Write a surf conditions summary for a test location. Waves are 3-4ft at 10s from the NW. Winds are light offshore. Tide is rising. Write exactly 2 sentences.",
+      });
+
+      if (!testSummary || testSummary.trim().length === 0) {
+        return res.status(500).json({
+          healthy: false,
+          model: AI_SUMMARY_MODEL,
+          error: "OpenAI returned an empty response",
+          latencyMs: Date.now() - start,
+        });
+      }
+
+      res.json({
+        healthy: true,
+        model: AI_SUMMARY_MODEL,
+        latencyMs: Date.now() - start,
+        previewChars: testSummary.slice(0, 80),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error("❌ AI summary health check failed:", message);
+      res.status(500).json({
+        healthy: false,
+        error: message,
+        latencyMs: Date.now() - start,
+      });
+    }
+  });
 
   // Daily API usage forecast
   app.get("/api/admin/usage-forecast", requireAdminAuth, async (req, res) => {
@@ -3462,23 +3502,11 @@ ${surfDataSummary.buoys.backup ? `- Buoy ${surfDataSummary.buoys.backup.stationI
 
 Write 2 sentences. First sentence: describe current wave size, period, direction, and wind quality honestly — use surf community language (e.g. "clean", "choppy", "glassy", "firing", "mushy"). Second sentence: mention tide timing and, if data is available, a brief tomorrow outlook. No hype, no fluff. Just what a knowledgeable local would say.`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-5-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a veteran surf forecaster who speaks plainly. Write exactly 2 sentences. No bullet points, no markdown, no emojis. Use real surf terminology. Be specific about conditions — never vague."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.5,
-        max_completion_tokens: 120,
+      const summary = await generateSurfSummary(openai, {
+        locationName: surfDataSummary.location.name,
+        region: surfDataSummary.location.region,
+        prompt,
       });
-
-      const summary = completion.choices[0]?.message?.content || "Unable to generate surf summary at this time.";
 
       console.log(`✅ AI surf summary generated for location ${locationId} (${location.name})`);
 
