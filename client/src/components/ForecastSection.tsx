@@ -32,7 +32,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
     if (!el || !el.children.length) return;
     const cardWidth = (el.children[0] as HTMLElement).offsetWidth + 12; // +gap
     const idx = Math.round(el.scrollLeft / cardWidth);
-    setActiveIndex(Math.max(0, Math.min(idx, el.children.length - 1)));
+    setActiveIndex(Math.max(0, Math.min(idx, (el.children.length - 1))));
   }, []);
 
   if (error) {
@@ -95,25 +95,25 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 rounded-2xl overflow-hidden snap-start"
-                style={{ minWidth: 175, background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                <div className="px-3 pt-3 pb-2 border-b border-white/5 flex justify-between">
-                  <Skeleton className="h-3 w-12 bg-white/10" />
+                style={{ minWidth: "100%", background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                <div className="px-4 pt-4 pb-3 border-b border-white/5 flex justify-between">
+                  <Skeleton className="h-4 w-16 bg-white/10" />
                 </div>
-                <div className="px-3 pt-2.5 pb-2 flex gap-2">
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="h-2 w-8 bg-white/10" />
-                    <Skeleton className="h-5 w-14 bg-white/10" />
-                    <Skeleton className="h-2 w-10 bg-white/10" />
+                <div className="px-4 pt-4 pb-3 flex gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3 w-10 bg-white/10" />
+                    <Skeleton className="h-8 w-20 bg-white/10" />
+                    <Skeleton className="h-3 w-12 bg-white/10" />
                   </div>
                   <div className="w-px bg-white/5" />
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="h-2 w-8 bg-white/10" />
-                    <Skeleton className="h-5 w-14 bg-white/10" />
-                    <Skeleton className="h-2 w-10 bg-white/10" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3 w-10 bg-white/10" />
+                    <Skeleton className="h-8 w-20 bg-white/10" />
+                    <Skeleton className="h-3 w-12 bg-white/10" />
                   </div>
                 </div>
-                <div className="px-2 pb-2 mt-2">
-                  <Skeleton className="h-[98px] w-full rounded-xl bg-white/5" />
+                <div className="px-3 pb-3 mt-2">
+                  <Skeleton className="h-[120px] w-full rounded-xl bg-white/5" />
                 </div>
               </div>
             ))
@@ -125,8 +125,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   key={i}
                   className="flex-shrink-0 rounded-2xl overflow-hidden flex flex-col snap-start"
                   style={{
-                    minWidth: 175,
-                    flex: "1 0 175px",
+                    minWidth: "100%",
                     background: "linear-gradient(160deg, #030912 0%, #091a35 100%)",
                     border: today
                       ? "1px solid rgba(16,185,129,0.35)"
@@ -134,27 +133,27 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   }}
                 >
                   {/* Day header */}
-                  <div className="px-3 pt-3 pb-2 border-b border-white/5">
-                    <span className={`text-xs font-bold ${today ? "text-emerald-400" : "text-slate-300"}`}>
+                  <div className="px-4 pt-4 pb-3 border-b border-white/5">
+                    <span className={`text-sm font-bold ${today ? "text-emerald-400" : "text-slate-300"}`}>
                       {day.date}
                     </span>
                   </div>
                   {/* Wave + wind — side by side */}
-                  <div className="px-3 pt-2.5 pb-2 flex gap-2">
+                  <div className="px-4 pt-4 pb-3 flex gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wave</p>
-                      <p className="text-emerald-400 font-black mb-0.5 text-[16px]">{day.waveHeight}</p>
-                      <p className="text-[10px] font-semibold text-[#64748b]">{day.wavePeriod}</p>
+                      <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold mb-1">Wave</p>
+                      <p className="text-emerald-400 font-black mb-1 text-[26px] leading-none">{day.waveHeight}</p>
+                      <p className="text-[13px] font-semibold text-[#64748b]">{day.wavePeriod}</p>
                     </div>
                     <div className="w-px bg-white/5 self-stretch" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-slate-600 text-[8px] uppercase tracking-wider font-semibold mb-0.5">Wind</p>
-                      <p className="text-cyan-400 font-bold mb-0.5 text-[16px]">{day.windSpeed}</p>
-                      <p className="text-slate-500 text-[10px]">{day.windDirection}</p>
+                      <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold mb-1">Wind</p>
+                      <p className="text-cyan-400 font-bold mb-1 text-[26px] leading-none">{day.windSpeed}</p>
+                      <p className="text-slate-400 text-[13px]">{day.windDirection}</p>
                     </div>
                   </div>
                   {/* Compact tide chart */}
-                  <div className="px-2 pb-2 mt-auto">
+                  <div className="px-3 pb-3 mt-auto">
                     {day.tides && day.tides.length > 0 && (
                       <TideChart tides={day.tides} date={day.date} location={location} />
                     )}
