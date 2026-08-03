@@ -108,6 +108,15 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
+  const { data: apnsHealth, isLoading: apnsLoading } = useQuery<{
+    operational: boolean;
+    error: string | null;
+  }>({
+    queryKey: ['/api/push/apns-health'],
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate(credentials);
@@ -404,6 +413,54 @@ export default function AdminDashboard() {
               </div>
             );
           })() : <p className="text-sm text-muted-foreground">Loading push metrics...</p>}
+        </CardContent>
+      </Card>
+
+      {/* APNs (iOS Push) Credential Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Bell className="h-5 w-5" />
+            <span>iOS Push Notifications (APNs)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {apnsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading APNs status…</p>
+          ) : apnsHealth ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                {apnsHealth.operational
+                  ? <CheckCircle className="h-5 w-5 text-green-500" />
+                  : <AlertTriangle className="h-5 w-5 text-yellow-500" />}
+                <span className="font-medium">
+                  {apnsHealth.operational ? 'Operational — credentials configured' : 'Disabled — credentials not configured'}
+                </span>
+              </div>
+              {!apnsHealth.operational && apnsHealth.error && (
+                <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm text-yellow-800 dark:text-yellow-200 space-y-2">
+                  <p><strong>Error:</strong> {apnsHealth.error}</p>
+                  <p className="font-semibold mt-2">How to enable iOS push:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-xs">
+                    <li>Go to <a href="https://developer.apple.com" target="_blank" rel="noopener noreferrer" className="underline">developer.apple.com</a> → <em>Certificates, Identifiers &amp; Profiles</em> → <em>Keys</em>.</li>
+                    <li>Create (or download) an APNs key — download the <code>.p8</code> file.</li>
+                    <li>Copy the full <code>.p8</code> file contents (including the <code>-----BEGIN PRIVATE KEY-----</code> header) and set it as the <strong>APNS_KEY</strong> secret in Replit Secrets.</li>
+                    <li>Set <strong>APNS_KEY_ID</strong> to the 10-character Key ID shown on the portal.</li>
+                    <li>Set <strong>APNS_TEAM_ID</strong> to the 10-character Team ID from your Apple Developer account.</li>
+                    <li>Optionally set <strong>APNS_BUNDLE_ID</strong> (defaults to <code>com.liveswell.app</code>) and <strong>APNS_SANDBOX=true</strong> for TestFlight builds.</li>
+                    <li>Redeploy the application — the service initialises at startup.</li>
+                  </ol>
+                </div>
+              )}
+              {apnsHealth.operational && (
+                <p className="text-xs text-muted-foreground">
+                  APNS_KEY, APNS_KEY_ID, and APNS_TEAM_ID are all set. Native iOS push alerts are active.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">APNs status unavailable.</p>
+          )}
         </CardContent>
       </Card>
 

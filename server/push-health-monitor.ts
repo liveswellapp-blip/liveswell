@@ -6,6 +6,10 @@
  * detected it sends an admin alert email so the team is notified before users
  * notice missed surf alerts.
  *
+ * Also checks APNs credential presence at startup.  When APNS_KEY, APNS_KEY_ID
+ * or APNS_TEAM_ID are absent an alert email is sent so the admin knows iOS push
+ * is silently disabled before any users are affected.
+ *
  * Configuration
  * ─────────────
  * ADMIN_ALERT_EMAIL  – recipient for alert emails (falls back to admin@liveswell.app)
@@ -204,7 +208,145 @@ This alert was generated automatically at ${new Date().toISOString()}.
 }
 
 // --------------------------------------------------------------------------
-// Exported entry point
+// APNs credential check
+// --------------------------------------------------------------------------
+
+export interface ApnsHealthResult {
+  ok: boolean;
+  configured: boolean;
+  missing: string[];
+  reason?: string;
+}
+
+/**
+ * Check whether all three required APNs environment variables are present.
+ * Does NOT attempt a live Apple gateway connection — credential presence is
+ * the only gate checked here.
+ */
+export function checkApnsHealth(): ApnsHealthResult {
+  const required = ['APNS_KEY', 'APNS_KEY_ID', 'APNS_TEAM_ID'] as const;
+  const missing = required.filter(k => !process.env[k]);
+
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      configured: false,
+      missing,
+      reason: `Missing APNs environment variable(s): ${missing.join(', ')}. Native iOS push notifications are disabled.`,
+    };
+  }
+
+  return { ok: true, configured: true, missing: [] };
+}
+
+async function sendApnsAdminAlert(result: ApnsHealthResult): Promise<void> {
+  const subject = '⚠️ LiveSwell — APNs credentials not configured (iOS push disabled)';
+  const reason = result.reason ?? 'APNs credentials missing';
+
+  const text = `LiveSwell APNs (Apple Push Notification service) health check FAILED.
+
+Reason : ${reason}
+
+iOS users who grant push-notification permission will NOT receive any alerts
+until the credentials are configured.
+
+How to fix
+──────────
+1. Go to https://developer.apple.com → Certificates, Identifiers & Profiles →
+   Keys → create (or download) an APNs key (.p8 file).
+2. Copy the full contents of the .p8 file (including BEGIN/END PRIVATE KEY
+   header/footer) and set it as the APNS_KEY secret in Replit Secrets.
+3. Set APNS_KEY_ID to the 10-character Key ID shown on the developer portal.
+4. Set APNS_TEAM_ID to the 10-character Team ID from your Apple Developer account.
+5. Optionally set APNS_BUNDLE_ID (defaults to com.liveswell.app) and
+   APNS_SANDBOX=true for TestFlight / sandbox builds.
+6. Redeploy the application for the changes to take effect.
+
+Missing variable(s): ${result.missing.join(', ')}
+
+This alert was generated automatically at ${new Date().toISOString()}.
+
+— LiveSwell monitoring`;
+
+  const html = `
+<p><strong>LiveSwell APNs health check <span style="color:#c0392b">FAILED</span>.</strong></p>
+<p>iOS users who grant push-notification permission will <strong>not</strong> receive any alerts
+until the credentials are configured.</p>
+<table cellpadding="4" style="border-collapse:collapse;font-family:monospace">
+  <tr><td><b>Reason</b></td><td>${reason}</td></tr>
+  <tr><td><b>Missing variables</b></td><td>${result.missing.join(', ')}</td></tr>
+</table>
+
+<h3>How to fix</h3>
+<ol>
+  <li>Go to <a href="https://developer.apple.com">developer.apple.com</a> → <em>Certificates, Identifiers &amp; Profiles</em> →
+      <em>Keys</em> → create (or download) an APNs key (<code>.p8</code> file).</li>
+  <li>Copy the full contents of the <code>.p8</code> file (including <code>-----BEGIN PRIVATE KEY-----</code> header/footer)
+      and set it as the <code>APNS_KEY</code> secret in <strong>Replit Secrets</strong>.</li>
+  <li>Set <code>APNS_KEY_ID</code> to the 10-character Key ID shown on the developer portal.</li>
+  <li>Set <code>APNS_TEAM_ID</code> to the 10-character Team ID from your Apple Developer account.</li>
+  <li>Optionally set <code>APNS_BUNDLE_ID</code> (defaults to <code>com.liveswell.app</code>) and
+      <code>APNS_SANDBOX=true</code> for TestFlight / sandbox builds.</li>
+  <li>Redeploy the application for the changes to take effect.</li>
+</ol>
+
+<p style="color:#888;font-size:0.85em">
+  Generated automatically at ${new Date().toISOString()}<br>
+  — LiveSwell monitoring
+</p>`;
+
+  try {
+    const connectors = new ReplitConnectors();
+    const response = await connectors.proxy('resend', '/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: ADMIN_ALERT_EMAIL,
+        subject,
+        text,
+        html,
+      }),
+    });
+
+    if (response.ok) {
+      console.log(`[push-health-monitor] APNs alert sent to ${ADMIN_ALERT_EMAIL}`);
+    } else {
+      const body = await response.text();
+      console.error(`[push-health-monitor] Failed to send APNs alert: ${body}`);
+    }
+  } catch (err) {
+    console.error('[push-health-monitor] Error sending APNs alert email:', err);
+  }
+}
+
+/**
+ * Run an APNs credential health check at startup.
+ * Logs the result and emails the admin when credentials are absent.
+ */
+export async function runApnsHealthCheck(
+  context: 'startup' | 'scheduled' = 'startup'
+): Promise<ApnsHealthResult> {
+  console.log(`[push-health-monitor] Running APNs health check (${context})…`);
+
+  const result = checkApnsHealth();
+
+  if (result.ok) {
+    console.log('[push-health-monitor] ✅ APNs credentials present — native iOS push enabled');
+  } else {
+    console.warn(`[push-health-monitor] ⚠️ APNs disabled: ${result.reason}`);
+    // Only email at startup to avoid repeat alerts during the normal dev cycle
+    // where APNs credentials are deliberately absent.
+    if (context === 'startup' && process.env.NODE_ENV === 'production') {
+      await sendApnsAdminAlert(result);
+    }
+  }
+
+  return result;
+}
+
+// --------------------------------------------------------------------------
+// Exported entry point (VAPID / web-push)
 // --------------------------------------------------------------------------
 
 /**

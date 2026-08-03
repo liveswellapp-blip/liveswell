@@ -4,7 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeSurfSpots } from "./storage";
 import { NotificationScheduler } from "./notification-scheduler";
 import { initWeatherCache } from "./weather-service";
-import { runPushHealthCheck } from "./push-health-monitor";
+import { runPushHealthCheck, runApnsHealthCheck } from "./push-health-monitor";
 
 // Validate required environment variables for production
 function validateEnvironment() {
@@ -97,6 +97,13 @@ app.use((req, res, next) => {
     // throwing), so this check is guaranteed to reach the email send path.
     runPushHealthCheck('startup').catch(err =>
       console.error('[push-health-monitor] Startup preflight failed:', err)
+    );
+
+    // ── APNs credential preflight ────────────────────────────────────────────
+    // Runs in production only — emails admin when APNs env vars are absent so
+    // the broken iOS push experience is caught before users notice.
+    runApnsHealthCheck('startup').catch(err =>
+      console.error('[push-health-monitor] APNs startup preflight failed:', err)
     );
 
     // Add some sample error logs for demonstration
