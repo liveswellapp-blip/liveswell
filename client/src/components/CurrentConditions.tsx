@@ -244,7 +244,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           className="rounded-xl border border-white/[0.08] overflow-hidden"
           style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}
         >
-          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <div className="flex items-center justify-between px-4 pt-3 pb-3">
             <div className="flex items-center gap-1.5">
               <Waves className="h-3.5 w-3.5 text-[#94a3b8]" />
               <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]" style={{fontSize:"13px"}}>Swell</span>
@@ -339,7 +339,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         {/* ── Wind card ─────────────────────────────────────────────── */}
         {conditions && (
           <div className="rounded-xl border border-white/[0.08] overflow-hidden" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}>
-            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <div className="flex items-center justify-between px-4 pt-3 pb-3">
               <div className="flex items-center gap-1.5">
                 <Wind className="h-3.5 w-3.5 text-[#94a3b8]" />
                 <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]" style={{fontSize:"13px"}}>Wind</span>
@@ -369,7 +369,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         {/* ── Tide chart card ───────────────────────────────────────── */}
         {(todayTides.length > 0 || isLoading) && (
           <div className="rounded-xl border border-white/[0.08] overflow-hidden" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)" }}>
-            <div className="flex items-center justify-between px-4 pt-3 pb-1">
+            <div className="flex items-center justify-between px-4 pt-3 pb-3">
               <div className="flex items-center gap-1.5">
                 <BarChart3 className="h-3.5 w-3.5 text-[#94a3b8]" />
                 <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]" style={{fontSize:"13px"}}>Tides</span>
