@@ -1,5 +1,26 @@
 apply plugin: 'com.android.application'
 
+// ---------------------------------------------------------------------------
+// Signing — reads from local.properties (never commit keystore or passwords).
+//
+// Add these keys to android/local.properties (create the file if absent):
+//
+//   KEYSTORE_FILE=../../liveswell-release.jks   # path relative to android/app/
+//   KEYSTORE_PASSWORD=your_store_password
+//   KEY_ALIAS=liveswell
+//   KEY_PASSWORD=your_key_password
+//
+// If the keys are absent the release build falls back to the debug key so
+// ./gradlew assembleRelease still compiles, but Play Store uploads require
+// a proper keystore entry.
+// ---------------------------------------------------------------------------
+def keystorePropsFile = rootProject.file("local.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+def hasKeystore = keystoreProps['KEYSTORE_FILE'] as boolean
+
 android {
     namespace "com.liveswell.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -16,8 +37,23 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+
+    if (hasKeystore) {
+        signingConfigs {
+            release {
+                storeFile     file(keystoreProps['KEYSTORE_FILE'])
+                storePassword keystoreProps['KEYSTORE_PASSWORD']
+                keyAlias      keystoreProps['KEY_ALIAS']
+                keyPassword   keystoreProps['KEY_PASSWORD']
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasKeystore) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -44,11 +80,16 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
+// Apply google-services only when a real (non-placeholder) google-services.json
+// is present. The placeholder file ships with REPLACE_WITH_* values and must
+// not activate the plugin or the build will fail at resource-generation time.
 try {
     def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
+    if (servicesJSON.exists() && servicesJSON.text && !servicesJSON.text.contains('REPLACE_WITH')) {
         apply plugin: 'com.google.gms.google-services'
+    } else {
+        logger.info("google-services.json not found or still contains placeholder values — google-services plugin not applied. Push Notifications won't work until you add the real file.")
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work.")
 }

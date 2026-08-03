@@ -87,37 +87,61 @@ keytool -genkey -v \
 
 Store the generated `.jks` file and its passwords somewhere safe (password manager).
 **Never commit the keystore or its passwords to the repository.**
+Both `*.jks` and `*.keystore` are excluded by `android/.gitignore`.
 
-Configure signing in `android/app/build.gradle`:
+### Wire the keystore via `local.properties`
 
-```groovy
-android {
-    signingConfigs {
-        release {
-            storeFile file("../../liveswell-release.jks")  // path relative to app/
-            storePassword "YOUR_STORE_PASSWORD"
-            keyAlias "liveswell"
-            keyPassword "YOUR_KEY_PASSWORD"
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false
-        }
-    }
-}
+`android/local.properties` is gitignored and is the safe place to put local secrets.
+Add these four lines to `android/local.properties` (create the file if it doesn't exist):
+
+```properties
+KEYSTORE_FILE=../../liveswell-release.jks
+KEYSTORE_PASSWORD=your_store_password
+KEY_ALIAS=liveswell
+KEY_PASSWORD=your_key_password
 ```
+
+`KEYSTORE_FILE` is a path **relative to `android/app/`**. The example above places the
+keystore in the project root (two levels up from `android/app/`). Adjust the path if
+you store it elsewhere.
+
+`android/app/build.gradle` reads these properties automatically when present.
+If the keys are absent the release build still compiles (using the debug key), but
+**Play Store uploads require a proper keystore** — do not skip this step.
+
+> **Do not** add `storePassword` / `keyPassword` directly to `build.gradle`. That
+> would expose credentials in source control. The `local.properties` approach keeps
+> secrets off disk in the repo.
 
 ---
 
-## Step 7 — Build a release AAB (Android App Bundle)
+## Step 7 — Add `google-services.json` (push notifications)
+
+Push notifications on Android require FCM. A placeholder file ships with the repo so
+the project structure is complete, but the build skips the `google-services` plugin
+when it detects placeholder values.
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com) → **Add project**
+2. Add an Android app with package name `com.liveswell.app`
+3. Download **`google-services.json`** and place it at `android/app/google-services.json`
+   (overwrite the placeholder)
+4. Run `npx cap sync android` again
+
+Without a real `google-services.json` the app builds and runs, but push notifications
+will not be delivered on Android.
+
+See **Task #116** — "Wire up Android FCM so push alerts reach Android users natively"
+for the full server-side integration.
+
+---
+
+## Step 8 — Build a release AAB (Android App Bundle)
 
 In Android Studio:
 
 1. **Build → Generate Signed Bundle / APK**
 2. Choose **Android App Bundle** → **Next**
-3. Select the keystore you created in Step 6
+3. Select the keystore you created in Step 6 (or point to `android/local.properties` values)
 4. Choose **release** build variant → **Finish**
 
 The output is at:
@@ -125,7 +149,7 @@ The output is at:
 android/app/release/app-release.aab
 ```
 
-Or from the command line:
+Or from the command line (requires the keystore to be configured in `local.properties`):
 
 ```bash
 cd android
@@ -134,29 +158,34 @@ cd android
 
 ---
 
-## Step 8 — Set up Firebase Cloud Messaging (push notifications)
+## Step 9 — Dry-run installation check (do this before every first Play submission)
 
-Push notifications on Android require FCM. Without this, alerts will not reach Android users.
+Before uploading to Play Console, verify the AAB installs cleanly using
+[bundletool](https://github.com/google/bundletool/releases):
 
-1. Go to [console.firebase.google.com](https://console.firebase.google.com) → **Add project**
-2. Add an Android app with package name `com.liveswell.app`
-3. Download **`google-services.json`** and place it at `android/app/google-services.json`
-4. Make sure `android/build.gradle` includes:
-   ```groovy
-   classpath 'com.google.gms:google-services:4.4.0'
-   ```
-5. Make sure `android/app/build.gradle` includes:
-   ```groovy
-   apply plugin: 'com.google.gms.google-services'
-   ```
-6. Run `npx cap sync android` again after adding the file
+```bash
+# 1. Convert AAB → APKS set
+java -jar bundletool.jar build-apks \
+  --bundle=app/release/app-release.aab \
+  --output=liveswell.apks \
+  --ks=../../liveswell-release.jks \
+  --ks-key-alias=liveswell
 
-See **Task #116** — "Wire up Android FCM so push alerts reach Android users natively"
-for the full server-side integration.
+# 2. Install on a connected device / running emulator
+java -jar bundletool.jar install-apks --apks=liveswell.apks
+```
+
+**Pass criteria:**
+- `build-apks` completes without errors
+- `install-apks` succeeds (no `INSTALL_FAILED_*` output)
+- App launches and `https://liveswell.io` loads in the WebView
+- No crash or blank white screen
+
+If any step fails, see the **Common issues** table below.
 
 ---
 
-## Step 9 — Upload to Google Play Console
+## Step 10 — Upload to Google Play Console
 
 1. Go to [play.google.com/console](https://play.google.com/console)
 2. **Create app** → set name "LiveSwell", default language, app/game, free/paid
@@ -167,7 +196,7 @@ for the full server-side integration.
 
 ---
 
-## Step 10 — Complete the store listing
+## Step 11 — Complete the store listing
 
 Under **Store presence → Main store listing**:
 
@@ -185,7 +214,7 @@ Under **Store presence → Main store listing**:
 
 ---
 
-## Step 11 — Submit for review
+## Step 12 — Submit for review
 
 1. In Play Console, go to **Publishing overview**
 2. Confirm all required fields show green ticks
@@ -259,9 +288,11 @@ The following permissions are declared in `android/app/src/main/AndroidManifest.
 | Blank white screen | Run `npx cap sync android` after `npm run build` |
 | "INSTALL_FAILED_UPDATE_INCOMPATIBLE" | Uninstall the app from the device before reinstalling |
 | Build fails: "Duplicate class kotlin.collections…" | Add `implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))` to `app/build.gradle` |
-| Push notifications not delivered | Add `google-services.json` and ensure FCM is wired up (Task #116) |
+| Push notifications not delivered | Replace `android/app/google-services.json` with the real file from Firebase console |
 | "App not optimized" warning in Play Console | AAB format is required — do not upload a plain APK |
 | Version code rejected | `versionCode` must be strictly higher than the last uploaded build |
+| `bundleRelease` produces unsigned AAB | Add keystore properties to `android/local.properties` (see Step 6) |
+| Build error: "File google-services.json is missing" | The placeholder file contains `REPLACE_WITH_*` values — replace it with the real Firebase file, or the plugin is intentionally skipped |
 
 ---
 
