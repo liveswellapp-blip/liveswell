@@ -358,7 +358,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 )}
               </div>
               <button
-                className="bg-sky-400/15 border border-sky-400/30 rounded-lg px-3 py-1.5 hover:bg-sky-400/25 transition-colors shrink-0 text-[#38bdf8] text-[11px]"
+                className="bg-sky-400/15 border border-sky-400/30 rounded-lg px-3 py-1.5 hover:bg-sky-400/25 transition-colors shrink-0 text-[#38bdf8] text-[11px] font-medium"
                 onClick={() => setShowWindDetailsModal(true)}
               >Wind Forecast</button>
             </div>
