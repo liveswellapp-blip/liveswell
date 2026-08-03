@@ -247,7 +247,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <div className="flex items-center gap-1.5">
               <Waves className="h-3.5 w-3.5 text-[#94a3b8]" />
-              <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]">Swell</span>
+              <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]" style={{fontSize:"13px"}}>Swell</span>
             </div>
             <span className="text-slate-500 text-[9px]">NOAA / Open-Meteo</span>
           </div>
@@ -342,7 +342,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between px-4 pt-3 pb-2">
               <div className="flex items-center gap-1.5">
                 <Wind className="h-3.5 w-3.5 text-[#94a3b8]" />
-                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]">Wind</span>
+                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]" style={{fontSize:"13px"}}>Wind</span>
               </div>
               <span className="text-slate-500 text-[9px]">OpenWeatherMap API</span>
             </div>
@@ -372,7 +372,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className="flex items-center justify-between px-4 pt-3 pb-1">
               <div className="flex items-center gap-1.5">
                 <BarChart3 className="h-3.5 w-3.5 text-[#94a3b8]" />
-                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]">Tides</span>
+                <span className="text-[11px] uppercase tracking-wide font-semibold text-[#ffffff]" style={{fontSize:"13px"}}>Tides</span>
               </div>
               <span className="text-slate-500 text-[10px]">{localTime} local</span>
             </div>
