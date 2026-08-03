@@ -486,10 +486,13 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
   const [verifyCode, setVerifyCode] = useState("");
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isConfirmingCode, setIsConfirmingCode] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
   const prevPhone = useRef(initialData?.phoneNumber ?? "");
 
   const handlePhoneChange = (val: string) => {
     patch("phoneNumber", val);
+    // Clear the error as soon as the user starts editing again
+    if (phoneError) setPhoneError("");
     if (val !== prevPhone.current) {
       prevPhone.current = val;
       setPhoneVerifiedLocal(false);
@@ -509,7 +512,17 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
         setVerifyCode("");
       }
     }
+    // Show an inline error if the number is non-empty but not valid E.164
+    const final = normalized.trim();
+    if (final && !isValidE164(final)) {
+      setPhoneError("Looks like an incomplete number");
+    } else {
+      setPhoneError("");
+    }
   };
+
+  /** Returns true when the string is a plausible E.164 phone number (+[digits], 8–15 chars total). */
+  const isValidE164 = (s: string): boolean => /^\+[1-9]\d{6,14}$/.test(s);
 
   /** Convert common US phone formats to E.164 before sending to the server. */
   const normalizePhoneNumber = (raw: string): string => {
@@ -982,23 +995,35 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
                       </div>
                     ) : (
                       /* Unverified / editing state: editable input + Verify button */
-                      <div className="flex items-center gap-2 mt-1">
-                        <input
-                          className={INPUT_CLS}
-                          style={{ ...SEL, flex: 1 }}
-                          placeholder="+15551234567"
-                          value={form.phoneNumber}
-                          onChange={e => handlePhoneChange(e.target.value)}
-                          onBlur={handlePhoneBlur}
-                          type="tel"
-                        />
-                        <button
-                          onClick={handleSendCode}
-                          disabled={isSendingCode || !form.phoneNumber.trim()}
-                          className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40"
-                          style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", color: "#34d399" }}>
-                          {isSendingCode ? "Sending…" : verifyStep === "code_sent" ? "Resend" : "Verify"}
-                        </button>
+                      <div className="mt-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            className={INPUT_CLS}
+                            style={{
+                              ...SEL,
+                              flex: 1,
+                              ...(phoneError ? { border: "1px solid rgba(239,68,68,0.6)", boxShadow: "0 0 0 1px rgba(239,68,68,0.25)" } : {}),
+                            }}
+                            placeholder="+15551234567"
+                            value={form.phoneNumber}
+                            onChange={e => handlePhoneChange(e.target.value)}
+                            onBlur={handlePhoneBlur}
+                            type="tel"
+                          />
+                          <button
+                            onClick={handleSendCode}
+                            disabled={isSendingCode || !form.phoneNumber.trim() || !!phoneError}
+                            className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40"
+                            style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", color: "#34d399" }}>
+                            {isSendingCode ? "Sending…" : verifyStep === "code_sent" ? "Resend" : "Verify"}
+                          </button>
+                        </div>
+                        {phoneError && (
+                          <p className="text-[11px] text-red-400 flex items-center gap-1">
+                            <AlertCircle size={10} className="shrink-0" />
+                            {phoneError}
+                          </p>
+                        )}
                       </div>
                     )}
 
