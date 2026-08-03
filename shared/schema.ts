@@ -183,6 +183,15 @@ export const apnsDeviceTokens = pgTable("apns_device_tokens", {
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [index("IDX_apns_device_tokens_user_id").on(table.userId)]);
 
+// FCM device tokens for native Android push notifications
+export const fcmDeviceTokens = pgTable("fcm_device_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  deviceToken: text("device_token").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [index("IDX_fcm_device_tokens_user_id").on(table.userId)]);
+
 export const smsRateLimits = pgTable("sms_rate_limits", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
@@ -298,3 +307,11 @@ export const insertApnsDeviceTokenSchema = createInsertSchema(apnsDeviceTokens).
   updatedAt: true,
 });
 export type InsertApnsDeviceToken = z.infer<typeof insertApnsDeviceTokenSchema>;
+
+export type FcmDeviceToken = typeof fcmDeviceTokens.$inferSelect;
+export const insertFcmDeviceTokenSchema = createInsertSchema(fcmDeviceTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertFcmDeviceToken = z.infer<typeof insertFcmDeviceTokenSchema>;

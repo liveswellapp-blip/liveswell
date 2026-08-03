@@ -611,13 +611,13 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
         toast({ title: "Not supported", description: "Push notifications aren't available on this browser.", variant: "destructive" });
         return;
       }
-      // On native iOS the subscribe() call triggers the APNs permission dialog
-      // and registers the device token with the server; it returns null (token
-      // is sent separately via the 'registration' event listener).
-      // On web it returns the VAPID subscription object.
+      // On native iOS/Android the subscribe() call triggers the platform
+      // permission dialog and registers the device token with the server;
+      // it returns null (token is sent separately via the 'registration'
+      // event listener). On web it returns the VAPID subscription object.
       const sub = await pushNotifications.subscribe();
-      const isIOS = await pushNotifications.isNativeIOS();
-      if (!sub && !isIOS) {
+      const isNative = await pushNotifications.isNativeIOS() || await pushNotifications.isNativeAndroid();
+      if (!sub && !isNative) {
         toast({ title: "Permission denied", description: "Allow notifications in your settings to enable push alerts.", variant: "destructive" });
         return;
       }

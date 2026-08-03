@@ -41,6 +41,7 @@ import {
 import { pushNotificationService } from "./push-service";
 import { insertPushSubscriptionSchema } from "@shared/schema";
 import { apnsService } from "./apns-service";
+import { fcmService } from "./fcm-service";
 import OpenAI from "openai";
 import { generateSurfSummary } from "./ai-summary-helper";
 
@@ -3679,6 +3680,65 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
     res.json({
       operational: apnsService.isOperational(),
       error: apnsService.getInitError(),
+    });
+  });
+
+  // ── FCM device token registration (native Android) ───────────────────────────
+
+  // List FCM tokens for the current user (used by isSubscribed() on Android)
+  app.get("/api/push/fcm-tokens", isAuthenticated, generalApiLimiter, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tokens = await storage.getFcmDeviceTokens(userId);
+      res.json(tokens.map((t: any) => t.deviceToken));
+    } catch (error) {
+      console.error("[FCM] Error listing device tokens:", error);
+      res.status(500).json({ message: "Failed to list FCM device tokens" });
+    }
+  });
+
+  // Register a native Android FCM device token
+  app.post("/api/push/fcm-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceToken } = req.body;
+
+      if (!deviceToken || typeof deviceToken !== "string" || deviceToken.trim().length === 0) {
+        return res.status(400).json({ message: "deviceToken is required" });
+      }
+
+      await storage.addFcmDeviceToken(userId, deviceToken.trim());
+      console.log(`[FCM] Device token registered for user ${userId}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[FCM] Error registering device token:", error);
+      res.status(500).json({ message: "Failed to register FCM device token" });
+    }
+  });
+
+  // Remove a native Android FCM device token (e.g. on sign-out)
+  app.delete("/api/push/fcm-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { deviceToken } = req.body;
+
+      if (!deviceToken || typeof deviceToken !== "string") {
+        return res.status(400).json({ message: "deviceToken is required" });
+      }
+
+      const removed = await storage.removeFcmDeviceToken(userId, deviceToken.trim());
+      res.json({ success: removed });
+    } catch (error) {
+      console.error("[FCM] Error removing device token:", error);
+      res.status(500).json({ message: "Failed to remove FCM device token" });
+    }
+  });
+
+  // Return FCM service health (admin only)
+  app.get("/api/push/fcm-health", requireAdminAuth, (req, res) => {
+    res.json({
+      operational: fcmService.isOperational(),
+      error: fcmService.getInitError(),
     });
   });
 

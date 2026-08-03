@@ -4,8 +4,10 @@
  * On iOS (Capacitor native shell): uses @capacitor/push-notifications to request
  * APNs permission and register the device token with the server.
  *
- * On all other platforms (web, Android web-view): uses the Web Push / VAPID
- * flow unchanged.
+ * On Android (Capacitor native shell): uses @capacitor/push-notifications to
+ * request FCM permission and register the FCM registration token with the server.
+ *
+ * On all other platforms (web): uses the Web Push / VAPID flow unchanged.
  */
 
 import { apiRequest } from '@/lib/queryClient';
@@ -53,11 +55,19 @@ class PushNotificationService {
     return !!(Capacitor?.isNativePlatform() && Capacitor?.getPlatform() === 'ios');
   }
 
+  /**
+   * Returns true when running inside a native Capacitor Android shell.
+   */
+  async isNativeAndroid(): Promise<boolean> {
+    const Capacitor = await getCapacitor();
+    return !!(Capacitor?.isNativePlatform() && Capacitor?.getPlatform() === 'android');
+  }
+
   // ─── Initialisation ──────────────────────────────────────────────────────────
 
   async initialize(): Promise<boolean> {
-    if (await this.isNativeIOS()) {
-      // Native iOS: no service worker needed
+    if (await this.isNativeIOS() || await this.isNativeAndroid()) {
+      // Native iOS / Android: no service worker needed
       return true;
     }
 
@@ -88,13 +98,14 @@ class PushNotificationService {
 
   async isSupported(): Promise<boolean> {
     if (await this.isNativeIOS()) return true;
+    if (await this.isNativeAndroid()) return true;
     return this.isWebPushSupported();
   }
 
   // ─── Permission ──────────────────────────────────────────────────────────────
 
   async getPermissionStatus(): Promise<NotificationPermission> {
-    if (await this.isNativeIOS()) {
+    if (await this.isNativeIOS() || await this.isNativeAndroid()) {
       const PushNotifications = await getCapacitorPush();
       if (!PushNotifications) return 'denied';
       try {
@@ -130,6 +141,24 @@ class PushNotificationService {
       }
     }
 
+    if (await this.isNativeAndroid()) {
+      const PushNotifications = await getCapacitorPush();
+      if (!PushNotifications) return false;
+
+      try {
+        // Request FCM permission and register for remote notifications
+        const result = await PushNotifications.requestPermissions();
+        if (result.receive !== 'granted') return false;
+
+        // Register with FCM — triggers the 'registration' event with the token
+        await PushNotifications.register();
+        return true;
+      } catch (err) {
+        console.error('[FCM] Permission / registration error:', err);
+        return false;
+      }
+    }
+
     if (!this.isWebPushSupported()) return false;
     const permission = await Notification.requestPermission();
     return permission === 'granted';
@@ -141,14 +170,19 @@ class PushNotificationService {
    * Subscribe to push notifications:
    * - iOS (native): requests APNs permission, obtains a device token, and
    *   registers it with the server via POST /api/push/apns-token.
+   * - Android (native): requests FCM permission, obtains a registration token,
+   *   and registers it with the server via POST /api/push/fcm-token.
    * - Web: registers a VAPID/web-push subscription as before.
    *
    * Returns a PushSubscriptionData on web success, or null (token was handled
-   * separately) on iOS, or null on failure.
+   * separately) on iOS/Android, or null on failure.
    */
   async subscribe(): Promise<PushSubscriptionData | null> {
     if (await this.isNativeIOS()) {
       return this.subscribeNativeIOS();
+    }
+    if (await this.isNativeAndroid()) {
+      return this.subscribeNativeAndroid();
     }
     return this.subscribeWebPush();
   }
@@ -203,6 +237,56 @@ class PushNotificationService {
     });
   }
 
+  private async subscribeNativeAndroid(): Promise<null> {
+    const PushNotifications = await getCapacitorPush();
+    if (!PushNotifications) return null;
+
+    // Remove any stale listeners first
+    await PushNotifications.removeAllListeners();
+
+    return new Promise((resolve) => {
+      let settled = false;
+      const settle = (val: null) => {
+        if (!settled) { settled = true; resolve(val); }
+      };
+
+      // Listen for the FCM registration token
+      PushNotifications.addListener('registration', async (token) => {
+        try {
+          await this.saveFcmTokenToServer(token.value);
+          console.log('[FCM] Registration token registered with server');
+        } catch (err) {
+          console.error('[FCM] Failed to save token to server:', err);
+        }
+        settle(null);
+      });
+
+      PushNotifications.addListener('registrationError', (err) => {
+        console.error('[FCM] Registration error:', err);
+        settle(null);
+      });
+
+      // Kick off the FCM registration flow
+      PushNotifications.requestPermissions().then((result) => {
+        if (result.receive === 'granted') {
+          PushNotifications.register().catch((err) => {
+            console.error('[FCM] register() failed:', err);
+            settle(null);
+          });
+        } else {
+          console.warn('[FCM] Permission not granted:', result.receive);
+          settle(null);
+        }
+      }).catch((err) => {
+        console.error('[FCM] requestPermissions() failed:', err);
+        settle(null);
+      });
+
+      // Timeout after 15 s
+      setTimeout(() => settle(null), 15_000);
+    });
+  }
+
   private async subscribeWebPush(): Promise<PushSubscriptionData | null> {
     if (!this.swRegistration) {
       throw new Error('Service Worker not registered. Call initialize() first.');
@@ -236,10 +320,8 @@ class PushNotificationService {
   }
 
   async unsubscribe(): Promise<boolean> {
-    if (await this.isNativeIOS()) {
-      // Best-effort: remove all tokens for this device from the server
-      // (we can't easily recover the token after unregistering, so we tell
-      //  the server to remove all tokens for the user on sign-out)
+    if (await this.isNativeIOS() || await this.isNativeAndroid()) {
+      // Best-effort: on sign-out the server removes all tokens for the user
       return true;
     }
 
@@ -271,6 +353,18 @@ class PushNotificationService {
       }
     }
 
+    if (await this.isNativeAndroid()) {
+      // On Android, check if we have stored FCM tokens on the server
+      try {
+        const resp = await apiRequest('/api/push/fcm-tokens', { method: 'GET' });
+        return Array.isArray(resp) && resp.length > 0;
+      } catch {
+        // Fall back to permission check
+        const status = await this.getPermissionStatus();
+        return status === 'granted';
+      }
+    }
+
     if (!this.swRegistration) return false;
     try {
       const subscription = await this.swRegistration.pushManager.getSubscription();
@@ -282,7 +376,7 @@ class PushNotificationService {
   }
 
   async getSubscription(): Promise<PushSubscription | null> {
-    if (await this.isNativeIOS()) return null;
+    if (await this.isNativeIOS() || await this.isNativeAndroid()) return null;
     if (!this.swRegistration) return null;
     try {
       return await this.swRegistration.pushManager.getSubscription();
@@ -303,6 +397,20 @@ class PushNotificationService {
 
   async removeApnsTokenFromServer(deviceToken: string): Promise<void> {
     await apiRequest('/api/push/apns-token', {
+      method: 'DELETE',
+      body: { deviceToken },
+    });
+  }
+
+  async saveFcmTokenToServer(deviceToken: string): Promise<void> {
+    await apiRequest('/api/push/fcm-token', {
+      method: 'POST',
+      body: { deviceToken },
+    });
+  }
+
+  async removeFcmTokenFromServer(deviceToken: string): Promise<void> {
+    await apiRequest('/api/push/fcm-token', {
       method: 'DELETE',
       body: { deviceToken },
     });

@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
@@ -124,6 +124,12 @@ export interface IStorage {
    * returns true. If over the limit, returns false without inserting.
    */
   checkAndRecordInboundSmsRateLimit(userId: string, phone: string): Promise<boolean>;
+
+  // FCM Device Tokens (native Android)
+  getFcmDeviceTokens(userId: string): Promise<FcmDeviceToken[]>;
+  addFcmDeviceToken(userId: string, deviceToken: string): Promise<FcmDeviceToken>;
+  removeFcmDeviceToken(userId: string, deviceToken: string): Promise<boolean>;
+  removeAllUserFcmDeviceTokens(userId: string): Promise<boolean>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -669,6 +675,35 @@ export class DatabaseStorage implements IStorage {
 
   async removeAllUserApnsDeviceTokens(userId: string): Promise<boolean> {
     const result = await db.delete(apnsDeviceTokens).where(eq(apnsDeviceTokens.userId, userId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ─── FCM Device Tokens ──────────────────────────────────────────────────────
+
+  async getFcmDeviceTokens(userId: string): Promise<FcmDeviceToken[]> {
+    return db.select().from(fcmDeviceTokens).where(eq(fcmDeviceTokens.userId, userId));
+  }
+
+  async addFcmDeviceToken(userId: string, deviceToken: string): Promise<FcmDeviceToken> {
+    // Upsert: delete any existing row with the same token, then insert fresh
+    await db.delete(fcmDeviceTokens).where(
+      and(eq(fcmDeviceTokens.userId, userId), eq(fcmDeviceTokens.deviceToken, deviceToken))
+    );
+    const [row] = await db.insert(fcmDeviceTokens)
+      .values({ userId, deviceToken, updatedAt: new Date() })
+      .returning();
+    return row;
+  }
+
+  async removeFcmDeviceToken(userId: string, deviceToken: string): Promise<boolean> {
+    const result = await db.delete(fcmDeviceTokens).where(
+      and(eq(fcmDeviceTokens.userId, userId), eq(fcmDeviceTokens.deviceToken, deviceToken))
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async removeAllUserFcmDeviceTokens(userId: string): Promise<boolean> {
+    const result = await db.delete(fcmDeviceTokens).where(eq(fcmDeviceTokens.userId, userId));
     return (result.rowCount ?? 0) > 0;
   }
 

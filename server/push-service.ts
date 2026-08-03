@@ -2,6 +2,7 @@ import webpush from 'web-push';
 import { storage } from './storage';
 import { trackPushResult } from './monitoring';
 import { apnsService } from './apns-service';
+import { fcmService } from './fcm-service';
 
 interface PushNotificationPayload {
   title: string;
@@ -191,6 +192,20 @@ class PushNotificationService {
         successCount += apnsCount;
       } catch (error) {
         console.error('[ERROR] APNs delivery failed for user', { userId, error });
+      }
+    }
+
+    // ── FCM (native Android) ──────────────────────────────────────────────────
+    if (fcmService.isOperational()) {
+      try {
+        const fcmCount = await fcmService.sendToUser(userId, {
+          title: payload.title,
+          body: payload.body,
+          url: payload.url,
+        });
+        successCount += fcmCount;
+      } catch (error) {
+        console.error('[ERROR] FCM delivery failed for user', { userId, error });
       }
     }
 
