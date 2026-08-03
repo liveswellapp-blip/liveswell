@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Send, FlaskConical, MessageSquareReply, Copy, CheckCheck } from "lucide-react";
+import { Send, FlaskConical, MessageSquareReply, Copy, CheckCheck, Smartphone, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
 interface SurfSpot {
   id: number;
@@ -81,6 +81,125 @@ function TwoWaySmsSetup() {
           <li>HELP replies return a list of example questions</li>
           <li>Unrecognised phone numbers receive a sign-up prompt</li>
         </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface ApnsTestResult {
+  success: boolean;
+  operational: boolean;
+  initError: string | null;
+  tokensFound: number;
+  delivered: number;
+  errors: Array<{ appleErrorCode: string }>;
+  message: string;
+}
+
+function IosApnsTest() {
+  const { toast } = useToast();
+  const [apnsUserId, setApnsUserId] = useState("");
+  const [lastResult, setLastResult] = useState<ApnsTestResult | null>(null);
+
+  const apnsMutation = useMutation<ApnsTestResult, Error>({
+    mutationFn: async () => {
+      const res = await fetch("/api/admin/apns-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: apnsUserId.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Request failed");
+      return data;
+    },
+    onSuccess: (data) => {
+      setLastResult(data);
+      if (data.success) {
+        toast({ title: "iOS APNs test passed", description: data.message });
+      } else {
+        toast({ title: "iOS APNs test failed", description: data.message, variant: "destructive" });
+      }
+    },
+    onError: (err) => {
+      setLastResult(null);
+      toast({ title: "iOS APNs test error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Card className="mb-8 border-orange-200 dark:border-orange-800">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center space-x-2 text-base">
+          <Smartphone className="h-5 w-5 text-orange-600" />
+          <span>iOS APNs Smoke Test</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Sends a real APNs notification to all registered iOS devices for a user. Use this to
+          confirm your <strong>APNS_KEY</strong>, <strong>APNS_KEY_ID</strong>, and{" "}
+          <strong>APNS_TEAM_ID</strong> are correctly configured and the bundle ID matches.
+        </p>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="apns-user-id">User ID</Label>
+          <Input
+            id="apns-user-id"
+            placeholder="e.g. user_abc123"
+            value={apnsUserId}
+            onChange={(e) => setApnsUserId(e.target.value)}
+            data-testid="input-apns-user-id"
+          />
+        </div>
+
+        <Button
+          type="button"
+          disabled={!apnsUserId.trim() || apnsMutation.isPending}
+          onClick={() => apnsMutation.mutate()}
+          data-testid="button-send-apns-test"
+          className="w-full sm:w-auto"
+        >
+          <Smartphone className="h-4 w-4 mr-2" />
+          {apnsMutation.isPending ? "Sending…" : "Send iOS Test Notification"}
+        </Button>
+
+        {lastResult && (
+          <div
+            className={`rounded-md border p-4 text-sm space-y-2 ${
+              lastResult.success
+                ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950"
+                : "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950"
+            }`}
+          >
+            <div className="flex items-center gap-2 font-medium">
+              {lastResult.success ? (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              ) : lastResult.tokensFound === 0 && lastResult.operational ? (
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-red-600" />
+              )}
+              <span>{lastResult.message}</span>
+            </div>
+
+            {lastResult.operational && lastResult.tokensFound > 0 && (
+              <ul className="text-muted-foreground space-y-0.5 pl-6 list-disc">
+                <li>Tokens found: {lastResult.tokensFound}</li>
+                <li>Delivered: {lastResult.delivered}</li>
+                {lastResult.errors.length > 0 && (
+                  <li>
+                    Apple error code{lastResult.errors.length > 1 ? "s" : ""}:{" "}
+                    {lastResult.errors.map((e) => e.appleErrorCode).join(", ")}
+                  </li>
+                )}
+              </ul>
+            )}
+
+            {!lastResult.operational && lastResult.initError && (
+              <p className="text-muted-foreground pl-6 font-mono text-xs">{lastResult.initError}</p>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -173,6 +292,7 @@ export default function LiveAlertTest() {
   return (
     <>
     <TwoWaySmsSetup />
+    <IosApnsTest />
     <Card className="mb-8">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">

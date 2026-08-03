@@ -147,14 +147,81 @@ export class ApnsService {
 
   /**
    * Send a test notification to all registered iOS devices for a user.
+   * Returns a detailed result object with per-token outcomes and Apple error codes.
    */
-  async sendTestToUser(userId: string): Promise<boolean> {
-    const count = await this.sendToUser(userId, {
+  async sendTestToUser(userId: string): Promise<ApnsTestResult> {
+    if (!this.client) {
+      return {
+        operational: false,
+        initError: this.initError,
+        tokensFound: 0,
+        delivered: 0,
+        errors: [],
+      };
+    }
+
+    const tokens = await this._storage.getApnsDeviceTokens(userId);
+    if (tokens.length === 0) {
+      return {
+        operational: true,
+        initError: null,
+        tokensFound: 0,
+        delivered: 0,
+        errors: [],
+      };
+    }
+
+    const payload: ApnsPayload = {
       title: '🌊 LiveSwell Test',
       body: "Your iOS push notifications are working! You'll receive surf alerts natively.",
-    });
-    return count > 0;
+    };
+
+    let delivered = 0;
+    const errors: Array<{ appleErrorCode: string }> = [];
+    const toDelete: string[] = [];
+
+    for (const { deviceToken } of tokens) {
+      try {
+        const notification = new Notification(deviceToken, {
+          alert: { title: payload.title, body: payload.body },
+          sound: 'default',
+        });
+        await this.client.send(notification);
+        delivered++;
+      } catch (err: any) {
+        const reason: string = err?.reason ?? 'UnknownError';
+        errors.push({ appleErrorCode: reason });
+        if (reason === 'BadDeviceToken' || reason === 'Unregistered') {
+          toDelete.push(deviceToken);
+        }
+        console.error(`[APNs] Test delivery failed for token (reason: ${reason})`);
+      }
+    }
+
+    // Prune invalid tokens
+    for (const token of toDelete) {
+      try {
+        await this._storage.removeApnsDeviceToken(userId, token);
+      } catch { /* best-effort */ }
+    }
+
+    console.log(`[APNs] Test: delivered ${delivered}/${tokens.length} to user ${userId}`);
+    return {
+      operational: true,
+      initError: null,
+      tokensFound: tokens.length,
+      delivered,
+      errors,
+    };
   }
+}
+
+export interface ApnsTestResult {
+  operational: boolean;
+  initError: string | null;
+  tokensFound: number;
+  delivered: number;
+  errors: Array<{ appleErrorCode: string }>;
 }
 
 export const apnsService = new ApnsService();

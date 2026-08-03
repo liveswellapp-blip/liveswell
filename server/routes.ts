@@ -446,6 +446,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: smoke-test push notification delivery to a specific user
+  // APNs (native iOS) smoke-test — sends a real notification to all registered iOS devices for a user
+  app.post("/api/admin/apns-test", requireAdminAuth, async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ message: "userId (string) is required" });
+      }
+
+      const result = await apnsService.sendTestToUser(userId);
+      const success = result.delivered > 0;
+
+      res.json({
+        success,
+        operational: result.operational,
+        initError: result.initError,
+        tokensFound: result.tokensFound,
+        delivered: result.delivered,
+        errors: result.errors,
+        message: !result.operational
+          ? (result.initError ?? "APNs service is not configured")
+          : result.tokensFound === 0
+            ? "No APNs tokens registered for this user — ask them to open the iOS app while signed in"
+            : success
+              ? `Test notification delivered to ${result.delivered}/${result.tokensFound} device(s)`
+              : `Delivery failed on all ${result.tokensFound} device(s) — see error codes for details`,
+      });
+    } catch (error) {
+      console.error("Admin APNs test error:", error);
+      res.status(500).json({ message: "APNs smoke test failed unexpectedly" });
+    }
+  });
+
   app.post("/api/admin/push-test", requireAdminAuth, async (req, res) => {
     try {
       const { userId } = req.body;
