@@ -531,10 +531,7 @@ export default function Landing() {
       {/* ── Hero ────────────────────────────────────────────────── */}
       <div className="landing-hero">
         <div>
-          <div className="landing-eyebrow">
-            <div className="landing-eyebrow-dot" />
-            <span>Live · Real-time surf data</span>
-          </div>
+
           <h1 className="landing-h1">
             Read the Ocean.<br />
             <em>Catch the</em><br />
@@ -544,12 +541,7 @@ export default function Landing() {
             Live NOAA buoy data, 5-day forecasts, and real-time tide charts for 218+ breaks worldwide.
             Know exactly what the ocean is doing before you leave the house.
           </p>
-          <div className="landing-badges">
-            <span className="landing-badge">🌊 NOAA Buoy Data</span>
-            <span className="landing-badge">📱 SMS Alerts</span>
-            <span className="landing-badge">✨ AI Summaries</span>
-            <span className="landing-badge">📍 218+ Spots</span>
-          </div>
+
           <div className="landing-cta-row">
             <button className="landing-cta-btn" onClick={handleLogin}>Get Started Free</button>
             <span className="landing-cta-note">Free · No credit card needed</span>
