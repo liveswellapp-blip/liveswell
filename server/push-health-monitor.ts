@@ -17,6 +17,9 @@
 
 import webpush from 'web-push';
 import { ReplitConnectors } from '@replit/connectors-sdk';
+import { db } from './db';
+import { pushHealthAlertState } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL || 'LiveSwell <onboarding@resend.dev>';
@@ -322,7 +325,8 @@ until the credentials are configured.</p>
 
 /**
  * Run an APNs credential health check at startup.
- * Logs the result and emails the admin when credentials are absent.
+ * Logs the result and emails the admin when credentials are absent, subject
+ * to a 24-hour cooldown (same recovered → failed bypass as the VAPID check).
  */
 export async function runApnsHealthCheck(
   context: 'startup' | 'scheduled' = 'startup'
@@ -333,16 +337,145 @@ export async function runApnsHealthCheck(
 
   if (result.ok) {
     console.log('[push-health-monitor] ✅ APNs credentials present — native iOS push enabled');
+    // Update stored state to reflect healthy status (enables recovery detection)
+    await evaluateAndSendAlert('apns', true, async () => {});
   } else {
     console.warn(`[push-health-monitor] ⚠️ APNs disabled: ${result.reason}`);
-    // Only email at startup to avoid repeat alerts during the normal dev cycle
+    // Only email in production to avoid noise during the normal dev cycle
     // where APNs credentials are deliberately absent.
-    if (context === 'startup' && process.env.NODE_ENV === 'production') {
-      await sendApnsAdminAlert(result);
+    if (process.env.NODE_ENV === 'production') {
+      await evaluateAndSendAlert('apns', false, () => sendApnsAdminAlert(result));
     }
   }
 
   return result;
+}
+
+// --------------------------------------------------------------------------
+// Cooldown helpers (24-hour per-key deduplication)
+// --------------------------------------------------------------------------
+
+const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Decide whether an alert email should be sent for `alertKey`.
+ *
+ * Returns true (send) when:
+ * - The previous check was healthy (recovered → failed transition), OR
+ * - More than 24 hours have passed since the last alert email.
+ *
+ * Returns false (suppress) when the same failure has already been reported
+ * within the last 24 hours.
+ *
+ * Also persists the updated state (lastWasOk, lastAlertedAt) to the DB so
+ * the cooldown survives server restarts.
+ *
+ * @param alertKey  Logical key, e.g. 'vapid' or 'apns'
+ * @param isOk      Whether the current check passed
+ * @param sendEmail Function that actually dispatches the email
+ */
+async function evaluateAndSendAlert(
+  alertKey: string,
+  isOk: boolean,
+  sendEmail: () => Promise<void>
+): Promise<void> {
+  // ── 1. Load existing state ──────────────────────────────────────────────
+  let state: { lastAlertedAt: Date | null; lastWasOk: boolean } = {
+    lastAlertedAt: null,
+    lastWasOk: true,
+  };
+
+  let dbAvailable = true;
+  try {
+    const rows = await db
+      .select()
+      .from(pushHealthAlertState)
+      .where(eq(pushHealthAlertState.alertKey, alertKey))
+      .limit(1);
+
+    if (rows.length > 0) {
+      state = { lastAlertedAt: rows[0].lastAlertedAt, lastWasOk: rows[0].lastWasOk };
+    }
+  } catch (err) {
+    dbAvailable = false;
+    // Table missing or DB unreachable — log prominently so it is not invisible.
+    // We fall back to always-send so alerts are never silently lost, but this
+    // means the cooldown is not enforced until the table exists.
+    console.warn(
+      `[push-health-monitor] WARNING: push_health_alert_state table unavailable for key '${alertKey}' — cooldown not enforced, will send every check. Run post-merge.sh to create the table. Error:`,
+      err instanceof Error ? err.message : err
+    );
+  }
+
+  // ── 2. Persist the latest health status (lastWasOk) ───────────────────
+  const now = new Date();
+
+  if (dbAvailable) {
+    try {
+      await db
+        .insert(pushHealthAlertState)
+        .values({
+          alertKey,
+          lastAlertedAt: state.lastAlertedAt,
+          lastWasOk: isOk,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: pushHealthAlertState.alertKey,
+          set: { lastWasOk: isOk, updatedAt: now },
+        });
+    } catch (err) {
+      console.error(`[push-health-monitor] Could not persist alert state for '${alertKey}':`, err);
+    }
+  }
+
+  // ── 3. If healthy, nothing to send ─────────────────────────────────────
+  if (isOk) return;
+
+  // ── 4. Decide whether to send ──────────────────────────────────────────
+  const recoveredToFailed = state.lastWasOk; // previous check was ok
+  const withinCooldown =
+    dbAvailable &&                            // can't enforce cooldown without DB
+    state.lastAlertedAt !== null &&
+    now.getTime() - state.lastAlertedAt.getTime() < ALERT_COOLDOWN_MS;
+
+  if (!recoveredToFailed && withinCooldown) {
+    const hoursAgo = state.lastAlertedAt
+      ? ((now.getTime() - state.lastAlertedAt.getTime()) / 3_600_000).toFixed(1)
+      : '?';
+    console.log(
+      `[push-health-monitor] Suppressing '${alertKey}' alert — already sent ${hoursAgo}h ago (cooldown 24h)`
+    );
+    return;
+  }
+
+  if (recoveredToFailed) {
+    console.log(
+      `[push-health-monitor] '${alertKey}' transitioned from healthy → failed; bypassing cooldown`
+    );
+  }
+
+  // ── 5. Send and record timestamp ───────────────────────────────────────
+  await sendEmail();
+
+  if (dbAvailable) {
+    try {
+      await db
+        .insert(pushHealthAlertState)
+        .values({
+          alertKey,
+          lastAlertedAt: now,
+          lastWasOk: false,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: pushHealthAlertState.alertKey,
+          set: { lastAlertedAt: now, lastWasOk: false, updatedAt: now },
+        });
+    } catch (err) {
+      console.error(`[push-health-monitor] Could not update lastAlertedAt for '${alertKey}':`, err);
+    }
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -353,7 +486,9 @@ export async function runApnsHealthCheck(
  * Run a push notification health check.
  *
  * - Logs the result.
- * - If unhealthy/degraded, sends an admin alert email.
+ * - If unhealthy/degraded, sends an admin alert email subject to a 24-hour
+ *   cooldown per failure type.  A recovered → failed transition always sends
+ *   a fresh alert regardless of cooldown.
  * - Returns the health result so callers can act on it if needed.
  *
  * Safe to call before push-service is fully initialised (e.g. as a preflight
@@ -371,11 +506,13 @@ export async function runPushHealthCheck(
     console.log(
       '[push-health-monitor] ✅ Push notifications healthy — VAPID keys present and valid'
     );
+    // Update stored state to reflect healthy status (enables recovery detection)
+    await evaluateAndSendAlert('vapid', true, async () => {});
   } else {
     console.error(
       `[push-health-monitor] ❌ Push notifications ${result.pushServiceStatus}: ${result.reason}`
     );
-    await sendAdminAlert(result);
+    await evaluateAndSendAlert('vapid', false, () => sendAdminAlert(result));
   }
 
   return result;

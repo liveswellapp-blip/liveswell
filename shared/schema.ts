@@ -204,6 +204,19 @@ export const smsRateLimits = pgTable("sms_rate_limits", {
   sentAt: timestamp("sent_at").defaultNow().notNull(),
 }, (table) => [index("IDX_sms_rate_limits_user_phone_type_sent").on(table.userId, table.phone, table.limitType, table.sentAt)]);
 
+/**
+ * Tracks the last time an admin alert email was sent for each push-health
+ * check key ('vapid' | 'apns'), plus the previous health state.  Used to
+ * implement a 24-hour cooldown so the same failure type does not spam the
+ * inbox — but a recovered → failed transition always sends a fresh alert.
+ */
+export const pushHealthAlertState = pgTable("push_health_alert_state", {
+  alertKey: text("alert_key").primaryKey(), // 'vapid' | 'apns'
+  lastAlertedAt: timestamp("last_alerted_at"),
+  lastWasOk: boolean("last_was_ok").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,

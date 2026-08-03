@@ -32,6 +32,16 @@ pool.query(\`
 
   -- SMS opt-out flag: set when user replies STOP to a text message
   ALTER TABLE user_alerts ADD COLUMN IF NOT EXISTS sms_opted_out BOOLEAN NOT NULL DEFAULT FALSE;
+
+  -- Push / APNs health-alert cooldown state (Task #45)
+  -- Tracks last-alerted timestamp per check key so repeated failures don't
+  -- spam the inbox (24-hour cooldown with recovered→failed bypass).
+  CREATE TABLE IF NOT EXISTS push_health_alert_state (
+    alert_key    TEXT PRIMARY KEY,
+    last_alerted_at TIMESTAMP,
+    last_was_ok  BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at   TIMESTAMP NOT NULL DEFAULT NOW()
+  );
 \`).then(() => { console.log('Migrations applied'); pool.end(); })
   .catch(e => { console.error(e); process.exit(1); });
 "
