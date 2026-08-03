@@ -66,6 +66,16 @@ export default function SurfAgentChat() {
     ),
   ];
 
+  // Track whether we've already auto-refreshed for the current drawer session
+  const autoRefreshedRef = useRef(false);
+
+  // Reset the guard whenever the drawer closes
+  useEffect(() => {
+    if (!open) {
+      autoRefreshedRef.current = false;
+    }
+  }, [open]);
+
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
       const res = await apiRequest("/api/agent/chat", { method: "POST", body: { message } });
@@ -140,6 +150,14 @@ export default function SurfAgentChat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages, isTyping]);
+
+  // Auto-refresh conditions silently when the drawer opens and data is stale
+  useEffect(() => {
+    if (open && isStale && !refreshMutation.isPending && !autoRefreshedRef.current) {
+      autoRefreshedRef.current = true;
+      refreshMutation.mutate();
+    }
+  }, [open, isStale, refreshMutation.isPending]);
 
   // Focus textarea when drawer opens
   useEffect(() => {
