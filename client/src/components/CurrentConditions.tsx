@@ -211,7 +211,41 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
   return (
     <div className="w-full">
-      <div className="max-w-2xl mx-auto px-3 pt-4 pb-2 space-y-3">
+      {/* ── Location header — above the card ─────────────────────── */}
+      <div className="max-w-2xl mx-auto px-4 pt-5 pb-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-1.5 mb-1">
+              <MapPin className="h-3.5 w-3.5 text-[#94a3b8]" />
+              <span className="text-xs font-semibold text-[#94a3b8]">{location.city}</span>
+            </div>
+            <h1 className="text-white font-black text-3xl leading-tight">{location.name}</h1>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            {lastUpdated !== "—" && (
+              <span className="text-[9px] text-slate-600">Updated {lastUpdated}</span>
+            )}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshState === "spinning"}
+              aria-label="Refresh conditions"
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
+              style={{
+                background: refreshState === "done" ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.07)",
+                border: refreshState === "done" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.12)",
+              }}
+            >
+              {refreshState === "done"
+                ? <Check size={13} className="text-emerald-400" />
+                : <RefreshCw size={13} className={`text-slate-400 ${refreshState === "spinning" ? "animate-spin" : ""}`} />
+              }
+            </button>
+            <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-3 pb-2 space-y-3">
 
         {/* ── Hero card ─────────────────────────────────────────────── */}
         <div
@@ -220,38 +254,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
         >
 
           <div className="relative px-5 pt-5 pb-5">
-            {/* Location + favorite */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-[#94a3b8]" />
-                  <span className="text-xs font-semibold text-[#94a3b8]">{location.city}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {lastUpdated !== "—" && (
-                    <span className="text-[9px] text-slate-600">Updated {lastUpdated}</span>
-                  )}
-                  <button
-                    onClick={handleRefresh}
-                    disabled={refreshState === "spinning"}
-                    aria-label="Refresh conditions"
-                    className="w-7 h-7 rounded-full flex items-center justify-center transition-all disabled:opacity-50"
-                    style={{
-                      background: refreshState === "done" ? "rgba(16,185,129,0.18)" : "rgba(255,255,255,0.07)",
-                      border: refreshState === "done" ? "1px solid rgba(16,185,129,0.4)" : "1px solid rgba(255,255,255,0.12)",
-                    }}
-                  >
-                    {refreshState === "done"
-                      ? <Check size={12} className="text-emerald-400" />
-                      : <RefreshCw size={12} className={`text-slate-400 ${refreshState === "spinning" ? "animate-spin" : ""}`} />
-                    }
-                  </button>
-                  <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
-                </div>
-              </div>
-              <h1 className="text-white font-black text-3xl leading-tight">{location.name}</h1>
-            </div>
-
             {/* Buoy cards */}
             {isLoading ? (
               <div className="grid grid-cols-2 gap-3">
