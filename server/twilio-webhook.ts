@@ -26,6 +26,7 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 // Keyword constants
 // ---------------------------------------------------------------------------
 const STOP_KEYWORDS = new Set(["STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END", "QUIT"]);
+const START_KEYWORDS = new Set(["START", "YES", "UNSTOP"]);
 const HELP_KEYWORDS = new Set(["HELP", "INFO"]);
 
 const HELP_REPLY =
@@ -38,6 +39,11 @@ const HELP_REPLY =
 const STOP_REPLY =
   "You've been unsubscribed from LiveSwell SMS alerts. " +
   "Reply START to re-subscribe anytime.";
+
+const START_REPLY =
+  "LiveSwell: You're now opted in to surf condition alerts. " +
+  "Msg&data rates may apply. Msg freq varies. " +
+  "Reply HELP for help, STOP to cancel.";
 
 const UNKNOWN_REPLY =
   "Hi! Your number isn't linked to a LiveSwell account. " +
@@ -218,6 +224,14 @@ export async function handleIncomingSms(req: Request, res: Response): Promise<vo
   // ── 3. HELP keyword ──────────────────────────────────────────────────────
   if (HELP_KEYWORDS.has(keyword)) {
     twimlReply(res, HELP_REPLY);
+    return;
+  }
+
+  // ── 3b. START / YES / UNSTOP — opt back in ───────────────────────────────
+  if (START_KEYWORDS.has(keyword)) {
+    // Twilio handles carrier-level re-subscription automatically;
+    // we just send the required opt-in confirmation reply.
+    twimlReply(res, START_REPLY);
     return;
   }
 
