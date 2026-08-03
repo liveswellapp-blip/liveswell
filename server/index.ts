@@ -37,6 +37,23 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Redirect support.liveswell.io → /support so the subdomain works as a
+// standalone support URL (e.g. for App Store / Google Play metadata).
+//
+// Only page-navigation paths are remapped; API calls, static assets, and
+// Vite dev-server paths pass through untouched so the app can still load
+// its JS/CSS bundles and the contact form can reach its API endpoint.
+const SUPPORT_PASSTHROUGH_PREFIXES = ["/api", "/assets", "/_", "/@", "/node_modules"];
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const host = (req.headers.host || "").split(":")[0].toLowerCase();
+  if (host !== "support.liveswell.io") return next();
+  if (req.path.startsWith("/support")) return next();
+  if (SUPPORT_PASSTHROUGH_PREFIXES.some(p => req.path.startsWith(p))) return next();
+  // Use 302 (temporary) so browsers don't permanently cache the redirect
+  // while the DNS / domain verification is still being set up.
+  return res.redirect(302, "/support" + req.path);
+});
+
 // Session configuration is handled by Replit Auth in replitAuth.ts
 
 app.use((req, res, next) => {

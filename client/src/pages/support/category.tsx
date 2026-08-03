@@ -136,7 +136,7 @@ export default function SupportCategory() {
       {/* Nav */}
       <nav className="support-nav">
         <img src={logoImage} alt="LiveSwell" className="support-nav-logo" />
-        <a href="/" className="support-back-link">← Back to app</a>
+        <a href="https://liveswell.io" className="support-back-link">← Back to app</a>
       </nav>
 
       {/* Breadcrumb */}
