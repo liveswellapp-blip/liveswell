@@ -3475,7 +3475,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
           }
         ],
         temperature: 0.5,
-        max_tokens: 120,
+        max_completion_tokens: 120,
       });
 
       const summary = completion.choices[0]?.message?.content || "Unable to generate surf summary at this time.";
