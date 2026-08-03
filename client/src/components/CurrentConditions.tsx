@@ -272,10 +272,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
               {/* ── Buoy #1 column ── */}
               <div className={backupBuoy ? 'pr-4' : ''}>
-                <p className="text-white text-[11px] font-semibold leading-tight truncate">
+                <p className="text-white font-semibold truncate text-[12px]">
                   {primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}
                 </p>
-                <p className="text-[9px] text-slate-500 mt-0.5 mb-3">
+                <p className="text-slate-500 mt-0.5 mb-3 text-[11px]">
                   {primaryBuoy.stationId === 'open-meteo' ? 'Global wave model' : `Station ${primaryBuoy.stationId}`}
                 </p>
                 <div className="flex flex-col divide-y divide-white/[0.06]">
@@ -303,10 +303,10 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
               {/* ── Buoy #2 column ── */}
               {backupBuoy && (
                 <div className="pl-4 border-l border-white/[0.08]">
-                  <p className="text-white text-[11px] font-semibold leading-tight truncate">
+                  <p className="text-white font-semibold truncate text-[12px]">
                     {backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}
                   </p>
-                  <p className="text-[9px] text-slate-500 mt-0.5 mb-3">Station {backupBuoy.stationId}</p>
+                  <p className="text-slate-500 mt-0.5 mb-3 text-[11px]">Station {backupBuoy.stationId}</p>
                   <div className="flex flex-col divide-y divide-white/[0.06]">
                     <div className="flex items-center justify-between py-1.5">
                       <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Height</span>
