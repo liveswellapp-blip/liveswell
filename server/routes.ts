@@ -3790,13 +3790,36 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   });
 
   // ── Agent: on-demand conditions refresh ──────────────────────────────────
+  // Per-user cooldown map for /api/agent/refresh-conditions (2 minutes)
+  const REFRESH_COOLDOWN_MS = 2 * 60 * 1000;
+  const refreshLastCalledAt = new Map<string, number>();
+
   app.post("/api/agent/refresh-conditions", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+
+      // Enforce per-user cooldown to avoid hammering the weather API
+      const lastCalled = refreshLastCalledAt.get(userId) ?? 0;
+      const now = Date.now();
+      const elapsed = now - lastCalled;
+      if (elapsed < REFRESH_COOLDOWN_MS) {
+        const nextAllowedAt = lastCalled + REFRESH_COOLDOWN_MS;
+        return res.json({
+          refreshed: 0,
+          cached: true,
+          nextAllowedAt,
+          message: "Conditions were just refreshed — please wait a moment before trying again",
+        });
+      }
+
       const favorites = await storage.getUserFavorites(userId);
       if (favorites.length === 0) {
         return res.json({ refreshed: 0, message: "No saved spots to refresh" });
       }
+
+      // Record the call time before issuing API requests so concurrent calls
+      // are also blocked while the fetch is in-flight.
+      refreshLastCalledAt.set(userId, now);
 
       let refreshed = 0;
       let errors = 0;
@@ -3820,8 +3843,9 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
         }
       }));
 
+      const nextAllowedAt = now + REFRESH_COOLDOWN_MS;
       console.log(`🔄 Agent conditions refresh for user ${userId}: ${refreshed} updated, ${errors} errors`);
-      res.json({ refreshed, errors, message: `Refreshed ${refreshed} spot${refreshed !== 1 ? "s" : ""}` });
+      res.json({ refreshed, errors, nextAllowedAt, message: `Refreshed ${refreshed} spot${refreshed !== 1 ? "s" : ""}` });
     } catch (error) {
       console.error("Conditions refresh error:", error);
       res.status(500).json({ message: "Failed to refresh conditions" });

@@ -24,6 +24,9 @@ export default function SurfAgentChat() {
   const [input, setInput] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  // Timestamp (ms) after which the Refresh button is re-enabled
+  const [refreshCooldownUntil, setRefreshCooldownUntil] = useState(0);
+  const [, forceRefreshCooldownRender] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const qc = useQueryClient();
@@ -113,12 +116,23 @@ export default function SurfAgentChat() {
   const refreshMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("/api/agent/refresh-conditions", { method: "POST" });
-      return res.json();
+      return res.json() as Promise<{ refreshed: number; cached?: boolean; nextAllowedAt?: number; message: string }>;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.nextAllowedAt) {
+        setRefreshCooldownUntil(data.nextAllowedAt);
+        // Schedule a re-render for when the cooldown expires
+        const delay = data.nextAllowedAt - Date.now();
+        if (delay > 0) {
+          setTimeout(() => forceRefreshCooldownRender((n) => n + 1), delay);
+        }
+      }
       qc.invalidateQueries({ queryKey: ["/api/agent/conditions-freshness"] });
     },
   });
+
+  const isRefreshOnCooldown = Date.now() < refreshCooldownUntil;
+  const isRefreshDisabled = refreshMutation.isPending || isRefreshOnCooldown;
 
   const sendMessage = useCallback(
     (text: string) => {
@@ -153,11 +167,11 @@ export default function SurfAgentChat() {
 
   // Auto-refresh conditions silently when the drawer opens and data is stale
   useEffect(() => {
-    if (open && isStale && !refreshMutation.isPending && !autoRefreshedRef.current) {
+    if (open && isStale && !isRefreshDisabled && !autoRefreshedRef.current) {
       autoRefreshedRef.current = true;
       refreshMutation.mutate();
     }
-  }, [open, isStale, refreshMutation.isPending]);
+  }, [open, isStale, isRefreshDisabled]);
 
   // Focus textarea when drawer opens
   useEffect(() => {
@@ -245,9 +259,9 @@ export default function SurfAgentChat() {
             {isStale && (
               <button
                 onClick={() => refreshMutation.mutate()}
-                disabled={refreshMutation.isPending}
+                disabled={isRefreshDisabled}
                 className="text-xs text-amber-500 hover:text-amber-300 px-2 py-1 rounded transition-colors flex items-center gap-1 disabled:opacity-50"
-                title="Refresh conditions"
+                title={isRefreshOnCooldown ? "Conditions were just refreshed — please wait a moment" : "Refresh conditions"}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -262,7 +276,7 @@ export default function SurfAgentChat() {
                   <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                   <path d="M21 3v5h-5" />
                 </svg>
-                {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
+                {refreshMutation.isPending ? "Refreshing…" : isRefreshOnCooldown ? "Just refreshed" : "Refresh"}
               </button>
             )}
             {allMessages.length > 0 && (
@@ -331,7 +345,7 @@ export default function SurfAgentChat() {
                   </div>
                   <button
                     onClick={() => refreshMutation.mutate()}
-                    disabled={refreshMutation.isPending}
+                    disabled={isRefreshDisabled}
                     className="text-xs text-amber-400 hover:text-amber-200 font-medium shrink-0 flex items-center gap-1 disabled:opacity-50 transition-colors"
                   >
                     <svg
@@ -347,7 +361,7 @@ export default function SurfAgentChat() {
                       <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                       <path d="M21 3v5h-5" />
                     </svg>
-                    {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
+                    {refreshMutation.isPending ? "Refreshing…" : isRefreshOnCooldown ? "Just refreshed" : "Refresh"}
                   </button>
                 </div>
               )}
@@ -449,7 +463,7 @@ export default function SurfAgentChat() {
               </div>
               <button
                 onClick={() => refreshMutation.mutate()}
-                disabled={refreshMutation.isPending}
+                disabled={isRefreshDisabled}
                 className="text-xs text-amber-400 hover:text-amber-200 font-medium shrink-0 flex items-center gap-1 disabled:opacity-50 transition-colors"
               >
                 <svg
@@ -465,7 +479,7 @@ export default function SurfAgentChat() {
                   <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
                   <path d="M21 3v5h-5" />
                 </svg>
-                {refreshMutation.isPending ? "Refreshing…" : "Refresh"}
+                {refreshMutation.isPending ? "Refreshing…" : isRefreshOnCooldown ? "Just refreshed" : "Refresh"}
               </button>
             </div>
           )}
