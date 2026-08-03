@@ -38,7 +38,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
   if (error) {
     return (
       <div className="w-full">
-        <div className="w-full border-b border-emerald-500/30 mt-8 mb-4" />
+        <div className="w-full border-b border-white/[0.08] mt-8 mb-4" />
         <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-4 mb-6">
           <p className="text-destructive text-sm text-center">Unable to load forecast data. Please try again later.</p>
         </div>
@@ -53,7 +53,7 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
 
   return (
     <div className="w-full">
-      <div className="w-full border-b border-emerald-500/30 mt-8 mb-4" />
+      <div className="w-full border-b border-white/[0.08] mt-8 mb-4" />
       <div className="container mx-auto px-4 md:px-6 max-w-7xl pb-4 mb-6">
 
         {/* ── Section header ── */}
