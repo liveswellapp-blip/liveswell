@@ -311,7 +311,9 @@ Water: ${conditions.waterTemp}°F
 Tides & Sun:
 High: ${highTides}
 Low: ${lowTides}
-Sunrise: ${conditions.sunrise} | Sunset: ${conditions.sunset} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})`;
+Sunrise: ${conditions.sunrise} | Sunset: ${conditions.sunset} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})
+
+Reply STOP to opt out. liveswell.io`;
   }
 
   static async sendConditionAlert(
@@ -354,7 +356,8 @@ Sunrise: ${conditions.sunrise} | Sunset: ${conditions.sunset} | UV: ${conditions
 ${triggerReason} at ${locationName}
 Triggered: ${timestamp}${conditionsLine}
 
-Open the app for full forecast.`;
+Open the app for full forecast.
+Reply STOP to opt out. liveswell.io`;
 
       const result = await client.messages.create({
         body: message,
