@@ -18,7 +18,8 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);   // true = waiting for first token (show dots)
+  const [isStreaming, setIsStreaming] = useState(false); // true = stream in progress (disable input)
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -42,10 +43,10 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
     setOpen(false);
   }, [location.id]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages or while streaming
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isStreaming]);
 
   // Focus textarea when opened
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || isStreaming) return;
 
     setInput("");
     setError(null);
@@ -65,6 +66,7 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setIsLoading(true);
+    setIsStreaming(true);
 
     try {
       const res = await fetch("/api/chat", {
@@ -80,20 +82,75 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
         throw new Error("Request failed");
       }
 
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      if (!res.body) {
+        throw new Error("No response body");
+      }
+
+      // Add an empty placeholder for the assistant reply
+      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let firstToken = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6);
+          if (payload === "[DONE]") break;
+          if (payload === "[ERROR]") throw new Error("Stream error");
+
+          try {
+            const { token } = JSON.parse(payload);
+            if (token) {
+              // Hide loading dots on the first token
+              if (!firstToken) {
+                firstToken = true;
+                setIsLoading(false);
+              }
+              setMessages(prev => {
+                const updated = [...prev];
+                const last = updated[updated.length - 1];
+                updated[updated.length - 1] = {
+                  ...last,
+                  content: last.content + token,
+                };
+                return updated;
+              });
+            }
+          } catch {
+            // Ignore parse errors on individual chunks
+          }
+        }
+      }
     } catch {
       setError("Couldn't connect. Tap retry to try again.");
-      // Remove the user message on failure so they can try again
-      setMessages(messages);
+      // Roll back to the pre-send message list
+      setMessages(nextMessages.slice(0, -1).concat(
+        // keep user message visible so they can see what they sent
+        nextMessages[nextMessages.length - 1]
+          ? [nextMessages[nextMessages.length - 1]]
+          : []
+      ));
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
     }
   }
 
   function handleRetry() {
     setError(null);
   }
+
+  const isBusy = isLoading || isStreaming;
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -191,7 +248,7 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
           )}
 
           {/* Error state */}
-          {error && !isLoading && (
+          {error && !isBusy && (
             <div className="flex justify-start">
               <div className="max-w-[82%] rounded-2xl rounded-bl-sm px-3 py-2 bg-red-950/50 border border-red-800/40 text-red-300 text-sm flex items-center gap-2">
                 <span className="flex-1 text-xs">{error}</span>
@@ -206,7 +263,7 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
           )}
 
           {/* Quick prompts — show when only the context message is present */}
-          {messages.length === 1 && !isLoading && (
+          {messages.length === 1 && !isBusy && (
             <div className="grid grid-cols-2 gap-1.5 pt-1">
               {QUICK_PROMPTS.map(prompt => (
                 <button
@@ -233,12 +290,12 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
               onKeyDown={handleKeyDown}
               placeholder="Ask about conditions…"
               rows={1}
-              disabled={isLoading}
+              disabled={isBusy}
               className="flex-1 resize-none bg-white/[0.07] border-white/[0.12] text-white placeholder:text-slate-500 rounded-xl text-sm py-2.5 focus:ring-1 focus:ring-emerald-500 min-h-[40px] max-h-[120px] overflow-y-auto"
             />
             <button
               onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isBusy}
               className="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
             >
               <Send className="w-4 h-4 text-white" />

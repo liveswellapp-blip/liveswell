@@ -4134,7 +4134,14 @@ Do not discuss topics unrelated to surfing or ocean activities.`;
         .slice(-20)
         .map((m: any) => ({ role: m.role as "user" | "assistant", content: String(m.content) }));
 
-      const completion = await openai.chat.completions.create({
+      // Stream the response via Server-Sent Events so the client can render
+      // tokens as they arrive rather than waiting for the full completion.
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
+
+      const stream = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
@@ -4142,15 +4149,30 @@ Do not discuss topics unrelated to surfing or ocean activities.`;
         ],
         max_tokens: 500,
         temperature: 0.7,
+        stream: true,
       });
 
-      const reply = completion.choices[0]?.message?.content?.trim() || "Sorry, I couldn't generate a response right now.";
+      let totalTokens = 0;
+      for await (const chunk of stream) {
+        const token = chunk.choices[0]?.delta?.content;
+        if (token) {
+          totalTokens++;
+          res.write(`data: ${JSON.stringify({ token })}\n\n`);
+        }
+      }
 
-      console.log(`✅ AI surf chat reply for location ${locId} (${location.name})`);
-      res.json({ reply });
+      res.write("data: [DONE]\n\n");
+      res.end();
+      console.log(`✅ AI surf chat streamed ${totalTokens} token chunks for location ${locId} (${location.name})`);
     } catch (error) {
       console.error("❌ AI surf chat error:", error instanceof Error ? error.message : error);
-      res.status(500).json({ message: "Failed to generate response" });
+      // If headers haven't been sent yet we can still send a JSON error.
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Failed to generate response" });
+      } else {
+        res.write("data: [ERROR]\n\n");
+        res.end();
+      }
     }
   });
 
