@@ -236,7 +236,6 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
           <FavoriteButton locationId={location.id} locationName={location.name} size="sm" />
         </div>
       </div>
-
       <div className="max-w-2xl mx-auto px-3 pb-2 space-y-3">
 
         {/* ── Swell card ────────────────────────────────────────────── */}
@@ -295,7 +294,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </div>
                 {primaryBuoy.stationId !== 'open-meteo' && (
                   <button
-                    className="mt-3 w-full text-[9px] bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#34d399]"
+                    className="mt-3 w-full bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#34d399] text-[11px]"
                     onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
                   >Wave History</button>
                 )}
