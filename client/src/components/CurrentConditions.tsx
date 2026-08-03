@@ -404,11 +404,11 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                       })
                       .map((tide, i) => (
                         <div key={i} className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-semibold capitalize w-8 shrink-0 text-[#94a3b8]">
+                          <span className="text-[12px] font-semibold capitalize w-8 shrink-0 text-[#94a3b8]">
                             {tide.type === "high" ? "High" : "Low"}
                           </span>
-                          <span className="text-[10px] font-medium text-[#34d399]">{tide.time}</span>
-                          <span className="text-slate-500 text-[10px]">{tide.height.toFixed(1)} ft</span>
+                          <span className="text-[12px] font-medium text-[#34d399]">{tide.time}</span>
+                          <span className="text-slate-500 text-[12px]">{tide.height.toFixed(1)} ft</span>
                         </div>
                       ))}
                   </div>
@@ -418,20 +418,20 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="mt-2 flex items-center gap-4">
                     {conditions.sunrise && (
                       <div className="flex items-center gap-1">
-                        <span className="text-slate-500 text-[9px] uppercase tracking-wider">Sunrise</span>
-                        <span className="text-[10px] font-semibold text-[#38bdf8]">{conditions.sunrise}</span>
+                        <span className="text-slate-500 text-[11px] uppercase tracking-wider">Sunrise</span>
+                        <span className="text-[12px] font-semibold text-[#38bdf8]">{conditions.sunrise}</span>
                       </div>
                     )}
                     {conditions.sunset && (
                       <div className="flex items-center gap-1">
-                        <span className="text-slate-500 text-[9px] uppercase tracking-wider">Sunset</span>
-                        <span className="text-[10px] font-semibold text-[#38bdf8]">{conditions.sunset}</span>
+                        <span className="text-slate-500 text-[11px] uppercase tracking-wider">Sunset</span>
+                        <span className="text-[12px] font-semibold text-[#38bdf8]">{conditions.sunset}</span>
                       </div>
                     )}
                   </div>
                 )}
                 <div className="mt-2 pt-2 border-t border-white/5 flex justify-end">
-                  <span className="text-slate-600 text-[9px]">NOAA Tides & Currents data</span>
+                  <span className="text-slate-600 text-[10px]">NOAA Tides & Currents data</span>
                 </div>
               </div>
             )}

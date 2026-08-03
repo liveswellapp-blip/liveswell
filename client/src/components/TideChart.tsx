@@ -261,13 +261,13 @@ export default function TideChart({ tides, date, location, sunrise, sunset }: Ti
               }}
             >
               {isHigh && (
-                <div className="mb-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[8px] font-semibold text-emerald-300 shadow leading-tight whitespace-nowrap">
+                <div className="mb-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[9px] font-semibold text-emerald-300 shadow leading-tight whitespace-nowrap">
                   {tide.time}
                 </div>
               )}
               <div className="w-1.5 h-1.5 rounded-full bg-slate-950 border border-emerald-400" />
               {!isHigh && (
-                <div className="mt-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[8px] font-semibold text-slate-300 shadow leading-tight whitespace-nowrap">
+                <div className="mt-0.5 px-1 py-px rounded bg-slate-900/80 border border-white/10 text-[9px] font-semibold text-slate-300 shadow leading-tight whitespace-nowrap">
                   {tide.time}
                 </div>
               )}
@@ -287,8 +287,8 @@ export default function TideChart({ tides, date, location, sunrise, sunset }: Ti
             }}
           >
             <div className="bg-slate-800 border border-white/20 text-white px-2 py-1 rounded-lg shadow-xl text-center">
-              <div className="text-[9px] text-slate-400">{dragInfo.time}</div>
-              <div className="text-[11px] font-bold text-emerald-400">{dragInfo.height.toFixed(1)}ft</div>
+              <div className="text-[10px] text-slate-400">{dragInfo.time}</div>
+              <div className="text-[12px] font-bold text-emerald-400">{dragInfo.height.toFixed(1)}ft</div>
             </div>
           </div>
         )}
@@ -306,7 +306,7 @@ export default function TideChart({ tides, date, location, sunrise, sunset }: Ti
           </div>
         )}
         {["12a", "6a", "12p", "6p", "12a"].map((label, i) => (
-          <span key={i} className="text-[10px] font-medium text-slate-400">{label}</span>
+          <span key={i} className="text-[11px] font-medium text-slate-400">{label}</span>
         ))}
       </div>
     </div>
