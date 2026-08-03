@@ -71,8 +71,8 @@ function StatTile({
         <Icon className="h-3.5 w-3.5 text-white" />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-medium leading-tight text-[#ffffff]">{label}</p>
-        <p className={`font-bold text-sm ${color} leading-snug`}>{value}</p>
+        <p className="font-medium text-[#ffffff] text-[12px]">{label}</p>
+        <p className="font-bold text-emerald-400 text-[16px]">{value}</p>
       </div>
     </div>
   );
@@ -281,15 +281,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 <div className="flex flex-col divide-y divide-white/[0.06]">
                   <div className="flex items-center justify-between py-1.5">
                     <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Height</span>
-                    <span className="text-[20px] font-black text-emerald-400 leading-none">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)} ft</span>
+                    <span className="font-black text-emerald-400 text-[24px]">{parseFloat(primaryBuoy.waveHeight || 0).toFixed(1)} ft</span>
                   </div>
                   <div className="flex items-center justify-between py-1.5">
                     <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Period</span>
-                    <span className="text-[14px] font-black text-emerald-400">{primaryBuoy.wavePeriod || 0} sec</span>
+                    <span className="font-black text-emerald-400 text-[16px]">{primaryBuoy.wavePeriod || 0} sec</span>
                   </div>
                   <div className="flex items-center justify-between py-1.5">
                     <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Direction</span>
-                    <span className="text-[14px] font-black text-emerald-400">{primaryBuoy.waveDirection || "—"}</span>
+                    <span className="font-black text-emerald-400 text-[16px]">{primaryBuoy.waveDirection || "—"}</span>
                   </div>
                 </div>
                 {primaryBuoy.stationId !== 'open-meteo' && (
@@ -310,15 +310,15 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                   <div className="flex flex-col divide-y divide-white/[0.06]">
                     <div className="flex items-center justify-between py-1.5">
                       <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Height</span>
-                      <span className="text-[20px] font-black text-[#67e8f9] leading-none">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)} ft</span>
+                      <span className="font-black text-[#67e8f9] text-[24px]">{parseFloat(backupBuoy.waveHeight || 0).toFixed(1)} ft</span>
                     </div>
                     <div className="flex items-center justify-between py-1.5">
                       <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Period</span>
-                      <span className="text-[14px] font-black text-[#67e8f9]">{backupBuoy.wavePeriod || 0} sec</span>
+                      <span className="font-black text-[#67e8f9] text-[16px]">{backupBuoy.wavePeriod || 0} sec</span>
                     </div>
                     <div className="flex items-center justify-between py-1.5">
                       <span className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">Direction</span>
-                      <span className="text-[14px] font-black text-[#67e8f9]">{backupBuoy.waveDirection || "—"}</span>
+                      <span className="font-black text-[#67e8f9] text-[16px]">{backupBuoy.waveDirection || "—"}</span>
                     </div>
                   </div>
                   <button
