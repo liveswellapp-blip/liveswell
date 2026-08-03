@@ -271,7 +271,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
             <div className={`px-4 pb-4 ${backupBuoy ? 'grid grid-cols-2 gap-px' : ''}`}>
 
               {/* ── Buoy #1 column ── */}
-              <div className={backupBuoy ? 'pr-4' : ''}>
+              <div className={backupBuoy ? 'pr-4 flex flex-col' : ''}>
                 <p className="text-white font-semibold truncate text-[12px]">
                   {primaryBuoy.stationName || `Buoy ${primaryBuoy.stationId}`}
                 </p>
@@ -294,7 +294,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                 </div>
                 {primaryBuoy.stationId !== 'open-meteo' && (
                   <button
-                    className="mt-3 w-full bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#34d399] text-[11px]"
+                    className="mt-auto pt-3 w-full bg-emerald-500/15 border border-emerald-500/30 rounded-lg py-1.5 hover:bg-emerald-500/25 transition-colors font-medium text-[#34d399] text-[11px]"
                     onClick={() => { setSelectedBuoyStation(primaryBuoy.stationId); setSelectedBuoyName(primaryBuoy.stationName || ""); setSelectedBuoyIndex(1); setShowBuoyHistoryModal(true); }}
                   >Wave History</button>
                 )}
@@ -302,7 +302,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
 
               {/* ── Buoy #2 column ── */}
               {backupBuoy && (
-                <div className="pl-4 border-l border-white/[0.08]">
+                <div className="pl-4 border-l border-white/[0.08] flex flex-col">
                   <p className="text-white font-semibold truncate text-[12px]">
                     {backupBuoy.stationName || `Buoy ${backupBuoy.stationId}`}
                   </p>
@@ -322,7 +322,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     </div>
                   </div>
                   <button
-                    className="mt-3 w-full bg-cyan-400/15 border border-cyan-400/30 rounded-lg py-1.5 hover:bg-cyan-400/25 transition-colors text-[#67e8f9] text-[11px] font-medium"
+                    className="mt-auto pt-3 w-full bg-cyan-400/15 border border-cyan-400/30 rounded-lg py-1.5 hover:bg-cyan-400/25 transition-colors text-[#67e8f9] text-[11px] font-medium"
                     onClick={() => { setSelectedBuoyStation(backupBuoy.stationId); setSelectedBuoyName(backupBuoy.stationName || ""); setSelectedBuoyIndex(2); setShowBuoyHistoryModal(true); }}
                   >Wave History</button>
                 </div>
