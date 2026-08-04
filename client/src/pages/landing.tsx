@@ -524,13 +524,11 @@ export default function Landing() {
           .landing-footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
         }
       `}</style>
-
       {/* ── Nav ─────────────────────────────────────────────────── */}
       <nav className="landing-nav">
         <img src={logoImage} alt="LiveSwell" />
         <button className="landing-nav-btn" onClick={handleLogin}>Sign In</button>
       </nav>
-
       {/* ── Hero ────────────────────────────────────────────────── */}
       <div className="landing-hero">
         <div>
@@ -540,10 +538,7 @@ export default function Landing() {
             <em>Catch the</em><br />
             Moment.
           </h1>
-          <p className="landing-sub">
-            Live NOAA buoy data, 5-day forecasts, and real-time tide charts for 229+ breaks worldwide.
-            Know exactly what the ocean is doing before you leave the house.
-          </p>
+          <p className="landing-sub">Get live swell, wind, and tide data in one clean and easy to use application. Plus unlimited alerts for you specific needs!</p>
 
           <div className="landing-cta-row">
             <button className="landing-cta-btn" onClick={handleSignUp}>Get Started Free</button>
@@ -558,7 +553,6 @@ export default function Landing() {
           </PhoneShell>
         </div>
       </div>
-
       {/* ── Stats bar ───────────────────────────────────────────── */}
       <div className="landing-stats-bar">
         <div className="landing-stats-inner">
@@ -575,7 +569,6 @@ export default function Landing() {
           ))}
         </div>
       </div>
-
       {/* ── Features ────────────────────────────────────────────── */}
       <div className="landing-features">
         <div className="landing-features-heading">Everything you need before paddling out</div>
@@ -589,7 +582,6 @@ export default function Landing() {
           ))}
         </div>
       </div>
-
       {/* ── How it works ────────────────────────────────────────── */}
       <div className="landing-hiw">
         <div className="landing-hiw-inner">
@@ -611,7 +603,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
       {/* ── SMS alert banner ────────────────────────────────────── */}
       <div className="landing-sms-banner-wrap">
         <div className="landing-sms-banner">
@@ -634,7 +625,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
       {/* ── Screenshots ─────────────────────────────────────────── */}
       <div className="landing-screenshots">
         <div className="landing-screenshots-heading">See it in action</div>
@@ -653,7 +643,6 @@ export default function Landing() {
           ))}
         </div>
       </div>
-
       {/* ── Footer ──────────────────────────────────────────────── */}
       <div className="landing-footer-wrap">
         <div className="landing-footer-grid">
