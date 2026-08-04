@@ -395,7 +395,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { search } = req.query;
       const users = await storage.getAllUsers(search as string);
-      res.json(users);
+      const safeUsers = users.map(({ passwordHash: _ph, ...u }) => u);
+      res.json(safeUsers);
     } catch (error) {
       console.error('Get users error:', error);
       res.status(500).json({ message: "Failed to get users" });
@@ -540,8 +541,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getUserProfile(userId)
       ]);
       
+      const { passwordHash: _ph, ...safeUser } = user;
       res.json({
-        user,
+        user: safeUser,
         favorites,
         profile,
         stats: {
