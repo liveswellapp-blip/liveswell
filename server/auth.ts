@@ -169,6 +169,45 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // ── Change password (authenticated) ─────────────────────────────────────────
+  app.patch("/api/auth/password", async (req, res) => {
+    try {
+      const sessionUser = (req.session as any)?.user;
+      if (!sessionUser?.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required." });
+      }
+      if ((newPassword as string).length < 8) {
+        return res.status(400).json({ message: "New password must be at least 8 characters." });
+      }
+
+      const user = await storage.getUser(sessionUser.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      if (!user.passwordHash) {
+        return res.status(400).json({ message: "This account does not have a password set. Use 'Forgot password' to create one." });
+      }
+
+      const match = await bcrypt.compare(currentPassword as string, user.passwordHash);
+      if (!match) {
+        return res.status(400).json({ message: "Current password is incorrect." });
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword as string, 12);
+      await storage.updateUserPasswordHash(user.id, passwordHash);
+
+      return res.json({ message: "Password updated successfully." });
+    } catch (error) {
+      console.error("Change-password error:", error);
+      return res.status(500).json({ message: "Failed to update password. Please try again." });
+    }
+  });
+
   // ── Reset password ──────────────────────────────────────────────────────────
   app.post("/api/auth/reset-password", async (req, res) => {
     try {
