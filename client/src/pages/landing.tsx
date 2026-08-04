@@ -255,7 +255,8 @@ function PhoneShell({ children, statusBar = true }: { children: ReactNode; statu
 
 /* ─── Landing page ─────────────────────────────────────────────── */
 export default function Landing() {
-  const handleLogin = () => { window.location.href = "/login"; };
+  const handleLogin = () => { window.location.href = "/sign-in"; };
+  const handleSignUp = () => { window.location.href = "/sign-up"; };
 
   const features = [
     { icon: "🌊", title: "Live NOAA Buoy Data", body: "Real wave height, period, and direction pulled directly from NOAA's network of offshore buoys — updated every 30 minutes." },
@@ -545,7 +546,7 @@ export default function Landing() {
           </p>
 
           <div className="landing-cta-row">
-            <button className="landing-cta-btn" onClick={handleLogin}>Get Started Free</button>
+            <button className="landing-cta-btn" onClick={handleSignUp}>Get Started Free</button>
             <span className="landing-cta-note">Free · No credit card needed</span>
           </div>
         </div>
@@ -665,7 +666,7 @@ export default function Landing() {
           </div>
           <div>
             <div className="landing-footer-col-title">App</div>
-            <a href="/login" className="landing-footer-link" onClick={e => { e.preventDefault(); handleLogin(); }}>Sign In</a>
+            <a href="/sign-in" className="landing-footer-link" onClick={e => { e.preventDefault(); handleLogin(); }}>Sign In</a>
             <a href="/support" className="landing-footer-link">Support</a>
             <a href="/terms" className="landing-footer-link">Terms of Service</a>
             <a href="/privacy" className="landing-footer-link">Privacy Policy</a>

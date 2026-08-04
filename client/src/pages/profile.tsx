@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Bell, LogOut, Shield, ChevronRight, Settings, HelpCircle, Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Bell, LogOut, Shield, ChevronRight, Settings, HelpCircle } from "lucide-react";
+import { Link } from "wouter";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,109 +25,12 @@ function getDisplayName(user: any): string {
   return "Surfer";
 }
 
-function PasswordField({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  const [show, setShow] = useState(false);
-  return (
-    <div>
-      <label htmlFor={id} className="block text-[11px] text-slate-500 mb-1">{label}</label>
-      <div className="relative">
-        <input
-          id={id}
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete="off"
-          className="w-full pr-9 pl-3 py-2.5 rounded-xl text-[13px] text-white bg-transparent outline-none"
-          style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}
-        />
-        <button
-          type="button"
-          onClick={() => setShow((s) => !s)}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400"
-          tabIndex={-1}
-        >
-          {show ? <EyeOff size={14} /> : <Eye size={14} />}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function Profile() {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const { user, logout } = useAuth();
 
   const initials = getInitials(user);
   const displayName = getDisplayName(user);
   const email = (user as any)?.email || "";
-
-  // Change-password state
-  const [pwExpanded, setPwExpanded] = useState(false);
-  const [currentPw, setCurrentPw] = useState("");
-  const [newPw, setNewPw] = useState("");
-  const [confirmPw, setConfirmPw] = useState("");
-  const [pwLoading, setPwLoading] = useState(false);
-  const [pwError, setPwError] = useState("");
-  const [pwSuccess, setPwSuccess] = useState(false);
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPwError("");
-    setPwSuccess(false);
-
-    if (newPw.length < 8) {
-      setPwError("New password must be at least 8 characters.");
-      return;
-    }
-    if (newPw === currentPw) {
-      setPwError("New password must be different from your current password.");
-      return;
-    }
-    if (newPw !== confirmPw) {
-      setPwError("New passwords do not match.");
-      return;
-    }
-
-    setPwLoading(true);
-    try {
-      const res = await fetch("/api/auth/password", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setPwError(data.message || "Failed to update password.");
-      } else {
-        setPwSuccess(true);
-        setCurrentPw("");
-        setNewPw("");
-        setConfirmPw("");
-        // Collapse after 2 seconds
-        setTimeout(() => {
-          setPwSuccess(false);
-          setPwExpanded(false);
-        }, 2000);
-      }
-    } catch {
-      setPwError("Something went wrong. Please try again.");
-    } finally {
-      setPwLoading(false);
-    }
-  };
 
   const ITEMS = [
     { icon: Bell,        label: "Notifications", value: "Manage alerts", color: "#fbbf24", href: "/notifications" },
@@ -135,12 +38,6 @@ export default function Profile() {
     { icon: Shield,      label: "Privacy",        value: "",              color: "#38bdf8", href: "/privacy" },
     { icon: HelpCircle,  label: "Help & Support", value: "",              color: "#34d399", href: "/support" },
   ];
-
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-  };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
@@ -191,96 +88,12 @@ export default function Profile() {
               </div>
             );
           })}
-
-          {/* ── Change password ── */}
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                setPwExpanded((v) => !v);
-                setPwError("");
-                setPwSuccess(false);
-              }}
-              className="w-full flex items-center justify-between px-1 py-3.5 cursor-pointer"
-              style={{ borderBottom: pwExpanded ? "none" : "1px solid rgba(255,255,255,0.04)" }}>
-              <div className="flex items-center gap-3.5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.18)" }}>
-                  <Lock size={14} style={{ color: "#a78bfa" }} />
-                </div>
-                <span className="text-white text-[13px] font-medium">Change Password</span>
-              </div>
-              <ChevronRight
-                size={13}
-                className="text-slate-700 transition-transform duration-200"
-                style={{ transform: pwExpanded ? "rotate(90deg)" : "rotate(0deg)" }}
-              />
-            </button>
-
-            {pwExpanded && (
-              <div
-                className="mb-2 px-3 pt-3 pb-4 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                {!(user as any)?.hasPassword ? (
-                  <div className="space-y-2 py-1 px-1">
-                    <p className="text-slate-400 text-[13px] leading-relaxed">
-                      Your account was created via Replit and doesn't have a password yet.
-                    </p>
-                    <p className="text-slate-500 text-[12px] leading-relaxed">
-                      Use <span className="text-violet-400 font-medium">Forgot password</span> on the login page to set one.
-                    </p>
-                  </div>
-                ) : pwSuccess ? (
-                  <div className="flex items-center gap-2 py-2 px-1">
-                    <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
-                    <span className="text-emerald-400 text-[13px] font-medium">Password updated successfully.</span>
-                  </div>
-                ) : (
-                  <form onSubmit={handleChangePassword} className="space-y-3">
-                    <PasswordField
-                      id="current-pw"
-                      label="Current password"
-                      value={currentPw}
-                      onChange={setCurrentPw}
-                      placeholder="Enter current password"
-                    />
-                    <PasswordField
-                      id="new-pw"
-                      label="New password"
-                      value={newPw}
-                      onChange={setNewPw}
-                      placeholder="At least 8 characters"
-                    />
-                    <PasswordField
-                      id="confirm-pw"
-                      label="Confirm new password"
-                      value={confirmPw}
-                      onChange={setConfirmPw}
-                      placeholder="Repeat new password"
-                    />
-
-                    {pwError && (
-                      <p className="text-red-400 text-[12px] px-1">{pwError}</p>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={pwLoading || !currentPw || !newPw || !confirmPw}
-                      className="w-full py-2.5 rounded-xl text-[13px] font-semibold text-white transition-opacity disabled:opacity-40"
-                      style={{ background: "linear-gradient(135deg,#6d28d9,#4f46e5)" }}>
-                      {pwLoading ? "Updating…" : "Update Password"}
-                    </button>
-                  </form>
-                )}
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Sign out */}
         <div className="pt-5">
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="w-full flex items-center gap-3.5 px-1 py-3.5 rounded-xl"
             style={{ border: "1px solid rgba(239,68,68,0.15)" }}>
             <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"

@@ -14,10 +14,8 @@ import Terms from "@/pages/terms";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "@/pages/ResetPassword";
+import ClerkSignIn from "@/pages/ClerkSignIn";
+import ClerkSignUp from "@/pages/ClerkSignUp";
 import AdminDashboard from "@/pages/admin";
 import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
@@ -31,11 +29,12 @@ function Router() {
   return (
     <>
       <Switch>
-        {/* Auth pages — always accessible */}
-        <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
-        <Route path="/forgot-password" component={ForgotPassword} />
-        <Route path="/reset-password" component={ResetPassword} />
+        {/* Clerk auth pages */}
+        <Route path="/sign-in" component={ClerkSignIn} />
+        <Route path="/sign-up" component={ClerkSignUp} />
+        {/* Keep /login as alias so old links still work */}
+        <Route path="/login" component={ClerkSignIn} />
+        <Route path="/register" component={ClerkSignUp} />
 
         {/* Public info pages */}
         <Route path="/privacy" component={Privacy} />

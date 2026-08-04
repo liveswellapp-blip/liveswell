@@ -1,15 +1,11 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, passwordResetTokens, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, phoneVerificationTokens, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(data: { email: string; passwordHash: string }): Promise<User>;
-  updateUserPasswordHash(userId: string, passwordHash: string): Promise<void>;
-  createPasswordResetToken(data: { userId: string; token: string; expiresAt: Date }): Promise<void>;
-  getPasswordResetToken(token: string): Promise<{ userId: string; expiresAt: Date } | undefined>;
-  deletePasswordResetToken(token: string): Promise<void>;
+  migrateUserToClerkId(oldId: string, newClerkId: string): Promise<void>;
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(search?: string): Promise<User[]>;
   getUserStats(): Promise<{
@@ -182,37 +178,51 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(data: { email: string; passwordHash: string }): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values({ email: data.email, passwordHash: data.passwordHash })
-      .returning();
-    return user;
-  }
+  /**
+   * Migrate a legacy user row (e.g. old Replit Auth UUID or numeric ID) to a
+   * new Clerk user ID, preserving all FK-linked data (favorites, alerts, etc.).
+   *
+   * Strategy (atomic transaction):
+   *   1. Temporarily null out email on old row to release the unique constraint.
+   *   2. Insert new row with Clerk ID and the original email.
+   *   3. Re-point every FK child table from oldId → newClerkId.
+   *   4. Delete the now-orphaned old row (no FK refs remain, so no cascade).
+   */
+  async migrateUserToClerkId(oldId: string, newClerkId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Step 1 — capture old row and release the unique email slot
+      const [oldUser] = await tx.select().from(users).where(eq(users.id, oldId));
+      if (!oldUser) return; // already gone
 
-  async updateUserPasswordHash(userId: string, passwordHash: string): Promise<void> {
-    await db
-      .update(users)
-      .set({ passwordHash, updatedAt: new Date() })
-      .where(eq(users.id, userId));
-  }
+      await tx.update(users).set({ email: null }).where(eq(users.id, oldId));
 
-  async createPasswordResetToken(data: { userId: string; token: string; expiresAt: Date }): Promise<void> {
-    // Delete any existing tokens for this user first to avoid duplicates
-    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, data.userId));
-    await db.insert(passwordResetTokens).values(data);
-  }
+      // Step 2 — insert new Clerk-ID row with the reclaimed email
+      await tx.insert(users).values({
+        id: newClerkId,
+        email: oldUser.email,
+        firstName: oldUser.firstName,
+        lastName: oldUser.lastName,
+        profileImageUrl: oldUser.profileImageUrl,
+      }).onConflictDoNothing(); // already exists if Clerk ID was used before
 
-  async getPasswordResetToken(token: string): Promise<{ userId: string; expiresAt: Date } | undefined> {
-    const [record] = await db
-      .select({ userId: passwordResetTokens.userId, expiresAt: passwordResetTokens.expiresAt })
-      .from(passwordResetTokens)
-      .where(eq(passwordResetTokens.token, token));
-    return record;
-  }
+      // Step 3 — migrate every FK child table
+      await tx.update(favorites).set({ userId: newClerkId }).where(eq(favorites.userId, oldId));
+      await tx.update(userProfiles).set({ userId: newClerkId }).where(eq(userProfiles.userId, oldId));
+      await tx.update(notificationSettings).set({ userId: newClerkId }).where(eq(notificationSettings.userId, oldId));
+      await tx.update(pushSubscriptions).set({ userId: newClerkId }).where(eq(pushSubscriptions.userId, oldId));
+      await tx.update(userAlerts).set({ userId: newClerkId }).where(eq(userAlerts.userId, oldId));
+      await tx.update(alertTriggerLog).set({ userId: newClerkId }).where(eq(alertTriggerLog.userId, oldId));
+      await tx.update(agentConversations).set({ userId: newClerkId }).where(eq(agentConversations.userId, oldId));
+      // agentSmsThreads is keyed by phoneNumber, not userId — no migration needed
+      await tx.update(verifiedPhonesTable).set({ userId: newClerkId }).where(eq(verifiedPhonesTable.userId, oldId));
+      await tx.update(smsRateLimits).set({ userId: newClerkId }).where(eq(smsRateLimits.userId, oldId));
+      await tx.update(apnsDeviceTokens).set({ userId: newClerkId }).where(eq(apnsDeviceTokens.userId, oldId));
+      await tx.update(fcmDeviceTokens).set({ userId: newClerkId }).where(eq(fcmDeviceTokens.userId, oldId));
+      await tx.update(phoneVerificationTokens).set({ userId: newClerkId }).where(eq(phoneVerificationTokens.userId, oldId));
 
-  async deletePasswordResetToken(token: string): Promise<void> {
-    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
+      // Step 4 — delete the now-childless old row
+      await tx.delete(users).where(eq(users.id, oldId));
+    });
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {

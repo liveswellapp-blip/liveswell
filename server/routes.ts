@@ -26,6 +26,7 @@ import { SMSService } from "./sms-service";
 import { EmailService } from "./email-service";
 import { findNearbyStations } from "./noaa-integration";
 import { setupAuth, isAuthenticated } from "./auth";
+import { clerkClient } from "@clerk/express";
 import { 
   fetchWeatherData,
   generateDemoWeatherData,
@@ -141,12 +142,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
-      const user = await storage.getUser(userId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-      // Never expose the password hash to the client; surface a boolean flag instead
-      const { passwordHash: _ph, ...safeUser } = user;
-      res.json({ ...safeUser, hasPassword: !!user.passwordHash });
+      const clerkId = req.auth.userId as string;
+
+      // Fetch Clerk user to get their canonical email/name.
+      const clerkUser = await clerkClient.users.getUser(clerkId);
+      const email = clerkUser.emailAddresses[0]?.emailAddress ?? null;
+
+      // Identity reconciliation: if no local user exists for this Clerk ID yet,
+      // check whether a legacy user row (old Replit Auth UUID / numeric ID) owns
+      // the same email.  If found, atomically migrate all their FK-linked data
+      // (favorites, alerts, profiles, etc.) to the new Clerk ID so nothing is lost.
+      const existingClerkUser = await storage.getUser(clerkId);
+      if (!existingClerkUser && email) {
+        const legacyUser = await storage.getUserByEmail(email);
+        if (legacyUser && legacyUser.id !== clerkId) {
+          console.log(`[auth] Migrating legacy user ${legacyUser.id} → Clerk ID ${clerkId} (email: ${email})`);
+          await storage.migrateUserToClerkId(legacyUser.id, clerkId);
+        }
+      }
+
+      // Upsert with Clerk ID (safe — any email conflict was resolved above).
+      const user = await storage.upsertUser({
+        id: clerkId,
+        email,
+        firstName: clerkUser.firstName ?? null,
+        lastName: clerkUser.lastName ?? null,
+        profileImageUrl: clerkUser.imageUrl ?? null,
+      });
+      res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -395,8 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { search } = req.query;
       const users = await storage.getAllUsers(search as string);
-      const safeUsers = users.map(({ passwordHash: _ph, ...u }) => u);
-      res.json(safeUsers);
+      res.json(users);
     } catch (error) {
       console.error('Get users error:', error);
       res.status(500).json({ message: "Failed to get users" });
@@ -541,9 +563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage.getUserProfile(userId)
       ]);
       
-      const { passwordHash: _ph, ...safeUser } = user;
       res.json({
-        user: safeUser,
+        user,
         favorites,
         profile,
         stats: {
@@ -2810,7 +2831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Favorites routes
   app.get("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const favorites = await storage.getUserFavorites(userId);
       res.json(favorites);
     } catch (error) {
@@ -2821,7 +2842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { locationId } = req.body;
       
       if (!locationId) {
@@ -2850,7 +2871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/favorites/:locationId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const locationId = parseInt(req.params.locationId);
       
       if (isNaN(locationId)) {
@@ -2871,7 +2892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/favorites/:locationId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const locationId = parseInt(req.params.locationId);
       
       if (isNaN(locationId)) {
@@ -2890,7 +2911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update current user's name / email on the users table
   app.put("/api/user", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { firstName, lastName, email } = req.body as {
         firstName?: string;
         lastName?: string;
@@ -2922,7 +2943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const profile = await storage.getUserProfile(userId);
       
       if (!profile) {
@@ -2938,7 +2959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/profile", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       
       const result = updateUserProfileSchema.safeParse(req.body);
       if (!result.success) {
@@ -2976,7 +2997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification Settings routes
   app.get("/api/notification-settings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const settings = await storage.getNotificationSettings(userId);
       
       if (!settings) {
@@ -3002,7 +3023,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/notification-settings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { smsEnabled, pushEnabled, phoneNumber, notificationTime, timezone, locationId } = req.body;
 
       const settings = await storage.upsertNotificationSettings(userId, {
@@ -3024,7 +3045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test notification endpoint
   app.post("/api/test-notification", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { NotificationScheduler } = await import('./notification-scheduler');
       
       const success = await NotificationScheduler.sendTestNotification(userId);
@@ -3043,7 +3064,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ── User Alerts CRUD ──────────────────────────────────────────────────────
   app.get("/api/user-alerts", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const alerts = await storage.getUserAlerts(userId);
       res.json(alerts);
     } catch (error) {
@@ -3054,7 +3075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user-alerts", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { insertUserAlertSchema } = await import("@shared/schema");
       const { SMSService } = await import("./sms-service");
       // Strip client-supplied phoneVerified — server determines this
@@ -3090,7 +3111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/user-alerts/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
       const { updateUserAlertSchema } = await import("@shared/schema");
@@ -3152,7 +3173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ── Phone Verification ─────────────────────────────────────────────────────
   app.post("/api/alerts/verify-phone/send", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { phoneNumber } = req.body;
       if (!phoneNumber || typeof phoneNumber !== "string" || !phoneNumber.trim()) {
         return res.status(400).json({ message: "phoneNumber is required" });
@@ -3183,7 +3204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/alerts/verify-phone/confirm", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { phoneNumber, code } = req.body;
       if (!phoneNumber || !code) {
         return res.status(400).json({ message: "phoneNumber and code are required" });
@@ -3200,7 +3221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/user-alerts/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
       const deleted = await storage.deleteUserAlert(id, userId);
@@ -3214,7 +3235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/user-alerts/:id/toggle", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
       const { active } = req.body;
@@ -3230,7 +3251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/user-alerts/:id/history", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
       const log = await storage.getAlertTriggerLog(id, userId, 10);
@@ -3243,7 +3264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/user-alerts/recent-activity", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const log = await storage.getRecentAlertTriggerLogs(userId, 20);
       res.json(log);
     } catch (error) {
@@ -3255,7 +3276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ── Re-enable SMS for alerts opted out via STOP reply ───────────────────
   app.post("/api/user-alerts/reenable-sms", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const count = await storage.reenableSmsForUser(userId);
       if (count === 0) {
         return res.json({ count: 0, message: "No SMS opt-out alerts found to re-enable." });
@@ -3557,7 +3578,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Subscribe to push notifications
   app.post("/api/push/subscribe", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const subscriptionData = insertPushSubscriptionSchema.parse({
         ...req.body,
         userId  // Server-side userId override - prevent client tampering
@@ -3574,7 +3595,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Unsubscribe from push notifications
   app.delete("/api/push/unsubscribe", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { endpoint } = req.body;
 
       if (!endpoint) {
@@ -3592,7 +3613,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Get user's push subscriptions
   app.get("/api/push/subscriptions", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const subscriptions = await storage.getPushSubscriptions(userId);
       res.json(subscriptions);
     } catch (error) {
@@ -3604,7 +3625,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Send test push notification
   app.post("/api/push/test", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const success = await pushNotificationService.sendTestNotificationToUser(userId);
       
       if (success) {
@@ -3623,7 +3644,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Register a native iOS APNs device token
   app.post("/api/push/apns-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { deviceToken } = req.body;
 
       if (!deviceToken || typeof deviceToken !== "string" || deviceToken.trim().length === 0) {
@@ -3642,7 +3663,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Remove a native iOS APNs device token (e.g. on sign-out)
   app.delete("/api/push/apns-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { deviceToken } = req.body;
 
       if (!deviceToken || typeof deviceToken !== "string") {
@@ -3670,7 +3691,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // List FCM tokens for the current user (used by isSubscribed() on Android)
   app.get("/api/push/fcm-tokens", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const tokens = await storage.getFcmDeviceTokens(userId);
       res.json(tokens.map((t: any) => t.deviceToken));
     } catch (error) {
@@ -3682,7 +3703,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Register a native Android FCM device token
   app.post("/api/push/fcm-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { deviceToken } = req.body;
 
       if (!deviceToken || typeof deviceToken !== "string" || deviceToken.trim().length === 0) {
@@ -3701,7 +3722,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Remove a native Android FCM device token (e.g. on sign-out)
   app.delete("/api/push/fcm-token", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { deviceToken } = req.body;
 
       if (!deviceToken || typeof deviceToken !== "string") {
@@ -3836,7 +3857,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // ── AI Surf Agent chat routes ────────────────────────────────────────────
   app.get("/api/agent/history", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const history = await storage.getAgentHistory(userId);
       res.json(history);
     } catch (error) {
@@ -3847,7 +3868,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
 
   app.post("/api/agent/chat", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const { message } = req.body;
       if (!message || typeof message !== 'string' || !message.trim()) {
         return res.status(400).json({ message: "message is required" });
@@ -3877,7 +3898,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
 
   app.delete("/api/agent/history", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       await storage.clearAgentHistory(userId);
       res.json({ success: true });
     } catch (error) {
@@ -3888,7 +3909,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
 
   app.get("/api/agent/conditions-freshness", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
       const favorites = await storage.getUserFavorites(userId);
       if (favorites.length === 0) {
         return res.json({ oldestUpdatedAt: null, hasSpots: false });
@@ -3914,7 +3935,7 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
 
   app.post("/api/agent/refresh-conditions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.auth.userId;
 
       // Enforce per-user cooldown to avoid hammering the weather API
       const lastCalled = refreshLastCalledAt.get(userId) ?? 0;

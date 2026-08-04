@@ -6,6 +6,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { createHash } from 'crypto';
 
+// Extend express-session SessionData to include admin auth
+declare module "express-session" {
+  interface SessionData {
+    adminAuth?: {
+      isAuthenticated: boolean;
+      loginTime: number;
+      username: string;
+    };
+  }
+}
+
 // Admin credentials — must be set as environment secrets (no hardcoded fallbacks)
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;

@@ -12,8 +12,8 @@ function validateEnvironment() {
   const missingSecrets = [];
   
   if (isProduction) {
-    if (!process.env.SESSION_SECRET) {
-      missingSecrets.push('SESSION_SECRET');
+    if (!process.env.CLERK_SECRET_KEY) {
+      missingSecrets.push('CLERK_SECRET_KEY');
     }
     if (!process.env.OPENWEATHER_API_KEY) {
       missingSecrets.push('OPENWEATHER_API_KEY');
