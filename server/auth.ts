@@ -198,6 +198,11 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ message: "Current password is incorrect." });
       }
 
+      const samePassword = await bcrypt.compare(newPassword as string, user.passwordHash);
+      if (samePassword) {
+        return res.status(400).json({ message: "New password must be different from your current password." });
+      }
+
       const passwordHash = await bcrypt.hash(newPassword as string, 12);
       await storage.updateUserPasswordHash(user.id, passwordHash);
 

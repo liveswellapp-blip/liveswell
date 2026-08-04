@@ -92,6 +92,10 @@ export default function Profile() {
       setPwError("New password must be at least 8 characters.");
       return;
     }
+    if (newPw === currentPw) {
+      setPwError("New password must be different from your current password.");
+      return;
+    }
     if (newPw !== confirmPw) {
       setPwError("New passwords do not match.");
       return;
