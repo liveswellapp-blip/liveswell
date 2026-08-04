@@ -144,9 +144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
-      // Never expose the password hash to the client
+      // Never expose the password hash to the client; surface a boolean flag instead
       const { passwordHash: _ph, ...safeUser } = user;
-      res.json(safeUser);
+      res.json({ ...safeUser, hasPassword: !!user.passwordHash });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });

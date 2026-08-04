@@ -221,7 +221,16 @@ export default function Profile() {
               <div
                 className="mb-2 px-3 pt-3 pb-4 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                {pwSuccess ? (
+                {!(user as any)?.hasPassword ? (
+                  <div className="space-y-2 py-1 px-1">
+                    <p className="text-slate-400 text-[13px] leading-relaxed">
+                      Your account was created via Replit and doesn't have a password yet.
+                    </p>
+                    <p className="text-slate-500 text-[12px] leading-relaxed">
+                      Use <span className="text-violet-400 font-medium">Forgot password</span> on the login page to set one.
+                    </p>
+                  </div>
+                ) : pwSuccess ? (
                   <div className="flex items-center gap-2 py-2 px-1">
                     <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
                     <span className="text-emerald-400 text-[13px] font-medium">Password updated successfully.</span>
