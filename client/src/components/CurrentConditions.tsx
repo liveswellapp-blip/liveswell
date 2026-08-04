@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Waves, BarChart3, Wind, Droplets, Sun, Clock, AlertCircle, RefreshCw, Check } from "lucide-react";
-import { Location, SurfConditions, ForecastDay } from "@/types/weather";
+import { Location, SurfConditions, ForecastDay, TidePoint } from "@/types/weather";
 import TideChart from "@/components/TideChart";
 import FavoriteButton from "@/components/FavoriteButton";
 import BuoyHistoryChart from "@/components/BuoyHistoryChart";
@@ -135,7 +135,13 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     refetchInterval: 15 * 60 * 1000,
   });
 
-  const todayTides = forecast?.[0]?.tides || [];
+  // Prefer real NOAA tides returned by the conditions endpoint (tides[]).
+  // Fall back to forecast[0].tides only when the conditions endpoint hasn't
+  // populated it yet (e.g. NOAA unavailable or first paint).
+  const conditionTides = (conditions as any)?.tides as TidePoint[] | undefined;
+  const todayTides: TidePoint[] = (conditionTides && conditionTides.length > 0)
+    ? conditionTides
+    : (forecast?.[0]?.tides || []);
   const primaryBuoy = (conditions as any)?.primaryBuoy;
   const backupBuoy = (conditions as any)?.backupBuoy;
 

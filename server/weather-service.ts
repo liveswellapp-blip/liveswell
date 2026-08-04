@@ -365,33 +365,33 @@ export async function fetchTideData(lat: number, lon: number) {
   // Map of coastal areas to their nearest NOAA tide stations
   const tideStationMap = [
     // East Coast Florida
-    { latRange: [29, 31], lonRange: [-82, -80], stationId: '8720218', name: 'Mayport (Jacksonville)' },
-    { latRange: [27, 29], lonRange: [-81, -79], stationId: '8721604', name: 'Trident Pier' },
-    { latRange: [25, 27], lonRange: [-81, -79], stationId: '8723214', name: 'Virginia Key' },
+    { latRange: [29, 31], lonRange: [-82, -80], stationId: '8720218', name: 'Mayport (Jacksonville)', timezone: 'America/New_York' },
+    { latRange: [27, 29], lonRange: [-81, -79], stationId: '8721604', name: 'Trident Pier', timezone: 'America/New_York' },
+    { latRange: [25, 27], lonRange: [-81, -79], stationId: '8723214', name: 'Virginia Key', timezone: 'America/New_York' },
     
     // Carolina Coast
-    { latRange: [33, 35], lonRange: [-79, -77], stationId: '8665530', name: 'Charleston' },
-    { latRange: [35, 37], lonRange: [-77, -75], stationId: '8652587', name: 'Oregon Inlet Marina' },
+    { latRange: [33, 35], lonRange: [-79, -77], stationId: '8665530', name: 'Charleston', timezone: 'America/New_York' },
+    { latRange: [35, 37], lonRange: [-77, -75], stationId: '8652587', name: 'Oregon Inlet Marina', timezone: 'America/New_York' },
     
     // Mid-Atlantic
-    { latRange: [37, 39], lonRange: [-77, -75], stationId: '8594900', name: 'Sewells Point' },
-    { latRange: [39, 41], lonRange: [-76, -74], stationId: '8594900', name: 'Baltimore' },
+    { latRange: [37, 39], lonRange: [-77, -75], stationId: '8594900', name: 'Sewells Point', timezone: 'America/New_York' },
+    { latRange: [39, 41], lonRange: [-76, -74], stationId: '8594900', name: 'Baltimore', timezone: 'America/New_York' },
     
     // Northeast
-    { latRange: [41, 43], lonRange: [-72, -70], stationId: '8461490', name: 'New London' },
-    { latRange: [43, 45], lonRange: [-71, -69], stationId: '8443970', name: 'Boston' },
+    { latRange: [41, 43], lonRange: [-72, -70], stationId: '8461490', name: 'New London', timezone: 'America/New_York' },
+    { latRange: [43, 45], lonRange: [-71, -69], stationId: '8443970', name: 'Boston', timezone: 'America/New_York' },
     
     // West Coast
-    { latRange: [32, 34], lonRange: [-118, -116], stationId: '9410170', name: 'San Diego' },
-    { latRange: [34, 36], lonRange: [-120, -118], stationId: '9411340', name: 'Santa Barbara' },
-    { latRange: [36, 38], lonRange: [-123, -121], stationId: '9413450', name: 'Monterey' },
-    { latRange: [37, 39], lonRange: [-123, -121], stationId: '9414290', name: 'San Francisco' },
+    { latRange: [32, 34], lonRange: [-118, -116], stationId: '9410170', name: 'San Diego', timezone: 'America/Los_Angeles' },
+    { latRange: [34, 36], lonRange: [-120, -118], stationId: '9411340', name: 'Santa Barbara', timezone: 'America/Los_Angeles' },
+    { latRange: [36, 38], lonRange: [-123, -121], stationId: '9413450', name: 'Monterey', timezone: 'America/Los_Angeles' },
+    { latRange: [37, 39], lonRange: [-123, -121], stationId: '9414290', name: 'San Francisco', timezone: 'America/Los_Angeles' },
     
     // Gulf Coast
-    { latRange: [25, 27], lonRange: [-83, -81], stationId: '8724580', name: 'Key West' },
-    { latRange: [27, 29], lonRange: [-85, -82], stationId: '8726520', name: 'St. Petersburg' },
-    { latRange: [29, 31], lonRange: [-88, -85], stationId: '8729840', name: 'Panama City Beach' },
-    { latRange: [29, 31], lonRange: [-95, -92], stationId: '8771450', name: 'Galveston Pier 21' },
+    { latRange: [25, 27], lonRange: [-83, -81], stationId: '8724580', name: 'Key West', timezone: 'America/New_York' },
+    { latRange: [27, 29], lonRange: [-85, -82], stationId: '8726520', name: 'St. Petersburg', timezone: 'America/New_York' },
+    { latRange: [29, 31], lonRange: [-88, -85], stationId: '8729840', name: 'Panama City Beach', timezone: 'America/Chicago' },
+    { latRange: [29, 31], lonRange: [-95, -92], stationId: '8771450', name: 'Galveston Pier 21', timezone: 'America/Chicago' },
   ];
   
   // Find the appropriate tide station
@@ -429,11 +429,31 @@ export async function fetchTideData(lat: number, lon: number) {
     };
   }
   
+  // Parse "YYYY-MM-DD HH:MM" (NOAA local-time string) directly into a display time.
+  // Avoids new Date() which treats the space-separated format as UTC on some Node versions.
+  function formatNoaaTime(noaaStr: string): string {
+    const timePart = noaaStr.split(' ')[1] ?? '00:00';
+    const [hh, mm] = timePart.split(':').map(Number);
+    const period = hh >= 12 ? 'PM' : 'AM';
+    const h12 = hh % 12 || 12;
+    return `${h12}:${String(mm).padStart(2, '0')} ${period}`;
+  }
+
   try {
-    // Fetch data from NOAA CO-OPS API
-    const today = new Date();
-    const begin = today.toISOString().split('T')[0].replace(/-/g, '');
-    const end = new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '');
+    // Fetch data from NOAA CO-OPS API.
+    // Use yesterday→tomorrow UTC so we always cover the full local calendar day at
+    // the station, regardless of UTC offset (avoids date flip after 8 PM EDT etc.).
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const tomorrow  = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const begin = yesterday.toISOString().split('T')[0].replace(/-/g, '');
+    const end   = tomorrow.toISOString().split('T')[0].replace(/-/g, '');
+
+    // Determine today's calendar date in the station's local timezone so we can
+    // filter predictions to exactly today's tides (not yesterday's or tomorrow's).
+    const stationTz = (station as any).timezone ?? 'UTC';
+    const todayLocalDate = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(now);
+    // en-CA gives "YYYY-MM-DD" which matches the date prefix of NOAA's "YYYY-MM-DD HH:MM"
     
     const response = await fetch(
       `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=${station.stationId}&product=water_level&units=english&time_zone=lst_ldt&format=json`,
@@ -448,35 +468,51 @@ export async function fetchTideData(lat: number, lon: number) {
       const latest = tideResponse.data[tideResponse.data.length - 1];
       const currentTide = parseFloat(latest.v);
       
-      // Fetch high/low predictions
+      // Fetch high/low predictions over the 3-day window
       const predictionsResponse = await fetch(
         `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${begin}&end_date=${end}&station=${station.stationId}&product=predictions&datum=MLLW&units=english&time_zone=lst_ldt&format=json&interval=hilo`,
         { signal: AbortSignal.timeout(5000) }
       );
       
-      let tideHigh = [];
-      let tideLow = [];
+      let tideHigh: any[] = [];
+      let tideLow:  any[] = [];
+      let tides:    any[] = [];  // full TidePoint[] for today — used by the chart
       
       if (predictionsResponse.ok) {
         const predictions = await predictionsResponse.json() as any;
         if (predictions.predictions) {
-          const highs = predictions.predictions.filter((p: any) => p.type === 'H').slice(0, 2);
-          const lows = predictions.predictions.filter((p: any) => p.type === 'L').slice(0, 2);
-          
-          // h.t from NOAA is "YYYY-MM-DD HH:MM" in the station's local (lst_ldt) timezone.
-          // We store isoRaw so the condition monitor can compare absolute timestamps
-          // without losing the date component (needed for next-day tides).
-          tideHigh = highs.map((h: any) => ({
-            time: new Date(h.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-            height: parseFloat(h.v).toFixed(1),
-            isoRaw: h.t,   // "YYYY-MM-DD HH:MM" in station local time
+          // Filter to only today's predictions in station-local time
+          const todayPredictions = predictions.predictions.filter(
+            (p: any) => typeof p.t === 'string' && p.t.startsWith(todayLocalDate)
+          );
+
+          // Build the full TidePoint[] for the chart (all of today's tides)
+          tides = todayPredictions.map((p: any) => ({
+            time:   formatNoaaTime(p.t),
+            height: parseFloat(parseFloat(p.v).toFixed(1)),
+            type:   p.type === 'H' ? 'high' : 'low',
           }));
-          
-          tideLow = lows.map((l: any) => ({
-            time: new Date(l.t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-            height: parseFloat(l.v).toFixed(1),
-            isoRaw: l.t,   // "YYYY-MM-DD HH:MM" in station local time
-          }));
+
+          // tideHigh / tideLow kept for backward compat (condition-alert monitor)
+          // h.t is "YYYY-MM-DD HH:MM" in station local time; stored as isoRaw for
+          // absolute-time comparisons in the alert monitor.
+          tideHigh = todayPredictions
+            .filter((p: any) => p.type === 'H')
+            .slice(0, 2)
+            .map((h: any) => ({
+              time:   formatNoaaTime(h.t),
+              height: parseFloat(h.v).toFixed(1),
+              isoRaw: h.t,
+            }));
+
+          tideLow = todayPredictions
+            .filter((p: any) => p.type === 'L')
+            .slice(0, 2)
+            .map((l: any) => ({
+              time:   formatNoaaTime(l.t),
+              height: parseFloat(l.v).toFixed(1),
+              isoRaw: l.t,
+            }));
         }
       }
       
@@ -496,6 +532,7 @@ export async function fetchTideData(lat: number, lon: number) {
           { time: '12:45 PM', height: '1.1' },
           { time: '1:30 AM', height: '0.9' }
         ],
+        tides,   // empty array if NOAA returned no predictions; caller falls back to generated
         source: station.name
       };
       

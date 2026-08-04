@@ -1710,6 +1710,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             { time: '12:45 PM', height: '1.1' },
             { time: '1:30 AM', height: '0.9' },
           ],
+          // Full TidePoint[] for today — used by TideChart & the tide-times row.
+          // Populated from real NOAA predictions; empty array if NOAA unavailable.
+          tides: (tideData as any).tides || [],
           primaryBuoy: marineData.primaryBuoy,
           backupBuoy: marineData.backupBuoy,
         });
