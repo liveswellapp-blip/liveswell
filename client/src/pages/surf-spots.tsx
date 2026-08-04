@@ -402,6 +402,15 @@ export default function SurfSpots() {
 
   const hasActiveFilters = !!(searchQuery.trim() || selectedContinent || selectedCountry || selectedState);
 
+  const allLocationsRef = useRef<HTMLDivElement>(null);
+  const prevHasActiveFilters = useRef(false);
+  useEffect(() => {
+    if (hasActiveFilters && !prevHasActiveFilters.current) {
+      allLocationsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    prevHasActiveFilters.current = hasActiveFilters;
+  }, [hasActiveFilters]);
+
   const handleSpotSelect = (spotId: number) => {
     setLocation(`/conditions?location=${spotId}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -493,59 +502,89 @@ export default function SurfSpots() {
       {/* ── Content ── */}
       <main className="flex-1 px-4 pt-5 pb-6 max-w-2xl mx-auto w-full space-y-6">
 
-        {/* Saved */}
-        <SavedGrid onSelect={handleSpotSelect} />
-
-        {/* All Locations */}
-        {isLoading ? (
-          <div>
-            <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-2 h-2 rounded-full bg-slate-700" />
-              <span className="text-slate-500 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                  <Skeleton className="h-3 w-20 mb-1.5 bg-white/5" />
-                  <Skeleton className="h-2 w-14 mb-3 bg-white/5" />
-                  <Skeleton className="h-2 w-16 bg-white/5" />
+        {hasActiveFilters ? (
+          <>
+            {/* All Locations — shown first when filters are active */}
+            <div ref={allLocationsRef}>
+              {isLoading ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <div className="w-2 h-2 rounded-full bg-slate-700" />
+                    <span className="text-slate-500 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                        <Skeleton className="h-3 w-20 mb-1.5 bg-white/5" />
+                        <Skeleton className="h-2 w-14 mb-3 bg-white/5" />
+                        <Skeleton className="h-2 w-16 bg-white/5" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <div className="w-2 h-2 rounded-full bg-slate-600" />
+                    <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+                    <span className="text-slate-600 text-[9px]">{filteredSpots.length} results</span>
+                  </div>
+                  {filteredSpots.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {filteredSpots.map(spot => (
+                        <SpotCard key={spot.id} spot={spot} onSelect={handleSpotSelect} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                      <MapPin size={20} className="text-slate-700 mx-auto mb-2" />
+                      <p className="text-slate-500 text-[12px] font-semibold mb-1">No spots found</p>
+                      <p className="text-slate-700 text-[10px]">Try a different search or filter</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        ) : hasActiveFilters ? (
-          <div>
-            <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-2 h-2 rounded-full bg-slate-600" />
-              <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
-              <span className="text-slate-600 text-[9px]">{filteredSpots.length} results</span>
-            </div>
-            {filteredSpots.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {filteredSpots.map(spot => (
-                  <SpotCard key={spot.id} spot={spot} onSelect={handleSpotSelect} />
-                ))}
+
+            {/* Saved — below results when filters are active */}
+            <SavedGrid onSelect={handleSpotSelect} />
+          </>
+        ) : (
+          <>
+            {/* Saved — shown first when no filters are active */}
+            <SavedGrid onSelect={handleSpotSelect} />
+
+            {/* All Locations — empty/loading state */}
+            {isLoading ? (
+              <div>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-2 h-2 rounded-full bg-slate-700" />
+                  <span className="text-slate-500 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="rounded-2xl p-3 h-24" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                      <Skeleton className="h-3 w-20 mb-1.5 bg-white/5" />
+                      <Skeleton className="h-2 w-14 mb-3 bg-white/5" />
+                      <Skeleton className="h-2 w-16 bg-white/5" />
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                <MapPin size={20} className="text-slate-700 mx-auto mb-2" />
-                <p className="text-slate-500 text-[12px] font-semibold mb-1">No spots found</p>
-                <p className="text-slate-700 text-[10px]">Try a different search or filter</p>
+              <div>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <div className="w-2 h-2 rounded-full bg-slate-600" />
+                  <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
+                </div>
+                <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                  <Search size={20} className="text-slate-700 mx-auto mb-2" />
+                  <p className="text-slate-500 text-[12px] font-semibold mb-1">Search or filter to explore spots</p>
+                  <p className="text-slate-700 text-[10px]">229+ locations worldwide</p>
+                </div>
               </div>
             )}
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center gap-2 mb-2.5">
-              <div className="w-2 h-2 rounded-full bg-slate-600" />
-              <span className="text-slate-400 text-[10px] font-bold tracking-widest uppercase">All Locations</span>
-            </div>
-            <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
-              <Search size={20} className="text-slate-700 mx-auto mb-2" />
-              <p className="text-slate-500 text-[12px] font-semibold mb-1">Search or filter to explore spots</p>
-              <p className="text-slate-700 text-[10px]">229+ locations worldwide</p>
-            </div>
-          </div>
+          </>
         )}
       </main>
       <Footer />
