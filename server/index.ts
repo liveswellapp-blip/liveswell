@@ -49,9 +49,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   if (host !== "support.liveswell.io") return next();
   if (req.path.startsWith("/support")) return next();
   if (SUPPORT_PASSTHROUGH_PREFIXES.some(p => req.path.startsWith(p))) return next();
-  // Use 302 (temporary) so browsers don't permanently cache the redirect
-  // while the DNS / domain verification is still being set up.
-  return res.redirect(302, "/support" + req.path);
+  // Use 301 (permanent) — the subdomain-to-path mapping is stable and
+  // permanent caching is correct for App Store / Google Play link resolution.
+  const suffix = req.path === "/" ? "" : req.path;
+  return res.redirect(301, "/support" + suffix);
 });
 
 // Session configuration is handled by Replit Auth in replitAuth.ts
