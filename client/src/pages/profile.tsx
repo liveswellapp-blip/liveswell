@@ -39,8 +39,10 @@ export default function Profile() {
     { icon: HelpCircle,  label: "Help & Support", value: "",              color: "#34d399", href: "/support" },
   ];
 
+  const { logout } = useAuth();
+
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logout();
   };
 
   return (

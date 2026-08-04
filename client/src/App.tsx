@@ -14,6 +14,10 @@ import Terms from "@/pages/terms";
 import SurfSpots from "@/pages/surf-spots";
 import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import AdminDashboard from "@/pages/admin";
 import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
@@ -27,6 +31,21 @@ function Router() {
   return (
     <>
       <Switch>
+        {/* Auth pages — always accessible */}
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
+
+        {/* Public info pages */}
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/support" component={SupportHome} />
+        <Route path="/support/category/:slug" component={SupportCategory} />
+        <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/users/:userId" component={AdminUserDetail} />
+
+        {/* App routes — authenticated only */}
         {isLoading || !isAuthenticated ? (
           <Route path="/" component={Landing} />
         ) : (
@@ -39,14 +58,7 @@ function Router() {
             <Route path="/monitoring" component={Monitoring} />
           </>
         )}
-        
-        <Route path="/privacy" component={Privacy} />
-        <Route path="/terms" component={Terms} />
-        <Route path="/support" component={SupportHome} />
-        <Route path="/support/category/:slug" component={SupportCategory} />
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/admin/users/:userId" component={AdminUserDetail} />
-        
+
         {(isLoading || !isAuthenticated) ? (
           <Route component={Landing} />
         ) : (

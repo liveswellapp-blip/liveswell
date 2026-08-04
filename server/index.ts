@@ -55,7 +55,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   return res.redirect(301, "/support" + suffix);
 });
 
-// Session configuration is handled by Replit Auth in replitAuth.ts
+// Session configuration is handled by auth.ts (setupAuth)
 
 app.use((req, res, next) => {
   const start = Date.now();

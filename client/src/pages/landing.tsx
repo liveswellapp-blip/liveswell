@@ -254,7 +254,7 @@ function PhoneShell({ children, statusBar = true }: { children: ReactNode; statu
 
 /* ─── Landing page ─────────────────────────────────────────────── */
 export default function Landing() {
-  const handleLogin = () => { window.location.href = "/api/login"; };
+  const handleLogin = () => { window.location.href = "/login"; };
 
   const features = [
     { icon: "🌊", title: "Live NOAA Buoy Data", body: "Real wave height, period, and direction pulled directly from NOAA's network of offshore buoys — updated every 30 minutes." },
@@ -663,7 +663,7 @@ export default function Landing() {
           </div>
           <div>
             <div className="landing-footer-col-title">App</div>
-            <a href="/api/login" className="landing-footer-link" onClick={e => { e.preventDefault(); handleLogin(); }}>Sign In</a>
+            <a href="/login" className="landing-footer-link" onClick={e => { e.preventDefault(); handleLogin(); }}>Sign In</a>
             <a href="/support" className="landing-footer-link">Support</a>
             <a href="/terms" className="landing-footer-link">Terms of Service</a>
             <a href="/privacy" className="landing-footer-link">Privacy Policy</a>

@@ -73,7 +73,7 @@ export default function Header({ onLocationSelect }: HeaderProps) {
               className="px-3 py-1.5 rounded-xl text-[12px] font-semibold text-white transition-opacity hover:opacity-80"
               style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)" }}
               data-testid="button-open-auth"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
             >
               Sign In
             </button>

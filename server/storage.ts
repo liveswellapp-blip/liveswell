@@ -1,9 +1,15 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, passwordResetTokens, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(data: { email: string; passwordHash: string }): Promise<User>;
+  updateUserPasswordHash(userId: string, passwordHash: string): Promise<void>;
+  createPasswordResetToken(data: { userId: string; token: string; expiresAt: Date }): Promise<void>;
+  getPasswordResetToken(token: string): Promise<{ userId: string; expiresAt: Date } | undefined>;
+  deletePasswordResetToken(token: string): Promise<void>;
   upsertUser(user: UpsertUser): Promise<User>;
   getAllUsers(search?: string): Promise<User[]>;
   getUserStats(): Promise<{
@@ -169,6 +175,44 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(data: { email: string; passwordHash: string }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({ email: data.email, passwordHash: data.passwordHash })
+      .returning();
+    return user;
+  }
+
+  async updateUserPasswordHash(userId: string, passwordHash: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async createPasswordResetToken(data: { userId: string; token: string; expiresAt: Date }): Promise<void> {
+    // Delete any existing tokens for this user first to avoid duplicates
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, data.userId));
+    await db.insert(passwordResetTokens).values(data);
+  }
+
+  async getPasswordResetToken(token: string): Promise<{ userId: string; expiresAt: Date } | undefined> {
+    const [record] = await db
+      .select({ userId: passwordResetTokens.userId, expiresAt: passwordResetTokens.expiresAt })
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return record;
+  }
+
+  async deletePasswordResetToken(token: string): Promise<void> {
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.token, token));
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
