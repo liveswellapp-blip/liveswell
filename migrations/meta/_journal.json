@@ -8,6 +8,13 @@
       "when": 1785860362927,
       "tag": "0000_overconfident_tusk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785870078378,
+      "tag": "0001_remove_legacy_auth_tables",
+      "breakpoints": true
     }
   ]
 }
