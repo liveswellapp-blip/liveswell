@@ -1982,6 +1982,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Marine API error: ${marineResponse.status}, using wind-based calculation`);
         }
         
+        // Fetch real NOAA tide data for tomorrow (day 1) and day-after-tomorrow (day 2).
+        // Runs in parallel with the rest of the forecast processing.
+        let realTideData: { tidesDay1: any[]; tidesDay2: any[] } = { tidesDay1: [], tidesDay2: [] };
+        try {
+          const td = await fetchTideData(lat, lon);
+          realTideData = {
+            tidesDay1: (td as any).tidesDay1 ?? [],
+            tidesDay2: (td as any).tidesDay2 ?? [],
+          };
+          if (realTideData.tidesDay1.length > 0 || realTideData.tidesDay2.length > 0) {
+            console.log(`✅ Real NOAA tide data for forecast: day1=${realTideData.tidesDay1.length} tides, day2=${realTideData.tidesDay2.length} tides`);
+          }
+        } catch (tideErr) {
+          console.warn('Could not fetch NOAA tide data for forecast, using generated tides:', tideErr);
+        }
+
         // Process forecast data into daily summaries
         const dailyForecasts = [];
         
@@ -2101,8 +2117,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             else if (conditions === "Fair") conditions = "Poor";
           }
           
-          // Generate realistic tide data for each day
-          const tides = generateRealisticTides(dayOffset, timezone);
+          // Use real NOAA tide data for days 1-2 where available; fall back to generated
+          let tides: Array<{ time: string; height: number; type: 'high' | 'low' }>;
+          let realTidesAvailable = false;
+          if (dayOffset === 1 && realTideData.tidesDay1 && realTideData.tidesDay1.length > 0) {
+            tides = realTideData.tidesDay1;
+            realTidesAvailable = true;
+            console.log(`Day ${dayOffset}: Using real NOAA tide data (${tides.length} tides)`);
+          } else if (dayOffset === 2 && realTideData.tidesDay2 && realTideData.tidesDay2.length > 0) {
+            tides = realTideData.tidesDay2;
+            realTidesAvailable = true;
+            console.log(`Day ${dayOffset}: Using real NOAA tide data (${tides.length} tides)`);
+          } else {
+            tides = generateRealisticTides(dayOffset, timezone);
+          }
           
           // Create consistent wave height range
           const waveMin = Math.floor(waveHeight);
@@ -2128,7 +2156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             windSpeed: dayOffset > 2 ? "TBD" : `${Math.round(avgWindSpeed)} mph`,
             windDirection: dayOffset > 2 ? "TBD" : getWindDirection(avgWindDeg),
             icon: "🌊",
-            tides: tides.map(tide => ({ ...tide, time: useRealData && dayOffset <= 2 ? tide.time : `Est. ${tide.time}` })),
+            tides: tides,
             sunrise,
             sunset,
           });

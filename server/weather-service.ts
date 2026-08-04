@@ -441,18 +441,21 @@ export async function fetchTideData(lat: number, lon: number) {
 
   try {
     // Fetch data from NOAA CO-OPS API.
-    // Use yesterday→tomorrow UTC so we always cover the full local calendar day at
-    // the station, regardless of UTC offset (avoids date flip after 8 PM EDT etc.).
+    // Use yesterday→3 days ahead UTC so we always cover the full local calendar day at
+    // the station and also return tides for tomorrow and the day after.
     const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const tomorrow  = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const yesterday       = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     const begin = yesterday.toISOString().split('T')[0].replace(/-/g, '');
-    const end   = tomorrow.toISOString().split('T')[0].replace(/-/g, '');
+    const end   = threeDaysFromNow.toISOString().split('T')[0].replace(/-/g, '');
 
-    // Determine today's calendar date in the station's local timezone so we can
-    // filter predictions to exactly today's tides (not yesterday's or tomorrow's).
+    // Determine calendar dates in the station's local timezone so we can
+    // filter predictions per-day (today / tomorrow / day-after-tomorrow).
     const stationTz = (station as any).timezone ?? 'UTC';
-    const todayLocalDate = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz }).format(now);
+    const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz });
+    const todayLocalDate            = fmt.format(now);
+    const tomorrowLocalDate         = fmt.format(new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000));
+    const dayAfterTomorrowLocalDate = fmt.format(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000));
     // en-CA gives "YYYY-MM-DD" which matches the date prefix of NOAA's "YYYY-MM-DD HH:MM"
     
     const response = await fetch(
@@ -468,30 +471,44 @@ export async function fetchTideData(lat: number, lon: number) {
       const latest = tideResponse.data[tideResponse.data.length - 1];
       const currentTide = parseFloat(latest.v);
       
-      // Fetch high/low predictions over the 3-day window
+      // Fetch high/low predictions over the extended window (yesterday → 3 days out)
       const predictionsResponse = await fetch(
         `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=${begin}&end_date=${end}&station=${station.stationId}&product=predictions&datum=MLLW&units=english&time_zone=lst_ldt&format=json&interval=hilo`,
         { signal: AbortSignal.timeout(5000) }
       );
       
-      let tideHigh: any[] = [];
-      let tideLow:  any[] = [];
-      let tides:    any[] = [];  // full TidePoint[] for today — used by the chart
+      let tideHigh:   any[] = [];
+      let tideLow:    any[] = [];
+      let tides:      any[] = [];  // full TidePoint[] for today — used by the chart
+      let tidesDay1:  any[] = [];  // tomorrow's tides — used by the 5-day forecast
+      let tidesDay2:  any[] = [];  // day-after-tomorrow's tides — used by the 5-day forecast
+
+      // Helper to convert a predictions array into TidePoint[]
+      const toTidePoints = (preds: any[]) =>
+        preds.map((p: any) => ({
+          time:   formatNoaaTime(p.t),
+          height: parseFloat(parseFloat(p.v).toFixed(1)),
+          type:   p.type === 'H' ? 'high' : 'low',
+        }));
       
       if (predictionsResponse.ok) {
         const predictions = await predictionsResponse.json() as any;
         if (predictions.predictions) {
-          // Filter to only today's predictions in station-local time
-          const todayPredictions = predictions.predictions.filter(
+          // Filter per-day in station-local time
+          const todayPredictions            = predictions.predictions.filter(
             (p: any) => typeof p.t === 'string' && p.t.startsWith(todayLocalDate)
           );
+          const tomorrowPredictions         = predictions.predictions.filter(
+            (p: any) => typeof p.t === 'string' && p.t.startsWith(tomorrowLocalDate)
+          );
+          const dayAfterTomorrowPredictions = predictions.predictions.filter(
+            (p: any) => typeof p.t === 'string' && p.t.startsWith(dayAfterTomorrowLocalDate)
+          );
 
-          // Build the full TidePoint[] for the chart (all of today's tides)
-          tides = todayPredictions.map((p: any) => ({
-            time:   formatNoaaTime(p.t),
-            height: parseFloat(parseFloat(p.v).toFixed(1)),
-            type:   p.type === 'H' ? 'high' : 'low',
-          }));
+          // Build TidePoint[] for each day
+          tides     = toTidePoints(todayPredictions);
+          tidesDay1 = toTidePoints(tomorrowPredictions);
+          tidesDay2 = toTidePoints(dayAfterTomorrowPredictions);
 
           // tideHigh / tideLow kept for backward compat (condition-alert monitor)
           // h.t is "YYYY-MM-DD HH:MM" in station local time; stored as isoRaw for
@@ -532,7 +549,9 @@ export async function fetchTideData(lat: number, lon: number) {
           { time: '12:45 PM', height: '1.1' },
           { time: '1:30 AM', height: '0.9' }
         ],
-        tides,   // empty array if NOAA returned no predictions; caller falls back to generated
+        tides,      // empty array if NOAA returned no predictions; caller falls back to generated
+        tidesDay1,  // tomorrow's real NOAA tides (empty if unavailable)
+        tidesDay2,  // day-after-tomorrow's real NOAA tides (empty if unavailable)
         source: station.name
       };
       
