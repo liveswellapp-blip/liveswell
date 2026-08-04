@@ -392,6 +392,16 @@ export async function fetchTideData(lat: number, lon: number) {
     { latRange: [27, 29], lonRange: [-85, -82], stationId: '8726520', name: 'St. Petersburg', timezone: 'America/New_York' },
     { latRange: [29, 31], lonRange: [-88, -85], stationId: '8729840', name: 'Panama City Beach', timezone: 'America/Chicago' },
     { latRange: [29, 31], lonRange: [-95, -92], stationId: '8771450', name: 'Galveston Pier 21', timezone: 'America/Chicago' },
+
+    // Hawaii — NOAA CO-OPS stations (all four main islands covered)
+    // Oahu (includes Pipeline / North Shore ~21.6°N, -158.1°W)
+    { latRange: [21.2, 21.8], lonRange: [-158.3, -157.6], stationId: '1612340', name: 'Honolulu', timezone: 'Pacific/Honolulu' },
+    // Maui / Kahului (covers Hookipa, Pe'ahi ~20.9°N, -156.3°W)
+    { latRange: [20.6, 21.1], lonRange: [-156.7, -155.9], stationId: '1615680', name: 'Kahului, Maui', timezone: 'Pacific/Honolulu' },
+    // Big Island / Hilo (covers Honolii, Pohoiki ~19.7°N, -155.0°W)
+    { latRange: [19.4, 20.3], lonRange: [-156.1, -154.8], stationId: '1617760', name: 'Hilo, Hawaii', timezone: 'Pacific/Honolulu' },
+    // Kauai / Nawiliwili (covers Hanalei, Tunnels ~22.1°N, -159.5°W)
+    { latRange: [21.8, 22.3], lonRange: [-159.8, -159.2], stationId: '1619910', name: 'Nawiliwili, Kauai', timezone: 'Pacific/Honolulu' },
   ];
   
   // Find the appropriate tide station
@@ -401,7 +411,12 @@ export async function fetchTideData(lat: number, lon: number) {
   );
   
   if (!station) {
-    console.log(`No tide station found for ${lat}, ${lon}, using generated data`);
+    // No NOAA station mapped for this coordinate (e.g. international spots like
+    // Teahupo'o, J-Bay, Bali). There is no freely-available no-key global tide
+    // prediction API, so we fall back to a sine-wave estimate and warn loudly so
+    // the gap is visible in logs. To add real data for a spot, add a NOAA station
+    // entry above (if covered by NOAA CO-OPS) or integrate a paid/keyed tide API.
+    console.warn(`⚠️  No NOAA tide station mapped for ${lat.toFixed(3)}, ${lon.toFixed(3)} — serving estimated sine-wave tides. Add a station entry to tideStationMap to fix this.`);
     // Generate realistic tide data
     const now = new Date();
     const hours = now.getHours() + now.getMinutes() / 60;
@@ -425,7 +440,7 @@ export async function fetchTideData(lat: number, lon: number) {
       tideStatus,
       tideHigh,
       tideLow,
-      source: 'generated'
+      source: 'estimated'
     };
   }
   
