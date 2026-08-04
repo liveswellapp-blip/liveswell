@@ -587,9 +587,12 @@ export async function fetchTideData(lat: number, lon: number) {
     }
     
   } catch (error) {
-    console.error(`Tide data fetch failed for station ${station.stationId}:`, error);
+    const errorReason = error instanceof Error ? error.message : String(error);
+    console.error(`Tide data fetch failed for station ${station.stationId} (${station.name}): ${errorReason}`);
     
-    // Fallback to generated data
+    // Fallback to generated data — source includes the station name so callers can
+    // distinguish "no station mapped" (source: 'estimated') from "station matched
+    // but temporarily unreachable" (source: '<name> (unavailable)').
     const now = new Date();
     const hours = now.getHours() + now.getMinutes() / 60;
     const tideLevel = 3 + 2.5 * Math.sin((hours - 6) * Math.PI / 6);
@@ -606,7 +609,7 @@ export async function fetchTideData(lat: number, lon: number) {
         { time: '12:45 PM', height: '1.1' },
         { time: '1:30 AM', height: '0.9' }
       ],
-      source: 'generated'
+      source: `${station.name} (unavailable)`
     };
   }
 }
