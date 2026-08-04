@@ -402,6 +402,18 @@ export async function fetchTideData(lat: number, lon: number) {
     { latRange: [19.4, 20.3], lonRange: [-156.1, -154.8], stationId: '1617760', name: 'Hilo, Hawaii', timezone: 'Pacific/Honolulu' },
     // Kauai / Nawiliwili (covers Hanalei, Tunnels ~22.1°N, -159.5°W)
     { latRange: [21.8, 22.3], lonRange: [-159.8, -159.2], stationId: '1619910', name: 'Nawiliwili, Kauai', timezone: 'Pacific/Honolulu' },
+
+    // Pacific Northwest — Oregon coast
+    // South Beach / Newport (~44.6°N) covers central OR surf spots (Seaside OR is further north)
+    { latRange: [42.0, 45.5], lonRange: [-124.8, -123.5], stationId: '9435380', name: 'South Beach, OR', timezone: 'America/Los_Angeles' },
+    // Astoria (~46.2°N) covers northern OR coast and Columbia River mouth area
+    { latRange: [45.5, 46.3], lonRange: [-124.5, -123.4], stationId: '9439040', name: 'Astoria, OR', timezone: 'America/Los_Angeles' },
+
+    // Pacific Northwest — Washington coast
+    // Toke Point / Willapa Bay (~46.7°N) covers southern WA coast including Cannon Beach-area
+    { latRange: [46.3, 47.2], lonRange: [-124.5, -123.5], stationId: '9440910', name: 'Toke Point, WA', timezone: 'America/Los_Angeles' },
+    // Westport (~46.9°N) covers central/northern WA coast including Grays Harbor
+    { latRange: [47.2, 48.5], lonRange: [-124.8, -123.5], stationId: '9441102', name: 'Westport, WA', timezone: 'America/Los_Angeles' },
   ];
   
   // Find the appropriate tide station
