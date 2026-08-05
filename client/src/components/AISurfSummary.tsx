@@ -41,7 +41,22 @@ export default function AISurfSummary({ location }: AISurfSummaryProps) {
     );
   }
 
-  if (error || !data) return null;
+  if (error) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 pb-2">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative rounded-2xl overflow-hidden bg-[#030912]/80 border border-emerald-500/10 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 text-emerald-400/40 text-xs font-bold tracking-widest uppercase shrink-0">✦ AI</div>
+              <p className="text-xs text-slate-500 leading-relaxed">Summary unavailable — check back shortly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 pb-2">

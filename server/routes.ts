@@ -3582,14 +3582,20 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
 
     } catch (error) {
       const locationId = parseInt(req.params.id);
+      const errMsg = error instanceof Error ? error.message : "Unknown error";
       console.error("❌ Error generating AI surf summary:", {
         locationId,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errMsg,
         stack: error instanceof Error ? error.stack : undefined
       });
-      res.status(500).json({ 
-        message: "Failed to generate surf summary",
-        error: error instanceof Error ? error.message : "Unknown error"
+      // Return 200 with a fallback summary so the rest of the conditions page
+      // still loads — the UI shows a brief "unavailable" notice rather than a
+      // blank panel or an unhandled 500.
+      res.json({
+        summary: "Summary unavailable — check back shortly.",
+        location: null,
+        generatedAt: new Date().toISOString(),
+        fallback: true,
       });
     }
   });

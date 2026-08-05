@@ -49,7 +49,8 @@ export async function generateSurfSummary(
 
   const text = completion.choices[0]?.message?.content;
   if (!text || text.trim().length === 0) {
-    throw new Error("OpenAI returned an empty response");
+    console.warn(`[ai-summary] Empty response from model for ${input.locationName} — returning fallback`);
+    return "Summary unavailable — check back shortly.";
   }
   return text;
 }
