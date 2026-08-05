@@ -486,7 +486,7 @@ export async function fetchTideData(lat: number, lon: number) {
     // en-CA gives "YYYY-MM-DD" which matches the date prefix of NOAA's "YYYY-MM-DD HH:MM"
     
     const response = await fetch(
-      `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=${station.stationId}&product=water_level&units=english&time_zone=lst_ldt&format=json`,
+      `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=latest&station=${station.stationId}&product=water_level&datum=MLLW&units=english&time_zone=lst_ldt&format=json`,
       { signal: AbortSignal.timeout(5000) }
     );
     

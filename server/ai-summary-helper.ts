@@ -10,9 +10,9 @@ import OpenAI from "openai";
 /** The model name used for surf summaries — single source of truth. */
 export const AI_SUMMARY_MODEL = "gpt-5-mini";
 
-/** Parameters that must be accepted by the model. */
+/** Parameters that must be accepted by the model.
+ *  Note: gpt-5-mini only supports the default temperature (1) — do not set it. */
 export const AI_SUMMARY_PARAMS = {
-  temperature: 0.5,
   max_completion_tokens: 120,
 } as const;
 
