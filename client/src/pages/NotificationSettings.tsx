@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -477,6 +477,19 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
 }) {
   const { toast } = useToast();
   const [form, setForm] = useState<AlertFormState>({ ...BLANK_FORM, ...initialData });
+
+  // Track the visual viewport height so the drawer shrinks/grows correctly when the
+  // soft keyboard appears or dismisses on Android Chrome. Without this, vaul's
+  // transform gets stuck and leaves a blank void below the drawer content.
+  const [vpHeight, setVpHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => setVpHeight(vv.height);
+    update();
+    vv.addEventListener("resize", update);
+    return () => vv.removeEventListener("resize", update);
+  }, []);
 
   // SMS consent checkbox — must be actively checked by user (Twilio A2P 10DLC requirement)
   const [smsConsent, setSmsConsent] = useState(false);
@@ -1155,15 +1168,24 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
   );
 
   if (isMobile) {
+    // Cap at 92% of the *visual* viewport so the drawer never taller than what's
+    // visible — and so it snaps back correctly when the soft keyboard dismisses.
+    const drawerMaxHeight = vpHeight ? `${Math.round(vpHeight * 0.92)}px` : "92dvh";
     return (
-      <Drawer open={open} onOpenChange={v => { if (!v) onClose(); }} shouldScaleBackground={false}>
+      <Drawer
+        open={open}
+        onOpenChange={v => { if (!v) onClose(); }}
+        shouldScaleBackground={false}
+        noBodyStyles
+        repositionInputs={false}
+      >
         <DrawerContent
           className="outline-none"
           style={{
             background: "#0d1b2e",
             border: "1px solid rgba(255,255,255,0.08)",
             color: "#e2e8f0",
-            maxHeight: "92dvh",
+            maxHeight: drawerMaxHeight,
             display: "flex",
             flexDirection: "column",
           }}
