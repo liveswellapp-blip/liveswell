@@ -12,19 +12,27 @@ const openai = new OpenAI({
 const SYSTEM_PROMPT = `You are a surf data assistant. Respond ONLY with valid JSON matching this schema:
 
 {
-  "intent": "conditions" | "forecast" | "compare" | "other",
+  "intent": "conditions" | "forecast" | "compare" | "other" | "clarify",
   "spots": ["exact spot name from context", ...],
-  "otherAnswer": "only populate this when intent is 'other' — one plain sentence answering the question using only facts from the context. No opinions, no advice."
+  "otherAnswer": "only populate this when intent is 'other' — a clear factual answer (up to 3 sentences) using surfing/oceanography knowledge. No opinions, no advice.",
+  "clarifyQuestion": "only populate this when intent is 'clarify' — a short friendly question asking which spot the user means, listing their saved spots."
 }
 
 intent meanings:
 - "conditions": user wants current conditions at one or more spots
-- "forecast": user wants the multi-day forecast for one or more spots  
+- "forecast": user wants the multi-day forecast for one or more spots
 - "compare": user wants spots compared side-by-side
-- "other": any question that doesn't fit above (e.g. "what is a period?", "when is high tide?")
+- "other": a general surf/ocean knowledge question that doesn't require specific spot data (e.g. "what is a wave period?", "what does offshore mean?", "what's a good wave height for beginners?", "how do I read a swell chart?"). Answer from general surfing and oceanography knowledge — factual explanations are allowed even if the spot context doesn't cover the topic.
+- "clarify": user's message relates to surf data but NO spot can be inferred from the message OR from the conversation history, and no context hint is available
 
-spots: list only exact spot names from the context that are relevant to the user's question. If the user says "my spots" or "all spots", include all of them.
-otherAnswer: ONLY for intent="other". Facts only, no opinions or advice.`;
+spots rules — READ CAREFULLY:
+1. If the user names a specific spot, include it.
+2. If the user says "my spots", "all spots", or similar, include ALL spots from context.
+3. **Follow-up inference**: If the user sends a follow-up like "how about tomorrow?", "what's the wind?", "is it good in the morning?", "what about Saturday?" — and the "Current context" line below shows a last-discussed spot — USE THAT SPOT. Do NOT return an empty spots array for follow-up questions when context is available.
+4. If intent is "clarify", return an empty spots array.
+
+otherAnswer: ONLY for intent="other". Facts and explanations from surfing/oceanography knowledge are fine. No opinions, no surf advice, no recommendations.
+clarifyQuestion: ONLY for intent="clarify". Keep it short and friendly. List the user's saved spot names so they can pick one.`;
 
 // ── Pure server-side formatters ───────────────────────────────────────────────
 
@@ -137,6 +145,31 @@ function buildConditionsContext(spots: SpotData[]): string {
   return lines.join('\n');
 }
 
+/**
+ * Scan the last few assistant messages in history to find which spot names
+ * from the saved spots list were most recently discussed.
+ * Returns an array of matched spot names (in order of recency).
+ */
+function extractLastDiscussedSpots(
+  history: AgentMessage[],
+  spotNames: string[],
+  lookback = 6,
+): string[] {
+  if (spotNames.length === 0 || history.length === 0) return [];
+
+  // Walk backwards through recent assistant messages
+  const recent = history.slice(-lookback).reverse();
+  for (const msg of recent) {
+    if (msg.role !== 'assistant') continue;
+    const content = msg.content.toLowerCase();
+    const found = spotNames.filter(name =>
+      content.includes(name.toLowerCase())
+    );
+    if (found.length > 0) return found;
+  }
+  return [];
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface SpotData {
@@ -212,17 +245,26 @@ export async function runSurfAgent(
   );
 
   const conditionsContext = buildConditionsContext(spotsWithConditions);
+  const spotNames = spotsWithConditions.map(s => s.name);
 
-  // Ask the model to classify intent + extract spot names — JSON only
+  // Determine the last discussed spots from history — used as a context hint
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
   const recentHistory = history.filter(
     (m: any) => !m.createdAt || new Date(m.createdAt).getTime() > cutoff,
   );
 
+  const lastDiscussedSpots = extractLastDiscussedSpots(recentHistory, spotNames);
+
+  // Build a context hint line to help the model with follow-up inference
+  const contextHint = lastDiscussedSpots.length > 0
+    ? `\nCurrent context: last discussed spot(s): ${lastDiscussedSpots.join(', ')}`
+    : '';
+
+  // Ask the model to classify intent + extract spot names — JSON only
   const messages: OpenAI.ChatCompletionMessageParam[] = [
     {
       role: 'system',
-      content: `${SYSTEM_PROMPT}\n\nAvailable spots:\n${conditionsContext}`,
+      content: `${SYSTEM_PROMPT}\n\nAvailable spots:\n${conditionsContext}${contextHint}`,
     },
     ...recentHistory.slice(-10).map(m => ({
       role: m.role as 'user' | 'assistant',
@@ -235,33 +277,71 @@ export async function runSurfAgent(
     model: 'gpt-4o-mini',
     messages,
     temperature: 0,
-    max_completion_tokens: 300,
+    max_completion_tokens: 500,
     response_format: { type: 'json_object' },
   });
 
-  let parsed: { intent: string; spots: string[]; otherAnswer?: string };
+  let parsed: { intent: string; spots: string[]; otherAnswer?: string; clarifyQuestion?: string };
   try {
     parsed = JSON.parse(completion.choices[0]?.message?.content ?? '{}');
   } catch {
     return "Couldn't parse a response. Please try again.";
   }
 
-  const { intent, spots: requestedSpots = [], otherAnswer } = parsed;
+  const { intent, spots: requestedSpots = [], otherAnswer, clarifyQuestion } = parsed;
 
-  // Match requested spot names back to our data (case-insensitive partial match)
-  const matchedSpots = requestedSpots.length > 0
-    ? spotsWithConditions.filter(s =>
-        requestedSpots.some(r => s.name.toLowerCase().includes(r.toLowerCase()) || r.toLowerCase().includes(s.name.toLowerCase()))
+  // ── Spot resolution with smarter fallback ────────────────────────────────────
+  let matchedSpots: SpotData[];
+
+  if (requestedSpots.length > 0) {
+    // Model named spots explicitly — match them
+    matchedSpots = spotsWithConditions.filter(s =>
+      requestedSpots.some(r =>
+        s.name.toLowerCase().includes(r.toLowerCase()) ||
+        r.toLowerCase().includes(s.name.toLowerCase())
       )
-    : spotsWithConditions;
+    );
+  } else if (intent === 'other' || intent === 'clarify') {
+    // These intents don't need spot data
+    matchedSpots = [];
+  } else {
+    // Follow-up message with no explicit spot — use last discussed spots from history
+    if (lastDiscussedSpots.length > 0) {
+      matchedSpots = spotsWithConditions.filter(s =>
+        lastDiscussedSpots.some(n =>
+          s.name.toLowerCase() === n.toLowerCase()
+        )
+      );
+    } else {
+      // No prior context at all — the model should have returned "clarify";
+      // but if it didn't, treat it as clarify here
+      matchedSpots = [];
+    }
+  }
+
+  // ── Intent handlers ───────────────────────────────────────────────────────────
+
+  if (intent === 'clarify') {
+    // Return the model's clarifying question, or a sensible default
+    if (clarifyQuestion?.trim()) return clarifyQuestion.trim();
+    const spotList = spotNames.length > 0 ? spotNames.join(', ') : 'none saved yet';
+    return `Which spot are you asking about? Your saved spots are: ${spotList}.`;
+  }
 
   if (intent === 'conditions' || intent === 'compare') {
-    if (matchedSpots.length === 0) return "No data available for the requested spot(s).";
+    if (matchedSpots.length === 0) {
+      // No spots resolved and no prior context — ask for clarification
+      const spotList = spotNames.length > 0 ? spotNames.join(', ') : 'none saved yet';
+      return `Which spot are you asking about? Your saved spots are: ${spotList}.`;
+    }
     return matchedSpots.map(formatConditionsLine).join('\n\n');
   }
 
   if (intent === 'forecast') {
-    if (matchedSpots.length === 0) return "No forecast data available for the requested spot(s).";
+    if (matchedSpots.length === 0) {
+      const spotList = spotNames.length > 0 ? spotNames.join(', ') : 'none saved yet';
+      return `Which spot are you asking about? Your saved spots are: ${spotList}.`;
+    }
 
     // Determine which days the user actually wants based on their message
     const msgLower = userMessage.toLowerCase();
@@ -297,6 +377,7 @@ export async function runSurfAgent(
     return forecastSpots.map(formatForecastLines).join('\n\n');
   }
 
-  // intent === 'other' — return the model's plain-text answer (facts only)
-  return otherAnswer?.trim() || "No data available to answer that.";
+  // intent === 'other' — return the model's educational/factual answer
+  if (otherAnswer?.trim()) return otherAnswer.trim();
+  return "I don't have enough context to answer that. Try asking about a specific spot or a surf concept.";
 }
