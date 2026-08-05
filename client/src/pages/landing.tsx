@@ -542,7 +542,7 @@ export default function Landing() {
 
           <div className="landing-cta-row">
             <button className="landing-cta-btn" onClick={handleSignUp}>Get Started Free</button>
-            <span className="landing-cta-note">Free · No credit card needed</span>
+            <span className="landing-cta-note">No credit card needed</span>
           </div>
         </div>
 
