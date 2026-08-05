@@ -10,8 +10,8 @@ export default defineConfig({
     },
   },
   test: {
-    // Run only server-side unit tests — exclude client and shared code
-    include: ["server/**/*.test.ts"],
+    // Run server-side unit tests and pure client-side utility tests
+    include: ["server/**/*.test.ts", "client/src/lib/**/*.test.ts"],
     environment: "node",
     // Don't require .env to be present for unit tests
     globals: false,

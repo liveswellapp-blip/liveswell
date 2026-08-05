@@ -1,5 +1,6 @@
 import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
 import { useSearch } from "wouter";
+import { sanitizeRedirectUrl } from "@/lib/sanitizeRedirectUrl";
 
 /**
  * Dedicated OAuth callback handler.
@@ -41,7 +42,9 @@ export default function SsoCallback() {
   const params = new URLSearchParams(search);
   // Accept both "redirect_url" (set by UnauthenticatedFallback) and the
   // shorter "returnTo" alias used by some deep-link flows.
-  const redirectUrl = params.get("redirect_url") ?? params.get("returnTo") ?? "/";
+  const redirectUrl = sanitizeRedirectUrl(
+    params.get("redirect_url") ?? params.get("returnTo") ?? "/"
+  );
 
   return (
     <AuthenticateWithRedirectCallback
