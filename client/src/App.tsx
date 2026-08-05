@@ -16,6 +16,7 @@ import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
 import ClerkSignIn from "@/pages/ClerkSignIn";
 import ClerkSignUp from "@/pages/ClerkSignUp";
+import SsoCallback from "@/pages/SsoCallback";
 import AdminDashboard from "@/pages/admin";
 import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
@@ -66,6 +67,10 @@ function Router() {
         {/* Keep /login as alias so old links still work */}
         <Route path="/login" component={ClerkSignIn} />
         <Route path="/register" component={ClerkSignUp} />
+        {/* OAuth callback — processes the session handshake after Google/Apple/etc.
+            Must be registered before all auth-gated routes so it is always accessible
+            regardless of authentication state. */}
+        <Route path="/sso-callback" component={SsoCallback} />
 
         {/* Public info pages */}
         <Route path="/privacy" component={Privacy} />

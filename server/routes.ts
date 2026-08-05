@@ -176,6 +176,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auth debug endpoint — dev-only, helps QA the OAuth flow on mobile devices
+  // Visit /api/auth/debug?key=liveswell_debug to see what the server sees
+  app.get('/api/auth/debug', (req: any, res) => {
+    if (process.env.NODE_ENV === 'production' && req.query.key !== 'liveswell_debug') {
+      return res.status(404).json({ message: 'Not found' });
+    }
+    const auth = req.auth ?? {};
+    res.json({
+      isSignedIn: !!auth.userId,
+      userId: auth.userId ?? null,
+      sessionId: auth.sessionId ?? null,
+      environment: process.env.NODE_ENV,
+    });
+  });
+
   // Admin authentication routes (public endpoints)
   app.post("/api/admin/login", adminLogin);
   app.post("/api/admin/logout", adminLogout);

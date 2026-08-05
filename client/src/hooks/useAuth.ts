@@ -8,7 +8,10 @@ function isDemoMode() {
   return new URLSearchParams(window.location.search).has("demo");
 }
 
-/** True when Clerk has written a session to localStorage but hasn't hydrated yet. */
+/** True when Clerk has written a session to localStorage but hasn't hydrated yet.
+ *  Only used when Clerk has NOT finished loading — once isLoaded=true Clerk's
+ *  own isLoaded flag is authoritative and we stop relying on the localStorage key.
+ */
 function hasStoredClerkSession(): boolean {
   if (typeof window === "undefined") return false;
   try {
@@ -59,13 +62,16 @@ export function useAuth() {
       }
     : null;
 
-  // Keep the spinner up when Clerk has a stored JWT but hasn't hydrated the
-  // user object yet — prevents a one-frame Landing page flash on hard refresh.
-  const sessionRestorePending = isLoaded && !clerkUser && hasStoredClerkSession();
-
+  // Keep the spinner up ONLY while Clerk is still initialising (!isLoaded).
+  // Once Clerk reports isLoaded=true its verdict on clerkUser is authoritative:
+  //   - clerkUser set   → authenticated
+  //   - clerkUser null  → not authenticated (expired JWT, no session, etc.)
+  // The previous `sessionRestorePending` guard checked localStorage for a
+  // __clerk_db_jwt key even after isLoaded=true, which caused a permanent
+  // spinner whenever a stored JWT was expired or invalid (no recovery path).
   return {
     user,
-    isLoading: !isLoaded || sessionRestorePending,
+    isLoading: !isLoaded,
     isAuthenticated: !!clerkUser,
     logout,
   };
