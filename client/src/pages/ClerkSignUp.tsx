@@ -10,9 +10,13 @@ export default function ClerkSignUp() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "24px",
+        justifyContent: "flex-start",
+        paddingTop: "clamp(20px, 8vh, 60px)",
+        paddingBottom: "24px",
+        paddingLeft: "24px",
+        paddingRight: "24px",
         gap: "24px",
+        overflowY: "auto",
       }}
     >
       <img src={logoImage} alt="LiveSwell" style={{ height: 36, objectFit: "contain" }} />

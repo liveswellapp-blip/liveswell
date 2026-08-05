@@ -31,6 +31,25 @@ export default function SurfAgentChat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const qc = useQueryClient();
 
+  // Keep the input bar above the soft keyboard on mobile.
+  // `fixed bottom-0` is relative to the layout viewport, which the keyboard
+  // overlaps without moving. visualViewport tracks the actually-visible area.
+  const [kbOffset, setKbOffset] = useState(0);
+  const [kbVpH, setKbVpH] = useState<number | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      if (window.innerWidth >= 768) { setKbOffset(0); setKbVpH(null); return; }
+      const offset = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+      setKbOffset(offset);
+      setKbVpH(vv.height);
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => { vv.removeEventListener("resize", update); vv.removeEventListener("scroll", update); };
+  }, []);
+
   const { data: history = [], isLoading: historyLoading } = useQuery<Message[]>({
     queryKey: ["/api/agent/history"],
     enabled: open,
@@ -237,7 +256,12 @@ export default function SurfAgentChat() {
         className={`fixed inset-x-0 bottom-0 z-50 flex flex-col bg-zinc-950 border-t border-zinc-800 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out ${
           open ? "translate-y-0" : "translate-y-full"
         } md:inset-x-auto md:right-6 md:bottom-6 md:w-96 md:h-[600px] md:rounded-2xl md:border md:border-zinc-800`}
-        style={{ height: open ? "min(85dvh, 640px)" : undefined }}
+        style={{
+          height: open
+            ? (kbOffset > 0 && kbVpH ? `${Math.round(kbVpH * 0.88)}px` : "min(85dvh, 640px)")
+            : undefined,
+          ...(kbOffset > 0 ? { bottom: kbOffset } : {}),
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">

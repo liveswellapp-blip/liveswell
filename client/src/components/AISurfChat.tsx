@@ -25,6 +25,25 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedRef = useRef(false);
 
+  // Keep the input bar above the soft keyboard on mobile.
+  // `fixed bottom-0` is relative to the layout viewport, which the keyboard
+  // overlaps without moving. visualViewport tracks the actually-visible area.
+  const [kbOffset, setKbOffset] = useState(0);
+  const [kbVpH, setKbVpH] = useState<number | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      if (window.innerWidth >= 768) { setKbOffset(0); setKbVpH(null); return; }
+      const offset = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+      setKbOffset(offset);
+      setKbVpH(vv.height);
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => { vv.removeEventListener("resize", update); vv.removeEventListener("scroll", update); };
+  }, []);
+
   // Build the opening context message when the panel first opens
   useEffect(() => {
     if (open && !initializedRef.current) {
@@ -204,7 +223,10 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
           md:inset-x-auto md:right-6 md:bottom-6 md:w-96 md:rounded-2xl md:border md:border-white/[0.08]
           ${open ? "translate-y-0" : "translate-y-full"}`}
         style={{
-          height: open ? "min(82dvh, 600px)" : undefined,
+          height: open
+            ? (kbOffset > 0 && kbVpH ? `${Math.round(kbVpH * 0.88)}px` : "min(82dvh, 600px)")
+            : undefined,
+          ...(kbOffset > 0 ? { bottom: kbOffset } : {}),
           background: "linear-gradient(160deg, #030912 0%, #091a35 100%)",
         }}
       >
