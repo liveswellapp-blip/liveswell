@@ -11,7 +11,10 @@
  *   - The `routing` prop requirement changed across v4 → v5
  *
  * SsoCallback.tsx currently passes:
- *   <AuthenticateWithRedirectCallback afterSignInUrl="/" afterSignUpUrl="/" />
+ *   <AuthenticateWithRedirectCallback
+ *     afterSignInUrl={redirectUrl}   // read from ?redirect_url= query param, falls back to "/"
+ *     afterSignUpUrl={redirectUrl}
+ *   />
  *
  * These props are valid for @clerk/clerk-react ^5.x (confirmed against 5.61.9).
  * If the major version changes, /sso-callback MUST be smoke-tested with a real
