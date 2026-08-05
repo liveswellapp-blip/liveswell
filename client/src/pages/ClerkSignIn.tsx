@@ -16,7 +16,7 @@ export default function ClerkSignIn() {
       }}
     >
       <img src={logoImage} alt="LiveSwell" style={{ height: 36, objectFit: "contain" }} />
-      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" afterSignInUrl="/" />
+      <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" fallbackRedirectUrl="/" />
     </div>
   );
 }
