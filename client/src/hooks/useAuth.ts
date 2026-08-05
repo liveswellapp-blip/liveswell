@@ -8,6 +8,16 @@ function isDemoMode() {
   return new URLSearchParams(window.location.search).has("demo");
 }
 
+/** True when Clerk has written a session to localStorage but hasn't hydrated yet. */
+function hasStoredClerkSession(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return Object.keys(localStorage).some((k) => k.startsWith("__clerk_db_jwt"));
+  } catch {
+    return false;
+  }
+}
+
 export function useAuth() {
   const demo = isDemoMode();
   const { user: clerkUser, isLoaded } = useUser();
@@ -49,9 +59,13 @@ export function useAuth() {
       }
     : null;
 
+  // Keep the spinner up when Clerk has a stored JWT but hasn't hydrated the
+  // user object yet — prevents a one-frame Landing page flash on hard refresh.
+  const sessionRestorePending = isLoaded && !clerkUser && hasStoredClerkSession();
+
   return {
     user,
-    isLoading: !isLoaded,
+    isLoading: !isLoaded || sessionRestorePending,
     isAuthenticated: !!clerkUser,
     logout,
   };
