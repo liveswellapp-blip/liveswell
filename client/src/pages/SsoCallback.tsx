@@ -39,7 +39,9 @@ export default function SsoCallback() {
   // e.g. "redirect_url=%2Fconditions%3Flocation%3D123"
   const search = useSearch();
   const params = new URLSearchParams(search);
-  const redirectUrl = params.get("redirect_url") ?? "/";
+  // Accept both "redirect_url" (set by UnauthenticatedFallback) and the
+  // shorter "returnTo" alias used by some deep-link flows.
+  const redirectUrl = params.get("redirect_url") ?? params.get("returnTo") ?? "/";
 
   return (
     <AuthenticateWithRedirectCallback
