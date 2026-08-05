@@ -67,10 +67,15 @@ function Router() {
         {/* Keep /login as alias so old links still work */}
         <Route path="/login" component={ClerkSignIn} />
         <Route path="/register" component={ClerkSignUp} />
-        {/* OAuth callback — processes the session handshake after Google/Apple/etc.
-            Must be registered before all auth-gated routes so it is always accessible
-            regardless of authentication state. */}
+        {/* OAuth callbacks — Clerk appends /sso-callback to the component's `path`
+            prop, so <SignIn path="/sign-in"> uses /sign-in/sso-callback and
+            <SignUp path="/sign-up"> uses /sign-up/sso-callback.  All three are
+            registered here so the AuthenticateWithRedirectCallback component can
+            complete the session handshake regardless of which flow the user came from.
+            These must appear before all auth-gated routes. */}
         <Route path="/sso-callback" component={SsoCallback} />
+        <Route path="/sign-in/sso-callback" component={SsoCallback} />
+        <Route path="/sign-up/sso-callback" component={SsoCallback} />
 
         {/* Public info pages */}
         <Route path="/privacy" component={Privacy} />

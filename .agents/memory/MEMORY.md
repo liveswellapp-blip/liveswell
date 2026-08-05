@@ -1,1 +1,2 @@
 - [Open-Meteo Marine fallback](open-meteo-marine-fallback.md) — NOAA NDBC is US-only; non-US surf spots need Open-Meteo Marine (marine-api.open-meteo.com) as a fallback for current wave data.
+- [Clerk SSO callback routing](clerk-sso-callback-routing.md) — Clerk appends /sso-callback to the component path prop; /sign-in/sso-callback AND /sign-up/sso-callback must be registered explicitly or OAuth loops.
