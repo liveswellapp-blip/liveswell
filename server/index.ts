@@ -5,6 +5,7 @@ import { initializeSurfSpots } from "./storage";
 import { NotificationScheduler } from "./notification-scheduler";
 import { initWeatherCache } from "./weather-service";
 import { runPushHealthCheck, runApnsHealthCheck } from "./push-health-monitor";
+import { runMigrations } from "./migrate";
 
 // Validate required environment variables for production
 function validateEnvironment() {
@@ -140,6 +141,12 @@ app.use((req, res, next) => {
       context: { timeout: 5000, retries: 3 }
     });
     
+    // ── Database migrations ──────────────────────────────────────────────────
+    // Runs all pending migrations before any other startup step so a fresh
+    // environment (or new deploy) always has the correct schema without manual
+    // intervention.
+    await runMigrations();
+
     console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode`);
     
     // Initialize surf spots database on startup
