@@ -2857,11 +2857,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/favorites", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.auth.userId as string;
       const { locationId } = req.body;
       
       if (!locationId) {
         return res.status(400).json({ message: "Location ID is required" });
+      }
+
+      // Guarantee the local users row exists before inserting into favorites.
+      // New OAuth sign-ups land at "/" immediately after the SSO callback, and
+      // the client's /api/auth/user upsert fires asynchronously — if the user
+      // taps a favorite before that query resolves, the FK constraint fires.
+      // Fetching from Clerk here ensures the row is always present.
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        await storage.upsertUser({
+          id: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? null,
+          firstName: clerkUser.firstName ?? null,
+          lastName: clerkUser.lastName ?? null,
+          profileImageUrl: clerkUser.imageUrl ?? null,
+        });
       }
 
       // Check if location exists
@@ -3038,8 +3055,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/notification-settings", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.auth.userId as string;
       const { smsEnabled, pushEnabled, phoneNumber, notificationTime, timezone, locationId } = req.body;
+
+      // Ensure local user row exists before writing FK-linked settings.
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        await storage.upsertUser({
+          id: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? null,
+          firstName: clerkUser.firstName ?? null,
+          lastName: clerkUser.lastName ?? null,
+          profileImageUrl: clerkUser.imageUrl ?? null,
+        });
+      }
 
       const settings = await storage.upsertNotificationSettings(userId, {
         smsEnabled: Boolean(smsEnabled),
@@ -3090,7 +3120,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/user-alerts", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.auth.userId as string;
+
+      // Ensure local user row exists before writing FK-linked alerts.
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        await storage.upsertUser({
+          id: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? null,
+          firstName: clerkUser.firstName ?? null,
+          lastName: clerkUser.lastName ?? null,
+          profileImageUrl: clerkUser.imageUrl ?? null,
+        });
+      }
+
       const { insertUserAlertSchema } = await import("@shared/schema");
       const { SMSService } = await import("./sms-service");
       // Strip client-supplied phoneVerified — server determines this
@@ -3593,7 +3637,21 @@ Write 2 sentences. First sentence: describe current wave size, period, direction
   // Subscribe to push notifications
   app.post("/api/push/subscribe", isAuthenticated, generalApiLimiter, async (req: any, res) => {
     try {
-      const userId = req.auth.userId;
+      const userId = req.auth.userId as string;
+
+      // Ensure local user row exists before writing FK-linked push subscription.
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        await storage.upsertUser({
+          id: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress ?? null,
+          firstName: clerkUser.firstName ?? null,
+          lastName: clerkUser.lastName ?? null,
+          profileImageUrl: clerkUser.imageUrl ?? null,
+        });
+      }
+
       const subscriptionData = insertPushSubscriptionSchema.parse({
         ...req.body,
         userId  // Server-side userId override - prevent client tampering
