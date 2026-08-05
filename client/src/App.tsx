@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation, useSearch } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,6 +22,32 @@ import NotificationSettings from "@/pages/NotificationSettings";
 import SurfAgentChat from "@/components/SurfAgentChat";
 import SupportHome from "@/pages/support/index";
 import SupportCategory from "@/pages/support/category";
+
+// The set of routes that require authentication.
+// When a signed-out user lands on one of these, we redirect them to
+// /sign-in?redirect_url=<path> so Clerk can return them there after OAuth.
+const PROTECTED_PATHS = ["/conditions", "/settings", "/notifications", "/profile", "/monitoring"];
+
+function UnauthenticatedFallback() {
+  const [location, navigate] = useLocation();
+  // useSearch returns the raw query string (e.g. "?location=123" or "").
+  const search = useSearch();
+  const isProtected = PROTECTED_PATHS.some(
+    (p) => location === p || location.startsWith(p + "/")
+  );
+  if (isProtected) {
+    // Preserve the full destination: pathname + any query string.
+    // e.g. /conditions?location=123 → /sign-in?redirect_url=%2Fconditions%3Flocation%3D123
+    // Clerk's <SignIn> reads redirect_url and honours it after any OAuth flow
+    // (Google, Apple, email, etc.) instead of falling back to "/".
+    const fullPath = search ? `${location}?${search}` : location;
+    const target = "/sign-in?redirect_url=" + encodeURIComponent(fullPath);
+    // Use replace so the browser back-button doesn't loop back to the protected route.
+    navigate(target, { replace: true });
+    return null;
+  }
+  return <Landing />;
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -70,7 +96,13 @@ function Router() {
             )}
           </Route>
         ) : !isAuthenticated ? (
-          <Route component={Landing} />
+          // Catch-all for unauthenticated users:
+          // - "/" → show the landing page
+          // - any protected route → redirect to /sign-in with the original path
+          //   so Clerk can return the user there after OAuth (Google, Apple, etc.)
+          <Route>
+            {() => <UnauthenticatedFallback />}
+          </Route>
         ) : (
           <Route component={NotFound} />
         )}
