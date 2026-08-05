@@ -571,7 +571,7 @@ export default function Landing() {
       </div>
       {/* ── Features ────────────────────────────────────────────── */}
       <div className="landing-features">
-        <div className="landing-features-heading">Everything you need before paddling out</div>
+        <div className="landing-features-heading">No More Opinions. Just Raw Data.</div>
         <p className="landing-features-sub">Real data, no guesswork. Built for surfers who need to know.</p>
         <div className="landing-features-grid">
           {features.map(f => (
