@@ -17,6 +17,8 @@ interface SearchModalProps {
 export default function SearchModal({ isOpen, onClose, onLocationSelect, initialQuery = "" }: SearchModalProps) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const [viewportOffsetTop, setViewportOffsetTop] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const { data: searchResults = [], isLoading } = useQuery<Location[]>({
     queryKey: [`/api/locations/search?q=${encodeURIComponent(searchQuery)}`],
@@ -31,23 +33,27 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
     }
   }, [isOpen, initialQuery]);
 
-  // Handle viewport height changes for mobile keyboard
+  // Handle viewport height/position changes for mobile keyboard
   useEffect(() => {
     const handleViewportChange = () => {
       // Use visual viewport if available (better for mobile keyboards)
       const height = window.visualViewport?.height || window.innerHeight;
+      const offsetTop = window.visualViewport?.offsetTop ?? 0;
       setViewportHeight(height);
+      setViewportOffsetTop(offsetTop);
+      setIsMobile(window.innerWidth <= 768);
     };
 
     if (isOpen && typeof window !== 'undefined') {
       // Listen for visual viewport changes (more accurate for mobile keyboards)
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', handleViewportChange);
+        window.visualViewport.addEventListener('scroll', handleViewportChange);
       } else {
         // Fallback to window resize
         window.addEventListener('resize', handleViewportChange);
       }
-      
+
       // Initial height check
       handleViewportChange();
     }
@@ -55,6 +61,7 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
     return () => {
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
       } else {
         window.removeEventListener('resize', handleViewportChange);
       }
@@ -72,16 +79,27 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
     setSearchQuery("");
   };
 
-  // Calculate dynamic height for mobile keyboard support
-  const isMobile = window.innerWidth <= 768;
-  const maxHeight = isMobile ? Math.min(viewportHeight * 0.8, 600) : '85vh';
-  const resultsHeight = isMobile ? Math.max(200, viewportHeight * 0.4) : 280;
+  // On mobile, pin the dialog to the top of the visual viewport so the keyboard never covers it
+  const mobileDialogStyle: React.CSSProperties = isMobile
+    ? {
+        position: "fixed",
+        top: viewportOffsetTop,
+        left: "50%",
+        transform: "translateX(-50%)",
+        height: viewportHeight,
+        maxHeight: viewportHeight,
+        width: "100%",
+        maxWidth: "100%",
+        margin: 0,
+        borderRadius: 0,
+      }
+    : {};
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-[500px] p-0 gap-0 flex flex-col"
-        style={{ maxHeight: isMobile ? `${maxHeight}px` : maxHeight }}
+        style={mobileDialogStyle}
       >
         <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <DialogTitle className="text-xl font-semibold text-foreground">
@@ -104,16 +122,16 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
           </div>
         </div>
 
-        {/* Search Results - Scrollable container */}
-        <div className="flex-1 px-6 pb-6 min-h-0">
+        {/* Search Results - Flex-fill scrollable container */}
+        <div className="flex-1 px-6 pb-6 min-h-0 flex flex-col">
           {searchQuery.length < 2 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="text-center py-4 text-muted-foreground">
+              <Search className="h-8 w-8 mx-auto mb-3 opacity-50" />
               <p>Type at least 2 characters to search</p>
               <p className="text-sm mt-1">Find surf spots around the world</p>
             </div>
           ) : isLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-y-auto flex-1 min-h-0">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="flex items-center space-x-3 p-3">
                   <Skeleton className="h-8 w-8" />
@@ -125,10 +143,7 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
               ))}
             </div>
           ) : searchResults.length > 0 ? (
-            <div 
-              className="space-y-1 overflow-y-auto historical-scroll"
-              style={{ height: `${resultsHeight}px` }}
-            >
+            <div className="space-y-1 overflow-y-auto flex-1 min-h-0 historical-scroll">
               {searchResults.map((location: Location) => (
                 <button
                   key={location.id}
@@ -149,8 +164,8 @@ export default function SearchModal({ isOpen, onClose, onLocationSelect, initial
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="text-center py-4 text-muted-foreground">
+              <MapPin className="h-8 w-8 mx-auto mb-3 opacity-50" />
               <p>No surf spots found</p>
               <p className="text-sm mt-1">Try a different search term</p>
             </div>
