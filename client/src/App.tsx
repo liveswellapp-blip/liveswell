@@ -45,16 +45,7 @@ function Router() {
         <Route path="/admin/users/:userId" component={AdminUserDetail} />
 
         {/* App routes — authenticated only */}
-        {isLoading ? (
-          <Route path="/">
-            {() => (
-              <div style={{ minHeight: "100vh", background: "#030a14", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ width: 32, height: 32, border: "3px solid rgba(52,211,153,0.3)", borderTopColor: "#34d399", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-              </div>
-            )}
-          </Route>
-        ) : !isAuthenticated ? (
+        {isLoading ? null : !isAuthenticated ? (
           <Route path="/" component={Landing} />
         ) : (
           <>
@@ -68,7 +59,16 @@ function Router() {
         )}
 
         {isLoading ? (
-          <Route>{() => null}</Route>
+          // Catch-all spinner: covers every route (/, /settings, /profile, /conditions, …)
+          // while Clerk is restoring the session on hard refresh.
+          <Route>
+            {() => (
+              <div style={{ minHeight: "100vh", background: "#030a14", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 32, height: 32, border: "3px solid rgba(52,211,153,0.3)", borderTopColor: "#34d399", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            )}
+          </Route>
         ) : !isAuthenticated ? (
           <Route component={Landing} />
         ) : (
