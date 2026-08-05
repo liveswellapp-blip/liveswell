@@ -125,9 +125,9 @@ export function adminStatus(req: Request, res: Response) {
   const adminAuth = req.session.adminAuth as AdminSession | undefined;
   
   if (adminAuth?.isAuthenticated) {
-    // Check if session is still valid (7 days)
+    // Check if session is still valid (4 hours)
     const sessionAge = Date.now() - adminAuth.loginTime;
-    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+    const maxAge = 4 * 60 * 60 * 1000; // 4 hours
     
     if (sessionAge < maxAge) {
       res.json({
@@ -158,9 +158,9 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
     });
   }
   
-  // Check session expiry
+  // Check session expiry (4 hours)
   const sessionAge = Date.now() - adminAuth.loginTime;
-  const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const maxAge = 4 * 60 * 60 * 1000; // 4 hours
   
   if (sessionAge >= maxAge) {
     req.session.adminAuth = undefined;

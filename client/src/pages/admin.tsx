@@ -54,10 +54,23 @@ interface UsageForecast {
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const [activeView, setActiveView] = useState<AdminView>('dashboard');
   const [location] = useLocation();
   const { toast } = useToast();
+
+  // Check for an existing valid session cookie on mount so the admin
+  // doesn't have to log in again after a page refresh.
+  useEffect(() => {
+    fetch('/api/admin/status', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.authenticated) setIsAuthenticated(true);
+      })
+      .catch(() => {/* ignore network errors — fall through to login form */})
+      .finally(() => setSessionChecked(true));
+  }, []);
 
   // Read ?view= query param so links from other pages (e.g. user detail back button) land on the right section
   useEffect(() => {
@@ -144,6 +157,15 @@ export default function AdminDashboard() {
       default:          return <Clock className="h-5 w-5 text-gray-500" />;
     }
   };
+
+  // ── Session check in progress — show nothing until resolved ──────────────
+  if (!sessionChecked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-white text-sm opacity-70">Checking session…</div>
+      </div>
+    );
+  }
 
   // ── Login screen ──────────────────────────────────────────────────────────
   if (!isAuthenticated) {
@@ -568,7 +590,11 @@ export default function AdminDashboard() {
       <AdminNav
         activeSection={activeView}
         onSectionChange={setActiveView}
-        onLogout={() => setIsAuthenticated(false)}
+        onLogout={() => {
+          fetch('/api/admin/logout', { method: 'POST', credentials: 'include' })
+            .catch(() => {/* ignore — clear client state regardless */})
+            .finally(() => setIsAuthenticated(false));
+        }}
       />
 
       {/* Main content — offset right on desktop to clear sidebar */}
