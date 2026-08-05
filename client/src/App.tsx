@@ -67,8 +67,12 @@ function Router() {
         <Route path="/terms" component={Terms} />
         <Route path="/support" component={SupportHome} />
         <Route path="/support/category/:slug" component={SupportCategory} />
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/admin/users/:userId" component={AdminUserDetail} />
+
+        {/* Admin routes — deferred until Clerk session resolves so the
+            catch-all loading spinner shows on hard refresh instead of
+            flashing the admin login form while auth state is unknown. */}
+        {!isLoading && <Route path="/admin" component={AdminDashboard} />}
+        {!isLoading && <Route path="/admin/users/:userId" component={AdminUserDetail} />}
 
         {/* App routes — authenticated only */}
         {isLoading ? null : !isAuthenticated ? (
