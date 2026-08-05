@@ -42,7 +42,12 @@ function UnauthenticatedFallback() {
     // (Google, Apple, email, etc.) instead of falling back to "/".
     const fullPath = search ? `${location}?${search}` : location;
     const target = "/sign-in?redirect_url=" + encodeURIComponent(fullPath);
-    // Use replace so the browser back-button doesn't loop back to the protected route.
+    // Use replace (history.replaceState) so the protected route is never pushed onto
+    // the history stack.  Without this, pressing Back from /sign-in would return the
+    // user to /settings → trigger this redirect again → loop back to /sign-in.
+    // With replace: true the sequence is:
+    //   previous page → /settings → (replaced by) /sign-in
+    // so Back goes to "previous page", not back into the redirect loop.
     navigate(target, { replace: true });
     return null;
   }
