@@ -538,7 +538,7 @@ export default function Landing() {
             <em>Catch the</em><br />
             Moment.
           </h1>
-          <p className="landing-sub">Get live swell, wind, and tide data in one clean and easy to use application. Plus unlimited alerts for you specific needs!</p>
+          <p className="landing-sub">Real-time surf conditions powered by NOAA buoy data, open marine forecasts, and AI. Built for surfers who want facts, not opinions.</p>
 
           <div className="landing-cta-row">
             <button className="landing-cta-btn" onClick={handleSignUp}>Get Started Free</button>
