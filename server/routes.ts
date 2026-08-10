@@ -1754,6 +1754,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Full TidePoint[] for today — used by TideChart & the tide-times row.
           // Populated from real NOAA predictions; empty array if NOAA unavailable.
           tides: (tideData as any).tides || [],
+          // Source string for UI attribution:
+          //   "estimated"           → no NOAA station mapped for this coordinate
+          //   "<name> (unavailable)" → station matched but temporarily unreachable
+          //   "<name>"              → real NOAA data
+          tideSource: tideData.source,
           primaryBuoy: marineData.primaryBuoy,
           backupBuoy: marineData.backupBuoy,
         });

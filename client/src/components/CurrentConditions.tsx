@@ -144,6 +144,7 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
     : (forecast?.[0]?.tides || []);
   const primaryBuoy = (conditions as any)?.primaryBuoy;
   const backupBuoy = (conditions as any)?.backupBuoy;
+  const tideSource: string | undefined = (conditions as any)?.tideSource;
 
   if (error) {
     return (
@@ -436,8 +437,29 @@ export default function CurrentConditions({ location }: CurrentConditionsProps) 
                     )}
                   </div>
                 )}
-                <div className="mt-2 pt-2 border-t border-white/5 flex justify-end">
-                  <span className="text-slate-600 text-[10px]">NOAA Tides & Currents data</span>
+                <div className="mt-2 pt-2 border-t border-white/5 flex justify-end items-center gap-1.5">
+                  {tideSource && (tideSource === 'estimated' || tideSource.includes('(unavailable)')) ? (
+                    <>
+                      <span
+                        className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium"
+                        style={{ background: 'rgba(251,191,36,0.12)', color: '#fbbf24' }}
+                        title={
+                          tideSource.includes('(unavailable)')
+                            ? `Tide station ${tideSource.replace(' (unavailable)', '')} is temporarily unavailable — showing estimated tides`
+                            : 'No NOAA tide station is mapped for this location — showing estimated tides'
+                        }
+                      >
+                        <span>⚠</span>
+                        <span>
+                          {tideSource.includes('(unavailable)')
+                            ? 'Estimated (station temporarily unavailable)'
+                            : 'Estimated (no station mapped)'}
+                        </span>
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-slate-600 text-[10px]">NOAA Tides &amp; Currents data</span>
+                  )}
                 </div>
               </div>
             )}
