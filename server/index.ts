@@ -7,6 +7,12 @@ import { initWeatherCache } from "./weather-service";
 import { runPushHealthCheck, runApnsHealthCheck } from "./push-health-monitor";
 import { runMigrations } from "./migrate";
 
+// In development, swap in the Clerk test secret key so the dev preview works
+// on any domain. clerkMiddleware reads CLERK_SECRET_KEY automatically.
+if (process.env.NODE_ENV !== 'production' && process.env.CLERK_DEV_SECRET_KEY) {
+  process.env.CLERK_SECRET_KEY = process.env.CLERK_DEV_SECRET_KEY;
+}
+
 // Validate required environment variables for production
 function validateEnvironment() {
   const isProduction = process.env.NODE_ENV === 'production';
