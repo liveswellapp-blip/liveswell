@@ -414,6 +414,9 @@ export async function fetchTideData(lat: number, lon: number) {
     { latRange: [46.3, 47.2], lonRange: [-124.5, -123.5], stationId: '9440910', name: 'Toke Point, WA', timezone: 'America/Los_Angeles' },
     // Westport (~46.9°N) covers central/northern WA coast including Grays Harbor
     { latRange: [47.2, 48.5], lonRange: [-124.8, -123.5], stationId: '9441102', name: 'Westport, WA', timezone: 'America/Los_Angeles' },
+    // Port Angeles (~48.1°N) covers the Strait of Juan de Fuca and northern WA spots above 48.5°N
+    // (e.g. Freshwater Bay, Dungeness Spit, and any Pacific-side spots near Cape Flattery)
+    { latRange: [48.5, 48.8], lonRange: [-124.8, -122.5], stationId: '9444900', name: 'Port Angeles, WA', timezone: 'America/Los_Angeles' },
   ];
   
   // Find the appropriate tide station

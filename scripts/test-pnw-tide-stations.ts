@@ -12,6 +12,7 @@ const STATIONS = [
   { id: '9439040', name: 'Astoria, OR'      },
   { id: '9440910', name: 'Toke Point, WA'   },
   { id: '9441102', name: 'Westport, WA'     },
+  { id: '9444900', name: 'Port Angeles, WA' },
 ];
 
 // Tide station map — must stay in sync with server/weather-service.ts (PNW entries)
@@ -24,6 +25,8 @@ const tideStationMap = [
   { latRange: [46.3, 47.2], lonRange: [-124.5, -123.5], stationId: '9440910', name: 'Toke Point, WA' },
   // Washington coast — Westport / Grays Harbor (47.2–48.5°N)
   { latRange: [47.2, 48.5], lonRange: [-124.8, -123.5], stationId: '9441102', name: 'Westport, WA' },
+  // Port Angeles — Strait of Juan de Fuca / northern WA spots above 48.5°N
+  { latRange: [48.5, 48.8], lonRange: [-124.8, -122.5], stationId: '9444900', name: 'Port Angeles, WA' },
 ];
 
 function findStation(lat: number, lon: number) {
@@ -95,11 +98,17 @@ async function main() {
     { label: 'Newport OR (South Beach area)',   lat: 44.6,  lon: -124.0,  expectedId: '9435380' },
     { label: 'Cannon Beach OR (northern OR)',   lat: 45.9,  lon: -123.97, expectedId: '9439040' },
     { label: 'Astoria OR (Columbia mouth)',     lat: 46.2,  lon: -123.8,  expectedId: '9439040' },
-    // Washington
-    { label: 'Long Beach WA (southern WA)',     lat: 46.4,  lon: -124.0, expectedId: '9440910' },
-    { label: 'Westport WA (Grays Harbor)',      lat: 46.9,  lon: -124.1, expectedId: '9440910' },
+    // Washington — southern/central (Toke Point)
+    { label: 'Long Beach WA (southern WA)',     lat: 46.4,  lon: -124.0,  expectedId: '9440910' },
+    { label: 'Westport WA (Grays Harbor)',      lat: 46.9,  lon: -124.1,  expectedId: '9440910' },
     { label: 'Ocean Shores WA (central WA)',    lat: 47.0,  lon: -124.15, expectedId: '9440910' },
-    { label: 'La Push WA (northern WA)',        lat: 47.9,  lon: -124.6, expectedId: '9441102' },
+    // Washington — northern WA coast (Westport station)
+    { label: 'La Push WA (northern WA)',        lat: 47.9,  lon: -124.6,  expectedId: '9441102' },
+    { label: 'Mukkaw Bay WA (Neah Bay area)',   lat: 48.37, lon: -124.6,  expectedId: '9441102' },
+    { label: 'Shi Shi Beach WA (~48.47°N)',     lat: 48.47, lon: -124.67, expectedId: '9441102' },
+    // Washington — north of 48.5°N (Port Angeles station — previously fell through to estimated)
+    { label: 'Freshwater Bay WA (>48.5°N)',     lat: 48.52, lon: -123.7,  expectedId: '9444900' },
+    { label: 'Dungeness Spit WA (>48.5°N)',     lat: 48.55, lon: -123.15, expectedId: '9444900' },
   ];
 
   for (const spot of surfSpots) {
@@ -117,8 +126,12 @@ async function main() {
   console.log('\n3. Source field check (expected: NOT "estimated")…\n');
 
   const checkSpots = [
-    { label: 'Seaside OR  (45.9, -123.9)',   lat: 45.9,  lon: -123.9  },
-    { label: 'Westport WA (46.9, -124.1)',   lat: 46.9,  lon: -124.1  },
+    { label: 'Seaside OR  (45.9, -123.9)',          lat: 45.9,  lon: -123.9  },
+    { label: 'Westport WA (46.9, -124.1)',          lat: 46.9,  lon: -124.1  },
+    { label: 'La Push WA  (47.9, -124.6)',          lat: 47.9,  lon: -124.6  },
+    { label: 'Mukkaw Bay  (48.37, -124.6)',         lat: 48.37, lon: -124.6  },
+    { label: 'Freshwater Bay WA (48.52, -123.7)',   lat: 48.52, lon: -123.7  },
+    { label: 'Dungeness Spit WA (48.55, -123.15)',  lat: 48.55, lon: -123.15 },
   ];
   for (const s of checkSpots) {
     const station = findStation(s.lat, s.lon);
