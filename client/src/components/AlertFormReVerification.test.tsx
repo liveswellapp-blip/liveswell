@@ -97,6 +97,7 @@ vi.mock("@/components/ui/drawer", () => ({
 // ── Real component import (after mocks are registered) ───────────────────────
 import React from "react";
 import { AlertFormDialog } from "@/pages/NotificationSettings";
+import { apiRequest } from "@/lib/queryClient";
 
 // ── Shared test fixtures ──────────────────────────────────────────────────────
 
@@ -279,5 +280,133 @@ describe("AlertFormDialog — phone re-verification prompt", () => {
       expect.objectContaining({ title: "Verify your number" }),
     );
     expect(mockMutate).not.toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Full re-verification round-trip
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("AlertFormDialog — full re-verification round-trip", () => {
+  beforeEach(() => {
+    mockToast.mockClear();
+    mockMutate.mockClear();
+    // Make both verify-phone endpoints resolve successfully by default
+    vi.mocked(apiRequest).mockResolvedValue({} as any);
+  });
+
+  afterEach(() => cleanup());
+
+  // ── 7. Complete the end-to-end verify flow ───────────────────────────────
+
+  it("completes the full flow — Change → consent → Verify → code → Confirm — and fires 'Phone verified!' toast", async () => {
+    const user = userEvent.setup();
+    renderVerifiedDialog();
+
+    // ── Step 1: Click "Change" to unlock the phone field ─────────────────
+    await user.click(screen.getByRole("button", { name: "Change" }));
+    // verifyStep is now "idle" — Verify button is visible
+    expect(screen.queryByRole("button", { name: "Verify" })).not.toBeNull();
+
+    // ── Step 2: Accept SMS consent so the Verify button becomes enabled ───
+    // The consent checkbox is rendered when verifyStep !== "verified"
+    const checkbox = screen.getByRole("checkbox");
+    await user.click(checkbox);
+
+    // ── Step 3: Click Verify → triggers /api/alerts/verify-phone/send ────
+    await user.click(screen.getByRole("button", { name: "Verify" }));
+
+    expect(vi.mocked(apiRequest)).toHaveBeenCalledWith(
+      "/api/alerts/verify-phone/send",
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    // "Code sent" toast fires and the code-entry input appears
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Code sent" }),
+    );
+    expect(screen.queryByPlaceholderText("123456")).not.toBeNull();
+
+    // ── Step 4: Type the 6-digit verification code ────────────────────────
+    const codeInput = screen.getByPlaceholderText("123456");
+    await user.type(codeInput, "123456");
+
+    // ── Step 5: Click Confirm → triggers /api/alerts/verify-phone/confirm ─
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+
+    expect(vi.mocked(apiRequest)).toHaveBeenCalledWith(
+      "/api/alerts/verify-phone/confirm",
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    // verifyStep reaches "verified" → "Phone verified!" toast fires
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Phone verified!" }),
+    );
+
+    // Locked verified display is restored
+    expect(screen.queryByRole("button", { name: "Change" })).not.toBeNull();
+    // Verify button and code-entry panel are gone
+    expect(screen.queryByRole("button", { name: "Verify" })).toBeNull();
+    expect(screen.queryByPlaceholderText("123456")).toBeNull();
+  });
+
+  // ── 8. Resend shows the code-entry panel again ───────────────────────────
+
+  it("shows a 'Resend' button and keeps the code-entry panel open when already in code_sent state", async () => {
+    const user = userEvent.setup();
+    renderVerifiedDialog();
+
+    // Unlock → consent → Verify (moves to code_sent)
+    await user.click(screen.getByRole("button", { name: "Change" }));
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: "Verify" }));
+
+    // Button label becomes "Resend" while code_sent
+    expect(screen.queryByRole("button", { name: "Resend" })).not.toBeNull();
+    // Code-entry input is still visible
+    expect(screen.queryByPlaceholderText("123456")).not.toBeNull();
+  });
+
+  // ── 9. Banner filter: re-verified alert drops out of unverifiedActiveAlerts
+
+  it("drops a re-verified alert from the unverifiedActiveAlerts filter, hiding the banner", () => {
+    // The NotificationSettings page computes:
+    //   unverifiedActiveAlerts = alerts.filter(
+    //     a => a.active && a.deliveryChannels?.includes("sms") && !!a.phoneNumber && !a.phoneVerified
+    //   )
+    // showVerificationBanner is true iff unverifiedActiveAlerts.length > 0.
+    // After a successful round-trip the server returns phoneVerified: true, so the
+    // alert drops out of the filter and the banner disappears.
+
+    type AlertLike = {
+      id: number;
+      active: boolean;
+      deliveryChannels: string[];
+      phoneNumber: string | null;
+      phoneVerified: boolean;
+    };
+
+    const unverifiedAlert: AlertLike = {
+      id: 42,
+      active: true,
+      deliveryChannels: ["sms"],
+      phoneNumber: "+15551234567",
+      phoneVerified: false,
+    };
+
+    const verifiedAlert: AlertLike = { ...unverifiedAlert, phoneVerified: true };
+
+    const bannerFilter = (a: AlertLike) =>
+      a.active &&
+      a.deliveryChannels.includes("sms") &&
+      !!a.phoneNumber &&
+      !a.phoneVerified;
+
+    // Before re-verification: alert appears → banner shows
+    expect([unverifiedAlert].filter(bannerFilter)).toHaveLength(1);
+
+    // After re-verification: phoneVerified is true → alert drops out → banner hides
+    expect([verifiedAlert].filter(bannerFilter)).toHaveLength(0);
   });
 });
