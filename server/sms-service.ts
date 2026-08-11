@@ -37,6 +37,14 @@ export function normalizePhone(phone: string): string {
   return stripped.replace(/\s/g, '');
 }
 
+interface BuoySummary {
+  stationId: string;
+  stationName?: string;
+  waveHeight: number | string;
+  wavePeriod: number;
+  waveDirection: string;
+}
+
 interface SurfConditionsData {
   waveHeight: string;
   wavePeriod: number;
@@ -50,6 +58,8 @@ interface SurfConditionsData {
   sunrise: string;
   sunset: string;
   dataTimestamp: string;
+  primaryBuoy?: BuoySummary | null;
+  backupBuoy?: BuoySummary | null;
 }
 
 const RATE_LIMIT_MAX = 3;
@@ -215,6 +225,17 @@ export class SMSService {
         hour12: true 
       });
       
+      const makeBuoySummary = (b: any): BuoySummary | null => {
+        if (!b || !b.stationId) return null;
+        return {
+          stationId: b.stationId,
+          stationName: b.stationName,
+          waveHeight: b.waveHeight,
+          wavePeriod: b.wavePeriod || 0,
+          waveDirection: b.waveDirection || '',
+        };
+      };
+
       const conditions = {
         waveHeight: `${weatherData.waveHeight}`,
         wavePeriod: weatherData.wavePeriod || 8,
@@ -234,6 +255,8 @@ export class SMSService {
         sunrise: weatherData.sunrise || '6:30 AM',
         sunset: weatherData.sunset || '6:30 PM',
         dataTimestamp: timestamp,
+        primaryBuoy: makeBuoySummary((weatherData as any).primaryBuoy),
+        backupBuoy: makeBuoySummary((weatherData as any).backupBuoy),
       };
 
       // Try AI summary (non-blocking — falls back gracefully)
@@ -302,11 +325,27 @@ export class SMSService {
 
     const aiLine = aiSentence ? `\n${aiSentence}\n` : '';
 
+    // Format buoy station lines (up to 2 if available)
+    const formatBuoyLine = (buoy: BuoySummary): string => {
+      const label = buoy.stationName || buoy.stationId;
+      const wh = buoy.waveHeight != null ? `${buoy.waveHeight}ft` : '—';
+      const wp = buoy.wavePeriod ? `${buoy.wavePeriod}s` : '';
+      const wd = buoy.waveDirection || '';
+      return `  ${label}: ${[wh, wp, wd].filter(Boolean).join(' ')}`;
+    };
+
+    const buoyLines: string[] = [];
+    if (conditions.primaryBuoy) buoyLines.push(formatBuoyLine(conditions.primaryBuoy));
+    if (conditions.backupBuoy)  buoyLines.push(formatBuoyLine(conditions.backupBuoy));
+    const buoySection = buoyLines.length > 0
+      ? `\nNearby Buoys:\n${buoyLines.join('\n')}`
+      : '';
+
     return `🌊 ${location.name} Surf Report${aiLine}
 Live Conditions (${conditions.dataTimestamp}):
 Waves: ${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}
 Wind: ${conditions.windSpeed}mph ${conditions.windDirection}
-Water: ${conditions.waterTemp}°F
+Water: ${conditions.waterTemp}°F${buoySection}
 
 Tides & Sun:
 High: ${highTides}
