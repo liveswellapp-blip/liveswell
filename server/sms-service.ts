@@ -360,8 +360,8 @@ export class SMSService {
     const aiLine = aiSentence ? `\n${aiSentence}\n` : '';
 
     const formatBuoyData = (buoy: BuoySummary): string => {
-      const wh = buoy.waveHeight != null ? `${buoy.waveHeight}ft` : '—';
-      const wp = buoy.wavePeriod ? `${buoy.wavePeriod}s` : '';
+      const wh = buoy.waveHeight != null ? `${parseFloat(buoy.waveHeight.toFixed(1))}ft` : '—';
+      const wp = buoy.wavePeriod ? `${Math.round(buoy.wavePeriod)}s` : '';
       const wd = buoy.waveDirection || '';
       return [wh, wp, wd].filter(Boolean).join(' @ ');
     };
