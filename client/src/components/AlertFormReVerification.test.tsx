@@ -368,7 +368,37 @@ describe("AlertFormDialog — full re-verification round-trip", () => {
     expect(screen.queryByPlaceholderText("123456")).not.toBeNull();
   });
 
-  // ── 9. Banner filter: re-verified alert drops out of unverifiedActiveAlerts
+  // ── 9. Clicking "Change" after a completed verify round-trip resets consent ─
+
+  it("unchecks the SMS consent checkbox when the user clicks 'Change' after a previously completed verification", async () => {
+    const user = userEvent.setup();
+    // Open with an unverified phone so the consent checkbox is immediately accessible
+    renderVerifiedDialog({ initialPhoneVerified: false });
+
+    // ── Step 1: Check the consent checkbox ───────────────────────────────────
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    // ── Step 2: Complete the verify flow so verifyStep reaches "verified" ────
+    await user.click(screen.getByRole("button", { name: "Verify" }));
+    // verifyStep → code_sent; type the code
+    const codeInput = screen.getByPlaceholderText("123456");
+    await user.type(codeInput, "123456");
+    await user.click(screen.getByRole("button", { name: "Confirm" }));
+    // verifyStep → verified; locked display + "Change" button restored
+    expect(screen.queryByRole("button", { name: "Change" })).not.toBeNull();
+
+    // ── Step 3: Click "Change" ───────────────────────────────────────────────
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // ── Step 4: Consent checkbox must be unchecked — fresh consent required ──
+    const resetCheckbox = screen.getByRole("checkbox");
+    expect(resetCheckbox).not.toBeChecked();
+  });
+
+  // ── 10. Banner filter: re-verified alert drops out of unverifiedActiveAlerts
 
   it("drops a re-verified alert from the unverifiedActiveAlerts filter, hiding the banner", () => {
     // The NotificationSettings page computes:

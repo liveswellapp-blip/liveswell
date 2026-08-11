@@ -992,6 +992,7 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
                             setVerifyStep("idle");
                             setPhoneVerifiedLocal(false);
                             setVerifyCode("");
+                            setSmsConsent(false);
                           }}
                           className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold shrink-0 transition-opacity hover:opacity-80"
                           style={{ background: "rgba(100,116,139,0.15)", border: "1px solid rgba(100,116,139,0.3)", color: "#94a3b8" }}>
