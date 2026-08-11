@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Send, FlaskConical, MessageSquareReply, Copy, CheckCheck, Smartphone, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { PhoneInputField } from "@/components/PhoneInputField";
 
 interface SurfSpot {
   id: number;
@@ -326,18 +327,11 @@ export default function LiveAlertTest() {
           {/* Phone field */}
           {needsPhone && (
             <div className="space-y-1.5">
-              <Label htmlFor="test-phone">
-                Phone number{" "}
-                <span className="text-muted-foreground text-xs">(E.164 format, e.g. +15551234567)</span>
-              </Label>
-              <Input
-                id="test-phone"
-                type="tel"
-                placeholder="+15551234567"
+              <Label htmlFor="test-phone">Phone number</Label>
+              <PhoneInputField
                 value={toPhone}
-                onChange={(e) => setToPhone(e.target.value)}
-                required={needsPhone}
-                data-testid="input-test-phone"
+                onChange={setToPhone}
+                placeholder="Local phone number"
               />
             </div>
           )}
