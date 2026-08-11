@@ -373,7 +373,7 @@ export class SMSService {
 
     // Second buoy block — only shown when a backup buoy is available
     const secondBuoySection = conditions.backupBuoy
-      ? `\n2nd Buoy: ${conditions.backupBuoy.stationName || conditions.backupBuoy.stationId}\n${formatBuoyData(conditions.backupBuoy)}`
+      ? `\n\n2nd Buoy: ${conditions.backupBuoy.stationName || conditions.backupBuoy.stationId}\n${formatBuoyData(conditions.backupBuoy)}`
       : '';
 
     return `🌊 ${location.name} Surf Report${aiLine}
