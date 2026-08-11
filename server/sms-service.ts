@@ -252,13 +252,14 @@ export class SMSService {
         return false;
       }
 
-      // Format conditions for SMS
+      // Format conditions for SMS — include date and timezone abbreviation
       const now = new Date();
-      const timestamp = now.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
+      const tz = (location as any).timezone || 'America/New_York';
+      const datePart = now.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', timeZone: tz });
+      const timePart = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz });
+      const tzAbbr = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' })
+        .formatToParts(now).find(p => p.type === 'timeZoneName')?.value ?? tz;
+      const timestamp = `${datePart} | ${timePart} ${tzAbbr}`;
       
       const makeBuoySummary = (b: any): BuoySummary | null => {
         if (!b || !b.stationId) return null;
