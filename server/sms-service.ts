@@ -359,27 +359,28 @@ export class SMSService {
 
     const aiLine = aiSentence ? `\n${aiSentence}\n` : '';
 
-    // Format buoy station lines (up to 2 if available)
-    const formatBuoyLine = (buoy: BuoySummary): string => {
-      const label = buoy.stationName || buoy.stationId;
+    const formatBuoyData = (buoy: BuoySummary): string => {
       const wh = buoy.waveHeight != null ? `${buoy.waveHeight}ft` : '—';
       const wp = buoy.wavePeriod ? `${buoy.wavePeriod}s` : '';
       const wd = buoy.waveDirection || '';
-      return `  ${label}: ${[wh, wp, wd].filter(Boolean).join(' ')}`;
+      return [wh, wp, wd].filter(Boolean).join(' ');
     };
 
-    const buoyLines: string[] = [];
-    if (conditions.primaryBuoy) buoyLines.push(formatBuoyLine(conditions.primaryBuoy));
-    if (conditions.backupBuoy)  buoyLines.push(formatBuoyLine(conditions.backupBuoy));
-    const buoySection = buoyLines.length > 0
-      ? `\nNearby Buoys:\n${buoyLines.join('\n')}`
+    // "Live Conditions" header — append primary buoy name/ID when available
+    const primaryLabel = conditions.primaryBuoy
+      ? ` · ${conditions.primaryBuoy.stationName || conditions.primaryBuoy.stationId}`
+      : '';
+
+    // Second buoy block — only shown when a backup buoy is available
+    const secondBuoySection = conditions.backupBuoy
+      ? `\n2nd Buoy: ${conditions.backupBuoy.stationName || conditions.backupBuoy.stationId}\n${formatBuoyData(conditions.backupBuoy)}`
       : '';
 
     return `🌊 ${location.name} Surf Report${aiLine}
-Live Conditions (${conditions.dataTimestamp}):
+Live Conditions (${conditions.dataTimestamp}${primaryLabel}):
 Waves: ${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}
 Wind: ${conditions.windSpeed}mph ${conditions.windDirection}
-Water: ${conditions.waterTemp}°F${buoySection}
+Water: ${conditions.waterTemp}°F${secondBuoySection}
 
 Tides & Sun:
 High: ${highTides}
