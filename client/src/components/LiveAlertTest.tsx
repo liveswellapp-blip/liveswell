@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -206,6 +206,12 @@ function IosApnsTest() {
   );
 }
 
+interface UserAlert {
+  id: number;
+  phoneNumber?: string | null;
+  phoneVerified?: boolean | null;
+}
+
 export default function LiveAlertTest() {
   const { toast } = useToast();
 
@@ -214,6 +220,24 @@ export default function LiveAlertTest() {
   const [toEmail, setToEmail] = useState("");
   const [locationId, setLocationId] = useState<string>("");
   const [alertId, setAlertId] = useState<string>("");
+
+  // Pre-fill phone from the admin's verified number
+  const { data: userAlerts } = useQuery<UserAlert[]>({
+    queryKey: ["/api/user-alerts"],
+    queryFn: async () => {
+      const res = await fetch("/api/user-alerts");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    if (!userAlerts) return;
+    const verified = userAlerts.find((a) => a.phoneVerified && a.phoneNumber);
+    if (verified?.phoneNumber) {
+      setToPhone((prev) => (prev === "" ? verified.phoneNumber! : prev));
+    }
+  }, [userAlerts]);
 
   // Fetch surf spots for the dropdown
   const { data: spotsData, isLoading: spotsLoading } = useQuery<SurfSpotsResponse>({
