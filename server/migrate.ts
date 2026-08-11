@@ -113,10 +113,19 @@ async function seedMigrationHistory(migrationsFolder: string): Promise<void> {
  * without any manual intervention.
  */
 export async function runMigrations(): Promise<void> {
-  const migrationsFolder = path.resolve(__dirname, '../migrations');
+  // Use process.cwd() so this works in both dev (tsx) and prod (node dist/index.js),
+  // falling back to the dist-relative path for environments where cwd differs.
+  const migrationsFolder = path.resolve(process.cwd(), 'migrations');
   console.log('[migrate] Checking database migrations…');
 
   try {
+    // Pre-flight: directly add any columns that migration-system bugs may have missed.
+    // Using pool.query (not Drizzle) so it runs regardless of migration state.
+    await pool.query(`
+      ALTER TABLE IF EXISTS "sms_rate_limits"
+      ADD COLUMN IF NOT EXISTS "limit_type" text NOT NULL DEFAULT 'outbound'
+    `);
+
     const applied = await appliedMigrationCount();
 
     if (applied === 0) {
