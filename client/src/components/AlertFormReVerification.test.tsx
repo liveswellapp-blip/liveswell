@@ -1,0 +1,283 @@
+// @vitest-environment jsdom
+
+/**
+ * AlertFormReVerification.test.tsx
+ *
+ * Component tests confirming that the phone re-verification prompt appears
+ * when a user changes their phone number while editing an alert.
+ *
+ * Scenario: the alert was previously saved with a verified phone number.
+ * The user opens the edit dialog, clicks "Change" or types a new number,
+ * and the form must require re-verification before saving.
+ *
+ * Done-criteria tested:
+ *   1. Pre-verified alert shows the locked-phone / "Change" UI
+ *   2. Clicking "Change" resets to unverified state (Verify button appears)
+ *   3. Typing a new phone number into the unlocked field keeps Verify visible
+ *   4. Trying to Save while unverified blocks the mutation and fires the toast
+ *   5. Opening with phoneVerified=false (server response after a number change)
+ *      immediately shows Verify and blocks Save
+ */
+
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+// ── Mocks (must be declared before any component imports) ────────────────────
+
+const mockToast = vi.fn();
+
+vi.mock("@/hooks/use-toast", () => ({
+  useToast: () => ({ toast: mockToast }),
+}));
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ user: { id: "test-user" } }),
+}));
+
+// Desktop mode — component renders a Dialog (not a Drawer)
+vi.mock("@/hooks/use-mobile", () => ({
+  useIsMobile: () => false,
+}));
+
+vi.mock("wouter", () => ({
+  useLocation: () => ["/alerts", vi.fn()],
+  Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+const mockMutate = vi.fn();
+
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useMutation: () => ({ mutate: mockMutate, isPending: false }),
+    useQuery: () => ({ data: [], isLoading: false }),
+  };
+});
+
+vi.mock("@/lib/queryClient", () => ({
+  apiRequest: vi.fn(),
+  queryClient: { invalidateQueries: vi.fn() },
+}));
+
+vi.mock("@/lib/push-notifications", () => ({
+  pushNotifications: {
+    isSupported:     vi.fn().mockResolvedValue(false),
+    subscribe:       vi.fn().mockResolvedValue(null),
+    isNativeIOS:     vi.fn().mockResolvedValue(false),
+    isNativeAndroid: vi.fn().mockResolvedValue(false),
+  },
+}));
+
+// Stub page-level components that pull in image assets not available in jsdom
+vi.mock("@/components/Header", () => ({ default: () => null }));
+vi.mock("@/components/Footer", () => ({ default: () => null }));
+
+// Render Dialog and Drawer inline (no Radix portal) so that:
+//   - All rendered content lives inside the test container, not document.body
+//   - No `pointer-events: none` is added to document.body by Radix
+//   - userEvent can interact freely with PhoneInputField inside the form
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="dialog">{children}</div> : null,
+  DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DialogTitle:  ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+}));
+
+vi.mock("@/components/ui/drawer", () => ({
+  Drawer: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+    open ? <div data-testid="drawer">{children}</div> : null,
+  DrawerContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DrawerHeader:  ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DrawerTitle:   ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+}));
+
+// ── Real component import (after mocks are registered) ───────────────────────
+import React from "react";
+import { AlertFormDialog } from "@/pages/NotificationSettings";
+
+// ── Shared test fixtures ──────────────────────────────────────────────────────
+
+const FAKE_LOCATION = {
+  id: 1,
+  name: "Malibu",
+  city: "Malibu",
+  country: "US",
+  latitude: "34.0",
+  longitude: "-118.0",
+  isCoastal: true,
+};
+
+/** Initial form data: alert already has a VERIFIED phone number */
+const VERIFIED_INITIAL_DATA = {
+  locationId: 1,
+  label: "",
+  alertType: "daily_report" as const,
+  frequency: "once_daily" as const,
+  notificationTime: "08:00",
+  notificationTimeTwo: "18:00",
+  timezone: "America/New_York",
+  channels: { push: false, sms: true, email: false },
+  phoneNumber: "+15551234567",
+  swellMinHeight: 4,
+  swellMinPeriod: 0,
+  windThreshold: 15,
+  windTriggerWhen: "below" as const,
+  windDirectionFilter: "any" as const,
+  tideType: "high" as const,
+  tideWindowMinutes: 30,
+  cooldownHours: 4,
+};
+
+function renderVerifiedDialog(
+  overrides: Partial<React.ComponentProps<typeof AlertFormDialog>> = {},
+) {
+  const props: React.ComponentProps<typeof AlertFormDialog> = {
+    open: true,
+    onClose: vi.fn(),
+    onSaveSuccess: vi.fn(),
+    initialData: VERIFIED_INITIAL_DATA,
+    editId: 42,
+    userEmail: "surfer@example.com",
+    favorites: [FAKE_LOCATION],
+    initialPhoneVerified: true,
+    initialEmailUnsubscribed: false,
+    existingAlerts: [],
+    ...overrides,
+  };
+  return render(<AlertFormDialog {...props} />);
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe("AlertFormDialog — phone re-verification prompt", () => {
+  beforeEach(() => {
+    mockToast.mockClear();
+    mockMutate.mockClear();
+  });
+
+  // `globals: false` means @testing-library/react cannot hook into the global
+  // afterEach — call cleanup() explicitly so DOM doesn't accumulate across tests.
+  afterEach(() => cleanup());
+
+  // ── 1. Verified state renders correctly ──────────────────────────────────
+
+  it("shows the locked phone display and a 'Change' button when the phone is pre-verified", () => {
+    renderVerifiedDialog();
+
+    // The locked display shows the phone number
+    expect(screen.queryByText("+15551234567")).not.toBeNull();
+
+    // "Change" lets the user unlock the field to enter a new number
+    expect(screen.queryByRole("button", { name: "Change" })).not.toBeNull();
+
+    // The Verify button must NOT appear while the phone is already verified
+    expect(screen.queryByRole("button", { name: "Verify" })).toBeNull();
+  });
+
+  // ── 2. Clicking "Change" triggers the unverified / re-verify state ───────
+
+  it("shows the Verify button after clicking 'Change', signalling re-verification is required", async () => {
+    const user = userEvent.setup();
+    renderVerifiedDialog();
+
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // Phone input + Verify button must now be visible (idle / unverified state)
+    expect(screen.queryByRole("button", { name: "Verify" })).not.toBeNull();
+    // The locked "Change" display must be gone
+    expect(screen.queryByRole("button", { name: "Change" })).toBeNull();
+  });
+
+  // ── 3. Typing a new number into the unlocked field keeps Verify visible ──
+
+  it("keeps the Verify button visible after the user types a new number into the unlocked phone field", async () => {
+    const user = userEvent.setup();
+    const { container } = renderVerifiedDialog();
+
+    // Unlock the phone field
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // With Dialog mocked inline, the input lives in `container` (no portal)
+    const phoneInput = container.querySelector(".PhoneInputInput") as HTMLInputElement;
+    expect(phoneInput).not.toBeNull();
+
+    // Type a new digit — this fires handlePhoneChange with a value different
+    // from prevPhone.current, confirming phoneVerifiedLocal stays false.
+    await user.click(phoneInput);
+    await user.type(phoneInput, "9");
+
+    // Verify button must remain visible — the changed number is still unverified
+    expect(screen.queryByRole("button", { name: "Verify" })).not.toBeNull();
+  });
+
+  // ── 4. Save is blocked after clicking "Change" without completing verify ─
+
+  it("fires a 'Verify your number' toast and blocks Save after clicking 'Change' without verifying", async () => {
+    const user = userEvent.setup();
+    renderVerifiedDialog();
+
+    // Unlock the phone field — phoneVerifiedLocal resets to false
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // Attempt to save without going through the verify flow
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    // Form gate must block the save and prompt to verify
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Verify your number" }),
+    );
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  // ── 5. Save is blocked after typing a new number without verifying ───────
+
+  it("fires a 'Verify your number' toast and blocks Save after typing a new phone number without verifying", async () => {
+    const user = userEvent.setup();
+    const { container } = renderVerifiedDialog();
+
+    // Unlock the phone field
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // Type a new digit to confirm the number-change handler resets verification
+    const phoneInput = container.querySelector(".PhoneInputInput") as HTMLInputElement;
+    expect(phoneInput).not.toBeNull();
+    await user.click(phoneInput);
+    await user.type(phoneInput, "9");
+
+    // Attempt to save the alert with the unverified changed number
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    // Save must be blocked
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Verify your number" }),
+    );
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+
+  // ── 6. Dialog opened with phoneVerified=false mirrors server response ────
+  //       after a phone number change (PUT returns phoneVerified=false)
+
+  it("shows the Verify button when the dialog opens with phoneVerified=false (the server response after a number change)", () => {
+    renderVerifiedDialog({ initialPhoneVerified: false });
+
+    // Verify prompt must appear immediately — the new number needs confirmation
+    expect(screen.queryByRole("button", { name: "Verify" })).not.toBeNull();
+    // Locked verified display must NOT appear
+    expect(screen.queryByRole("button", { name: "Change" })).toBeNull();
+  });
+
+  it("fires a 'Verify your number' toast and blocks Save when phoneVerified=false on open", async () => {
+    const user = userEvent.setup();
+    renderVerifiedDialog({ initialPhoneVerified: false });
+
+    await user.click(screen.getByRole("button", { name: "Save Changes" }));
+
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Verify your number" }),
+    );
+    expect(mockMutate).not.toHaveBeenCalled();
+  });
+});

@@ -464,7 +464,7 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, initialEmailUnsubscribed, existingAlerts }: {
+export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, initialEmailUnsubscribed, existingAlerts }: {
   open: boolean;
   onClose: () => void;
   onSaveSuccess?: (alertId: number) => void;
