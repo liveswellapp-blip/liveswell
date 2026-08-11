@@ -22,7 +22,7 @@ import {
   trackOpenWeatherUsage 
 } from './rate-limiter';
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
-import { SMSService } from "./sms-service";
+import { SMSService, PhoneConflictError } from "./sms-service";
 import { EmailService } from "./email-service";
 import { findNearbyStations } from "./noaa-integration";
 import { setupAuth, isAuthenticated } from "./auth";
@@ -3233,11 +3233,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!phoneNumber || !code) {
         return res.status(400).json({ message: "phoneNumber and code are required" });
       }
-      const { SMSService } = await import("./sms-service");
+
+      // verifyCode() validates the submitted code first, then attempts to
+      // write the verified-phones row.  If the phone is already owned by a
+      // different account the DB unique constraint fires and verifyCode()
+      // throws PhoneConflictError — so the conflict is only revealed after
+      // the caller has proved they control the phone (correct code).
       const ok = await SMSService.verifyCode(userId, phoneNumber.trim(), String(code).trim());
       if (!ok) return res.status(400).json({ message: "Invalid or expired code" });
       res.json({ success: true });
     } catch (error) {
+      if (error instanceof PhoneConflictError) {
+        return res.status(409).json({ message: "This number is already linked to another account" });
+      }
       console.error("Error confirming verification code:", error);
       res.status(500).json({ message: "Failed to confirm code" });
     }

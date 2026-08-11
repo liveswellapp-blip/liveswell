@@ -20,21 +20,41 @@ const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
 /**
  * Normalise a phone number to E.164 format.
- * - Already-E.164 numbers (starting with +) are returned as-is.
+ * All non-digit characters (spaces, dashes, parentheses, etc.) are stripped
+ * before the country-code logic runs, so formatted strings like
+ * "+1 (555) 123-4567" produce the same canonical value as "+15551234567".
+ *
+ * - Numbers that begin with "+" after trimming have their country code
+ *   preserved; only punctuation is removed.
  * - 10-digit US numbers get "+1" prepended.
  * - 11-digit numbers starting with "1" get "+" prepended.
- * - Everything else is returned with only whitespace stripped so Twilio
- *   can surface a meaningful error rather than a silent wrong-number failure.
+ * - Everything else is returned digits-only so Twilio can surface a
+ *   meaningful error rather than a mangled destination.
  */
 export function normalizePhone(phone: string): string {
   const stripped = phone.trim();
-  if (stripped.startsWith('+')) return stripped;
+  const hasPlus = stripped.startsWith('+');
+  // Strip all non-digit characters so formatted inputs are canonicalised
   const digits = stripped.replace(/\D/g, '');
+  if (hasPlus) return `+${digits}`;
   if (digits.length === 10) return `+1${digits}`;
   if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
-  // Unknown format — return digits-only with no country code so Twilio
-  // rejects it with a clear error rather than a mangled destination.
-  return stripped.replace(/\s/g, '');
+  // Unknown format — return digits-only so Twilio can reject it clearly.
+  return digits;
+}
+
+/**
+ * Thrown by SMSService.verifyCode() when the submitted phone number is
+ * already verified under a *different* user account.  The route layer
+ * converts this to a 409 response.  Throwing only after the code has been
+ * validated means callers cannot use the error to enumerate ownership of
+ * arbitrary phone numbers.
+ */
+export class PhoneConflictError extends Error {
+  constructor() {
+    super('Phone number is already verified under a different account');
+    this.name = 'PhoneConflictError';
+  }
 }
 
 interface BuoySummary {
@@ -163,14 +183,28 @@ export class SMSService {
     if (!entry) return false;
     if (entry.code !== code.trim()) return false;
 
-    // Delete the used token
+    // Code is valid — consume the token before writing verified state so
+    // a replay cannot piggyback on a still-present token.
     await db.delete(phoneVerificationTokens).where(eq(phoneVerificationTokens.id, entry.id));
 
-    // Persist the verified status — upsert by deleting + inserting
+    // Remove any existing verified-phone row for THIS user+phone, then
+    // insert a fresh one.  The unique index on verified_phones.phone means
+    // that if a *different* user already owns this number the insert will
+    // throw a uniqueness violation (PG error code 23505), which we surface
+    // as PhoneConflictError.  The check happens after code validation so
+    // callers cannot enumerate ownership of arbitrary phone numbers.
     await db.delete(verifiedPhonesTable).where(
       and(eq(verifiedPhonesTable.userId, userId), eq(verifiedPhonesTable.phone, phone))
     );
-    await db.insert(verifiedPhonesTable).values({ userId, phone, verifiedAt: now });
+    try {
+      await db.insert(verifiedPhonesTable).values({ userId, phone, verifiedAt: now });
+    } catch (err: any) {
+      // PostgreSQL unique_violation = SQLSTATE 23505
+      if (err?.code === '23505' || err?.message?.includes('unique')) {
+        throw new PhoneConflictError();
+      }
+      throw err;
+    }
 
     return true;
   }

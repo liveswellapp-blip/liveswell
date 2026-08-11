@@ -119,12 +119,51 @@ export async function runMigrations(): Promise<void> {
   console.log('[migrate] Checking database migrations…');
 
   try {
-    // Pre-flight: directly add any columns that migration-system bugs may have missed.
+    // Pre-flight: directly add any columns / indexes that migration-system bugs may have missed.
     // Using pool.query (not Drizzle) so it runs regardless of migration state.
     await pool.query(`
       ALTER TABLE IF EXISTS "sms_rate_limits"
       ADD COLUMN IF NOT EXISTS "limit_type" text NOT NULL DEFAULT 'outbound'
     `);
+
+    // Pre-flight: canonicalize phone values and enforce uniqueness on
+    // verified_phones.phone — but only if the table already exists.
+    // On a fresh database migration 0000 hasn't run yet, so the table is
+    // absent; on an existing deployment it is present and needs backfilling.
+    const { rows: [{ vp_exists }] } = await pool.query<{ vp_exists: boolean }>(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'verified_phones'
+      ) AS vp_exists
+    `);
+
+    if (vp_exists) {
+      // Canonicalize any +‐prefixed phone values stored before normalizePhone()
+      // was fixed to strip punctuation.  Already-canonical values are unchanged.
+      await pool.query(`
+        UPDATE "verified_phones"
+        SET phone = '+' || regexp_replace(phone, '[^0-9]', '', 'g')
+        WHERE phone LIKE '+%'
+          AND phone <> '+' || regexp_replace(phone, '[^0-9]', '', 'g')
+      `);
+
+      // Remove any duplicates produced by canonicalization, keeping the most
+      // recently verified row per phone number.
+      await pool.query(`
+        DELETE FROM "verified_phones"
+        WHERE id NOT IN (
+          SELECT DISTINCT ON (phone) id
+          FROM "verified_phones"
+          ORDER BY phone, verified_at DESC
+        )
+      `);
+
+      // Enforce one-account-per-phone at the database level.
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS "UQ_verified_phones_phone"
+        ON "verified_phones" ("phone")
+      `);
+    }
 
     const applied = await appliedMigrationCount();
 

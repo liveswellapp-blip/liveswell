@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { SMSService } from "./sms-service";
+import { SMSService, normalizePhone, PhoneConflictError } from "./sms-service";
 import { db } from "./db";
 import {
   users,
@@ -307,5 +307,132 @@ describe("SMSService.verifyCode() — replay prevention", () => {
     // Re-using the same code must not succeed once the token is consumed.
     const secondAttempt = await SMSService.verifyCode(currentUserId, currentPhone, code);
     expect(secondAttempt).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests — phone ownership conflict
+// ---------------------------------------------------------------------------
+
+describe("SMSService.verifyCode() — phone conflict", () => {
+  // A secondary user to attempt verification of a phone already owned by
+  // currentUserId.  Managed here so the outer afterEach is not polluted.
+  let secondaryUserId: string;
+
+  beforeEach(async () => {
+    const n = ++testCounter;
+    secondaryUserId = `test-sms-conflict-B-${Date.now()}-${n}`;
+    await db.insert(users).values({ id: secondaryUserId });
+  });
+
+  afterEach(async () => {
+    await db
+      .delete(phoneVerificationTokens)
+      .where(eq(phoneVerificationTokens.userId, secondaryUserId));
+    await db
+      .delete(verifiedPhones)
+      .where(eq(verifiedPhones.userId, secondaryUserId));
+    await db.delete(users).where(eq(users.id, secondaryUserId));
+  });
+
+  it("throws PhoneConflictError when the phone is already verified under a different account", async () => {
+    const code = "121212";
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Primary user claims the phone first.
+    await seedToken(currentUserId, currentPhone, code, expiresAt);
+    await SMSService.verifyCode(currentUserId, currentPhone, code);
+
+    // Secondary user presents a valid code for the same phone.
+    const code2 = "343434";
+    await seedToken(secondaryUserId, currentPhone, code2, expiresAt);
+
+    await expect(
+      SMSService.verifyCode(secondaryUserId, currentPhone, code2),
+    ).rejects.toThrow(PhoneConflictError);
+  });
+
+  it("does not leave a verified_phones row for the conflicting user after the error", async () => {
+    const code = "565656";
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Owner claims the phone.
+    await seedToken(currentUserId, currentPhone, code, expiresAt);
+    await SMSService.verifyCode(currentUserId, currentPhone, code);
+
+    // Conflicting user tries to claim the same phone.
+    const code2 = "787878";
+    await seedToken(secondaryUserId, currentPhone, code2, expiresAt);
+    await expect(
+      SMSService.verifyCode(secondaryUserId, currentPhone, code2),
+    ).rejects.toThrow(PhoneConflictError);
+
+    // No verified row must exist for the conflicting user.
+    const rows = await db
+      .select()
+      .from(verifiedPhones)
+      .where(
+        and(
+          eq(verifiedPhones.userId, secondaryUserId),
+          eq(verifiedPhones.phone, currentPhone),
+        ),
+      );
+    expect(rows).toHaveLength(0);
+  });
+
+  it("resolves formatted legacy phone numbers to the same canonical value as the conflicting user", async () => {
+    // Simulate a pre-migration row stored in formatted form (e.g. "+1 (555) 000-XXXX").
+    // After migration such rows are canonicalized, but this test seeds the
+    // canonical form directly (as it would appear post-migration) and verifies
+    // that a second user presenting the same digits with formatting also conflicts.
+    const code = "246810";
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Owner verifies using the canonical form.
+    await seedToken(currentUserId, currentPhone, code, expiresAt);
+    await SMSService.verifyCode(currentUserId, currentPhone, code);
+
+    // Attacker supplies the same digits with dashes/spaces — normalizePhone()
+    // must produce the same canonical value so the conflict is detected.
+    const formattedPhone = currentPhone.replace(
+      /^\+1(\d{3})(\d{3})(\d{4})$/,
+      "+1 ($1) $2-$3",
+    );
+    const code2 = "135791";
+    // Seed the token with the canonical phone (as the server would store it
+    // after calling normalizePhone on whatever the user supplied).
+    await seedToken(secondaryUserId, currentPhone, code2, expiresAt);
+
+    await expect(
+      SMSService.verifyCode(secondaryUserId, formattedPhone, code2),
+    ).rejects.toThrow(PhoneConflictError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests — normalizePhone() canonicalization
+// ---------------------------------------------------------------------------
+
+describe("normalizePhone() — canonicalization", () => {
+  it("strips spaces and punctuation from a formatted +‐prefixed number", () => {
+    expect(normalizePhone("+1 (555) 123-4567")).toBe("+15551234567");
+  });
+
+  it("leaves an already-canonical E.164 number unchanged", () => {
+    expect(normalizePhone("+15551234567")).toBe("+15551234567");
+  });
+
+  it("adds +1 to a bare 10-digit US number", () => {
+    expect(normalizePhone("5551234567")).toBe("+15551234567");
+  });
+
+  it("adds + to an 11-digit number starting with 1", () => {
+    expect(normalizePhone("15551234567")).toBe("+15551234567");
+  });
+
+  it("produces the same canonical value for a formatted and canonical representation of the same number", () => {
+    expect(normalizePhone("+1 (555) 123-4567")).toBe(
+      normalizePhone("+15551234567"),
+    );
   });
 });

@@ -137,7 +137,10 @@ export const verifiedPhones = pgTable("verified_phones", {
   userId: varchar("user_id").references(() => users.id).notNull(),
   phone: text("phone").notNull(),
   verifiedAt: timestamp("verified_at").defaultNow().notNull(),
-}, (table) => [index("IDX_verified_phones_user_phone").on(table.userId, table.phone)]);
+}, (table) => [
+  index("IDX_verified_phones_user_phone").on(table.userId, table.phone),
+  unique("UQ_verified_phones_phone").on(table.phone),
+]);
 
 export const agentConversations = pgTable("agent_conversations", {
   id: serial("id").primaryKey(),
