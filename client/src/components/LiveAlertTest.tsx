@@ -212,6 +212,10 @@ interface UserAlert {
   phoneVerified?: boolean | null;
 }
 
+interface AuthUser {
+  email?: string | null;
+}
+
 export default function LiveAlertTest() {
   const { toast } = useToast();
 
@@ -231,6 +235,16 @@ export default function LiveAlertTest() {
     },
   });
 
+  // Pre-fill email from the admin's account
+  const { data: authUser } = useQuery<AuthUser>({
+    queryKey: ["/api/auth/user"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/user");
+      if (!res.ok) return {};
+      return res.json();
+    },
+  });
+
   useEffect(() => {
     if (!userAlerts) return;
     const verified = userAlerts.find((a) => a.phoneVerified && a.phoneNumber);
@@ -238,6 +252,12 @@ export default function LiveAlertTest() {
       setToPhone((prev) => (prev === "" ? verified.phoneNumber! : prev));
     }
   }, [userAlerts]);
+
+  useEffect(() => {
+    if (authUser?.email) {
+      setToEmail((prev) => (prev === "" ? authUser.email! : prev));
+    }
+  }, [authUser]);
 
   // Fetch surf spots for the dropdown
   const { data: spotsData, isLoading: spotsLoading } = useQuery<SurfSpotsResponse>({
