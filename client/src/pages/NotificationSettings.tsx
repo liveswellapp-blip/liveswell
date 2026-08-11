@@ -15,6 +15,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location } from "@/types/weather";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { PhoneInputField } from "@/components/PhoneInputField";
 import { pushNotifications } from "@/lib/push-notifications";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -506,11 +507,13 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
   const prevPhone = useRef(initialData?.phoneNumber ?? "");
 
   const handlePhoneChange = (val: string) => {
-    patch("phoneNumber", val);
+    // react-phone-number-input returns undefined when empty — treat as ""
+    const safe = val ?? "";
+    patch("phoneNumber", safe);
     // Clear the error as soon as the user starts editing again
     if (phoneError) setPhoneError("");
-    if (val !== prevPhone.current) {
-      prevPhone.current = val;
+    if (safe !== prevPhone.current) {
+      prevPhone.current = safe;
       setPhoneVerifiedLocal(false);
       setVerifyStep("idle");
       setVerifyCode("");
@@ -518,18 +521,8 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
   };
 
   const handlePhoneBlur = () => {
-    const normalized = normalizePhoneNumber(form.phoneNumber);
-    if (normalized !== form.phoneNumber) {
-      patch("phoneNumber", normalized);
-      if (normalized !== prevPhone.current) {
-        prevPhone.current = normalized;
-        setPhoneVerifiedLocal(false);
-        setVerifyStep("idle");
-        setVerifyCode("");
-      }
-    }
-    // Show an inline error if the number is non-empty but not valid E.164
-    const final = normalized.trim();
+    // The library already outputs E.164, so no normalization is needed.
+    const final = form.phoneNumber.trim();
     if (final && !isValidE164(final)) {
       setPhoneError("Looks like an incomplete number");
     } else {
@@ -1019,18 +1012,12 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
                       /* Unverified / editing state: editable input + Verify button */
                       <div className="mt-1 space-y-1">
                         <div className="flex items-center gap-2">
-                          <input
-                            className={INPUT_CLS}
-                            style={{
-                              ...SEL,
-                              flex: 1,
-                              ...(phoneError ? { border: "1px solid rgba(239,68,68,0.6)", boxShadow: "0 0 0 1px rgba(239,68,68,0.25)" } : {}),
-                            }}
-                            placeholder="+15551234567"
+                          <PhoneInputField
                             value={form.phoneNumber}
-                            onChange={e => handlePhoneChange(e.target.value)}
+                            onChange={handlePhoneChange}
                             onBlur={handlePhoneBlur}
-                            type="tel"
+                            hasError={!!phoneError}
+                            disabled={isSendingCode}
                           />
                           <button
                             onClick={handleSendCode}
