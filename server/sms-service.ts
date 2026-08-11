@@ -71,6 +71,7 @@ interface SurfConditionsData {
   waveDirection: string;
   windSpeed: string;
   windDirection: string;
+  windGusts?: string | null;
   waterTemp: string;
   tideHigh: Array<{ time: string; height: string }>;
   tideLow: Array<{ time: string; height: string }>;
@@ -276,6 +277,7 @@ export class SMSService {
         waveDirection: weatherData.waveDirection || 'W',
         windSpeed: `${weatherData.windSpeed}`,
         windDirection: weatherData.windDirection || 'W',
+        windGusts: weatherData.windGusts ? `${weatherData.windGusts}` : null,
         waterTemp: `${Math.round(weatherData.waterTemp)}`,
         tideHigh: weatherData.tideHigh || [
           { time: '5:30 AM', height: '5.4' },
@@ -351,11 +353,9 @@ export class SMSService {
       return 'Very High';
     };
 
-    // Format high tides
-    const highTides = conditions.tideHigh.map(tide => `${tide.time} (${tide.height}ft)`).join(', ');
-    
-    // Format low tides
-    const lowTides = conditions.tideLow.map(tide => `${tide.time} (${tide.height}ft)`).join(', ');
+    // Tides — pipe-separated per type
+    const highTides = conditions.tideHigh.map(t => `${t.time} (${t.height}ft)`).join(' | ');
+    const lowTides  = conditions.tideLow.map(t  => `${t.time} (${t.height}ft)`).join(' | ');
 
     const aiLine = aiSentence ? `\n${aiSentence}\n` : '';
 
@@ -363,31 +363,50 @@ export class SMSService {
       const wh = buoy.waveHeight != null ? `${buoy.waveHeight}ft` : '—';
       const wp = buoy.wavePeriod ? `${buoy.wavePeriod}s` : '';
       const wd = buoy.waveDirection || '';
-      return [wh, wp, wd].filter(Boolean).join(' ');
+      return [wh, wp, wd].filter(Boolean).join(' @ ');
     };
 
-    // "Live Conditions" header — append primary buoy name/ID when available
-    const primaryLabel = conditions.primaryBuoy
-      ? ` · ${conditions.primaryBuoy.stationName || conditions.primaryBuoy.stationId}`
+    // Swell section — primary always shown; secondary only when available
+    const primaryBuoyName = conditions.primaryBuoy
+      ? `${conditions.primaryBuoy.stationId} ${conditions.primaryBuoy.stationName || ''}`.trim()
+      : null;
+    const primarySwellLine = primaryBuoyName
+      ? `Primary Buoy - ${primaryBuoyName}\n${formatBuoyData(conditions.primaryBuoy!)}`
+      : `${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}`;
+
+    const secondaryBuoyName = conditions.backupBuoy
+      ? `${conditions.backupBuoy.stationId} ${conditions.backupBuoy.stationName || ''}`.trim()
+      : null;
+    const secondarySwellLine = secondaryBuoyName
+      ? `\n\nSecondary Buoy - ${secondaryBuoyName}\n${formatBuoyData(conditions.backupBuoy!)}`
       : '';
 
-    // Second buoy block — only shown when a backup buoy is available
-    const secondBuoySection = conditions.backupBuoy
-      ? `\n\n2nd Buoy: ${conditions.backupBuoy.stationName || conditions.backupBuoy.stationId}\n${formatBuoyData(conditions.backupBuoy)}`
-      : '';
+    // Wind — append gusts when available
+    const windLine = conditions.windGusts
+      ? `${conditions.windSpeed}mph ${conditions.windDirection} | Gusts ${conditions.windGusts}mph ${conditions.windDirection}`
+      : `${conditions.windSpeed}mph ${conditions.windDirection}`;
 
-    return `🌊 ${location.name} Surf Report${aiLine}
-Live Conditions (${conditions.dataTimestamp}${primaryLabel}):
-Waves: ${conditions.waveHeight}ft @ ${conditions.wavePeriod}s ${conditions.waveDirection}
-Wind: ${conditions.windSpeed}mph ${conditions.windDirection}
-Water: ${conditions.waterTemp}°F${secondBuoySection}
+    return `${location.name} Surf Report${aiLine}
 
-Tides & Sun:
-High: ${highTides}
-Low: ${lowTides}
-Sunrise: ${conditions.sunrise} | Sunset: ${conditions.sunset} | UV: ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})
+Live Conditions (${conditions.dataTimestamp})
 
-Reply STOP to opt out. liveswell.io`;
+Swell
+${primarySwellLine}${secondarySwellLine}
+
+Wind
+${windLine}
+
+Water
+${conditions.waterTemp}°F
+
+Tides & Sun
+High - ${highTides}
+Low - ${lowTides}
+Sunrise - ${conditions.sunrise}
+Sunset - ${conditions.sunset}
+UV - ${conditions.uvIndex} (${getUVDescription(conditions.uvIndex)})
+
+Reply STOP to opt out.`;
   }
 
   static async sendConditionAlert(
