@@ -18,6 +18,7 @@ import Header from "@/components/Header";
 import { PhoneInputField } from "@/components/PhoneInputField";
 import { pushNotifications } from "@/lib/push-notifications";
 import { useAuth } from "@/hooks/useAuth";
+import { isValidE164, normalizePhoneNumber, phoneBlurError, isVerifyButtonEnabled } from "@/lib/phoneValidation";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type AlertTypeId = "daily_report" | "swell" | "wind" | "tide";
@@ -522,25 +523,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
 
   const handlePhoneBlur = () => {
     // The library already outputs E.164, so no normalization is needed.
-    const final = form.phoneNumber.trim();
-    if (final && !isValidE164(final)) {
-      setPhoneError("Looks like an incomplete number");
-    } else {
-      setPhoneError("");
-    }
-  };
-
-  /** Returns true when the string is a plausible E.164 phone number (+[digits], 8–15 chars total). */
-  const isValidE164 = (s: string): boolean => /^\+[1-9]\d{6,14}$/.test(s);
-
-  /** Convert common US phone formats to E.164 before sending to the server. */
-  const normalizePhoneNumber = (raw: string): string => {
-    const s = raw.trim();
-    if (s.startsWith("+")) return s; // already E.164 or international — pass through
-    const digits = s.replace(/\D/g, "");
-    if (digits.length === 10) return `+1${digits}`;
-    if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-    return s; // unknown format — let the server validate
+    setPhoneError(phoneBlurError(form.phoneNumber));
   };
 
   const handleSendCode = async () => {
@@ -550,6 +533,13 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
       return;
     }
     const phone = normalizePhoneNumber(raw);
+    // Guard: react-phone-number-input outputs E.164 for complete numbers and ""
+    // for incomplete ones. Re-validate here so a number that bypasses the blur
+    // check (e.g. pasted value, rapid country switch) never reaches the API.
+    if (!isValidE164(phone)) {
+      setPhoneError("Looks like an incomplete number");
+      return;
+    }
     setIsSendingCode(true);
     try {
       await apiRequest("/api/alerts/verify-phone/send", { method: "POST", body: { phoneNumber: phone } });
@@ -1021,7 +1011,7 @@ function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, us
                           />
                           <button
                             onClick={handleSendCode}
-                            disabled={isSendingCode || !form.phoneNumber.trim() || !!phoneError || !smsConsent}
+                            disabled={!isVerifyButtonEnabled({ phoneNumber: form.phoneNumber, smsConsent, isSendingCode })}
                             className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold shrink-0 transition-opacity hover:opacity-80 disabled:opacity-40"
                             style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)", color: "#34d399" }}>
                             {isSendingCode ? "Sending…" : verifyStep === "code_sent" ? "Resend" : "Verify"}
