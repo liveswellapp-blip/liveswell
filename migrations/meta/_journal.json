@@ -15,6 +15,13 @@
       "when": 1785870078378,
       "tag": "0001_remove_legacy_auth_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1754949600000,
+      "tag": "0002_add_sms_rate_limit_type",
+      "breakpoints": true
     }
   ]
 }
