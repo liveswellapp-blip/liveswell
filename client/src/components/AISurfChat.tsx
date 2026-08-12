@@ -150,6 +150,22 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
           }
         }
       }
+
+      // Guard: if the stream ended with no tokens, the assistant bubble would
+      // be blank.  Replace it with a user-friendly fallback message.
+      if (!firstToken) {
+        setMessages(prev => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last?.role === "assistant" && last.content === "") {
+            updated[updated.length - 1] = {
+              ...last,
+              content: "Sorry, I couldn't generate a response. Please try again.",
+            };
+          }
+          return updated;
+        });
+      }
     } catch {
       setError("Couldn't connect. Tap retry to try again.");
       // Roll back to the pre-send message list

@@ -3901,6 +3901,14 @@ Do not discuss topics unrelated to surfing or ocean activities.`;
         }
       }
 
+      // Guard: if the model returned an empty stream (zero tokens), send a
+      // fallback message so the client never shows a blank assistant bubble.
+      if (totalTokens === 0) {
+        const fallback = "Sorry, I couldn't generate a response. Please try again.";
+        res.write(`data: ${JSON.stringify({ token: fallback })}\n\n`);
+        console.warn(`⚠️  AI surf chat: empty stream for location ${locId} (${location.name}) — sent fallback`);
+      }
+
       res.write("data: [DONE]\n\n");
       res.end();
       console.log(`✅ AI surf chat streamed ${totalTokens} token chunks for location ${locId} (${location.name})`);
