@@ -31,6 +31,65 @@ Preferred communication style: Simple, everyday language.
 - **Integration**: Real-time NOAA marine data and comprehensive surf forecasting with multiple data overlays.
 - **AI Surf Summary**: Intelligent wind classification system that accurately determines onshore/offshore/sideshore conditions based on coastline orientation (East Coast, West Coast, Gulf Coast) and real-time wind direction.
 
+## Push Notification Setup (iOS APNs & Android FCM)
+
+Native push notifications for iOS and Android require credentials from Apple and Firebase. The server code is fully wired up — it will log a warning at startup and gracefully disable native push until the secrets are set.
+
+### iOS — Apple Push Notification service (APNs)
+
+**One-time setup:**
+1. Sign in to [developer.apple.com](https://developer.apple.com) → Certificates, Identifiers & Profiles → **Keys**.
+2. Click **+** to create a new key. Enable **Apple Push Notifications service (APNs)**. Download the `.p8` file — **it can only be downloaded once**.
+3. Note the **Key ID** (10-character string shown on the key detail page).
+4. Note your **Team ID** — it appears in the top-right corner of the developer portal under your account name.
+5. Set these Replit Secrets:
+   - `APNS_KEY` — full contents of the `.p8` file (paste the entire text including `-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`).
+   - `APNS_KEY_ID` — the 10-character Key ID.
+   - `APNS_TEAM_ID` — the 10-character Team ID.
+   - `APNS_BUNDLE_ID` — your app's bundle identifier (default: `com.liveswell.app`).
+   - `APNS_SANDBOX` — set to `true` for TestFlight/simulator builds, omit or set to `false` for production.
+
+**Key rotation (APNs auth keys do not expire, but if one is revoked):**
+1. Create a new key in the Apple Developer portal (same steps above).
+2. Update `APNS_KEY`, `APNS_KEY_ID` in Replit Secrets with the new values.
+3. Restart the server — the log will confirm `[APNs] Service initialised`.
+4. Revoke the old key in the Apple Developer portal once the new one is confirmed working.
+
+**Relevant files:** `server/apns-service.ts`
+
+---
+
+### Android — Firebase Cloud Messaging (FCM)
+
+**One-time setup:**
+1. Go to [console.firebase.google.com](https://console.firebase.google.com) and create (or select) a Firebase project.
+2. In the project, go to **Project Settings → Service accounts**.
+3. Click **Generate new private key** — this downloads a JSON file.
+4. Open the JSON file and set these Replit Secrets:
+   - `FIREBASE_PROJECT_ID` — the `project_id` field from the JSON.
+   - `FIREBASE_CLIENT_EMAIL` — the `client_email` field from the JSON.
+   - `FIREBASE_PRIVATE_KEY` — the `private_key` field from the JSON (paste the full PEM including newlines).
+5. In the Firebase console, go to **Build → Cloud Messaging** and confirm FCM is enabled for the project.
+
+**Key rotation:**
+1. In Firebase console → Project Settings → Service accounts, click **Generate new private key**.
+2. Update `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` in Replit Secrets.
+3. Restart the server — the log will confirm `[FCM] Service initialised`.
+4. Delete the old service account key from Firebase console.
+
+**Relevant files:** `server/fcm-service.ts`
+
+---
+
+### Verifying push health after setup
+- **Server logs at startup** will show `[APNs] Service initialised` and `[FCM] Service initialised` when credentials are correct.
+- **Admin push-test endpoints:**
+  - `POST /api/admin/apns-test` with `{ "userId": "<clerk-user-id>" }` — sends a real notification to all registered iOS devices for that user.
+  - `POST /api/admin/fcm-test` with `{ "userId": "<clerk-user-id>" }` — sends a real notification to all registered Android devices.
+- The **admin health dashboard** shows APNs and FCM status under the push-notification health panel.
+
+---
+
 ## Email Deliverability Setup
 
 ### Verified Sending Domain (Resend)
