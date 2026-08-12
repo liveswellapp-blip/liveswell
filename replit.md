@@ -207,6 +207,34 @@ Misconfigured alerts or traffic spikes can generate unexpected charges on paid A
 
 ---
 
+## Error Monitoring (Sentry)
+
+Unhandled server errors, React crashes, and unhandled promise rejections are captured and sent to Sentry.
+
+**To activate monitoring:**
+1. Sign up at [sentry.io](https://sentry.io) (free tier is sufficient).
+2. Create two projects — one for **Node.js** (backend) and one for **React** (frontend).
+3. Copy the DSN from each project's Settings → SDK Setup page.
+4. Add these Replit Secrets:
+   - `SENTRY_DSN` — Node.js project DSN (used by the server)
+   - `VITE_SENTRY_DSN` — React project DSN (used by the browser client)
+5. Restart the server — the startup log will confirm `[Sentry] Server monitoring initialised`.
+
+**Optional — readable stack traces in production:**
+Source maps are uploaded to Sentry automatically during production builds when these secrets are set:
+- `SENTRY_AUTH_TOKEN` — from sentry.io → Settings → Auth Tokens
+- `SENTRY_ORG` — your Sentry organisation slug (e.g. `liveswell`)
+- `SENTRY_PROJECT` — your Sentry project slug (e.g. `liveswell-react`)
+
+**Relevant files:**
+- `server/sentry.ts` — server Sentry init
+- `client/src/sentry.ts` — client Sentry init
+- `server/index.ts` — Sentry Express error handler
+- `server/condition-monitor.ts` — Sentry capture in background job error paths
+- `vite.config.ts` — source map upload plugin (production only)
+
+---
+
 ## External Dependencies
 
 ### Core Infrastructure

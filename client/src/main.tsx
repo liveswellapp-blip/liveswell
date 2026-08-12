@@ -1,3 +1,6 @@
+// Sentry MUST be imported before all other modules so it can instrument them.
+import { Sentry } from "./sentry";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App";
@@ -19,13 +22,17 @@ if (!PUBLISHABLE_KEY) {
   );
 }
 
+const SentryErrorBoundary = Sentry.ErrorBoundary ?? (({ children }: { children: React.ReactNode }) => <>{children}</>);
+
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider
-    publishableKey={PUBLISHABLE_KEY}
-    afterSignOutUrl="/"
-    signInFallbackRedirectUrl="/"
-    signUpFallbackRedirectUrl="/"
-  >
-    <App />
-  </ClerkProvider>
+  <SentryErrorBoundary fallback={<p>Something went wrong. Please refresh the page.</p>}>
+    <ClerkProvider
+      publishableKey={PUBLISHABLE_KEY}
+      afterSignOutUrl="/"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
+    >
+      <App />
+    </ClerkProvider>
+  </SentryErrorBoundary>
 );

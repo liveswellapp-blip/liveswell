@@ -1,3 +1,6 @@
+// Sentry MUST be imported before all other modules so it can instrument them.
+import "./sentry";
+import * as Sentry from "@sentry/node";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -165,6 +168,12 @@ app.use((req, res, next) => {
     await NotificationScheduler.initialize();
     
     const server = await registerRoutes(app);
+
+  // Sentry error handler must be registered before the generic error handler
+  // so it can capture the full error with request context.
+  if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

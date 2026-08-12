@@ -12,6 +12,7 @@ import { pushNotificationService } from './push-service';
 import { fetchWeatherData } from './weather-service';
 import { generateNotificationSummary } from './ai-service';
 import { resetDailyMetrics, getOpenWeatherRemainingCalls } from './monitoring';
+import { Sentry } from './sentry';
 
 // ─── Threshold types ─────────────────────────────────────────────────────────
 export interface SwellThresholds {
@@ -491,6 +492,7 @@ export class ConditionMonitor {
       }
     } catch (error) {
       console.error('Error in daily report scheduler:', error);
+      Sentry.captureException(error, { tags: { job: 'daily-report-scheduler' } });
     }
   }
 
@@ -607,6 +609,7 @@ export class ConditionMonitor {
       }
     } catch (error) {
       console.error('Error in ConditionMonitor:', error);
+      Sentry.captureException(error, { tags: { job: 'condition-alerts' } });
     }
   }
 }
