@@ -111,6 +111,54 @@ Current value: `LiveSwell <alerts@liveswell.io>` (set in Replit Secrets panel).
 - `server/email-service.ts` — reads `RESEND_FROM_EMAIL`, all `sendEmail()` calls use `FROM_EMAIL`
 - Replit Secrets panel — where `RESEND_FROM_EMAIL` is stored
 
+## SMS A2P 10DLC Registration (Twilio)
+
+US carriers require Application-to-Person (A2P) 10DLC registration for SMS sent at scale. Without it, messages are increasingly filtered or blocked as volume grows, and Twilio may suspend the number.
+
+**Twilio phone number:** +1 904-944-9195
+
+### Registration status
+- **Brand registration:** ⏳ Pending — owner must complete in Twilio console
+- **Campaign registration:** ⏳ Pending — requires brand approval (~1 business day)
+- **Phone number linked to campaign:** ⏳ Pending
+
+### Steps to complete (Twilio console)
+
+1. **Register the brand**
+   - Go to **Messaging → Regulatory Compliance → Brands → Register** in the [Twilio console](https://console.twilio.com).
+   - Company name: **LiveSwell**
+   - Website: **liveswell.io**
+   - EIN/tax ID: *(owner must supply)*
+   - Legal business name, address, and contact info.
+
+2. **Register the campaign** (after brand approval, ~1 business day)
+   - Go to **Messaging → Regulatory Compliance → Campaigns → Register**.
+   - Use case: **Mixed** or **Low Volume Mixed**.
+   - Campaign description: *Surf condition alerts, daily SMS surf reports, and OTP verification codes sent to opted-in users of the LiveSwell app.*
+   - Sample messages:
+     - Verification: `Your LiveSwell verification code is: 847291. It expires in 10 minutes.`
+     - Daily report: `Cocoa Beach Surf Report\n\nLive Conditions (8/12/26 | 7:00 AM EDT)\n\nSwell\n3.2ft @ 12s ENE\n\nWind\n8mph NE\n...Reply STOP to opt out.`
+     - Alert: `🚨 LiveSwell Alert\n\nWave height ≥ 4ft at Cocoa Beach\nTriggered: 6:45 AM\n\nOpen the app for full forecast.\nReply STOP to opt out. liveswell.io`
+   - Opt-in flow: User enters and verifies phone number in-app; explicit consent is captured at verification time.
+   - Opt-out: Standard STOP/UNSTOP handling (Twilio managed) plus in-app SMS disable toggle.
+
+3. **Link the phone number**
+   - Under **Messaging Services**, create a service (or use an existing one) and attach +1 904-944-9195.
+   - Associate the messaging service with the approved campaign.
+
+4. **Update sender in code** *(if moving to a Messaging Service SID)*
+   - If Twilio recommends sending via a Messaging Service SID instead of the raw phone number, update `TWILIO_PHONE_NUMBER` in Replit Secrets to the `MGXXXXXXXX` SID, or add a separate `TWILIO_MESSAGING_SERVICE_SID` secret and update `server/sms-service.ts` to use `messagingServiceSid` instead of `from`.
+
+5. **Record the campaign SID here once approved**
+   - Campaign SID: *(fill in after approval, e.g. `CMXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`)*
+   - Approved date: *(fill in)*
+   - Ongoing cost: ~$10/month brand + ~$10/month campaign (carrier fees)
+
+### After approval — verify delivery
+Send a test SMS from the admin panel or via the Twilio console and confirm it arrives on a real US number without filtering.
+
+---
+
 ## External Dependencies
 
 ### Core Infrastructure
