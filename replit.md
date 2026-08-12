@@ -159,6 +159,54 @@ Send a test SMS from the admin panel or via the Twilio console and confirm it ar
 
 ---
 
+## Billing Alerts & Spend Caps
+
+Misconfigured alerts or traffic spikes can generate unexpected charges on paid APIs. The following spend caps and alerts should be kept active at all times.
+
+### Twilio (SMS)
+
+- **Dashboard:** [console.twilio.com](https://console.twilio.com) → Account → Billing → Manage → Billing Alerts
+- **Recommended threshold:** $25/month — email the account owner when monthly spend reaches this amount
+- **How to configure:**
+  1. In the Twilio console, go to **Account → Billing → Billing Alerts**.
+  2. Click **Create Alert**, set the dollar threshold (e.g. $25), and enable **email notification**.
+  3. Confirm the alert appears in the list with status **Active**.
+- **Current threshold:** $25/month
+- **Alert email:** *(set in Twilio console — use the owner's email)*
+
+### OpenAI (AI summaries)
+
+- **Dashboard:** [platform.openai.com](https://platform.openai.com) → Settings → Limits
+- **Recommended:** Set a **monthly spend soft limit** of $20 (notifies by email) and a **hard limit** of $40 (cuts off API access).
+- **How to configure:**
+  1. Go to **Settings → Limits** in the OpenAI platform dashboard.
+  2. Under **Usage limits**, set the soft limit (email notification) and hard limit (API suspended).
+  3. Confirm the email recipient for notifications under **Settings → Organization → Profile**.
+- **Current soft limit:** $20/month | **Hard limit:** $40/month
+- **Note:** LiveSwell uses OpenAI via Replit AI Integrations (`AI_INTEGRATIONS_OPENAI_API_KEY` / `AI_INTEGRATIONS_OPENAI_BASE_URL`). Spend is tracked in the OpenAI dashboard under the API key associated with the integration.
+
+### OpenWeather (weather data)
+
+- **Dashboard:** [home.openweathermap.org](https://home.openweathermap.org/subscriptions)
+- **Free tier limit:** 1,000 API calls/day. Each unique monitored surf location costs ~216 calls/day (3 OWM endpoints × 72 condition-check cycles). The free tier supports **up to 4 unique monitored locations**.
+- **Server-side guard:** The condition monitor logs an **80% utilization warning** at startup when estimated daily usage reaches or exceeds 800 calls/day. The warning appears in server logs and is surfaced in the admin monitoring endpoint (`GET /api/admin/usage-forecast`).
+- **Environment variable:** Set `OPENWEATHER_QUOTA_WARN_THRESHOLD` (default: `100`) to control the per-cycle remaining-calls warning in the condition monitor.
+- **How to configure alerts (if on a paid plan):**
+  1. Log in at [home.openweathermap.org](https://home.openweathermap.org).
+  2. Go to **My Services → Subscriptions** to view current plan and call counts.
+  3. If a paid plan is active, enable usage notifications in **Account → Notifications**.
+- **Upgrade link:** [openweathermap.org/api](https://openweathermap.org/api) — upgrade before adding a 5th unique monitored location.
+
+### Quick reference
+
+| Service | Monthly threshold | Dashboard |
+|---|---|---|
+| Twilio | $25 alert | console.twilio.com → Billing → Billing Alerts |
+| OpenAI | $20 soft / $40 hard | platform.openai.com → Settings → Limits |
+| OpenWeather | 1,000 calls/day (free tier) | home.openweathermap.org/subscriptions |
+
+---
+
 ## External Dependencies
 
 ### Core Infrastructure

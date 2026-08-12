@@ -397,12 +397,22 @@ export class ConditionMonitor {
       const owmCallsPerCycle = 3; // weather + forecast + UV index
       const callsPerLocationPerDay = cyclesPerDay * owmCallsPerCycle; // 216
       const estimatedCalls = uniqueLocations.size * callsPerLocationPerDay;
+      const dailyLimit = 1000; // OpenWeather free-tier call cap
+      const utilizationPct = dailyLimit > 0 ? Math.round((estimatedCalls / dailyLimit) * 100) : 0;
       console.log(
         `📍 Condition monitor: ${uniqueLocations.size} unique location(s) monitored` +
-        ` → ~${estimatedCalls} OpenWeatherMap API calls/day` +
+        ` → ~${estimatedCalls} OpenWeatherMap API calls/day (${utilizationPct}% of ${dailyLimit}/day free tier)` +
         ` (${owmCallsPerCycle} calls/cycle × ${cyclesPerDay} cycles × ${uniqueLocations.size} location(s)).` +
-        ` Free tier limit: 1,000/day (supports up to ${Math.floor(1000 / callsPerLocationPerDay)} unique location(s)).`,
+        ` Free tier limit: ${dailyLimit}/day (supports up to ${Math.floor(dailyLimit / callsPerLocationPerDay)} unique location(s)).`,
       );
+      if (utilizationPct >= 80) {
+        console.warn(
+          `⚠️  OpenWeather daily quota WARNING: estimated usage is ${utilizationPct}% of the ${dailyLimit}/day free tier` +
+          ` (${estimatedCalls} calls/day across ${uniqueLocations.size} unique location(s)).` +
+          ` Upgrade your plan at https://openweathermap.org/api before adding more monitored locations` +
+          ` to avoid data gaps. Free tier supports up to ${Math.floor(dailyLimit / callsPerLocationPerDay)} unique location(s).`
+        );
+      }
     } catch (err) {
       console.warn('⚠️ Could not compute monitored location count:', err);
     }
