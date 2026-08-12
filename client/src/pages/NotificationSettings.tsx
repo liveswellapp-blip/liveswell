@@ -518,6 +518,7 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
       setPhoneVerifiedLocal(false);
       setVerifyStep("idle");
       setVerifyCode("");
+      setSmsConsent(false);
     }
   };
 

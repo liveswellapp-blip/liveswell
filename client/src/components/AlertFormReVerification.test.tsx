@@ -368,6 +368,56 @@ describe("AlertFormDialog — full re-verification round-trip", () => {
     expect(screen.queryByPlaceholderText("123456")).not.toBeNull();
   });
 
+  // ── 9a. Typing a new digit after clicking "Change" keeps consent unchecked ─
+  //        (handlePhoneChange code path — distinct from the button-click reset)
+
+  it("keeps the SMS consent checkbox unchecked when the user types a new number after clicking 'Change'", async () => {
+    const user = userEvent.setup();
+    const { container } = renderVerifiedDialog();
+
+    // ── Step 1: Click "Change" — smsConsent resets to false ─────────────────
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // Sanity-check: consent is unchecked after "Change"
+    const checkbox = screen.getByRole("checkbox");
+    expect(checkbox).not.toBeChecked();
+
+    // ── Step 2: Type a new digit — fires handlePhoneChange ───────────────────
+    const phoneInput = container.querySelector(".PhoneInputInput") as HTMLInputElement;
+    expect(phoneInput).not.toBeNull();
+    await user.click(phoneInput);
+    await user.type(phoneInput, "9");
+
+    // ── Step 3: Consent must remain unchecked — typing must not set it true ──
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+  });
+
+  // ── 9b. Typing a new digit after checking consent resets consent ─────────
+  //        Confirms handlePhoneChange resets smsConsent when the number changes
+
+  it("resets the SMS consent checkbox when the user types a new digit after checking consent", async () => {
+    const user = userEvent.setup();
+    const { container } = renderVerifiedDialog();
+
+    // Unlock the field
+    await user.click(screen.getByRole("button", { name: "Change" }));
+
+    // Check the consent checkbox
+    const checkbox = screen.getByRole("checkbox");
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    // Type a new digit — this fires handlePhoneChange with a new value,
+    // which must reset smsConsent back to false (fresh consent required).
+    const phoneInput = container.querySelector(".PhoneInputInput") as HTMLInputElement;
+    expect(phoneInput).not.toBeNull();
+    await user.click(phoneInput);
+    await user.type(phoneInput, "9");
+
+    // Consent must be reset — the changed number requires fresh consent.
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+  });
+
   // ── 9. Clicking "Change" after a completed verify round-trip resets consent ─
 
   it("unchecks the SMS consent checkbox when the user clicks 'Change' after a previously completed verification", async () => {
