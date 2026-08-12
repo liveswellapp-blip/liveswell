@@ -21,6 +21,12 @@ export default function ClerkSignUp() {
     >
       <img src={logoImage} alt="LiveSwell" style={{ height: 36, objectFit: "contain" }} />
       <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" fallbackRedirectUrl="/" />
+      <p style={{ color: "#8899aa", fontSize: 13, textAlign: "center", maxWidth: 320, margin: 0 }}>
+        By continuing, you agree to our{" "}
+        <a href="/terms" style={{ color: "#4da8ff", textDecoration: "underline" }}>Terms of Service</a>
+        {" "}and{" "}
+        <a href="/privacy" style={{ color: "#4da8ff", textDecoration: "underline" }}>Privacy Policy</a>.
+      </p>
     </div>
   );
 }
