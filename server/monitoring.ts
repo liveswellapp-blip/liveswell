@@ -350,6 +350,11 @@ export function trackRequest(success: boolean, source: 'openweather' | 'noaa' | 
   
   if (source === 'openweather') {
     metrics.openweather.requestsToday++;
+    // Keep remainingCalls in sync so callers can check headroom
+    metrics.openweather.remainingCalls = Math.max(
+      0,
+      metrics.openweather.dailyLimit - metrics.openweather.requestsToday
+    );
   } else if (source === 'noaa') {
     metrics.noaa.requestsToday++;
     metrics.noaa.lastRequestAt = new Date().toISOString();
@@ -420,10 +425,19 @@ export function trackPushResult(result: 'sent' | 'failed' | 'cleanedUp') {
 }
 
 /**
+ * Returns the estimated number of OpenWeather API calls remaining today.
+ * Based on the daily limit minus calls tracked so far this reset window.
+ */
+export function getOpenWeatherRemainingCalls(): number {
+  return metrics.openweather.remainingCalls;
+}
+
+/**
  * Reset daily metrics (call this daily via cron or scheduler)
  */
 export function resetDailyMetrics() {
   metrics.openweather.requestsToday = 0;
+  metrics.openweather.remainingCalls = metrics.openweather.dailyLimit;
   metrics.noaa.requestsToday = 0;
   metrics.noaa.failedRequests = 0;
   metrics.noaa.lastRequestAt = undefined;

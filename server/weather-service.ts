@@ -765,6 +765,13 @@ export async function fetchWeatherData(lat: number, lon: number) {
       ),
     ]);
 
+    // Count every real OWM request pair (weather + forecast = 2 calls) toward the daily quota
+    try {
+      const { trackRequest } = await import('./monitoring');
+      trackRequest(weatherResponse.ok, 'openweather'); // weather call
+      trackRequest(forecastResponse.ok, 'openweather'); // forecast call
+    } catch { /* non-fatal */ }
+
     if (weatherResponse.status === 429) {
       console.warn('⚠️  OpenWeatherMap rate limit hit (429) — daily API cap likely reached. Falling back to demo data.');
       console.warn(`   Current cache size: ${weatherCache.size} location(s). Consider reducing alert frequency or upgrading the API plan.`);
@@ -794,20 +801,31 @@ export async function fetchWeatherData(lat: number, lon: number) {
       } catch { /* keep current-weather wind on parse error */ }
     }
 
-    // Fetch UV data
+    // Fetch UV data (3rd OWM call per uncached location per cycle)
     let uvIndex = 5; // Default fallback
     try {
       const uvResponse = await fetch(
         `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`,
         { signal: AbortSignal.timeout(5000) }
       );
-      
+
+      // Track this call toward the daily quota regardless of success
+      try {
+        const { trackRequest } = await import('./monitoring');
+        trackRequest(uvResponse.ok, 'openweather'); // UV call
+      } catch { /* non-fatal */ }
+
       if (uvResponse.ok) {
         const uvData = await uvResponse.json() as OpenWeatherUVResponse;
         uvIndex = Math.round(uvData.value);
       }
     } catch (uvError) {
       console.warn('UV data fetch failed, using default:', uvError);
+      // Still count the attempt — the network request was issued
+      try {
+        const { trackRequest } = await import('./monitoring');
+        trackRequest(false, 'openweather');
+      } catch { /* non-fatal */ }
     }
 
     // Get marine data (waves, tides)

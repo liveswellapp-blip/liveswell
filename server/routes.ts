@@ -211,18 +211,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...condAlerts.map((a: any) => a.locationId),
         ...dailyAlerts.map((a: any) => a.locationId),
       ]);
-      const checksPerDay = Math.floor((24 * 60) / 20); // 72 cycles/day
-      const estimatedCallsPerDay = uniqueLocations.size * checksPerDay;
+      // Each uncached location costs 3 OWM calls per cycle:
+      //   1. current weather  (data/2.5/weather)
+      //   2. 3-hour forecast  (data/2.5/forecast)
+      //   3. UV index         (data/2.5/uvi)
+      // Cycle cadence: every 20 min → 72 cycles/day.
+      // Total per location per day: 3 × 72 = 216 calls.
+      const cyclesPerDay = Math.floor((24 * 60) / 20); // 72
+      const owmCallsPerCycle = 3; // weather + forecast + UV
+      const callsPerLocationPerDay = cyclesPerDay * owmCallsPerCycle; // 216
+      const estimatedCallsPerDay = uniqueLocations.size * callsPerLocationPerDay;
       const dailyLimit = 1000;
       const remainingQuota = Math.max(0, dailyLimit - estimatedCallsPerDay);
       // How many more unique locations could be added before hitting the cap
-      const capacityRemaining = checksPerDay > 0
-        ? Math.floor(remainingQuota / checksPerDay)
+      const capacityRemaining = callsPerLocationPerDay > 0
+        ? Math.floor(remainingQuota / callsPerLocationPerDay)
         : null;
 
       res.json({
         uniqueLocations: uniqueLocations.size,
-        checksPerDay,
+        cyclesPerDay,
+        owmCallsPerCycle,
+        callsPerLocationPerDay,
         estimatedCallsPerDay,
         dailyLimit,
         remainingQuota,
@@ -230,6 +240,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         utilizationPct: dailyLimit > 0
           ? Math.round((estimatedCallsPerDay / dailyLimit) * 100)
           : 0,
+        // ── Plan upgrade guidance ──────────────────────────────────────────
+        // OpenWeather free tier: 1,000 calls/day.
+        // Each unique monitored location costs ~216 calls/day
+        // (3 OWM calls × 72 condition-check cycles/day).
+        // The free tier supports only 4 unique locations (4 × 216 = 864 calls).
+        // Upgrade at https://openweathermap.org/api before adding a 5th location.
+        // Set OPENWEATHER_QUOTA_WARN_THRESHOLD (default 100) to control at
+        // what remaining-call count the condition monitor logs a warning.
+        planUpgradeUrl: 'https://openweathermap.org/api',
+        planNote: 'Free tier: 1,000 calls/day. Each unique location uses ~216 calls/day (3 OWM calls × 72 cycles). Upgrade before adding a 5th unique monitored location.',
       });
     } catch (error) {
       console.error("Usage forecast failed:", error);

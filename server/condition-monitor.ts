@@ -11,7 +11,7 @@ import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
 import { fetchWeatherData } from './weather-service';
 import { generateNotificationSummary } from './ai-service';
-import { resetDailyMetrics } from './monitoring';
+import { resetDailyMetrics, getOpenWeatherRemainingCalls } from './monitoring';
 
 // ─── Threshold types ─────────────────────────────────────────────────────────
 export interface SwellThresholds {
@@ -391,12 +391,17 @@ export class ConditionMonitor {
         ...condAlerts.map((a: any) => a.locationId),
         ...dailyAlerts.map((a: any) => a.locationId),
       ]);
-      const checksPerDay = Math.floor((24 * 60) / 20); // 72 per location
-      const estimatedCalls = uniqueLocations.size * checksPerDay;
+      // Each uncached location costs 3 OWM calls/cycle (weather + forecast + UV).
+      // Cycle cadence: every 20 min → 72 cycles/day → 216 calls/location/day.
+      const cyclesPerDay = Math.floor((24 * 60) / 20); // 72
+      const owmCallsPerCycle = 3; // weather + forecast + UV index
+      const callsPerLocationPerDay = cyclesPerDay * owmCallsPerCycle; // 216
+      const estimatedCalls = uniqueLocations.size * callsPerLocationPerDay;
       console.log(
         `📍 Condition monitor: ${uniqueLocations.size} unique location(s) monitored` +
-        ` → ~${estimatedCalls} OpenWeatherMap API calls/day (${checksPerDay} cycles × ${uniqueLocations.size} location(s)).` +
-        ` Free tier limit: 1,000/day.`,
+        ` → ~${estimatedCalls} OpenWeatherMap API calls/day` +
+        ` (${owmCallsPerCycle} calls/cycle × ${cyclesPerDay} cycles × ${uniqueLocations.size} location(s)).` +
+        ` Free tier limit: 1,000/day (supports up to ${Math.floor(1000 / callsPerLocationPerDay)} unique location(s)).`,
       );
     } catch (err) {
       console.warn('⚠️ Could not compute monitored location count:', err);
@@ -483,6 +488,24 @@ export class ConditionMonitor {
     try {
       const conditionAlerts = await storage.getActiveConditionAlerts();
       if (conditionAlerts.length === 0) return;
+
+      // ── Quota guard ─────────────────────────────────────────────────────────
+      // Warn when remaining tracked API calls drop below the warning threshold so
+      // operators know to upgrade the OpenWeather plan before real data stops.
+      // Threshold is configurable via OPENWEATHER_QUOTA_WARN_THRESHOLD (default 100).
+      const quotaWarnThreshold = parseInt(
+        process.env.OPENWEATHER_QUOTA_WARN_THRESHOLD ?? '100',
+        10
+      );
+      const remainingCalls = getOpenWeatherRemainingCalls();
+      if (remainingCalls <= quotaWarnThreshold) {
+        console.warn(
+          `⚠️  OpenWeather quota low: ${remainingCalls} call(s) remaining today` +
+          ` (warn threshold: ${quotaWarnThreshold}).` +
+          ` Upgrade the plan at https://openweathermap.org/api to avoid data gaps.`
+        );
+      }
+      // ────────────────────────────────────────────────────────────────────────
 
       console.log(`🔍 Checking ${conditionAlerts.length} condition alert(s)…`);
 
