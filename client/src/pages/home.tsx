@@ -196,7 +196,7 @@ export default function Home() {
                       : "text-slate-500 hover:text-slate-300 border border-transparent"
                   }`}
                 >
-                  {tab === "conditions" ? "Conditions" : "🗺 Map"}
+                  {tab === "conditions" ? "Conditions" : "Map"}
                 </button>
               ))}
             </div>
