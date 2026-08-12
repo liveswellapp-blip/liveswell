@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
-import { fetchWeatherData, fetchTideData, fetchAgentForecast, type AgentForecastDay } from "./weather-service";
+import { fetchWeatherData, fetchTideData, fetchAgentForecast, getQuotaExceededAt, type AgentForecastDay } from "./weather-service";
 
 const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
@@ -213,12 +213,19 @@ export async function runSurfAgent(
             parseFloat(loc.latitude),
             parseFloat(loc.longitude),
           );
-          conditions = conditions
-            ? await storage.updateSurfConditions(loc.id, weatherData)
-            : await storage.createSurfConditions({ locationId: loc.id, ...weatherData });
-          // Capture tide schedule from fresh weather data (not persisted in DB)
-          tideArrays = { tideHigh: weatherData.tideHigh, tideLow: weatherData.tideLow };
-          console.log(`🔄 Auto-refreshed conditions for ${loc.name}`);
+          // Skip DB write when quota is exhausted — fabricated demo data must not
+          // overwrite stored real conditions.  Use existing (stale) conditions instead.
+          if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
+            console.warn(`⚠️  Skipping auto-refresh DB write for ${loc.name} — OpenWeather quota exceeded; using last known conditions`);
+            // tideArrays stays empty; the else branch below will fetch tide data from NOAA
+          } else {
+            conditions = conditions
+              ? await storage.updateSurfConditions(loc.id, weatherData)
+              : await storage.createSurfConditions({ locationId: loc.id, ...weatherData });
+            // Capture tide schedule from fresh weather data (not persisted in DB)
+            tideArrays = { tideHigh: weatherData.tideHigh, tideLow: weatherData.tideLow };
+            console.log(`🔄 Auto-refreshed conditions for ${loc.name}`);
+          }
         } catch (err) {
           console.warn(`⚠️  Auto-refresh failed for ${loc.name}:`, err);
         }

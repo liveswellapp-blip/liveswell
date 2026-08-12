@@ -39,6 +39,7 @@ import {
   getCoastalSwellDirection,
   getRealisticWaterTemperature,
   addCalendarDays,
+  getQuotaExceededAt,
 } from "./weather-service";
 import { pushNotificationService } from "./push-service";
 import { insertPushSubscriptionSchema } from "@shared/schema";
@@ -228,6 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? Math.floor(remainingQuota / callsPerLocationPerDay)
         : null;
 
+      const quotaExceededAt = getQuotaExceededAt();
       res.json({
         uniqueLocations: uniqueLocations.size,
         cyclesPerDay,
@@ -240,6 +242,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         utilizationPct: dailyLimit > 0
           ? Math.round((estimatedCallsPerDay / dailyLimit) * 100)
           : 0,
+        // ── Quota-exceeded flag ────────────────────────────────────────────
+        // Set when a 429 response was received from OpenWeather today.
+        // When set, the condition monitor skips firing alerts (data is fabricated).
+        // Resets to null at midnight UTC when the daily quota refreshes.
+        quotaExceededAt: quotaExceededAt ? quotaExceededAt.toISOString() : null,
         // ── Plan upgrade guidance ──────────────────────────────────────────
         // OpenWeather free tier: 1,000 calls/day.
         // Each unique monitored location costs ~216 calls/day
@@ -357,6 +364,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               parseFloat(location.latitude),
               parseFloat(location.longitude)
             );
+
+            // Skip DB write when quota is exhausted — fabricated demo data must
+            // not overwrite stored real conditions during an audit run.
+            if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
+              errorCount++;
+              const msg = `${location.name}: OpenWeather quota exceeded — skipping DB write`;
+              errors.push(msg);
+              console.warn(`⚠️ ${msg}`);
+              return;
+            }
             
             // Check if conditions exist, update or create
             const existingConditions = await storage.getSurfConditions(location.id);
@@ -744,8 +761,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         
         if (!forecastResponse.ok) {
+          // 429 = daily OWM quota exhausted. Return 503 rather than fabricated demo wind data.
+          if (forecastResponse.status === 429 || getQuotaExceededAt()) {
+            console.warn(`⚠️ wind-forecast: OWM quota exhausted (${forecastResponse.status}) — returning 503`);
+            res.status(503).json({ message: "Wind forecast temporarily unavailable — daily API quota reached. Try again after midnight UTC." });
+            return;
+          }
           console.log(`Wind forecast API error: ${forecastResponse.status}, using demo data`);
-          // Fall back to demo data (same as above)
+          // Fall back to demo data for non-quota errors (e.g. 5xx transient)
           const windForecastData = [];
           const now = new Date();
           const timezone = getTimezone(parseFloat(location.latitude), parseFloat(location.longitude));
@@ -1491,6 +1514,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (!forecastResponse.ok) {
           console.log(`Wind forecast API error: ${forecastResponse.status}, using current conditions baseline`);
+
+          // When the OWM forecast endpoint itself returns 429, the quota is exhausted.
+          // Refuse to synthesize a fake 48-hour forecast from demo data — return 503
+          // with the cached conditions as a hint, or a plain unavailable message.
+          if (forecastResponse.status === 429 || getQuotaExceededAt()) {
+            console.warn(`⚠️ future-conditions: OWM quota exhausted — returning 503 instead of synthetic forecast`);
+            res.status(503).json({ message: "Wind forecast temporarily unavailable — daily API quota reached. Try again after midnight UTC." });
+            return;
+          }
           
           // Use current conditions as baseline for realistic forecast
           let currentWindSpeed = 8;
@@ -1498,8 +1530,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           try {
             const weatherData = await fetchWeatherData(lat, lon);
-            if (weatherData.windSpeed) currentWindSpeed = parseFloat(weatherData.windSpeed);
-            if (weatherData.windDirection) currentWindDirection = weatherData.windDirection;
+            // If the fallback fetch itself returns quota-exceeded demo data, use defaults
+            if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
+              console.warn(`⚠️ future-conditions: fetchWeatherData returned quota-exceeded demo data — using wind defaults`);
+              // Fall through with defaults (8 mph ESE) rather than fabricating from demo numbers
+            } else {
+              if (weatherData.windSpeed) currentWindSpeed = parseFloat(weatherData.windSpeed);
+              if (weatherData.windDirection) currentWindDirection = weatherData.windDirection;
+            }
           } catch (error) {
             // Use defaults
           }
@@ -1628,7 +1666,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             parseFloat(location.latitude),
             parseFloat(location.longitude)
           );
-          
+
+          // When the OpenWeather daily quota is exhausted, fetchWeatherData returns
+          // fabricated demo numbers tagged with quotaExceeded:true.  We must NOT
+          // persist these to the DB (that would corrupt the conditions table) and
+          // we must NOT silently serve them as real data.  Serve the last real
+          // conditions with an explicit warning instead, or 503 if none exist.
+          if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
+            console.warn(`⚠️ Skipping DB write for location ${locationId} (${location.name}) — OpenWeather quota exceeded; returning ${conditions ? 'cached' : 'no'} conditions.`);
+            if (conditions) {
+              res.json({ ...conditions, warning: "Live weather data temporarily unavailable — OpenWeather daily quota reached. Showing last known conditions.", dataUnavailable: true });
+              return;
+            }
+            res.status(503).json({ message: "Weather data temporarily unavailable — daily API quota exceeded. Try again after midnight UTC." });
+            return;
+          }
+
           if (conditions) {
             // Update existing conditions
             conditions = await storage.updateSurfConditions(locationId, weatherData);
@@ -1875,6 +1928,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         if (!forecastResponse.ok) {
+          // 429 = daily OWM quota exhausted. Return 503 rather than fabricated demo forecast.
+          if (forecastResponse.status === 429 || getQuotaExceededAt()) {
+            console.warn(`⚠️ 5-day forecast: OWM quota exhausted (${forecastResponse.status}) — returning 503`);
+            res.status(503).json({ message: "Forecast temporarily unavailable — daily API quota reached. Try again after midnight UTC." });
+            return;
+          }
           console.log(`Forecast API error: ${forecastResponse.status}, using demo data`);
           
           // Generate demo forecast data as fallback with proper timezone (starting from tomorrow)
@@ -3843,6 +3902,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             parseFloat(loc.latitude),
             parseFloat(loc.longitude)
           );
+          // Skip DB write when quota is exhausted — fabricated demo data must not
+          // overwrite stored real conditions.
+          if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
+            console.warn(`⚠️ Skipping refresh DB write for ${loc.name} — OpenWeather quota exceeded`);
+            errors++;
+            return;
+          }
           const existing = await storage.getSurfConditions(loc.id);
           if (existing) {
             await storage.updateSurfConditions(loc.id, weatherData);

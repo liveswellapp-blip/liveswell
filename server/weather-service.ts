@@ -8,6 +8,21 @@ if (API_KEY === "demo_key" || !API_KEY || API_KEY.length < 10) {
   console.log("✅ OpenWeather API key configured - real weather data available");
 }
 
+// ─── OpenWeather quota-exceeded tracker ──────────────────────────────────────
+// Set when a 429 response is received from the OpenWeather API, indicating the
+// daily API cap has been reached. Reset at midnight by resetQuotaExceeded().
+let quotaExceededAt: Date | null = null;
+
+/** Returns the time the OpenWeather quota was last exceeded, or null if it has not been exceeded today. */
+export function getQuotaExceededAt(): Date | null {
+  return quotaExceededAt;
+}
+
+/** Clears the quota-exceeded flag. Call this at midnight when the daily quota resets. */
+export function resetQuotaExceeded(): void {
+  quotaExceededAt = null;
+}
+
 // ─── In-memory + persistent weather cache ────────────────────────────────────
 // Caches fetchWeatherData results per location for WEATHER_CACHE_TTL_MS so that
 // multiple alerts at the same location share a single API call per check cycle.
@@ -772,10 +787,21 @@ export async function fetchWeatherData(lat: number, lon: number) {
       trackRequest(forecastResponse.ok, 'openweather'); // forecast call
     } catch { /* non-fatal */ }
 
-    if (weatherResponse.status === 429) {
-      console.warn('⚠️  OpenWeatherMap rate limit hit (429) — daily API cap likely reached. Falling back to demo data.');
+    // Helper: mark quota as exceeded and return tagged demo data consistently.
+    // Called from any point where any OWM response returns 429.
+    const handleQuotaExceeded = async (source: string) => {
+      quotaExceededAt = new Date();
+      console.warn(`⚠️  OpenWeatherMap rate limit hit (429) on ${source} — daily API cap likely reached. Falling back to demo data.`);
       console.warn(`   Current cache size: ${weatherCache.size} location(s). Consider reducing alert frequency or upgrading the API plan.`);
-      return await generateDemoWeatherData(lat, lon);
+      const demoData = await generateDemoWeatherData(lat, lon);
+      return { ...demoData, dataSource: 'demo', quotaExceeded: true };
+    };
+
+    if (weatherResponse.status === 429) {
+      return await handleQuotaExceeded('current-weather');
+    }
+    if (forecastResponse.status === 429) {
+      return await handleQuotaExceeded('forecast');
     }
 
     if (!weatherResponse.ok) {
@@ -815,6 +841,9 @@ export async function fetchWeatherData(lat: number, lon: number) {
         trackRequest(uvResponse.ok, 'openweather'); // UV call
       } catch { /* non-fatal */ }
 
+      if (uvResponse.status === 429) {
+        return await handleQuotaExceeded('UV index');
+      }
       if (uvResponse.ok) {
         const uvData = await uvResponse.json() as OpenWeatherUVResponse;
         uvIndex = Math.round(uvData.value);

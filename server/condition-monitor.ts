@@ -9,7 +9,7 @@ import { storage } from './storage';
 import { SMSService } from './sms-service';
 import { EmailService } from './email-service';
 import { pushNotificationService } from './push-service';
-import { fetchWeatherData } from './weather-service';
+import { fetchWeatherData, resetQuotaExceeded, getQuotaExceededAt } from './weather-service';
 import { generateNotificationSummary } from './ai-service';
 import { resetDailyMetrics, getOpenWeatherRemainingCalls } from './monitoring';
 import { Sentry } from './sentry';
@@ -315,6 +315,44 @@ function slotFiredToday(lastFiredAt: Date, alertTz: string, slotTime: string, to
  * Returns true if at least one channel delivered.
  */
 async function dispatchDailyReport(alert: any): Promise<boolean> {
+  // ── Atomic quota pre-check ───────────────────────────────────────────────
+  // Fetch and validate weather data BEFORE starting any channel so that push,
+  // SMS, and email all see the same quota state.  Without this, push (which
+  // reads stored conditions, not fetchWeatherData) can fire while concurrent
+  // SMS/email calls discover the first 429 and suppress themselves.
+  //
+  // Two-level check:
+  //   1. getQuotaExceededAt() — catches quota exceeded in a prior call this session
+  //   2. fetchWeatherData result — catches the first 429 that happens right now
+  if (getQuotaExceededAt()) {
+    console.warn(
+      `⚠️ dispatchDailyReport: suppressing all channels for alert ${alert.id} (${alert.locationName})` +
+      ` — OpenWeather quota already exceeded. Quota resets at midnight UTC.`
+    );
+    return false;
+  }
+  try {
+    const location = await storage.getLocation(alert.locationId);
+    if (location) {
+      const weatherData = await fetchWeatherData(
+        parseFloat(location.latitude),
+        parseFloat(location.longitude),
+      );
+      if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
+        console.warn(
+          `⚠️ dispatchDailyReport: suppressing all channels for alert ${alert.id} (${alert.locationName})` +
+          ` — OpenWeather quota exceeded during pre-dispatch weather check. Quota resets at midnight UTC.`
+        );
+        return false;
+      }
+    }
+  } catch (preCheckErr) {
+    // Weather pre-check failure (network error, etc.) is non-fatal — proceed
+    // with dispatch so a temporary API blip does not silently drop reports.
+    console.warn(`⚠️ dispatchDailyReport pre-check fetch failed for alert ${alert.id}:`, preCheckErr);
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   const channels: string[] = alert.deliveryChannels ?? [];
   const promises: Promise<boolean>[] = [];
 
@@ -423,9 +461,10 @@ export class ConditionMonitor {
     cron.schedule('*/20 * * * *', () => this.checkConditionAlerts());
     // Daily report scheduler: runs every minute, fires reports at user-configured times
     cron.schedule('* * * * *', () => this.checkDailyReportAlerts());
-    // Reset daily API-call counters at midnight UTC
+    // Reset daily API-call counters and quota-exceeded flag at midnight UTC
     cron.schedule('0 0 * * *', () => {
       resetDailyMetrics();
+      resetQuotaExceeded();
       console.log('🔄 Daily metrics reset at midnight UTC');
     }, { timezone: 'UTC' });
     this.initialized = true;
@@ -477,6 +516,21 @@ export class ConditionMonitor {
               console.log(`⏭️ Alert ${alert.id} slot ${slot} already fired today — skipping`);
               continue;
             }
+          }
+
+          // Skip delivery when the OpenWeather quota is exhausted.
+          // The SMS/email services independently call fetchWeatherData, which
+          // returns fabricated demo data after a 429. Sending that to users
+          // is worse than not sending at all.  The slot is intentionally NOT
+          // marked as delivered so the next day's scheduled time can still fire.
+          const quotaExceededAt = getQuotaExceededAt();
+          if (quotaExceededAt) {
+            console.warn(
+              `⚠️ Skipping daily report alert ${alert.id} (${alert.locationName}) at ${slot} ${tz}` +
+              ` — OpenWeather quota exceeded since ${quotaExceededAt.toISOString()}.` +
+              ` Report will NOT be sent with fabricated demo data. Quota resets at midnight UTC.`
+            );
+            continue;
           }
 
           console.log(`📅 Daily report due: alert ${alert.id} for ${alert.locationName} at ${slot} ${tz}`);
@@ -546,6 +600,20 @@ export class ConditionMonitor {
           continue;
         }
         if (!weatherData) continue;
+
+        // Skip alert evaluation when the OpenWeather quota is exhausted.
+        // Two checks so cached results (which won't carry quotaExceeded:true) are also blocked:
+        //   1. weatherData.quotaExceeded — set when THIS fetch hit a 429 on any OWM sub-request.
+        //   2. getQuotaExceededAt() — set by an earlier 429 this session; blocks cached data
+        //      that was fetched before the quota was reached.
+        if (weatherData.quotaExceeded || getQuotaExceededAt()) {
+          console.warn(
+            `⚠️ Skipping condition alerts for location ${locationId} (${location.name})` +
+            ` — OpenWeather quota exceeded; data is fabricated demo values.` +
+            ` Alerts will resume once the quota resets (midnight UTC).`
+          );
+          continue;
+        }
 
         const lat = parseFloat(location.latitude);
         const lon = parseFloat(location.longitude);

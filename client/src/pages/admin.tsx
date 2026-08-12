@@ -50,6 +50,7 @@ interface UsageForecast {
   remainingQuota: number;
   capacityRemaining: number | null;
   utilizationPct: number;
+  quotaExceededAt: string | null;
 }
 
 export default function AdminDashboard() {
@@ -497,6 +498,19 @@ export default function AdminDashboard() {
         <CardContent>
           {forecastData ? (
             <div className="space-y-4">
+              {/* Quota-exceeded banner — shown when a real 429 was received today */}
+              {forecastData.quotaExceededAt && (
+                <div className="flex items-start gap-3 rounded-md border border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-700 p-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                  <div className="text-sm text-red-700 dark:text-red-300">
+                    <strong>OpenWeather daily quota exceeded</strong> — a 429 response was received at{' '}
+                    {new Date(forecastData.quotaExceededAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.
+                    {' '}Condition alerts are <strong>paused</strong> until midnight UTC when the quota resets.
+                    Users will not receive false alerts based on fabricated demo data.
+                    {' '}<a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="underline font-medium">Upgrade the plan</a> to avoid this tomorrow.
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-secondary rounded-lg p-3 text-center">
                   <div className="text-2xl font-bold">{forecastData.uniqueLocations}</div>

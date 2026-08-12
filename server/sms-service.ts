@@ -1,7 +1,7 @@
 import twilio from 'twilio';
 import { storage } from './storage';
 import type { Location } from '@shared/schema';
-import { fetchWeatherData } from './weather-service';
+import { fetchWeatherData, getQuotaExceededAt } from './weather-service';
 import { generateNotificationSummary } from './ai-service';
 import { db } from './db';
 import { phoneVerificationTokens, verifiedPhones as verifiedPhonesTable, smsRateLimits } from '@shared/schema';
@@ -249,6 +249,21 @@ export class SMSService {
       const weatherData = await fetchWeatherData(parseFloat(location.latitude), parseFloat(location.longitude));
       if (!weatherData) {
         console.error(`No conditions found for location ${locationId}`);
+        return false;
+      }
+
+      // Refuse to send fabricated demo data when the OpenWeather quota is exhausted.
+      // Two checks:
+      //   1. (weatherData as any).quotaExceeded — set when THIS call hit a 429 (any of the
+      //      three OWM sub-requests: current, forecast, UV).
+      //   2. getQuotaExceededAt() — set by a previous call this session; catches cases where
+      //      the 18-min cache returns unflagged data that was fetched before the quota was hit.
+      if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
+        console.warn(
+          `⚠️ SMS daily conditions for ${location.name} (${locationId}) suppressed` +
+          ` — OpenWeather quota exceeded; data is fabricated demo values.` +
+          ` Delivery will resume once the quota resets (midnight UTC).`
+        );
         return false;
       }
 
