@@ -259,6 +259,67 @@ describe("buildConditionsSummary — buoy with numeric zero wave fields", () => 
   });
 });
 
+describe("buildConditionsSummary — backupBuoy with null wave fields", () => {
+  const conditionsWithNullBackupBuoy = {
+    waveHeight: "3.0",
+    wavePeriod: "10",
+    waveDirection: "SW",
+    windSpeed: "12",
+    windDirection: "W",
+    tideStatus: "falling",
+    backupBuoy: {
+      stationId: "46013",
+      stationName: "Bodega Bay",
+      waveHeight: null,
+      wavePeriod: null,
+      waveDirection: null,
+    },
+  };
+
+  it("shows 'unknown' for backup buoy waveHeight when null", () => {
+    const result = buildConditionsSummary(conditionsWithNullBackupBuoy);
+    expect(result).toMatch(/Backup buoy.*unknown/);
+  });
+
+  it("does NOT show '0.0 ft' for backup buoy when waveHeight is null", () => {
+    const result = buildConditionsSummary(conditionsWithNullBackupBuoy);
+    expect(result).not.toMatch(/Backup buoy.*0\.0 ft/);
+  });
+
+  it("does NOT show 'undefined' for backup buoy fields when null", () => {
+    const result = buildConditionsSummary(conditionsWithNullBackupBuoy);
+    expect(result).not.toMatch(/undefined/i);
+  });
+});
+
+describe("buildConditionsSummary — backupBuoy with numeric zero wave fields", () => {
+  const conditionsWithZeroBackupBuoy = {
+    waveHeight: "2.0",
+    wavePeriod: "8",
+    waveDirection: "NW",
+    windSpeed: "5",
+    windDirection: "N",
+    tideStatus: "rising",
+    backupBuoy: {
+      stationId: "46013",
+      stationName: "Bodega Bay",
+      waveHeight: "0",
+      wavePeriod: "0",
+      waveDirection: "N",
+    },
+  };
+
+  it("shows '0.0 ft' for backup buoy waveHeight of 0, not 'unknown'", () => {
+    const result = buildConditionsSummary(conditionsWithZeroBackupBuoy);
+    expect(result).toMatch(/Backup buoy.*0\.0 ft/);
+  });
+
+  it("does NOT show 'unknown' for backup buoy when all fields are zero/present", () => {
+    const result = buildConditionsSummary(conditionsWithZeroBackupBuoy);
+    expect(result).not.toMatch(/Backup buoy.*unknown/);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Client-side: buildContextMessage (opening message shown in the chat panel)
 // ---------------------------------------------------------------------------
