@@ -37,7 +37,8 @@ import {
   formatTime,
   getTimezone,
   getCoastalSwellDirection,
-  getRealisticWaterTemperature
+  getRealisticWaterTemperature,
+  addCalendarDays,
 } from "./weather-service";
 import { pushNotificationService } from "./push-service";
 import { insertPushSubscriptionSchema } from "@shared/schema";
@@ -1988,17 +1989,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`Marine API error: ${marineResponse.status}, using wind-based calculation`);
         }
         
-        // Fetch real NOAA tide data for tomorrow (day 1) and day-after-tomorrow (day 2).
+        // Fetch real NOAA tide data for all 5 forecast days (NOAA hilo supports up to 7 days out).
         // Runs in parallel with the rest of the forecast processing.
-        let realTideData: { tidesDay1: any[]; tidesDay2: any[] } = { tidesDay1: [], tidesDay2: [] };
+        let realTideData: { tidesDay1: any[]; tidesDay2: any[]; tidesDay3: any[]; tidesDay4: any[]; tidesDay5: any[] } = {
+          tidesDay1: [], tidesDay2: [], tidesDay3: [], tidesDay4: [], tidesDay5: [],
+        };
         try {
           const td = await fetchTideData(lat, lon);
           realTideData = {
             tidesDay1: (td as any).tidesDay1 ?? [],
             tidesDay2: (td as any).tidesDay2 ?? [],
+            tidesDay3: (td as any).tidesDay3 ?? [],
+            tidesDay4: (td as any).tidesDay4 ?? [],
+            tidesDay5: (td as any).tidesDay5 ?? [],
           };
-          if (realTideData.tidesDay1.length > 0 || realTideData.tidesDay2.length > 0) {
-            console.log(`✅ Real NOAA tide data for forecast: day1=${realTideData.tidesDay1.length} tides, day2=${realTideData.tidesDay2.length} tides`);
+          const counts = [1,2,3,4,5].map(d => `day${d}=${(realTideData as any)[`tidesDay${d}`].length}`).join(', ');
+          const anyReal = Object.values(realTideData).some((arr: any[]) => arr.length > 0);
+          if (anyReal) {
+            console.log(`✅ Real NOAA tide data for forecast: ${counts}`);
           }
         } catch (tideErr) {
           console.warn('Could not fetch NOAA tide data for forecast, using generated tides:', tideErr);
@@ -2006,28 +2014,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Process forecast data into daily summaries
         const dailyForecasts = [];
-        
-        // Group forecast data by day in location's timezone
-        const forecastsByDay = new Map();
-        
+
+        // Group forecast data by day in location's timezone.
+        // Use Intl.DateTimeFormat with 'en-CA' locale to get YYYY-MM-DD keys —
+        // these sort chronologically, unlike Date.toDateString() weekday-text keys.
+        const isoFmt = new Intl.DateTimeFormat('en-CA', { timeZone: timezone });
+        const todayLocalKey = isoFmt.format(new Date());
+        const forecastsByDay = new Map<string, any[]>();
+
         for (const item of forecastData.list) {
           const date = new Date(item.dt * 1000);
-          
-          // Get the date in the location's timezone
-          const localDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
-          const dayKey = localDate.toDateString();
-          
+          const dayKey = isoFmt.format(date); // "YYYY-MM-DD" in location timezone
           if (!forecastsByDay.has(dayKey)) {
             forecastsByDay.set(dayKey, []);
           }
-          forecastsByDay.get(dayKey).push(item);
+          forecastsByDay.get(dayKey)!.push(item);
         }
-        
-        // Process up to 5 days (starting from tomorrow)
+
+        // Sort chronologically (YYYY-MM-DD strings sort correctly) and skip today.
         const sortedDays = Array.from(forecastsByDay.keys()).sort();
-        let dayOffset = 1;
-        
-        for (const dayKey of sortedDays.slice(1, 6)) {
+
+        // Build an explicit calendar-date → offset lookup for days 1-5.
+        // Using addCalendarDays (UTC-based) avoids DST ambiguity: a DST clock-back
+        // day is 25 h long, so `todayMidnight + N * 24h` can land on the same local
+        // calendar date twice; UTC arithmetic always yields a distinct target date.
+        const dayOffsetMap = new Map<string, number>();
+        for (let d = 1; d <= 5; d++) {
+          dayOffsetMap.set(addCalendarDays(todayLocalKey, d), d);
+        }
+
+        for (const dayKey of sortedDays) {
+          const dayOffset = dayOffsetMap.get(dayKey);
+          // Skip days not in our 5-day window (today, or beyond day 5)
+          if (dayOffset === undefined) continue;
+          if (dailyForecasts.length >= 5) break;
+
           const dayItems = forecastsByDay.get(dayKey);
           if (!dayItems || dayItems.length === 0) continue;
           
@@ -2123,15 +2144,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             else if (conditions === "Fair") conditions = "Poor";
           }
           
-          // Use real NOAA tide data for days 1-2 where available; fall back to generated
+          // Use real NOAA tide data for all 5 days where available; fall back to generated
           let tides: Array<{ time: string; height: number; type: 'high' | 'low' }>;
           let realTidesAvailable = false;
-          if (dayOffset === 1 && realTideData.tidesDay1 && realTideData.tidesDay1.length > 0) {
-            tides = realTideData.tidesDay1;
-            realTidesAvailable = true;
-            console.log(`Day ${dayOffset}: Using real NOAA tide data (${tides.length} tides)`);
-          } else if (dayOffset === 2 && realTideData.tidesDay2 && realTideData.tidesDay2.length > 0) {
-            tides = realTideData.tidesDay2;
+          const realTidesForDay: any[] =
+            dayOffset === 1 ? realTideData.tidesDay1 :
+            dayOffset === 2 ? realTideData.tidesDay2 :
+            dayOffset === 3 ? realTideData.tidesDay3 :
+            dayOffset === 4 ? realTideData.tidesDay4 :
+            dayOffset === 5 ? realTideData.tidesDay5 : [];
+          if (realTidesForDay && realTidesForDay.length > 0) {
+            tides = realTidesForDay;
             realTidesAvailable = true;
             console.log(`Day ${dayOffset}: Using real NOAA tide data (${tides.length} tides)`);
           } else {
@@ -2166,8 +2189,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sunrise,
             sunset,
           });
-          
-          dayOffset++;
         }
         
         res.json(dailyForecasts);

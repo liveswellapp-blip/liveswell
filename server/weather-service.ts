@@ -152,6 +152,21 @@ interface OpenWeatherUVResponse {
   value: number;
 }
 
+/**
+ * Advance a YYYY-MM-DD calendar date by `days` days using pure UTC arithmetic.
+ * This avoids DST pitfalls: a calendar day can be 23 h or 25 h in a DST-observing
+ * timezone, so adding fixed 86 400 000 ms offsets to a local instant can land on
+ * the same local date twice (fall-back) or skip one (spring-forward).
+ * Using Date.UTC keeps the arithmetic in UTC which has no DST transitions.
+ *
+ * Exported so it can be unit-tested independently.
+ */
+export function addCalendarDays(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  return dt.toISOString().slice(0, 10); // "YYYY-MM-DD"
+}
+
 export function getWindDirection(degrees: number): string {
   const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   const index = Math.round(degrees / 22.5) % 16;
@@ -188,6 +203,15 @@ export function getTimezone(lat: number, lon: number): string {
   // Eastern Time Zone (East Coast)
   if (lon >= -88 && lon <= -67 && lat >= 24 && lat <= 47) {
     return 'America/New_York';
+  }
+
+  // Hawaii Time Zone (UTC-10, no DST).
+  // Must be checked before the UTC fallback so Hawaiian NOAA-station coordinates
+  // (lat 19–23, lon -160 to -154) get the same timezone used by fetchTideData
+  // when building tidesDay1–tidesDay5. Without this, the forecast route uses UTC
+  // for grouping and the dayOffsetMap drifts ~10 h behind the station-local dates.
+  if (lon >= -161 && lon <= -154 && lat >= 18 && lat <= 23) {
+    return 'Pacific/Honolulu';
   }
   
   // Default to UTC if no match
@@ -471,21 +495,28 @@ export async function fetchTideData(lat: number, lon: number) {
 
   try {
     // Fetch data from NOAA CO-OPS API.
-    // Use yesterday→3 days ahead UTC so we always cover the full local calendar day at
-    // the station and also return tides for tomorrow and the day after.
+    // Use yesterday→7 days ahead UTC so we always cover the full local calendar day at
+    // the station and also return tides for all 5 forecast days.
     const now = new Date();
-    const yesterday       = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
-    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const yesterday      = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const begin = yesterday.toISOString().split('T')[0].replace(/-/g, '');
-    const end   = threeDaysFromNow.toISOString().split('T')[0].replace(/-/g, '');
+    const end   = sevenDaysFromNow.toISOString().split('T')[0].replace(/-/g, '');
 
     // Determine calendar dates in the station's local timezone so we can
-    // filter predictions per-day (today / tomorrow / day-after-tomorrow).
+    // filter predictions per-day.
+    // IMPORTANT: Do NOT use `now + N * 86400000` millisecond arithmetic here.
+    // Around DST transitions a calendar day can be 23 h or 25 h, so adding fixed
+    // 24-hour intervals can produce duplicate or missing local dates.  Instead we
+    // derive each target date by pure calendar-date addition via UTC (no DST).
     const stationTz = (station as any).timezone ?? 'UTC';
     const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: stationTz });
     const todayLocalDate            = fmt.format(now);
-    const tomorrowLocalDate         = fmt.format(new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000));
-    const dayAfterTomorrowLocalDate = fmt.format(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000));
+    const tomorrowLocalDate         = addCalendarDays(todayLocalDate, 1);
+    const dayAfterTomorrowLocalDate = addCalendarDays(todayLocalDate, 2);
+    const day3LocalDate             = addCalendarDays(todayLocalDate, 3);
+    const day4LocalDate             = addCalendarDays(todayLocalDate, 4);
+    const day5LocalDate             = addCalendarDays(todayLocalDate, 5);
     // en-CA gives "YYYY-MM-DD" which matches the date prefix of NOAA's "YYYY-MM-DD HH:MM"
     
     const response = await fetch(
@@ -512,6 +543,9 @@ export async function fetchTideData(lat: number, lon: number) {
       let tides:      any[] = [];  // full TidePoint[] for today — used by the chart
       let tidesDay1:  any[] = [];  // tomorrow's tides — used by the 5-day forecast
       let tidesDay2:  any[] = [];  // day-after-tomorrow's tides — used by the 5-day forecast
+      let tidesDay3:  any[] = [];  // day 3 tides — used by the 5-day forecast
+      let tidesDay4:  any[] = [];  // day 4 tides — used by the 5-day forecast
+      let tidesDay5:  any[] = [];  // day 5 tides — used by the 5-day forecast
 
       // Helper to convert a predictions array into TidePoint[]
       const toTidePoints = (preds: any[]) =>
@@ -534,11 +568,23 @@ export async function fetchTideData(lat: number, lon: number) {
           const dayAfterTomorrowPredictions = predictions.predictions.filter(
             (p: any) => typeof p.t === 'string' && p.t.startsWith(dayAfterTomorrowLocalDate)
           );
+          const day3Predictions = predictions.predictions.filter(
+            (p: any) => typeof p.t === 'string' && p.t.startsWith(day3LocalDate)
+          );
+          const day4Predictions = predictions.predictions.filter(
+            (p: any) => typeof p.t === 'string' && p.t.startsWith(day4LocalDate)
+          );
+          const day5Predictions = predictions.predictions.filter(
+            (p: any) => typeof p.t === 'string' && p.t.startsWith(day5LocalDate)
+          );
 
           // Build TidePoint[] for each day
           tides     = toTidePoints(todayPredictions);
           tidesDay1 = toTidePoints(tomorrowPredictions);
           tidesDay2 = toTidePoints(dayAfterTomorrowPredictions);
+          tidesDay3 = toTidePoints(day3Predictions);
+          tidesDay4 = toTidePoints(day4Predictions);
+          tidesDay5 = toTidePoints(day5Predictions);
 
           // tideHigh / tideLow kept for backward compat (condition-alert monitor)
           // h.t is "YYYY-MM-DD HH:MM" in station local time; stored as isoRaw for
@@ -582,6 +628,9 @@ export async function fetchTideData(lat: number, lon: number) {
         tides,      // empty array if NOAA returned no predictions; caller falls back to generated
         tidesDay1,  // tomorrow's real NOAA tides (empty if unavailable)
         tidesDay2,  // day-after-tomorrow's real NOAA tides (empty if unavailable)
+        tidesDay3,  // day 3 real NOAA tides (empty if unavailable)
+        tidesDay4,  // day 4 real NOAA tides (empty if unavailable)
+        tidesDay5,  // day 5 real NOAA tides (empty if unavailable)
         source: station.name
       };
       
