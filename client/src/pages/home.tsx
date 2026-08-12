@@ -8,16 +8,20 @@ import DetailedData from "@/components/DetailedData";
 import NearbySpots from "@/components/NearbySpots";
 import SurfSpotStats from "@/components/SurfSpotStats";
 import LoadingScreen from "@/components/LoadingScreen";
+import SpotMap from "@/components/SpotMap";
 
 import Footer from "@/components/Footer";
 import { Location } from "@/types/weather";
 
 
 
+type ActiveTab = "conditions" | "map";
+
 export default function Home() {
   const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true); // Start as true
   const [isNavigating, setIsNavigating] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("conditions");
   const [location] = useLocation();
   const [urlParams, setUrlParams] = useState(new URLSearchParams(window.location.search));
 
@@ -176,10 +180,43 @@ export default function Home() {
       
       {currentLocation ? (
         <div className="w-full">
-          <CurrentConditions location={currentLocation} />
-          <ForecastSection location={currentLocation} />
-          <DetailedData location={currentLocation} />
-          <NearbySpots location={currentLocation} />
+          {/* ── Tab bar ───────────────────────────────────────────────── */}
+          <div className="max-w-2xl mx-auto px-4 pt-4 pb-1">
+            <div
+              className="flex gap-1 p-1 rounded-xl"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              {(["conditions", "map"] as ActiveTab[]).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all capitalize ${
+                    activeTab === tab
+                      ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                      : "text-slate-500 hover:text-slate-300 border border-transparent"
+                  }`}
+                >
+                  {tab === "conditions" ? "Conditions" : "🗺 Map"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Tab content ───────────────────────────────────────────── */}
+          {activeTab === "conditions" ? (
+            <>
+              <CurrentConditions location={currentLocation} />
+              <ForecastSection location={currentLocation} />
+              <DetailedData location={currentLocation} />
+              <NearbySpots location={currentLocation} />
+            </>
+          ) : (
+            <SpotMap
+              lat={currentLocation.latitude}
+              lon={currentLocation.longitude}
+              name={currentLocation.name}
+            />
+          )}
         </div>
       ) : (
         <div className="container mx-auto px-4 py-12 space-y-8 max-w-7xl">
