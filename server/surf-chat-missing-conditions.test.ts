@@ -123,6 +123,142 @@ describe("buildConditionsSummary — present conditions", () => {
   });
 });
 
+describe("buildConditionsSummary — partial conditions (object present, key fields null)", () => {
+  const partialConditions = {
+    waveHeight: null,
+    wavePeriod: null,
+    waveDirection: null,
+    windSpeed: null,
+    windDirection: null,
+    windGusts: null,
+    tideStatus: null,
+    tideHeight: null,
+    waterTemp: null,
+  };
+
+  it("does NOT produce '0.0 ft' when waveHeight is null", () => {
+    const result = buildConditionsSummary(partialConditions);
+    expect(result).not.toContain("0.0 ft");
+  });
+
+  it("does NOT produce 'undefineds' or 'undefined' for wavePeriod when null", () => {
+    const result = buildConditionsSummary(partialConditions);
+    expect(result).not.toMatch(/undefined/i);
+  });
+
+  it("shows 'unknown' for missing wave height", () => {
+    const result = buildConditionsSummary(partialConditions);
+    expect(result).toMatch(/Waves:.*unknown/);
+  });
+
+  it("shows 'unknown' for missing wave period", () => {
+    const result = buildConditionsSummary(partialConditions);
+    expect(result).toMatch(/@ unknown/);
+  });
+
+  it("shows 'unknown' for missing wave direction", () => {
+    const result = buildConditionsSummary(partialConditions);
+    expect(result).toMatch(/from unknown/);
+  });
+
+  it("shows 'unknown' for missing wind speed", () => {
+    const result = buildConditionsSummary(partialConditions);
+    expect(result).toMatch(/Wind:.*unknown/);
+  });
+
+  it("does not return the 'unavailable' notice since the conditions object is present", () => {
+    const result = buildConditionsSummary(partialConditions);
+    expect(result).not.toBe("Current conditions data is unavailable right now.");
+  });
+});
+
+describe("buildConditionsSummary — numeric zero values (calm / flat conditions)", () => {
+  const zeroConditions = {
+    waveHeight: "0",
+    wavePeriod: "0",
+    waveDirection: "N",
+    windSpeed: "0",
+    windDirection: "N",
+    windGusts: null,
+    tideStatus: "low",
+    tideHeight: "0",
+    waterTemp: "60",
+  };
+
+  it("shows '0.0 ft' for waveHeight of 0, not 'unknown'", () => {
+    const result = buildConditionsSummary(zeroConditions);
+    expect(result).toContain("0.0 ft");
+  });
+
+  it("shows '0 mph' for windSpeed of 0, not 'unknown'", () => {
+    const result = buildConditionsSummary(zeroConditions);
+    expect(result).toContain("0 mph");
+  });
+
+  it("does NOT contain 'unknown' for fully populated zero conditions", () => {
+    const result = buildConditionsSummary(zeroConditions);
+    // All fields are present (even if zero), so no field should fall back to unknown
+    expect(result).not.toMatch(/Waves:.*unknown/);
+    expect(result).not.toMatch(/Wind:.*unknown/);
+  });
+});
+
+describe("buildConditionsSummary — buoy with null wave fields", () => {
+  const conditionsWithPartialBuoy = {
+    waveHeight: "3.0",
+    wavePeriod: "10",
+    waveDirection: "SW",
+    windSpeed: "12",
+    windDirection: "W",
+    tideStatus: "falling",
+    primaryBuoy: {
+      stationId: "46026",
+      stationName: "San Francisco",
+      waveHeight: null,
+      wavePeriod: null,
+      waveDirection: null,
+    },
+  };
+
+  it("shows 'unknown' for buoy waveHeight when null", () => {
+    const result = buildConditionsSummary(conditionsWithPartialBuoy);
+    expect(result).toMatch(/Primary buoy.*unknown/);
+  });
+
+  it("does NOT show '0.0 ft' for buoy when waveHeight is null", () => {
+    const result = buildConditionsSummary(conditionsWithPartialBuoy);
+    expect(result).not.toMatch(/Primary buoy.*0\.0 ft/);
+  });
+
+  it("does NOT show 'undefined' for buoy fields when null", () => {
+    const result = buildConditionsSummary(conditionsWithPartialBuoy);
+    expect(result).not.toMatch(/undefined/i);
+  });
+});
+
+describe("buildConditionsSummary — buoy with numeric zero wave fields", () => {
+  const conditionsWithZeroBuoy = {
+    waveHeight: "2.0",
+    wavePeriod: "8",
+    waveDirection: "NW",
+    windSpeed: "5",
+    windDirection: "N",
+    tideStatus: "rising",
+    primaryBuoy: {
+      stationId: "46026",
+      stationName: "San Francisco",
+      waveHeight: "0",
+      wavePeriod: "0",
+      waveDirection: "N",
+    },
+  };
+
+  it("shows '0.0 ft' for buoy waveHeight of 0, not 'unknown'", () => {
+    const result = buildConditionsSummary(conditionsWithZeroBuoy);
+    expect(result).toMatch(/Primary buoy.*0\.0 ft/);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Client-side: buildContextMessage (opening message shown in the chat panel)
 // ---------------------------------------------------------------------------

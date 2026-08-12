@@ -16,17 +16,35 @@ export function buildConditionsSummary(conditions: Record<string, any> | null): 
     return "Current conditions data is unavailable right now.";
   }
 
+  const isPresent = (v: any): boolean => v != null && v !== "";
+
+  const waveHeight = isPresent(conditions.waveHeight)
+    ? `${parseFloat(conditions.waveHeight).toFixed(1)} ft`
+    : "unknown";
+  const wavePeriod = isPresent(conditions.wavePeriod) ? `${conditions.wavePeriod}s` : "unknown";
+  const waveDirection = isPresent(conditions.waveDirection) ? conditions.waveDirection : "unknown";
+  const windSpeed = isPresent(conditions.windSpeed)
+    ? `${Math.round(parseFloat(conditions.windSpeed))} mph`
+    : "unknown";
+  const windDirection = isPresent(conditions.windDirection) ? conditions.windDirection : "unknown";
+
+  const buoyLine = (label: string, buoy: Record<string, any>) => {
+    const bName = buoy.stationName || buoy.stationId || "unknown";
+    const bWave = isPresent(buoy.waveHeight)
+      ? `${parseFloat(buoy.waveHeight).toFixed(1)} ft`
+      : "unknown";
+    const bPeriod = isPresent(buoy.wavePeriod) ? `${buoy.wavePeriod}s` : "unknown";
+    const bDir = isPresent(buoy.waveDirection) ? buoy.waveDirection : "unknown";
+    return `- ${label} (${bName}): ${bWave} @ ${bPeriod} from ${bDir}`;
+  };
+
   return [
-    `- Waves: ${parseFloat(conditions.waveHeight || "0").toFixed(1)} ft @ ${conditions.wavePeriod}s from ${conditions.waveDirection}`,
-    `- Wind: ${Math.round(parseFloat(conditions.windSpeed || "0"))} mph from ${conditions.windDirection}${conditions.windGusts ? `, gusts ${Math.round(parseFloat(conditions.windGusts))} mph` : ""}`,
-    `- Tide: ${conditions.tideStatus}${conditions.tideHeight ? ` at ${parseFloat(conditions.tideHeight).toFixed(1)} ft` : ""}`,
+    `- Waves: ${waveHeight} @ ${wavePeriod} from ${waveDirection}`,
+    `- Wind: ${windSpeed} from ${windDirection}${conditions.windGusts ? `, gusts ${Math.round(parseFloat(conditions.windGusts))} mph` : ""}`,
+    `- Tide: ${conditions.tideStatus || "unknown"}${conditions.tideHeight ? ` at ${parseFloat(conditions.tideHeight).toFixed(1)} ft` : ""}`,
     `- Water temp: ${conditions.waterTemp ? `${parseFloat(conditions.waterTemp).toFixed(0)}°F` : "unknown"}`,
-    conditions.primaryBuoy
-      ? `- Primary buoy (${conditions.primaryBuoy.stationName || conditions.primaryBuoy.stationId}): ${parseFloat(conditions.primaryBuoy.waveHeight || "0").toFixed(1)} ft @ ${conditions.primaryBuoy.wavePeriod}s from ${conditions.primaryBuoy.waveDirection}`
-      : null,
-    conditions.backupBuoy
-      ? `- Backup buoy (${conditions.backupBuoy.stationName || conditions.backupBuoy.stationId}): ${parseFloat(conditions.backupBuoy.waveHeight || "0").toFixed(1)} ft @ ${conditions.backupBuoy.wavePeriod}s from ${conditions.backupBuoy.waveDirection}`
-      : null,
+    conditions.primaryBuoy ? buoyLine("Primary buoy", conditions.primaryBuoy) : null,
+    conditions.backupBuoy ? buoyLine("Backup buoy", conditions.backupBuoy) : null,
   ]
     .filter(Boolean)
     .join("\n") as string;
