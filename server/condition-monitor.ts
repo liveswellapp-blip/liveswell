@@ -510,7 +510,9 @@ export class ConditionMonitor {
         10
       );
       const remainingCalls = getOpenWeatherRemainingCalls();
-      if (remainingCalls <= quotaWarnThreshold) {
+      // A threshold of 0 (or negative) means "never warn" — useful for disabling
+      // the warning in environments where quota is not a concern.
+      if (quotaWarnThreshold > 0 && remainingCalls <= quotaWarnThreshold) {
         console.warn(
           `⚠️  OpenWeather quota low: ${remainingCalls} call(s) remaining today` +
           ` (warn threshold: ${quotaWarnThreshold}).` +
