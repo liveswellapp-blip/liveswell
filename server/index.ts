@@ -47,8 +47,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Redirect support.liveswell.io → /support so the subdomain works as a
-// standalone support URL (e.g. for App Store / Google Play metadata).
+// Redirect support.liveswell.io → https://liveswell.io/support so the
+// subdomain works as a standalone support URL (e.g. for App Store / Google
+// Play metadata).
+//
+// The redirect MUST be an absolute URL so the browser crosses from the
+// support.liveswell.io host to liveswell.io.  A relative redirect like
+// "/support" would keep the browser on support.liveswell.io.
 //
 // Only page-navigation paths are remapped; API calls, static assets, and
 // Vite dev-server paths pass through untouched so the app can still load
@@ -57,12 +62,12 @@ const SUPPORT_PASSTHROUGH_PREFIXES = ["/api", "/assets", "/_", "/@", "/node_modu
 app.use((req: Request, res: Response, next: NextFunction) => {
   const host = (req.headers.host || "").split(":")[0].toLowerCase();
   if (host !== "support.liveswell.io") return next();
-  if (req.path.startsWith("/support")) return next();
   if (SUPPORT_PASSTHROUGH_PREFIXES.some(p => req.path.startsWith(p))) return next();
   // Use 301 (permanent) — the subdomain-to-path mapping is stable and
   // permanent caching is correct for App Store / Google Play link resolution.
+  // Absolute URL required: a relative redirect stays on the same host.
   const suffix = req.path === "/" ? "" : req.path;
-  return res.redirect(301, "/support" + suffix);
+  return res.redirect(301, `https://liveswell.io/support${suffix}`);
 });
 
 // Session configuration is handled by auth.ts (setupAuth)
