@@ -58,6 +58,111 @@ interface UsageForecast {
   planNote?: string;
 }
 
+/** Fetches and displays the Sentry "Errors (last 24h)" count. */
+function SentryErrorCount() {
+  const { data, isLoading, error, dataUpdatedAt } = useQuery<{
+    configured: boolean;
+    count: number | null;
+    capped: boolean;
+    sentryUrl: string | null;
+    cachedAt: string | null;
+    message?: string;
+  }>({
+    queryKey: ['/api/admin/sentry-error-count'],
+    refetchInterval: 5 * 60 * 1000, // re-poll every 5 min (matches server cache TTL)
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Clock className="h-4 w-4 animate-pulse" />
+        Loading error count…
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-destructive">
+        <XCircle className="h-4 w-4" />
+        Could not load error count.
+      </div>
+    );
+  }
+
+  if (!data.configured) {
+    return (
+      <div className="rounded-md bg-secondary p-3 space-y-1">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          <span>Errors (last 24h): <em>not configured</em></span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {data.message ?? 'Set SENTRY_API_TOKEN, SENTRY_ORG, and SENTRY_PROJECT in Replit Secrets to enable live error counts.'}
+        </p>
+      </div>
+    );
+  }
+
+  if (data.count === null) {
+    return (
+      <div className="rounded-md bg-secondary p-3 space-y-1">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <XCircle className="h-4 w-4 text-red-500" />
+          <span>Errors (last 24h): <em>fetch failed</em></span>
+        </div>
+        <p className="text-xs text-muted-foreground">{data.message}</p>
+      </div>
+    );
+  }
+
+  const hasErrors = data.count > 0;
+  const countLabel = data.capped ? '100+' : String(data.count);
+
+  return (
+    <div className={`rounded-md p-3 space-y-2 ${hasErrors ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700' : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700'}`}>
+      <div className="flex items-center gap-2">
+        {hasErrors
+          ? <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+          : <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />}
+        <span className={`font-semibold text-sm ${hasErrors ? 'text-amber-800 dark:text-amber-200' : 'text-green-800 dark:text-green-200'}`}>
+          Errors (last 24h):&nbsp;
+          <span className={`text-lg ${hasErrors ? 'text-amber-700 dark:text-amber-300' : 'text-green-700 dark:text-green-300'}`}>
+            {countLabel}
+          </span>
+          {!hasErrors && ' — all clear'}
+        </span>
+        {hasErrors && data.sentryUrl && (
+          <a
+            href={data.sentryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto text-xs underline text-amber-700 dark:text-amber-300 whitespace-nowrap"
+          >
+            View in Sentry →
+          </a>
+        )}
+      </div>
+      {hasErrors && (
+        <p className="text-xs text-amber-700 dark:text-amber-300">
+          {data.capped ? '100 or more new unresolved issues ' : `${data.count} new unresolved issue${data.count !== 1 ? 's' : ''} `}
+          first seen in the last 24 hours.{' '}
+          {data.sentryUrl && (
+            <a href={data.sentryUrl} target="_blank" rel="noopener noreferrer" className="underline font-medium">
+              Open Sentry dashboard
+            </a>
+          )}{' '}to investigate.
+        </p>
+      )}
+      {data.cachedAt && (
+        <p className="text-xs text-muted-foreground">
+          Cached · refreshes every 5 min · last fetched {new Date(data.cachedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** Inline panel: shows Sentry DSN status and a one-click smoke-test button. */
 function SentryTestPanel() {
   const { toast } = useToast();
@@ -571,8 +676,12 @@ export default function AdminDashboard() {
             <span>Error Monitoring (Sentry)</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <SentryTestPanel />
+        <CardContent className="space-y-6">
+          <SentryErrorCount />
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Smoke Test</p>
+            <SentryTestPanel />
+          </div>
         </CardContent>
       </Card>
 

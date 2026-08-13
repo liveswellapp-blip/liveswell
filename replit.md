@@ -226,6 +226,14 @@ Unhandled server errors, React crashes, and unhandled promise rejections are cap
    - `VITE_SENTRY_DSN` — React project DSN (used by the browser client)
 5. Restart the server — the startup log will confirm `[Sentry] Server monitoring initialised`.
 
+**Optional — live error count on the admin dashboard:**
+The admin monitoring page shows an "Errors (last 24h)" badge pulled from the Sentry Issues API. Set these Replit Secrets to enable it:
+- `SENTRY_API_TOKEN` — a Sentry internal-integration token or personal auth token (sentry.io → Settings → Auth Tokens). Needs `project:read` scope.
+- `SENTRY_ORG` — your Sentry organisation slug (e.g. `liveswell`)
+- `SENTRY_PROJECT` — your Sentry project slug (e.g. `liveswell-node`)
+
+The count is cached server-side for 5 minutes. Zero errors shows a green indicator; any non-zero count shows an amber badge with a direct link to the Sentry issues list.
+
 **Optional — readable stack traces in production:**
 Source maps are uploaded to Sentry automatically during production builds when these secrets are set:
 - `SENTRY_AUTH_TOKEN` — from sentry.io → Settings → Auth Tokens

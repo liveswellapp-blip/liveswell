@@ -581,6 +581,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── Sentry Issues API — error count for the last 24 h ────────────────────
+  // Requires SENTRY_API_TOKEN (a Sentry internal-integration token or personal
+  // auth token), SENTRY_ORG (org slug), and SENTRY_PROJECT (project slug).
+  // The result is cached for 5 minutes to avoid hammering the Sentry API.
+  {
+    let _sentryCache: { count: number; capped: boolean; fetchedAt: number } | null = null;
+    const SENTRY_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+    app.get("/api/admin/sentry-error-count", requireAdminAuth, async (_req, res) => {
+      const token   = process.env.SENTRY_API_TOKEN;
+      const org     = process.env.SENTRY_ORG;
+      const project = process.env.SENTRY_PROJECT;
+
+      if (!token || !org || !project) {
+        return res.json({
+          configured: false,
+          count: null,
+          capped: false,
+          sentryUrl: null,
+          cachedAt: null,
+          message: "Set SENTRY_API_TOKEN, SENTRY_ORG, and SENTRY_PROJECT to enable live error counts.",
+        });
+      }
+
+      const sentryUrl = `https://sentry.io/organizations/${org}/issues/?project=${project}&query=is%3Aunresolved&statsPeriod=24h`;
+
+      // Return cached result if still fresh
+      const now = Date.now();
+      if (_sentryCache && now - _sentryCache.fetchedAt < SENTRY_CACHE_TTL_MS) {
+        return res.json({
+          configured: true,
+          count: _sentryCache.count,
+          capped: _sentryCache.capped,
+          sentryUrl,
+          cachedAt: new Date(_sentryCache.fetchedAt).toISOString(),
+        });
+      }
+
+      try {
+        // Fetch unresolved issues that first appeared in the last 24 hours.
+        // Limit 100 — if the response returns exactly 100 we flag it as capped.
+        const apiUrl = `https://sentry.io/api/0/projects/${org}/${project}/issues/?query=is%3Aunresolved+firstSeen%3A%3E-24h&limit=100&statsPeriod=24h`;
+        const response = await fetch(apiUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          console.error(`[Sentry API] HTTP ${response.status} fetching issue count`);
+          return res.status(502).json({
+            configured: true,
+            count: null,
+            capped: false,
+            sentryUrl,
+            cachedAt: null,
+            message: `Sentry API returned HTTP ${response.status}. Check SENTRY_API_TOKEN, SENTRY_ORG, and SENTRY_PROJECT.`,
+          });
+        }
+
+        const issues: unknown[] = await response.json();
+        const count = Array.isArray(issues) ? issues.length : 0;
+        const capped = count >= 100;
+
+        _sentryCache = { count, capped, fetchedAt: now };
+
+        return res.json({
+          configured: true,
+          count,
+          capped,
+          sentryUrl,
+          cachedAt: new Date(now).toISOString(),
+        });
+      } catch (err) {
+        console.error('[Sentry API] Fetch error:', err);
+        return res.status(502).json({
+          configured: true,
+          count: null,
+          capped: false,
+          sentryUrl,
+          cachedAt: null,
+          message: 'Failed to reach Sentry API. Check server connectivity.',
+        });
+      }
+    });
+  }
+
   // Sentry smoke-test: throws a deliberate error through Express's error handler
   // chain so Sentry.setupExpressErrorHandler captures it automatically, giving
   // a genuine end-to-end confirmation that unhandled server errors reach Sentry.
