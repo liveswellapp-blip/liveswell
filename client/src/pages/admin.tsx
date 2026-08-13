@@ -44,13 +44,18 @@ interface ApiMetrics {
 
 interface UsageForecast {
   uniqueLocations: number;
-  checksPerDay: number;
+  cyclesPerDay: number;
+  checksPerDay?: number; // alias kept for backward compat
+  owmCallsPerCycle: number;
+  callsPerLocationPerDay: number;
   estimatedCallsPerDay: number;
   dailyLimit: number;
   remainingQuota: number;
   capacityRemaining: number | null;
   utilizationPct: number;
   quotaExceededAt: string | null;
+  planUpgradeUrl?: string;
+  planNote?: string;
 }
 
 export default function AdminDashboard() {
@@ -545,17 +550,21 @@ export default function AdminDashboard() {
               </div>
               <div className={`rounded-md p-3 text-sm ${forecastData.remainingQuota <= 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : forecastData.utilizationPct >= 80 ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'}`}>
                 {forecastData.remainingQuota <= 0 ? (
-                  <p>⚠️ <strong>Over the daily cap.</strong> At {forecastData.uniqueLocations} monitored location{forecastData.uniqueLocations !== 1 ? 's' : ''}, the estimated {forecastData.estimatedCallsPerDay.toLocaleString()} calls/day exceeds the {forecastData.dailyLimit.toLocaleString()} free-tier limit.</p>
+                  <p>⚠️ <strong>Over the daily cap.</strong> At {forecastData.uniqueLocations} monitored location{forecastData.uniqueLocations !== 1 ? 's' : ''}, the estimated {forecastData.estimatedCallsPerDay.toLocaleString()} calls/day exceeds the {forecastData.dailyLimit.toLocaleString()} free-tier limit.{' '}
+                    <a href={forecastData.planUpgradeUrl ?? 'https://openweathermap.org/api'} target="_blank" rel="noopener noreferrer" className="underline font-medium">Upgrade the plan</a> to raise your quota.
+                  </p>
                 ) : forecastData.utilizationPct >= 80 ? (
-                  <p>⚠️ <strong>Approaching the daily cap ({forecastData.utilizationPct}% used).</strong> You have room for roughly {forecastData.capacityRemaining ?? 0} more monitored location{(forecastData.capacityRemaining ?? 0) !== 1 ? 's' : ''} before hitting the limit.</p>
+                  <p>⚠️ <strong>Approaching the daily cap ({forecastData.utilizationPct}% used).</strong> You have room for roughly {forecastData.capacityRemaining ?? 0} more monitored location{(forecastData.capacityRemaining ?? 0) !== 1 ? 's' : ''} before hitting the limit.{' '}
+                    <a href={forecastData.planUpgradeUrl ?? 'https://openweathermap.org/api'} target="_blank" rel="noopener noreferrer" className="underline font-medium">Upgrade the plan</a> to increase your quota.
+                  </p>
                 ) : forecastData.uniqueLocations === 0 ? (
                   <p>✅ <strong>No locations monitored yet.</strong> The {forecastData.dailyLimit.toLocaleString()} daily call quota is fully available.</p>
                 ) : (
-                  <p>✅ <strong>Well within limits.</strong> {forecastData.uniqueLocations} location{forecastData.uniqueLocations !== 1 ? 's' : ''} × {forecastData.checksPerDay} checks/day = {forecastData.estimatedCallsPerDay.toLocaleString()} calls. You can add {forecastData.capacityRemaining ?? 0} more location{(forecastData.capacityRemaining ?? 0) !== 1 ? 's' : ''} before reaching the cap.</p>
+                  <p>✅ <strong>Well within limits.</strong> {forecastData.uniqueLocations} location{forecastData.uniqueLocations !== 1 ? 's' : ''} × {forecastData.cyclesPerDay} cycles/day = {forecastData.estimatedCallsPerDay.toLocaleString()} calls. You can add {forecastData.capacityRemaining ?? 0} more location{(forecastData.capacityRemaining ?? 0) !== 1 ? 's' : ''} before reaching the cap.</p>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Checks run every 20 min ({forecastData.checksPerDay} cycles/day). Estimate resets at midnight UTC.
+                Checks run every 20 min ({forecastData.cyclesPerDay} cycles/day). Estimate resets at midnight UTC.
               </p>
             </div>
           ) : <p className="text-sm text-muted-foreground">Loading forecast...</p>}
