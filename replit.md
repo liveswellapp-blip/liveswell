@@ -146,8 +146,14 @@ US carriers require Application-to-Person (A2P) 10DLC registration for SMS sent 
    - Under **Messaging Services**, create a service (or use an existing one) and attach +1 904-944-9195.
    - Associate the messaging service with the approved campaign.
 
-4. **Update sender in code** *(if moving to a Messaging Service SID)*
-   - If Twilio recommends sending via a Messaging Service SID instead of the raw phone number, update `TWILIO_PHONE_NUMBER` in Replit Secrets to the `MGXXXXXXXX` SID, or add a separate `TWILIO_MESSAGING_SERVICE_SID` secret and update `server/sms-service.ts` to use `messagingServiceSid` instead of `from`.
+4. **Update sender in code** *(using a Messaging Service SID)*
+   - A2P 10DLC campaigns must be sent via a Messaging Service. Once the Messaging Service is created in the Twilio console and the phone number (+1 904-944-9195) is added to it, set the Replit Secret `TWILIO_MESSAGING_SERVICE_SID` to the `MGXXXXXXXX` SID.
+   - When `TWILIO_MESSAGING_SERVICE_SID` is set, all outbound SMS (verification codes, daily reports, condition alerts) automatically use `messagingServiceSid` instead of `from: twilioPhoneNumber`. The raw `TWILIO_PHONE_NUMBER` is used as a fallback if the secret is absent.
+   - **Required Replit Secrets for SMS:**
+     - `TWILIO_ACCOUNT_SID` — Twilio account SID
+     - `TWILIO_AUTH_TOKEN` — Twilio auth token
+     - `TWILIO_PHONE_NUMBER` — raw sending number (+1 904-944-9195), used as fallback when `TWILIO_MESSAGING_SERVICE_SID` is absent
+     - `TWILIO_MESSAGING_SERVICE_SID` — Messaging Service SID (`MGXXXXXXXX`); when set, takes priority over `TWILIO_PHONE_NUMBER` for all outbound sends
 
 5. **Record the campaign SID here once approved**
    - Campaign SID: *(fill in after approval, e.g. `CMXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`)*

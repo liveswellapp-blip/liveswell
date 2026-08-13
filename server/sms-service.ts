@@ -11,9 +11,16 @@ import { and, eq, gt, gte, lt, asc } from 'drizzle-orm';
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+const twilioMessagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
 
-if (!accountSid || !authToken || !twilioPhoneNumber) {
+if (!accountSid || !authToken || (!twilioPhoneNumber && !twilioMessagingServiceSid)) {
   console.warn('Twilio credentials not configured - SMS notifications will be disabled');
+}
+
+if (twilioMessagingServiceSid) {
+  console.log(`📱 SMS will be sent via Messaging Service SID: ${twilioMessagingServiceSid}`);
+} else if (twilioPhoneNumber) {
+  console.log(`📱 SMS will be sent from phone number: ${twilioPhoneNumber}`);
 }
 
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
@@ -133,7 +140,7 @@ export class SMSService {
   // ─── Phone Verification ─────────────────────────────────────────────────────
 
   static async sendVerificationCode(userId: string, phoneNumber: string): Promise<boolean> {
-    if (!client || !twilioPhoneNumber) {
+    if (!client || (!twilioPhoneNumber && !twilioMessagingServiceSid)) {
       console.error('Twilio not configured — cannot send verification SMS');
       return false;
     }
@@ -153,7 +160,9 @@ export class SMSService {
     try {
       await client.messages.create({
         body: `Your LiveSwell verification code is: ${code}\n\nIt expires in 10 minutes.`,
-        from: twilioPhoneNumber,
+        ...(twilioMessagingServiceSid
+          ? { messagingServiceSid: twilioMessagingServiceSid }
+          : { from: twilioPhoneNumber }),
         to: phone,
       });
       console.log(`📱 Verification code sent to ${phone}`);
@@ -232,7 +241,7 @@ export class SMSService {
   // ─── SMS Delivery ───────────────────────────────────────────────────────────
 
   static async sendDailyConditions(userId: string, phoneNumber: string, locationId: number): Promise<boolean> {
-    if (!client || !twilioPhoneNumber) {
+    if (!client || (!twilioPhoneNumber && !twilioMessagingServiceSid)) {
       console.error('Twilio not configured - cannot send SMS');
       return false;
     }
@@ -326,7 +335,9 @@ export class SMSService {
       // Send SMS via Twilio
       const result = await client.messages.create({
         body: message,
-        from: twilioPhoneNumber,
+        ...(twilioMessagingServiceSid
+          ? { messagingServiceSid: twilioMessagingServiceSid }
+          : { from: twilioPhoneNumber }),
         to: phoneNumber,
       });
 
@@ -431,7 +442,7 @@ Reply STOP to opt out.`;
     triggerReason: string,
     locationId: number,
   ): Promise<boolean> {
-    if (!client || !twilioPhoneNumber) {
+    if (!client || (!twilioPhoneNumber && !twilioMessagingServiceSid)) {
       console.error('Twilio not configured — cannot send condition alert SMS');
       return false;
     }
@@ -470,7 +481,9 @@ Reply STOP to opt out. liveswell.io`;
 
       const result = await client.messages.create({
         body: message,
-        from: twilioPhoneNumber,
+        ...(twilioMessagingServiceSid
+          ? { messagingServiceSid: twilioMessagingServiceSid }
+          : { from: twilioPhoneNumber }),
         to: phoneNumber,
       });
 
