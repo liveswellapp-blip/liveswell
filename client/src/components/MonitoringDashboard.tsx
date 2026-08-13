@@ -38,6 +38,7 @@ interface Metrics {
     requestsToday: number;
     dailyLimit: number;
     remainingCalls: number;
+    quotaWarnThreshold: number;
   };
   noaa: {
     requestsToday: number;
@@ -285,6 +286,12 @@ export default function MonitoringDashboard() {
                 } 
                 className="h-2"
               />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Warning at ≤ {metrics?.openweather.quotaWarnThreshold ?? 100} calls remaining</span>
+                <span className={(metrics?.openweather.remainingCalls ?? Infinity) <= (metrics?.openweather.quotaWarnThreshold ?? 100) ? 'text-yellow-600 dark:text-yellow-400 font-medium' : ''}>
+                  {metrics?.openweather.remainingCalls ?? '—'} remaining
+                </span>
+              </div>
             </div>
             
             <div className="grid grid-cols-3 gap-4 text-sm">

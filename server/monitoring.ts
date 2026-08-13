@@ -194,12 +194,21 @@ export function getMetrics(req: Request, res: Response) {
   const noaaStale = metrics.noaa.requestsToday > 0 &&
     (noaaIdleMinutes === null || noaaIdleMinutes >= NOAA_STALE_THRESHOLD_MINUTES);
 
+  const quotaWarnThreshold = parseInt(
+    process.env.OPENWEATHER_QUOTA_WARN_THRESHOLD ?? '100',
+    10
+  );
+
   res.json({
     ...metrics,
     noaa: {
       ...metrics.noaa,
       idleMinutes: noaaIdleMinutes,
       stale: noaaStale
+    },
+    openweather: {
+      ...metrics.openweather,
+      quotaWarnThreshold
     },
     performance: {
       averageResponseTime: Math.round(averageResponseTime),
