@@ -49,18 +49,36 @@ async function sendEmail(
   retries = 2,
 ): Promise<{ id?: string; error?: string }> {
   let lastError: string | undefined;
+  let currentPayload = payload;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     const connectors = new ReplitConnectors();
     const response = await connectors.proxy('resend', '/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(currentPayload),
     });
 
     // Transient server-side errors (5xx) — wait briefly and retry
     if (!response.ok) {
       const body = await response.text();
+
+      // Domain not verified in this Resend account (common in Replit dev connector)
+      // — fall back to Resend's shared onboarding sender and retry once.
+      if (
+        response.status === 403 &&
+        body.includes('domain is not verified') &&
+        currentPayload.from !== FALLBACK_FROM
+      ) {
+        console.warn(
+          `⚠️  Resend rejected from-address "${currentPayload.from}" (domain not verified in connector account). ` +
+          `Retrying with fallback sender "${FALLBACK_FROM}". ` +
+          `To fix permanently, verify the domain at https://resend.com/domains.`,
+        );
+        currentPayload = { ...currentPayload, from: FALLBACK_FROM };
+        continue;
+      }
+
       if (response.status >= 500 && attempt < retries) {
         console.warn(`⚠️  Resend transient error (${response.status}) on attempt ${attempt}/${retries} — retrying…`);
         await new Promise(r => setTimeout(r, 1000 * attempt));
@@ -623,6 +641,78 @@ ${footerTextLine}`;
       return true;
     } catch (error) {
       console.error('Error sending condition alert email:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send a support contact form submission to the configured inbox.
+   * Uses the same FROM_EMAIL / fallback logic as all other emails so this
+   * route never breaks when the custom domain isn't verified in the
+   * Replit-managed Resend connector.
+   *
+   * @param senderName  - display name provided by the submitter
+   * @param senderEmail - email address the submitter entered (used as reply-to)
+   * @param subject     - topic selected / typed in the form
+   * @param message     - body of the support request
+   */
+  static async sendSupportContact(
+    senderName: string,
+    senderEmail: string,
+    subject: string,
+    message: string,
+  ): Promise<boolean> {
+    try {
+      // Destination: use SUPPORT_EMAIL env var when set (recommended in production
+      // so support messages land in a dedicated inbox). Fall back to extracting
+      // the plain address from FROM_EMAIL so it always points to a verified sender.
+      const toEmail =
+        process.env.SUPPORT_EMAIL ||
+        (FROM_EMAIL.match(/<([^>]+)>/)?.[1] ?? FROM_EMAIL);
+
+      const safeName    = senderName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeEmail   = senderEmail.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const html = `
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px;">
+  <h2 style="color:#030a14;margin-top:0;">New Support Request</h2>
+  <table style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td style="padding:8px 0;font-weight:600;color:#374151;width:100px;">From:</td>
+      <td style="padding:8px 0;color:#111827;">${safeName} &lt;${safeEmail}&gt;</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;font-weight:600;color:#374151;">Subject:</td>
+      <td style="padding:8px 0;color:#111827;">${subject.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+    </tr>
+  </table>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;" />
+  <p style="color:#374151;line-height:1.7;white-space:pre-wrap;">${safeMessage}</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;" />
+  <p style="font-size:12px;color:#9ca3af;">Sent via the LiveSwell support centre · Reply directly to ${safeEmail}</p>
+</div>`;
+
+      const text = `Support request from ${senderName} <${senderEmail}>\nSubject: ${subject}\n\n${message}`;
+
+      const result = await sendEmail({
+        from:    FROM_EMAIL,
+        to:      toEmail,
+        subject: `[Support] ${subject} — from ${senderName}`,
+        html,
+        text,
+        headers: { 'Reply-To': senderEmail },
+      });
+
+      if (result.error) {
+        console.error(`❌ Support contact email failed: ${result.error}`);
+        return false;
+      }
+
+      console.log(`✅ Support contact email sent from ${senderEmail} (id: ${result.id})`);
+      return true;
+    } catch (error) {
+      console.error('Error sending support contact email:', error);
       return false;
     }
   }

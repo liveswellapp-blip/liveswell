@@ -107,9 +107,12 @@ Current value: `LiveSwell <alerts@liveswell.io>` (set in Replit Secrets panel).
 
 **Fallback behaviour:** If `RESEND_FROM_EMAIL` is not set, the server falls back to `onboarding@resend.dev` (Resend's shared test address). The startup log will print a warning in this case. This fallback must not be used in production.
 
+**Support contact inbox:** The `/support` contact form sends submissions to `SUPPORT_EMAIL` (Replit Secret). If not set, it falls back to the plain address extracted from `RESEND_FROM_EMAIL`. Set `SUPPORT_EMAIL` to a dedicated support inbox (e.g. `support@liveswell.io`) so contact form messages land in the right place and don't mix with outgoing alert emails.
+
 **Relevant files:**
-- `server/email-service.ts` — reads `RESEND_FROM_EMAIL`, all `sendEmail()` calls use `FROM_EMAIL`
-- Replit Secrets panel — where `RESEND_FROM_EMAIL` is stored
+- `server/email-service.ts` — reads `RESEND_FROM_EMAIL` and `SUPPORT_EMAIL`, all `sendEmail()` calls use `FROM_EMAIL`
+- `client/src/pages/support/ContactForm.tsx` — the contact form UI (unauthenticated; no auth required)
+- Replit Secrets panel — where `RESEND_FROM_EMAIL` and `SUPPORT_EMAIL` are stored
 
 ## SMS A2P 10DLC Registration (Twilio)
 
