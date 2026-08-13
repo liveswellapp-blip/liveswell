@@ -46,6 +46,13 @@ import { pushNotificationService } from "./push-service";
 import { insertPushSubscriptionSchema } from "@shared/schema";
 import { apnsService } from "./apns-service";
 import { fcmService } from "./fcm-service";
+import {
+  getSentryCache,
+  setSentryCache,
+  getSentryAlertedAt,
+  processSentryCount,
+  SENTRY_CACHE_TTL_MS,
+} from "./sentry-alert-logic";
 import OpenAI from "openai";
 import { buildConditionsSummary } from "./chat-helpers";
 
@@ -629,122 +636,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // (SENTRY_ALERT_THRESHOLD, default 1) an email is sent to RESEND_FROM_EMAIL.
   // The alert fires only once per spike — it won't re-fire on the next poll
   // unless the count drops back to zero in between.
-  {
-    let _sentryCache: { count: number; capped: boolean; fetchedAt: number } | null = null;
-    let _sentryAlertedAt: number | null = null; // timestamp of last alert email sent
-    const SENTRY_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  // Spike-detection state is managed by sentry-alert-logic.ts (testable module).
+  app.get("/api/admin/sentry-error-count", requireAdminAuth, async (_req, res) => {
+    const token   = process.env.SENTRY_API_TOKEN;
+    const org     = process.env.SENTRY_ORG;
+    const project = process.env.SENTRY_PROJECT;
 
-    app.get("/api/admin/sentry-error-count", requireAdminAuth, async (_req, res) => {
-      const token   = process.env.SENTRY_API_TOKEN;
-      const org     = process.env.SENTRY_ORG;
-      const project = process.env.SENTRY_PROJECT;
+    if (!token || !org || !project) {
+      return res.json({
+        configured: false,
+        count: null,
+        capped: false,
+        sentryUrl: null,
+        cachedAt: null,
+        message: "Set SENTRY_API_TOKEN, SENTRY_ORG, and SENTRY_PROJECT to enable live error counts.",
+      });
+    }
 
-      if (!token || !org || !project) {
-        return res.json({
-          configured: false,
-          count: null,
-          capped: false,
-          sentryUrl: null,
-          cachedAt: null,
-          message: "Set SENTRY_API_TOKEN, SENTRY_ORG, and SENTRY_PROJECT to enable live error counts.",
-        });
-      }
+    const sentryUrl = `https://sentry.io/organizations/${org}/issues/?project=${project}&query=is%3Aunresolved&statsPeriod=24h`;
 
-      const sentryUrl = `https://sentry.io/organizations/${org}/issues/?project=${project}&query=is%3Aunresolved&statsPeriod=24h`;
+    // Return cached result if still fresh
+    const now = Date.now();
+    const cached = getSentryCache();
+    if (cached && now - cached.fetchedAt < SENTRY_CACHE_TTL_MS) {
+      return res.json({
+        configured: true,
+        count: cached.count,
+        capped: cached.capped,
+        sentryUrl,
+        cachedAt: new Date(cached.fetchedAt).toISOString(),
+      });
+    }
 
-      // Return cached result if still fresh
-      const now = Date.now();
-      if (_sentryCache && now - _sentryCache.fetchedAt < SENTRY_CACHE_TTL_MS) {
-        return res.json({
-          configured: true,
-          count: _sentryCache.count,
-          capped: _sentryCache.capped,
-          sentryUrl,
-          cachedAt: new Date(_sentryCache.fetchedAt).toISOString(),
-        });
-      }
+    try {
+      // Fetch unresolved issues that first appeared in the last 24 hours.
+      // Limit 100 — if the response returns exactly 100 we flag it as capped.
+      const apiUrl = `https://sentry.io/api/0/projects/${org}/${project}/issues/?query=is%3Aunresolved+firstSeen%3A%3E-24h&limit=100&statsPeriod=24h`;
+      const response = await fetch(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      try {
-        // Fetch unresolved issues that first appeared in the last 24 hours.
-        // Limit 100 — if the response returns exactly 100 we flag it as capped.
-        const apiUrl = `https://sentry.io/api/0/projects/${org}/${project}/issues/?query=is%3Aunresolved+firstSeen%3A%3E-24h&limit=100&statsPeriod=24h`;
-        const response = await fetch(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          console.error(`[Sentry API] HTTP ${response.status} fetching issue count`);
-          return res.status(502).json({
-            configured: true,
-            count: null,
-            capped: false,
-            sentryUrl,
-            cachedAt: null,
-            message: `Sentry API returned HTTP ${response.status}. Check SENTRY_API_TOKEN, SENTRY_ORG, and SENTRY_PROJECT.`,
-          });
-        }
-
-        const issues: unknown[] = await response.json();
-        const count = Array.isArray(issues) ? issues.length : 0;
-        const capped = count >= 100;
-
-        const previousCount = _sentryCache?.count ?? 0;
-        _sentryCache = { count, capped, fetchedAt: now };
-
-        // ── Alert email ────────────────────────────────────────────────────
-        // Fire when:
-        //   • count is above the configured threshold (default 1)
-        //   • count rose since the last cached value (previous was 0 or lower)
-        //   • no alert has been sent yet during this spike
-        //     (reset when count drops back to 0)
-        const threshold = Math.max(1, parseInt(process.env.SENTRY_ALERT_THRESHOLD ?? '1', 10) || 1);
-        const adminEmail = process.env.RESEND_FROM_EMAIL
-          ? process.env.RESEND_FROM_EMAIL.replace(/^[^<]*<([^>]+)>$/, '$1').trim()
-          : null;
-
-        if (count >= threshold && previousCount < threshold && adminEmail) {
-          // Don't re-alert if we already sent one during this spike
-          if (!_sentryAlertedAt) {
-            const detectedAt = new Date(now).toLocaleString('en-US', {
-              month: 'short', day: 'numeric', year: 'numeric',
-              hour: 'numeric', minute: '2-digit', hour12: true,
-            });
-            console.warn(`[Sentry] Error spike detected — ${count} issue(s) (threshold ${threshold}). Emailing admin…`);
-            EmailService.sendSentryErrorAlert(adminEmail, count, threshold, sentryUrl, detectedAt)
-              .catch(err => console.error('[Sentry] Failed to send alert email:', err));
-            _sentryAlertedAt = now;
-          }
-        }
-
-        // Reset alert sentinel when count drops back below threshold so the
-        // next spike triggers a fresh email.
-        if (count < threshold) {
-          _sentryAlertedAt = null;
-        }
-
-        return res.json({
-          configured: true,
-          count,
-          capped,
-          sentryUrl,
-          cachedAt: new Date(now).toISOString(),
-        });
-      } catch (err) {
-        console.error('[Sentry API] Fetch error:', err);
+      if (!response.ok) {
+        console.error(`[Sentry API] HTTP ${response.status} fetching issue count`);
         return res.status(502).json({
           configured: true,
           count: null,
           capped: false,
           sentryUrl,
           cachedAt: null,
-          message: 'Failed to reach Sentry API. Check server connectivity.',
+          message: `Sentry API returned HTTP ${response.status}. Check SENTRY_API_TOKEN, SENTRY_ORG, and SENTRY_PROJECT.`,
         });
       }
-    });
-  }
+
+      const issues: unknown[] = await response.json();
+      const count = Array.isArray(issues) ? issues.length : 0;
+      const capped = count >= 100;
+
+      const previousCount = getSentryCache()?.count ?? 0;
+      setSentryCache({ count, capped, fetchedAt: now });
+
+      // ── Alert email ────────────────────────────────────────────────────
+      // Delegate spike-detection to processSentryCount() which manages the
+      // sentinel state and returns true only when an alert should fire.
+      const threshold = Math.max(1, parseInt(process.env.SENTRY_ALERT_THRESHOLD ?? '1', 10) || 1);
+      const adminEmail = process.env.RESEND_FROM_EMAIL
+        ? process.env.RESEND_FROM_EMAIL.replace(/^[^<]*<([^>]+)>$/, '$1').trim()
+        : null;
+
+      const shouldAlert = processSentryCount(count, previousCount, threshold, now);
+
+      if (shouldAlert && adminEmail) {
+        const detectedAt = new Date(now).toLocaleString('en-US', {
+          month: 'short', day: 'numeric', year: 'numeric',
+          hour: 'numeric', minute: '2-digit', hour12: true,
+        });
+        console.warn(`[Sentry] Error spike detected — ${count} issue(s) (threshold ${threshold}). Emailing admin…`);
+        EmailService.sendSentryErrorAlert(adminEmail, count, threshold, sentryUrl, detectedAt)
+          .catch(err => console.error('[Sentry] Failed to send alert email:', err));
+      }
+
+      return res.json({
+        configured: true,
+        count,
+        capped,
+        sentryUrl,
+        cachedAt: new Date(now).toISOString(),
+      });
+    } catch (err) {
+      console.error('[Sentry API] Fetch error:', err);
+      return res.status(502).json({
+        configured: true,
+        count: null,
+        capped: false,
+        sentryUrl,
+        cachedAt: null,
+        message: 'Failed to reach Sentry API. Check server connectivity.',
+      });
+    }
+  });
 
   // Sentry smoke-test: throws a deliberate error through Express's error handler
   // chain so Sentry.setupExpressErrorHandler captures it automatically, giving
