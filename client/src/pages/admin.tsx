@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Shield, Activity, Database, Globe, BarChart3,
   AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp,
-  Bell, LayoutDashboard, Users, Bug,
+  Bell, LayoutDashboard, Users, Bug, MessageSquare,
 } from "lucide-react";
 import AdminNav, { AdminSection } from "@/components/AdminNav";
 import UserDatabase from "@/components/UserDatabase";
@@ -308,6 +308,17 @@ export default function AdminDashboard() {
     error: string | null;
   }>({
     queryKey: ['/api/push/apns-health'],
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
+
+  const { data: twilioStatus, isLoading: twilioStatusLoading } = useQuery<{
+    configured: boolean;
+    senderMode: 'messaging-service' | 'phone-number' | 'unconfigured';
+    senderValue: string | null;
+    maskedAccountSid: string | null;
+  }>({
+    queryKey: ['/api/admin/twilio-status'],
     enabled: isAuthenticated,
     refetchInterval: 60000,
   });
@@ -664,6 +675,81 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">APNs status unavailable.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Twilio SMS Sender Mode */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageSquare className="h-5 w-5" />
+            <span>SMS Sender (Twilio)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {twilioStatusLoading ? (
+            <p className="text-sm text-muted-foreground">Loading Twilio status…</p>
+          ) : twilioStatus ? (
+            <div className="space-y-3">
+              {/* Overall configured status */}
+              <div className="flex items-center gap-2">
+                {twilioStatus.configured
+                  ? <CheckCircle className="h-5 w-5 text-green-500" />
+                  : <XCircle className="h-5 w-5 text-red-500" />}
+                <span className="font-medium">
+                  {twilioStatus.configured ? 'Configured' : 'Not configured — SMS disabled'}
+                </span>
+              </div>
+
+              {twilioStatus.configured && (
+                <div className="space-y-2 text-sm">
+                  {/* Sender mode */}
+                  <div className="flex items-start gap-2">
+                    {twilioStatus.senderMode === 'messaging-service'
+                      ? <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                      : <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />}
+                    <div>
+                      <span className="font-medium">
+                        {twilioStatus.senderMode === 'messaging-service'
+                          ? 'Routing via Messaging Service SID'
+                          : 'Routing via direct phone number (fallback)'}
+                      </span>
+                      {twilioStatus.senderValue && (
+                        <p className="text-muted-foreground font-mono text-xs mt-0.5">
+                          {twilioStatus.senderValue}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Account SID */}
+                  {twilioStatus.maskedAccountSid && (
+                    <p className="text-muted-foreground text-xs">
+                      Account SID: <span className="font-mono">{twilioStatus.maskedAccountSid}</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Warning when in fallback mode */}
+              {twilioStatus.senderMode === 'phone-number' && (
+                <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 p-3 text-sm text-yellow-800 dark:text-yellow-200 space-y-1">
+                  <p><strong>Fallback mode — A2P 10DLC not active.</strong></p>
+                  <p>Messages are sent from the raw phone number rather than a registered Messaging Service. US carriers may filter or block these messages.</p>
+                  <p className="text-xs mt-1">Set the <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">TWILIO_MESSAGING_SERVICE_SID</code> secret to enable A2P 10DLC routing.</p>
+                </div>
+              )}
+
+              {/* Not configured at all */}
+              {twilioStatus.senderMode === 'unconfigured' && (
+                <div className="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-3 text-sm text-red-800 dark:text-red-200">
+                  <p>Neither <code className="bg-red-100 dark:bg-red-800 px-1 rounded">TWILIO_MESSAGING_SERVICE_SID</code> nor <code className="bg-red-100 dark:bg-red-800 px-1 rounded">TWILIO_PHONE_NUMBER</code> is set. SMS cannot be sent.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Twilio status unavailable.</p>
           )}
         </CardContent>
       </Card>

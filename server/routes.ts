@@ -504,6 +504,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Twilio SMS sender mode status
+  app.get("/api/admin/twilio-status", requireAdminAuth, (req, res) => {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+    const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    const configured = !!(accountSid && (messagingServiceSid || phoneNumber));
+
+    // Mask a value: show first 4 + … + last 4 chars
+    const mask = (val: string) => {
+      if (val.length <= 8) return '****';
+      return `${val.slice(0, 4)}…${val.slice(-4)}`;
+    };
+
+    let senderMode: 'messaging-service' | 'phone-number' | 'unconfigured';
+    let senderValue: string | null = null;
+    let maskedAccountSid: string | null = accountSid ? mask(accountSid) : null;
+
+    if (messagingServiceSid) {
+      senderMode = 'messaging-service';
+      senderValue = mask(messagingServiceSid);
+    } else if (phoneNumber) {
+      senderMode = 'phone-number';
+      // For phone numbers, show the last 4 digits with the rest masked
+      senderValue = phoneNumber.length > 4
+        ? phoneNumber.slice(0, 3) + '****' + phoneNumber.slice(-4)
+        : '****';
+    } else {
+      senderMode = 'unconfigured';
+    }
+
+    res.json({
+      configured,
+      senderMode,
+      senderValue,
+      maskedAccountSid,
+    });
+  });
+
   // Admin: smoke-test push notification delivery to a specific user
   // APNs (native iOS) smoke-test — sends a real notification to all registered iOS devices for a user
   app.post("/api/admin/apns-test", requireAdminAuth, async (req, res) => {
