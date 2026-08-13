@@ -624,8 +624,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Requires SENTRY_API_TOKEN (a Sentry internal-integration token or personal
   // auth token), SENTRY_ORG (org slug), and SENTRY_PROJECT (project slug).
   // The result is cached for 5 minutes to avoid hammering the Sentry API.
+  //
+  // Alert emails: when the count rises from zero to above the threshold
+  // (SENTRY_ALERT_THRESHOLD, default 1) an email is sent to RESEND_FROM_EMAIL.
+  // The alert fires only once per spike — it won't re-fire on the next poll
+  // unless the count drops back to zero in between.
   {
     let _sentryCache: { count: number; capped: boolean; fetchedAt: number } | null = null;
+    let _sentryAlertedAt: number | null = null; // timestamp of last alert email sent
     const SENTRY_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
     app.get("/api/admin/sentry-error-count", requireAdminAuth, async (_req, res) => {
@@ -685,7 +691,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const count = Array.isArray(issues) ? issues.length : 0;
         const capped = count >= 100;
 
+        const previousCount = _sentryCache?.count ?? 0;
         _sentryCache = { count, capped, fetchedAt: now };
+
+        // ── Alert email ────────────────────────────────────────────────────
+        // Fire when:
+        //   • count is above the configured threshold (default 1)
+        //   • count rose since the last cached value (previous was 0 or lower)
+        //   • no alert has been sent yet during this spike
+        //     (reset when count drops back to 0)
+        const threshold = Math.max(1, parseInt(process.env.SENTRY_ALERT_THRESHOLD ?? '1', 10) || 1);
+        const adminEmail = process.env.RESEND_FROM_EMAIL
+          ? process.env.RESEND_FROM_EMAIL.replace(/^[^<]*<([^>]+)>$/, '$1').trim()
+          : null;
+
+        if (count >= threshold && previousCount < threshold && adminEmail) {
+          // Don't re-alert if we already sent one during this spike
+          if (!_sentryAlertedAt) {
+            const detectedAt = new Date(now).toLocaleString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric',
+              hour: 'numeric', minute: '2-digit', hour12: true,
+            });
+            console.warn(`[Sentry] Error spike detected — ${count} issue(s) (threshold ${threshold}). Emailing admin…`);
+            EmailService.sendSentryErrorAlert(adminEmail, count, threshold, sentryUrl, detectedAt)
+              .catch(err => console.error('[Sentry] Failed to send alert email:', err));
+            _sentryAlertedAt = now;
+          }
+        }
+
+        // Reset alert sentinel when count drops back below threshold so the
+        // next spike triggers a fresh email.
+        if (count < threshold) {
+          _sentryAlertedAt = null;
+        }
 
         return res.json({
           configured: true,

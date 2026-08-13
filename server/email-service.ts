@@ -399,6 +399,87 @@ LiveSwell · Manage alerts at liveswell.app`;
     }
   }
 
+  /**
+   * Sends a proactive admin alert when the Sentry error count rises above the
+   * configured threshold.  Called from the /api/admin/sentry-error-count cache
+   * refresh path so admins are notified within one 5-minute polling cycle.
+   *
+   * @param toEmail     Admin email address (RESEND_FROM_EMAIL or similar)
+   * @param count       Number of new unresolved Sentry issues detected
+   * @param threshold   The configured threshold that was exceeded
+   * @param sentryUrl   Direct link to the Sentry issues list
+   * @param detectedAt  ISO timestamp of when the spike was detected
+   */
+  static async sendSentryErrorAlert(
+    toEmail: string,
+    count: number,
+    threshold: number,
+    sentryUrl: string,
+    detectedAt: string,
+  ): Promise<boolean> {
+    try {
+      const subject = `🚨 LiveSwell: ${count} new Sentry error${count === 1 ? '' : 's'} detected`;
+
+      const text = `LiveSwell Admin Alert — Sentry Error Spike
+
+${count} new unresolved error${count === 1 ? '' : 's'} appeared in Sentry (threshold: ${threshold}).
+Detected at: ${detectedAt}
+
+View errors: ${sentryUrl}
+
+—
+LiveSwell Admin · liveswell.app`;
+
+      const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#030912;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e2e8f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:24px 16px;">
+    <tr><td>
+      <div style="background:linear-gradient(160deg,#030912 0%,#1a0a0a 100%);border:1px solid rgba(239,68,68,0.3);border-radius:16px;padding:24px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <span style="font-size:28px;">🚨</span>
+          <div>
+            <div style="font-size:18px;font-weight:900;color:#fff;">Sentry Error Spike</div>
+            <div style="font-size:12px;color:#64748b;">Detected at ${detectedAt}</div>
+          </div>
+        </div>
+        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:18px;margin-bottom:16px;text-align:center;">
+          <div style="font-size:48px;font-weight:900;color:#ef4444;">${count}</div>
+          <div style="font-size:14px;color:#fca5a5;margin-top:4px;">new unresolved error${count === 1 ? '' : 's'} in the last 24 h</div>
+          <div style="font-size:11px;color:#64748b;margin-top:6px;">Alert threshold: ${threshold}</div>
+        </div>
+        <a href="${sentryUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;text-decoration:none;padding:12px;border-radius:12px;font-size:13px;font-weight:700;">View Issues in Sentry →</a>
+      </div>
+      <div style="text-align:center;font-size:11px;color:#334155;">
+        LiveSwell Admin · <a href="https://liveswell.app" style="color:#10b981;text-decoration:none;">liveswell.app</a>
+      </div>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      const result = await sendEmail({
+        from: FROM_EMAIL,
+        to: toEmail,
+        subject,
+        text,
+        html,
+      });
+
+      if (result.error) {
+        console.error(`❌ Sentry error alert email failed: ${result.error}`);
+        return false;
+      }
+
+      console.log(`✅ Sentry error alert sent to ${toEmail} (id: ${result.id})`);
+      return true;
+    } catch (error) {
+      console.error('Error sending Sentry error alert email:', error);
+      return false;
+    }
+  }
+
   static async sendConditionAlert(
     toEmail: string,
     locationName: string,
