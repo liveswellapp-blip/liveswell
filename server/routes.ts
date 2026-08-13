@@ -1,4 +1,5 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
+import { Sentry } from "./sentry";
 import { runSurfAgent } from "./surf-agent";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -139,7 +140,25 @@ function generateRealisticTides(dayOffset: number, timezone: string = 'UTC') {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup Auth middleware
   await setupAuth(app);
-  
+
+  // Attach Clerk user ID to Sentry scope for every authenticated request so
+  // all server-side events carry user context automatically.
+  if (process.env.SENTRY_DSN) {
+    app.use((req: Request, _res: Response, next: NextFunction) => {
+      const userId = getAuth(req).userId;
+      if (userId) {
+        // Run the rest of the request handler chain inside a Sentry scope so
+        // the user ID is attached to any exceptions captured downstream.
+        Sentry.withScope((scope) => {
+          scope.setUser({ id: userId });
+          next();
+        });
+      } else {
+        next();
+      }
+    });
+  }
+
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
@@ -560,6 +579,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Admin push-test error:", error);
       res.status(500).json({ message: "Push notification smoke test failed" });
     }
+  });
+
+  // Sentry smoke-test: throws a deliberate error through Express's error handler
+  // chain so Sentry.setupExpressErrorHandler captures it automatically, giving
+  // a genuine end-to-end confirmation that unhandled server errors reach Sentry.
+  //
+  // The response will be HTTP 500 — that is intentional and expected.  The admin
+  // UI treats this specific 500 as a success signal.
+  app.post("/api/admin/sentry-test", requireAdminAuth, (req, res, next) => {
+    if (!process.env.SENTRY_DSN) {
+      return res.status(503).json({
+        success: false,
+        message: "SENTRY_DSN is not configured — add the secret to enable Sentry monitoring.",
+      });
+    }
+
+    // Annotate the current scope so the event is easy to identify in Sentry.
+    Sentry.getCurrentScope().setTags({
+      "test": "sentry-smoke-test",
+      "trigger": "admin-panel",
+    });
+    Sentry.getCurrentScope().setContext("smoke_test", {
+      triggeredAt: new Date().toISOString(),
+      environment: process.env.NODE_ENV ?? "development",
+    });
+
+    // Throw through Express's error handler chain.  Sentry.setupExpressErrorHandler
+    // sits before the generic error handler and will capture this automatically,
+    // exercising the same code path as a real unhandled server crash.
+    const testError = new Error(
+      "LiveSwell Sentry smoke test — deliberate error to confirm Sentry end-to-end delivery."
+    );
+    (testError as any).isTestError = true;
+    next(testError);
   });
 
   app.get("/api/admin/users/:userId", requireAdminAuth, async (req, res) => {

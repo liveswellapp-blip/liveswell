@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Shield, Activity, Database, Globe, BarChart3,
   AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp,
-  Bell, LayoutDashboard, Users,
+  Bell, LayoutDashboard, Users, Bug,
 } from "lucide-react";
 import AdminNav, { AdminSection } from "@/components/AdminNav";
 import UserDatabase from "@/components/UserDatabase";
@@ -56,6 +56,77 @@ interface UsageForecast {
   quotaExceededAt: string | null;
   planUpgradeUrl?: string;
   planNote?: string;
+}
+
+/** Inline panel: shows Sentry DSN status and a one-click smoke-test button. */
+function SentryTestPanel() {
+  const { toast } = useToast();
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'unconfigured' | 'error'>('idle');
+
+  async function sendTestError() {
+    setStatus('sending');
+    try {
+      // The endpoint deliberately throws through Express's error handler and
+      // returns HTTP 500 — that IS the success signal for the smoke test.
+      const res = await fetch('/api/admin/sentry-test', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (res.status === 503) {
+        setStatus('unconfigured');
+        toast({ title: 'Sentry not configured', description: 'Add SENTRY_DSN to Replit Secrets to enable monitoring.', variant: 'destructive' });
+        return;
+      }
+
+      // 500 is expected — it means the error travelled through Express's error
+      // handler chain (where Sentry captures it) and the generic handler replied.
+      // Any non-503 response means the test fired successfully.
+      setStatus('sent');
+      toast({
+        title: 'Test error sent to Sentry',
+        description: 'Check your Sentry dashboard — the event should appear within 30 seconds.',
+      });
+    } catch {
+      setStatus('error');
+      toast({ title: 'Request failed', description: 'Could not reach the server.', variant: 'destructive' });
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        {status === 'sent'
+          ? <CheckCircle className="h-5 w-5 text-green-500" />
+          : status === 'unconfigured'
+            ? <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            : status === 'error'
+              ? <XCircle className="h-5 w-5 text-red-500" />
+              : <Activity className="h-5 w-5 text-muted-foreground" />}
+        <span className="text-sm">
+          {status === 'idle'     && 'Send a deliberate test error to confirm Sentry is receiving events.'}
+          {status === 'sending'  && 'Sending test error…'}
+          {status === 'sent'     && 'Test error delivered — check Sentry dashboard (Events → Issues).'}
+          {status === 'unconfigured' && 'SENTRY_DSN is not set. Add it to Replit Secrets to enable monitoring.'}
+          {status === 'error'    && 'Request failed. Make sure the server is running.'}
+        </span>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={status === 'sending'}
+        onClick={sendTestError}
+      >
+        <Bug className="h-4 w-4 mr-2" />
+        {status === 'sending' ? 'Sending…' : 'Send Test Error to Sentry'}
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        This fires a deliberate exception through Express's error handler — the same path as a real crash.
+        The event will carry the admin session context. Errors also require <code>SENTRY_DSN</code> to be set.
+      </p>
+    </div>
+  );
 }
 
 export default function AdminDashboard() {
@@ -489,6 +560,19 @@ export default function AdminDashboard() {
           ) : (
             <p className="text-sm text-muted-foreground">APNs status unavailable.</p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Sentry Error Monitoring */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Bug className="h-5 w-5" />
+            <span>Error Monitoring (Sentry)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SentryTestPanel />
         </CardContent>
       </Card>
 

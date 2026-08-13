@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { Sentry } from "./sentry";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Settings from "@/pages/settings";
@@ -53,6 +56,20 @@ function UnauthenticatedFallback() {
     return null;
   }
   return <Landing />;
+}
+
+/** Keeps Sentry's user context in sync with the signed-in Clerk user. */
+function SentryUserSync() {
+  const { user, isLoaded } = useUser();
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (user) {
+      Sentry.setUser({ id: user.id, email: user.primaryEmailAddress?.emailAddress });
+    } else {
+      Sentry.setUser(null);
+    }
+  }, [user, isLoaded]);
+  return null;
 }
 
 function Router() {
@@ -137,6 +154,7 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
+          <SentryUserSync />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
