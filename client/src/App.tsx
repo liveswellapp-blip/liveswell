@@ -26,6 +26,7 @@ import NotificationSettings from "@/pages/NotificationSettings";
 import SurfAgentChat from "@/components/SurfAgentChat";
 import SupportHome from "@/pages/support/index";
 import SupportCategory from "@/pages/support/category";
+import PricingPage from "@/pages/Pricing";
 
 // The set of routes that require authentication.
 // When a signed-out user lands on one of these, we redirect them to
@@ -95,6 +96,7 @@ function Router() {
         <Route path="/sign-up/sso-callback" component={SsoCallback} />
 
         {/* Public info pages */}
+        <Route path="/pricing" component={PricingPage} />
         <Route path="/privacy" component={Privacy} />
         <Route path="/terms" component={Terms} />
         <Route path="/support" component={SupportHome} />

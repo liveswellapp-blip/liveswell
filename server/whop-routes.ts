@@ -118,6 +118,23 @@ export function registerWhopRoutes(app: Express): void {
       const { userId } = getAuth(req);
       const { planId } = parsed.data;
 
+      // Guard: block existing Pro subscribers from opening a duplicate checkout.
+      // This is the authoritative server-side check — client-side loading states
+      // are UX only and must not be relied on for billing correctness.
+      try {
+        const [existingUser] = await db
+          .select({ isPro: users.isPro })
+          .from(users)
+          .where(eq(users.id, userId!))
+          .limit(1);
+        if (existingUser?.isPro) {
+          return res.status(409).json({ error: 'already_subscribed', message: 'You already have an active Pro subscription.' });
+        }
+      } catch (dbErr) {
+        console.error('[whop/checkout] DB error checking Pro status:', dbErr);
+        return res.status(500).json({ error: 'Failed to verify subscription status' });
+      }
+
       // Validate that the plan ID belongs to this app's configured plans.
       // An empty allowlist (no env vars set) is treated as a server-side
       // misconfiguration — never falls back to "allow any plan".

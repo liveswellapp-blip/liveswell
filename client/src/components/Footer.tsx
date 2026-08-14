@@ -11,6 +11,8 @@ export default function Footer({ hideSupport = false }: FooterProps) {
             &copy; 2024 LiveSwell. All rights reserved. Data provided by OpenWeatherMap and marine weather services.
           </p>
           <p className="text-[11px] flex items-center justify-center gap-3">
+            <a href="/pricing" className="underline hover:opacity-70 transition-opacity">Pricing</a>
+            <span className="opacity-30">·</span>
             <a href="/terms" className="underline hover:opacity-70 transition-opacity">Terms of Service</a>
             <span className="opacity-30">·</span>
             <a href="/privacy" className="underline hover:opacity-70 transition-opacity">Privacy Policy</a>

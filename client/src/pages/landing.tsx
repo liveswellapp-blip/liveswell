@@ -586,7 +586,7 @@ export default function Landing() {
       <div className="landing-hiw">
         <div className="landing-hiw-inner">
           <div className="landing-hiw-heading">Up and running in 60 seconds</div>
-          <p className="landing-hiw-sub">No setup, no subscriptions. Just sign in and find your break.</p>
+          <p className="landing-hiw-sub">Sign in free and start checking conditions in seconds. <a href="/pricing" style={{ color: "#34d399", textDecoration: "underline" }}>See Pro plans →</a></p>
           <div className="landing-hiw-grid">
             <div className="landing-hiw-connector" />
             {[
@@ -656,6 +656,7 @@ export default function Landing() {
           <div>
             <div className="landing-footer-col-title">App</div>
             <a href="/sign-in" className="landing-footer-link" onClick={e => { e.preventDefault(); handleLogin(); }}>Sign In</a>
+            <a href="/pricing" className="landing-footer-link">Pricing</a>
             <a href="/support" className="landing-footer-link">Support</a>
             <a href="/terms" className="landing-footer-link">Terms of Service</a>
             <a href="/privacy" className="landing-footer-link">Privacy Policy</a>
@@ -670,7 +671,7 @@ export default function Landing() {
         </div>
         <div className="landing-footer-bottom">
           <span>© {new Date().getFullYear()} LiveSwell. All rights reserved.</span>
-          <span>Free · No credit card needed</span>
+          <span>Free to start · <a href="/pricing" style={{ color: "rgba(52,211,153,0.6)", textDecoration: "underline" }}>Pro plans from $4.99/mo</a></span>
         </div>
       </div>
     </div>
