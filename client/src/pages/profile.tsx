@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, LogOut, Shield, ChevronRight, Settings, HelpCircle } from "lucide-react";
+import { Bell, LogOut, Shield, ChevronRight, Settings, HelpCircle, CreditCard } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -33,6 +33,7 @@ export default function Profile() {
   const email = (user as any)?.email || "";
 
   const ITEMS = [
+    { icon: CreditCard,  label: "Account & Billing", value: "",           color: "#a78bfa", href: "/account" },
     { icon: Bell,        label: "Notifications", value: "Manage alerts", color: "#fbbf24", href: "/notifications" },
     { icon: Settings,    label: "Preferences",   value: "",              color: "#94a3b8", href: "/settings" },
     { icon: Shield,      label: "Privacy",        value: "",              color: "#38bdf8", href: "/privacy" },
