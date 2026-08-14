@@ -946,7 +946,9 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(userAlerts.active, true),
-          eq(userAlerts.alertType, 'daily_report')
+          eq(userAlerts.alertType, 'daily_report'),
+          // Only deliver to users with an active Pro subscription
+          eq(users.isPro, true),
         )
       );
   }
@@ -981,7 +983,9 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(userAlerts.active, true),
-          ne(userAlerts.alertType, 'daily_report')
+          ne(userAlerts.alertType, 'daily_report'),
+          // Only deliver to users with an active Pro subscription
+          eq(users.isPro, true),
         )
       );
   }

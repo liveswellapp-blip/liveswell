@@ -126,6 +126,19 @@ export async function runMigrations(): Promise<void> {
       ADD COLUMN IF NOT EXISTS "limit_type" text NOT NULL DEFAULT 'outbound'
     `);
 
+    // Pre-flight: Whop subscription columns (migration 0004).
+    // Added here so databases that were seeded before this migration existed
+    // (and therefore have it marked as applied in the tracking table without
+    // the column actually being present) still get the column on next startup.
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "is_pro" boolean NOT NULL DEFAULT false
+    `);
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "whop_membership_id" text
+    `);
+
     // Pre-flight: canonicalize phone values and enforce uniqueness on
     // verified_phones.phone — but only if the table already exists.
     // On a fresh database migration 0000 hasn't run yet, so the table is

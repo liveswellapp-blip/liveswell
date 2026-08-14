@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Location, SurfConditions } from "@/types/weather";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageCircle, X, Send, RefreshCw, SquarePen } from "lucide-react";
+import { MessageCircle, X, Send, RefreshCw, SquarePen, Lock } from "lucide-react";
+import { Link } from "wouter";
+import { getClerkToken } from "@/lib/queryClient";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,6 +23,7 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
   const [isLoading, setIsLoading] = useState(false);   // true = waiting for first token (show dots)
   const [isStreaming, setIsStreaming] = useState(false); // true = stream in progress (disable input)
   const [error, setError] = useState<string | null>(null);
+  const [proRequired, setProRequired] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const initializedRef = useRef(false);
@@ -88,14 +91,29 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
     setIsStreaming(true);
 
     try {
+      const token = await getClerkToken();
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
         body: JSON.stringify({
           locationId: location.id,
           messages: nextMessages.map(m => ({ role: m.role, content: m.content })),
         }),
       });
+
+      if (res.status === 402) {
+        setProRequired(true);
+        setMessages(nextMessages.slice(0, -1));
+        return;
+      }
+
+      if (res.status === 401) {
+        throw new Error("Not signed in — please refresh the page.");
+      }
 
       if (!res.ok) {
         throw new Error("Request failed");
@@ -338,29 +356,49 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
           <div ref={bottomRef} />
         </div>
 
-        {/* Input */}
-        <div className="px-3 pt-2 pb-4 shrink-0 border-t border-white/[0.08]">
-          <div className="flex items-end gap-2">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about conditions…"
-              rows={1}
-              disabled={isBusy}
-              className="flex-1 resize-none bg-white/[0.07] border-white/[0.12] text-white placeholder:text-slate-500 rounded-xl text-sm py-2.5 focus:ring-1 focus:ring-emerald-500 min-h-[40px] max-h-[120px] overflow-y-auto"
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isBusy}
-              className="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
+        {/* Input — locked for free users */}
+        {proRequired ? (
+          <div className="px-4 pt-3 pb-5 shrink-0 border-t border-white/[0.08] flex flex-col items-center gap-3">
+            <div className="flex items-center gap-2 text-amber-400">
+              <Lock className="w-4 h-4" />
+              <span className="text-sm font-semibold">Pro feature</span>
+            </div>
+            <p className="text-[12px] text-slate-400 text-center leading-snug">
+              AI surf chat is available on the Pro plan. Upgrade to ask questions about conditions, gear, and local breaks.
+            </p>
+            <Link
+              href="/pricing"
+              className="px-5 py-2 rounded-xl text-sm font-semibold text-white transition-colors"
+              style={{ background: "linear-gradient(135deg, #10b981 0%, #0ea5e9 100%)" }}
+              onClick={() => setOpen(false)}
             >
-              <Send className="w-4 h-4 text-white" />
-            </button>
+              Upgrade to Pro
+            </Link>
           </div>
-          <p className="text-center text-slate-600 text-[10px] mt-1.5">Enter to send · Shift+Enter for new line</p>
-        </div>
+        ) : (
+          <div className="px-3 pt-2 pb-4 shrink-0 border-t border-white/[0.08]">
+            <div className="flex items-end gap-2">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about conditions…"
+                rows={1}
+                disabled={isBusy}
+                className="flex-1 resize-none bg-white/[0.07] border-white/[0.12] text-white placeholder:text-slate-500 rounded-xl text-sm py-2.5 focus:ring-1 focus:ring-emerald-500 min-h-[40px] max-h-[120px] overflow-y-auto"
+              />
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || isBusy}
+                className="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
+              >
+                <Send className="w-4 h-4 text-white" />
+              </button>
+            </div>
+            <p className="text-center text-slate-600 text-[10px] mt-1.5">Enter to send · Shift+Enter for new line</p>
+          </div>
+        )}
       </div>
     </>
   );

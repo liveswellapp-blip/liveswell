@@ -13,7 +13,7 @@
 import type { Request, Response } from "express";
 import twilio from "twilio";
 import { db } from "./db";
-import { agentSmsThreads, verifiedPhones as verifiedPhonesTable, userAlerts } from "@shared/schema";
+import { agentSmsThreads, verifiedPhones as verifiedPhonesTable, userAlerts, users } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { storage } from "./storage";
 import { runSurfAgent, type AgentMessage } from "./surf-agent";
@@ -271,6 +271,21 @@ export async function handleIncomingSms(req: Request, res: Response): Promise<vo
   // ── 6. Load conversation thread ──────────────────────────────────────────
   const history = await getSmsThread(from);
   const isFirstContact = history.length === 0;
+
+  // ── 6b. Pro subscription check — AI agent is a Pro-only feature ──────────
+  const [userRow] = await db
+    .select({ isPro: users.isPro })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!userRow?.isPro) {
+    console.log(`[twilio-webhook] Non-Pro user ${userId} tried SMS agent — blocking`);
+    twimlReply(
+      res,
+      "AI surf chat is a Pro feature. Upgrade at liveswell.io/pricing to ask questions about your spots via SMS.",
+    );
+    return;
+  }
 
   // ── 7. Run surf agent ────────────────────────────────────────────────────
   let agentReply: string;

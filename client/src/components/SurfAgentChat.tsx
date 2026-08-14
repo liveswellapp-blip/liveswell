@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Link } from "wouter";
 
 interface Message {
   id?: number;
@@ -24,6 +25,7 @@ export default function SurfAgentChat() {
   const [input, setInput] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [proRequired, setProRequired] = useState(false);
   // Timestamp (ms) after which the Refresh button is re-enabled
   const [refreshCooldownUntil, setRefreshCooldownUntil] = useState(0);
   const [, forceRefreshCooldownRender] = useState(0);
@@ -50,12 +52,24 @@ export default function SurfAgentChat() {
     return () => { vv.removeEventListener("resize", update); vv.removeEventListener("scroll", update); };
   }, []);
 
-  const { data: history = [], isLoading: historyLoading } = useQuery<Message[]>({
+  const { data: history = [], isLoading: historyLoading, error: historyError } = useQuery<Message[]>({
     queryKey: ["/api/agent/history"],
     enabled: open,
     staleTime: 0,
     refetchOnWindowFocus: false,
+    retry: (count, err: any) => {
+      // Don't retry on 402 — the user needs to upgrade, not retry
+      if (String(err?.message ?? "").startsWith("402")) return false;
+      return count < 3;
+    },
   });
+
+  // Detect Pro requirement from history query error
+  useEffect(() => {
+    if (historyError && String((historyError as any)?.message ?? "").startsWith("402")) {
+      setProRequired(true);
+    }
+  }, [historyError]);
 
   const { data: freshness } = useQuery<{ oldestUpdatedAt: string | null; hasSpots?: boolean; missingSpotCount?: number }>({
     queryKey: ["/api/agent/conditions-freshness"],
@@ -110,6 +124,14 @@ export default function SurfAgentChat() {
       setIsTyping(false);
     },
     onError: (err) => {
+      const msg = String((err as any)?.message ?? "");
+      if (msg.startsWith("402")) {
+        // Free user hit the paywall — show upgrade prompt, remove optimistic messages
+        setProRequired(true);
+        setLocalMessages([]);
+        setIsTyping(false);
+        return;
+      }
       // Remove pending assistant placeholder, keep user message; inject error bubble
       setLocalMessages((prev) => [
         ...prev.filter((m) => !(m.pending && m.role === "assistant")),
@@ -538,36 +560,58 @@ export default function SurfAgentChat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input area */}
-        <div className="px-3 pb-safe-area-inset-bottom shrink-0 border-t border-zinc-800 pb-3 pt-2">
-          <div className="flex items-end gap-2">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about surf conditions…"
-              rows={1}
-              className="flex-1 resize-none bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 rounded-xl text-sm py-2.5 focus:ring-1 focus:ring-emerald-500 min-h-[40px] max-h-[120px] overflow-y-auto"
-              disabled={chatMutation.isPending}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || chatMutation.isPending}
-              className="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-4 h-4 text-white"
-              >
-                <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+        {/* Input area — locked for free users */}
+        {proRequired ? (
+          <div className="px-4 pt-4 pb-5 shrink-0 border-t border-zinc-800 flex flex-col items-center gap-3 text-center">
+            <div className="flex items-center gap-2 text-amber-400">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-            </button>
+              <span className="text-sm font-semibold text-white">Pro feature</span>
+            </div>
+            <p className="text-xs text-zinc-400 leading-snug max-w-[260px]">
+              The Live Swell Agent is available on the Pro plan. Upgrade to ask questions about your spots, conditions, and when to paddle out.
+            </p>
+            <Link
+              href="/pricing"
+              className="px-5 py-2 rounded-xl text-sm font-semibold text-white transition-colors"
+              style={{ background: "linear-gradient(135deg, #10b981 0%, #0ea5e9 100%)" }}
+              onClick={() => setOpen(false)}
+            >
+              Upgrade to Pro
+            </Link>
           </div>
-          <p className="text-center text-zinc-600 text-[10px] mt-1.5">Enter to send · Shift+Enter for new line</p>
-        </div>
+        ) : (
+          <div className="px-3 pb-safe-area-inset-bottom shrink-0 border-t border-zinc-800 pb-3 pt-2">
+            <div className="flex items-end gap-2">
+              <Textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about surf conditions…"
+                rows={1}
+                className="flex-1 resize-none bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 rounded-xl text-sm py-2.5 focus:ring-1 focus:ring-emerald-500 min-h-[40px] max-h-[120px] overflow-y-auto"
+                disabled={chatMutation.isPending}
+              />
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || chatMutation.isPending}
+                className="w-9 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors shrink-0"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-4 h-4 text-white"
+                >
+                  <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-center text-zinc-600 text-[10px] mt-1.5">Enter to send · Shift+Enter for new line</p>
+          </div>
+        )}
       </div>
     </>
   );

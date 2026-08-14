@@ -55,7 +55,7 @@ import {
 } from "./sentry-alert-logic";
 import OpenAI from "openai";
 import { buildConditionsSummary } from "./chat-helpers";
-import { registerWhopRoutes, logWhopStartupWarnings } from "./whop-routes";
+import { registerWhopRoutes, logWhopStartupWarnings, requirePro } from "./whop-routes";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -3364,7 +3364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Test notification endpoint
-  app.post("/api/test-notification", isAuthenticated, async (req: any, res) => {
+  app.post("/api/test-notification", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId;
       const { NotificationScheduler } = await import('./notification-scheduler');
@@ -3394,7 +3394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/user-alerts", isAuthenticated, async (req: any, res) => {
+  app.post("/api/user-alerts", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId as string;
 
@@ -3444,7 +3444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/user-alerts/:id", isAuthenticated, async (req: any, res) => {
+  app.put("/api/user-alerts/:id", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId;
       const id = parseInt(req.params.id);
@@ -3583,6 +3583,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
       const { active } = req.body;
       if (typeof active !== "boolean") return res.status(400).json({ message: "active must be boolean" });
+
+      // Enabling an alert requires Pro; disabling is always allowed so users can
+      // turn off alerts without needing an active subscription.
+      if (active) {
+        const [user] = await db
+          .select({ isPro: users.isPro })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        if (!user?.isPro) {
+          return res.status(402).json({ error: "pro_required", upgradeUrl: "/pricing" });
+        }
+      }
+
       const updated = await storage.toggleUserAlert(id, userId, active);
       if (!updated) return res.status(404).json({ message: "Alert not found" });
       res.json(updated);
@@ -3999,7 +4013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ── AI Surf Agent chat routes ────────────────────────────────────────────
-  app.get("/api/agent/history", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/history", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId;
       const history = await storage.getAgentHistory(userId);
@@ -4010,7 +4024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/agent/chat", isAuthenticated, async (req: any, res) => {
+  app.post("/api/agent/chat", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId;
       const { message } = req.body;
@@ -4040,7 +4054,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/agent/history", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/agent/history", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId;
       await storage.clearAgentHistory(userId);
@@ -4051,7 +4065,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/agent/conditions-freshness", isAuthenticated, async (req: any, res) => {
+  app.get("/api/agent/conditions-freshness", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId;
       const favorites = await storage.getUserFavorites(userId);
@@ -4077,7 +4091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const REFRESH_COOLDOWN_MS = 2 * 60 * 1000;
   const refreshLastCalledAt = new Map<string, number>();
 
-  app.post("/api/agent/refresh-conditions", isAuthenticated, async (req: any, res) => {
+  app.post("/api/agent/refresh-conditions", isAuthenticated, requirePro, async (req: any, res) => {
     try {
       const userId = getAuth(req).userId;
 
@@ -4145,7 +4159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ── AI Surf Chat endpoint ─────────────────────────────────────────────────
   // POST /api/chat — accepts { messages, locationId }, fetches live conditions,
   // builds a system prompt scoped to that spot, and returns an AI reply.
-  app.post("/api/chat", generalApiLimiter, async (req, res) => {
+  app.post("/api/chat", isAuthenticated, requirePro, generalApiLimiter, async (req, res) => {
     try {
       const { messages, locationId } = req.body;
 

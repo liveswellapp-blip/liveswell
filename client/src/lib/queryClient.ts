@@ -1,7 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 /** Get the current Clerk session JWT to attach to API requests. */
-async function getClerkToken(): Promise<string | null> {
+export async function getClerkToken(): Promise<string | null> {
   try {
     // window.Clerk is populated by ClerkProvider after initialisation.
     return await (window as any).Clerk?.session?.getToken() ?? null;

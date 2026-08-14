@@ -8,9 +8,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Bell, Plus, MapPin, Clock, Trash2, Pencil, Mail, MessageSquare, Smartphone,
-  Waves, Wind, Droplets, AlertCircle, History, ChevronLeft, CheckCircle2, ShieldCheck, X,
+  Waves, Wind, Droplets, AlertCircle, History, ChevronLeft, CheckCircle2, ShieldCheck, X, Lock,
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Location } from "@/types/weather";
 import Footer from "@/components/Footer";
@@ -479,6 +479,7 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
 }) {
   const { toast } = useToast();
   const [form, setForm] = useState<AlertFormState>({ ...BLANK_FORM, ...initialData });
+  const [proRequired, setProRequired] = useState(false);
 
   // Track the visual viewport height so the drawer shrinks/grows correctly when the
   // soft keyboard appears or dismisses on Android Chrome. Without this, vaul's
@@ -630,7 +631,10 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
       onClose();
     },
     onError: (err: any) => {
-      if (String(err?.message ?? "").startsWith("409")) {
+      const msg = String(err?.message ?? "");
+      if (msg.startsWith("402")) {
+        setProRequired(true);
+      } else if (msg.startsWith("409")) {
         toast({ title: "Spot already has a condition alert", description: "Edit your existing condition alert for this spot instead.", variant: "destructive" });
       } else {
         toast({ title: "Error", description: "Failed to create alert.", variant: "destructive" });
@@ -646,7 +650,14 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
       if (editId != null) onSaveSuccess?.(editId);
       onClose();
     },
-    onError: () => toast({ title: "Error", description: "Failed to update alert.", variant: "destructive" }),
+    onError: (err: any) => {
+      const msg = String(err?.message ?? "");
+      if (msg.startsWith("402")) {
+        setProRequired(true);
+      } else {
+        toast({ title: "Error", description: "Failed to update alert.", variant: "destructive" });
+      }
+    },
   });
 
   const handleSave = () => {
@@ -705,6 +716,27 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
 
   const formBody = (
         <div className="space-y-4 pt-1">
+          {/* Pro upgrade banner — shown when the API returns 402 */}
+          {proRequired && (
+            <div className="rounded-2xl px-4 py-4 flex flex-col items-center gap-3 text-center"
+              style={{ background: "rgba(16,185,129,0.07)", border: "1px solid rgba(16,185,129,0.25)" }}>
+              <div className="flex items-center gap-2 text-emerald-400">
+                <Lock size={16} />
+                <span className="text-[14px] font-bold">Pro plan required</span>
+              </div>
+              <p className="text-[12px] text-slate-400 leading-snug">
+                Creating and editing alerts is a Pro feature. Upgrade to unlock unlimited alerts across all your saved spots.
+              </p>
+              <Link
+                href="/pricing"
+                className="px-5 py-2 rounded-xl text-[13px] font-semibold text-white"
+                style={{ background: "linear-gradient(135deg, #10b981 0%, #0ea5e9 100%)" }}
+                onClick={onClose}
+              >
+                Upgrade to Pro
+              </Link>
+            </div>
+          )}
           {/* Alert type selector */}
           <div>
             <label className="text-[11px] text-slate-400 mb-2 block">Alert type</label>
@@ -1295,7 +1327,17 @@ export default function NotificationSettings() {
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
       apiRequest(`/api/user-alerts/${id}/toggle`, { method: "PATCH", body: { active } }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/user-alerts"] }),
-    onError: () => toast({ title: "Error", description: "Failed to update alert.", variant: "destructive" }),
+    onError: (err: any) => {
+      if (String(err?.message ?? "").startsWith("402")) {
+        toast({
+          title: "Pro plan required",
+          description: "Upgrade to Pro to activate alerts.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({ title: "Error", description: "Failed to update alert.", variant: "destructive" });
+    },
   });
 
   const deleteMutation = useMutation({
