@@ -49,3 +49,11 @@ integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 120000
+
+[userenv]
+
+[userenv.shared]
+WHOP_COMPANY_ID = "biz_lmwrprQbD8vhqH"
+WHOP_PRODUCT_ID = "https://whop.com/liveswell-3nm6"
+WHOP_MONTHLY_PLAN_ID = "plan_COuOInuu8tySg"
+WHOP_ANNUAL_PLAN_ID = "plan_5CBWd6a76zGLJ"
