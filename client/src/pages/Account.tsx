@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Crown, CreditCard, ArrowRight, Zap, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -21,6 +21,14 @@ function formatDate(ts: number): string {
 
 export default function AccountPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [, navigate] = useLocation();
+
+  // Redirect unauthenticated visitors to sign-in, preserving the destination
+  // so Clerk returns them here after login.
+  if (!authLoading && !isAuthenticated) {
+    navigate("/sign-in?redirect_url=" + encodeURIComponent("/account"), { replace: true });
+    return null;
+  }
 
   const { data: sub, isLoading: subLoading, isError } = useQuery<SubStatus>({
     queryKey: ["/api/whop/subscription"],
