@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import AdminNav from "@/components/AdminNav";
+import { Input } from "@/components/ui/input";
 import {
   User, Mail, Calendar, Heart, MapPin, Settings,
   ArrowLeft, Clock, FileText, Trash2, CreditCard,
-  ShieldCheck, Activity,
+  ShieldCheck, Activity, FlaskConical,
 } from "lucide-react";
 
 interface AdminStatus { authenticated: boolean }
@@ -22,6 +23,8 @@ interface UserDetails {
     firstName: string | null;
     lastName: string | null;
     profileImageUrl: string | null;
+    isPro: boolean;
+    isTestAccount: boolean;
     createdAt: string;
     updatedAt: string;
   };
@@ -69,9 +72,38 @@ export default function AdminUserDetail() {
   });
 
   // Fetch user details
-  const { data: userDetails, isLoading: detailsLoading } = useQuery<UserDetails>({
+  const { data: userDetails, isLoading: detailsLoading, refetch: refetchUser } = useQuery<UserDetails>({
     queryKey: [`/api/admin/users/${userId}`],
     enabled: !!userId && adminStatus?.authenticated === true,
+  });
+
+  // Grant / revoke test account access
+  const testAccessMutation = useMutation({
+    mutationFn: async (revoke: boolean) => {
+      const res = await fetch('/api/admin/grant-test-access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: userDetails!.user.email, revoke }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? 'Request failed');
+      }
+      return res.json();
+    },
+    onSuccess: (_, revoke) => {
+      toast({
+        title: revoke ? 'Test access revoked' : 'Test access granted',
+        description: revoke
+          ? 'User is back on the free plan.'
+          : 'User now has Pro access and phone verification bypassed.',
+      });
+      refetchUser();
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
   });
 
   const formatDate = (dateString: string) =>
@@ -191,7 +223,56 @@ export default function AdminUserDetail() {
                     <dt className="text-muted-foreground font-medium">Language</dt>
                     <dd className="mt-0.5">{userDetails!.profile?.language ?? '—'}</dd>
                   </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Plan</dt>
+                    <dd className="mt-0.5 flex items-center gap-2">
+                      {user.isPro ? (
+                        <span className="inline-flex items-center gap-1 text-amber-500 font-semibold">
+                          ★ Pro{user.isTestAccount ? ' (test)' : ''}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Free</span>
+                      )}
+                    </dd>
+                  </div>
                 </dl>
+              </CardContent>
+            </Card>
+
+            {/* Test account access */}
+            <Card className={user.isTestAccount ? 'border-amber-500/40 bg-amber-500/5' : ''}>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FlaskConical className="h-4 w-4" /> Test Account Access
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="text-sm text-muted-foreground max-w-sm">
+                    {user.isTestAccount ? (
+                      <p>
+                        This account has <span className="text-amber-500 font-medium">test access</span>: Pro features are unlocked and phone verification is bypassed. Use this for App Store / Play Store review.
+                      </p>
+                    ) : (
+                      <p>
+                        Grant this account Pro access with phone verification bypassed — intended for App Store and Play Store review teams who can't receive SMS verification codes.
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={user.isTestAccount ? 'outline' : 'default'}
+                    disabled={testAccessMutation.isPending}
+                    onClick={() => testAccessMutation.mutate(user.isTestAccount)}
+                    className="shrink-0"
+                  >
+                    {testAccessMutation.isPending
+                      ? 'Saving…'
+                      : user.isTestAccount
+                        ? 'Revoke test access'
+                        : 'Grant test access'}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

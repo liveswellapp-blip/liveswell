@@ -5,7 +5,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { users } from "@shared/schema";
+import { users, userAlerts } from "@shared/schema";
 import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema, insertUserSchema, updateUserProfileSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from 'bcrypt';
@@ -803,6 +803,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // ── Admin: grant / revoke test-account access ────────────────────────────
+  // Sets isPro + isTestAccount on the user, which also bypasses SMS phone
+  // verification so store reviewers can use any phone number without a code.
+  app.post("/api/admin/grant-test-access", requireAdminAuth, async (req, res) => {
+    try {
+      const { email, revoke = false } = req.body as { email: string; revoke?: boolean };
+      if (!email) return res.status(400).json({ message: "email is required" });
+
+      const target = await storage.getUserByEmail(email.trim().toLowerCase());
+      if (!target) return res.status(404).json({ message: `No user found with email: ${email}` });
+
+      const [updated] = await db
+        .update(users)
+        .set({ isPro: !revoke, isTestAccount: !revoke, updatedAt: new Date() })
+        .where(eq(users.id, target.id))
+        .returning();
+
+      // When granting access, pre-verify all existing alert phone numbers so
+      // the tester doesn't have to go through the SMS verification flow.
+      if (!revoke) {
+        await db
+          .update(userAlerts)
+          .set({ phoneVerified: true })
+          .where(eq(userAlerts.userId, target.id));
+      }
+
+      res.json({
+        success: true,
+        action: revoke ? "revoked" : "granted",
+        user: { id: updated.id, email: updated.email, isPro: updated.isPro, isTestAccount: updated.isTestAccount },
+      });
+    } catch (error) {
+      console.error("grant-test-access error:", error);
+      res.status(500).json({ message: "Failed to update test access" });
+    }
+  });
+
   app.get("/api/admin/user-stats", requireAdminAuth, async (req, res) => {
     try {
       const stats = await storage.getUserStats();
@@ -3416,9 +3453,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Strip client-supplied phoneVerified — server determines this
       const { phoneVerified: _pv, ...bodyWithoutVerified } = req.body;
       const phoneNumber = bodyWithoutVerified.phoneNumber;
-      const serverPhoneVerified = phoneNumber
-        ? await SMSService.isPhoneVerified(userId, phoneNumber)
-        : false;
+      // Re-fetch after potential upsert so we have the latest flags.
+      const currentUser = await storage.getUser(userId);
+      const serverPhoneVerified = currentUser?.isTestAccount
+        ? !!phoneNumber  // test accounts skip SMS verification
+        : phoneNumber
+          ? await SMSService.isPhoneVerified(userId, phoneNumber)
+          : false;
       const parsed = insertUserAlertSchema.safeParse({ ...bodyWithoutVerified, userId, phoneVerified: serverPhoneVerified });
       if (!parsed.success) return res.status(400).json({ message: "Invalid alert data", errors: parsed.error.errors });
 
@@ -3462,18 +3503,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasSms = Array.isArray(safeBody.deliveryChannels)
         ? safeBody.deliveryChannels.includes('sms')
         : false;
+      const alertOwner = await storage.getUser(userId);
       let serverPhoneVerified = false;
       if (hasSms && newPhone) {
-        const existing = await storage.getUserAlertById(id, userId);
-        const oldPhone: string | null = existing?.phoneNumber ?? null;
-        const normalOld = oldPhone?.replace(/\s/g, '').toLowerCase() ?? null;
-        const normalNew = newPhone.replace(/\s/g, '').toLowerCase();
-        if (normalOld && normalOld === normalNew) {
-          // Phone unchanged — trust existing DB state
-          serverPhoneVerified = existing?.phoneVerified ?? false;
+        if (alertOwner?.isTestAccount) {
+          // Test accounts skip SMS verification entirely.
+          serverPhoneVerified = true;
         } else {
-          // Phone changed — require fresh in-process verification
-          serverPhoneVerified = await SMSService.isPhoneVerified(userId, newPhone);
+          const existing = await storage.getUserAlertById(id, userId);
+          const oldPhone: string | null = existing?.phoneNumber ?? null;
+          const normalOld = oldPhone?.replace(/\s/g, '').toLowerCase() ?? null;
+          const normalNew = newPhone.replace(/\s/g, '').toLowerCase();
+          if (normalOld && normalOld === normalNew) {
+            // Phone unchanged — trust existing DB state
+            serverPhoneVerified = existing?.phoneVerified ?? false;
+          } else {
+            // Phone changed — require fresh in-process verification
+            serverPhoneVerified = await SMSService.isPhoneVerified(userId, newPhone);
+          }
         }
       }
 
