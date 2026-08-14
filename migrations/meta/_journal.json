@@ -29,6 +29,13 @@
       "when": 1754949700000,
       "tag": "0003_unique_verified_phones_phone",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1755129600000,
+      "tag": "0004_add_whop_subscription_columns",
+      "breakpoints": true
     }
   ]
 }

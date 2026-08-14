@@ -55,6 +55,7 @@ import {
 } from "./sentry-alert-logic";
 import OpenAI from "openai";
 import { buildConditionsSummary } from "./chat-helpers";
+import { registerWhopRoutes, logWhopStartupWarnings } from "./whop-routes";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -4285,6 +4286,10 @@ Do not discuss topics unrelated to surfing or ocean activities.`;
       );
     }
   });
+
+  // ── Whop subscription routes ─────────────────────────────────────────────
+  logWhopStartupWarnings();
+  registerWhopRoutes(app);
 
   // Add error handling middleware (should be last)
   app.use(errorTrackingMiddleware);

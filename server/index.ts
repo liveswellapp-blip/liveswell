@@ -44,7 +44,15 @@ function validateEnvironment() {
 }
 
 const app = express();
-app.use(express.json());
+// Capture the raw request body before the JSON parser consumes it.
+// The Whop webhook handler needs the exact original bytes to verify signatures.
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf.toString('utf8');
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: false }));
 
 // Redirect support.liveswell.io → https://liveswell.io/support so the
