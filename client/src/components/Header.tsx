@@ -1,4 +1,4 @@
-import { Search, Waves, User } from "lucide-react";
+import { Search, Waves, User, CreditCard } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -16,6 +16,7 @@ export default function Header({ onLocationSelect }: HeaderProps) {
 
   const spotsActive = location === "/" || location === "/conditions";
   const profileActive = location === "/profile";
+  const accountActive = location === "/account";
 
   return (
     <header className="sticky top-0 z-50" style={{ background: "#030a14", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
@@ -53,6 +54,20 @@ export default function Header({ onLocationSelect }: HeaderProps) {
               >
                 <Search size={15} />
               </button>
+
+              {/* Account / billing */}
+              <Link href="/account">
+                <button
+                  className="w-8 h-8 flex items-center justify-center rounded-xl transition-colors"
+                  style={{
+                    background: accountActive ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)",
+                    color: accountActive ? "#34d399" : "#475569",
+                  }}
+                  title="Account & billing"
+                >
+                  <CreditCard size={15} />
+                </button>
+              </Link>
 
               {/* Profile */}
               <Link href="/profile">

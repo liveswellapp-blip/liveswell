@@ -27,11 +27,12 @@ import SurfAgentChat from "@/components/SurfAgentChat";
 import SupportHome from "@/pages/support/index";
 import SupportCategory from "@/pages/support/category";
 import PricingPage from "@/pages/Pricing";
+import AccountPage from "@/pages/Account";
 
 // The set of routes that require authentication.
 // When a signed-out user lands on one of these, we redirect them to
 // /sign-in?redirect_url=<path> so Clerk can return them there after OAuth.
-const PROTECTED_PATHS = ["/conditions", "/settings", "/notifications", "/profile", "/monitoring"];
+const PROTECTED_PATHS = ["/conditions", "/settings", "/notifications", "/profile", "/monitoring", "/account"];
 
 function UnauthenticatedFallback() {
   const [location, navigate] = useLocation();
@@ -119,6 +120,7 @@ function Router() {
             <Route path="/notifications" component={NotificationSettings} />
             <Route path="/profile" component={Profile} />
             <Route path="/monitoring" component={Monitoring} />
+            <Route path="/account" component={AccountPage} />
           </>
         )}
 
