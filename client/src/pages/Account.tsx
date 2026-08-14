@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Crown, CreditCard, ArrowRight, Zap } from "lucide-react";
+import { Crown, CreditCard, ArrowRight, Zap, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SubStatus {
   isPro: boolean;
@@ -19,10 +20,19 @@ function formatDate(ts: number): string {
 }
 
 export default function AccountPage() {
-  const { data: sub, isLoading } = useQuery<SubStatus>({
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  const { data: sub, isLoading: subLoading, isError } = useQuery<SubStatus>({
     queryKey: ["/api/whop/subscription"],
     refetchOnWindowFocus: false,
+    // Only fetch once Clerk has confirmed the user is signed in.
+    // Prevents a premature unauthenticated request that would show "Free"
+    // for a split second while the JWT is still being retrieved.
+    enabled: !authLoading && isAuthenticated,
   });
+
+  // Show skeleton while auth OR the subscription query is in-flight
+  const isLoading = authLoading || subLoading;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#030a14" }}>
@@ -40,6 +50,11 @@ export default function AccountPage() {
 
           {isLoading ? (
             <div className="h-6 w-24 rounded-lg animate-pulse" style={{ background: "rgba(255,255,255,0.08)" }} />
+          ) : isError ? (
+            <div className="flex items-center gap-2 text-slate-400 text-[13px]">
+              <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+              <span>Could not load plan info. Please try again later.</span>
+            </div>
           ) : sub?.isPro ? (
             <>
               {/* Pro badge */}
