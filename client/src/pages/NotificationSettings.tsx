@@ -1299,7 +1299,7 @@ function saveDismissedSmsOptOutBanner(dismissed: boolean) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
   const [, navigate] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editAlert, setEditAlert] = useState<UserAlert | null>(null);
@@ -1492,12 +1492,25 @@ export default function NotificationSettings() {
             <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
             <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
           </div>
-          <button onClick={openCreate}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
-            style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
-            <Plus size={14} />
-            Add Alert
-          </button>
+          {isPro ? (
+            <button onClick={openCreate}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+              style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
+              <Plus size={14} />
+              Add Alert
+            </button>
+          ) : (
+            <button onClick={() => navigate("/pricing")}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold transition-opacity hover:opacity-90"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#94a3b8" }}>
+              <Lock size={14} />
+              Add Alert
+              <span className="ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-black tracking-wide"
+                style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
+                PRO
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1637,11 +1650,24 @@ export default function NotificationSettings() {
             <Bell size={36} className="text-slate-700 mx-auto mb-3" />
             <p className="text-slate-500 text-[14px]">No alerts yet</p>
             <p className="text-slate-600 text-[12px] mt-1">Daily reports or real-time condition triggers</p>
-            <button onClick={openCreate}
-              className="mt-5 px-6 py-2.5 rounded-2xl text-[13px] font-bold text-white"
-              style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
-              Create your first alert
-            </button>
+            {isPro ? (
+              <button onClick={openCreate}
+                className="mt-5 px-6 py-2.5 rounded-2xl text-[13px] font-bold text-white"
+                style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
+                Create your first alert
+              </button>
+            ) : (
+              <button onClick={() => navigate("/pricing")}
+                className="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-[13px] font-bold transition-opacity hover:opacity-90"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#94a3b8" }}>
+                <Lock size={14} />
+                Create your first alert
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black tracking-wide"
+                  style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" }}>
+                  PRO
+                </span>
+              </button>
+            )}
           </div>
         ) : (
           <>

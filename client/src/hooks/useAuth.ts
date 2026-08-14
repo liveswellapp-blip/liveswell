@@ -38,6 +38,14 @@ export function useAuth() {
     retry: 3,
   });
 
+  // Fetch Pro subscription status. Cached for 5 min; only runs when authenticated.
+  const { data: subData } = useQuery<{ isPro: boolean }>({
+    queryKey: ["/api/whop/subscription"],
+    enabled: !demo && isLoaded && !!clerkUser,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
   const logout = async () => {
     queryClient.clear();
     await signOut();
@@ -48,6 +56,7 @@ export function useAuth() {
       user: DEMO_USER,
       isLoading: false,
       isAuthenticated: true,
+      isPro: false,
       logout: async () => {},
     };
   }
@@ -73,6 +82,7 @@ export function useAuth() {
     user,
     isLoading: !isLoaded,
     isAuthenticated: !!clerkUser,
+    isPro: subData?.isPro ?? false,
     logout,
   };
 }
