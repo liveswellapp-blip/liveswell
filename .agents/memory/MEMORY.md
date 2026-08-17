@@ -3,3 +3,4 @@
 - [Clerk SSO callback routing](clerk-sso-callback-routing.md) — Clerk appends /sso-callback to the component path prop; /sign-in/sso-callback AND /sign-up/sso-callback must be registered explicitly or OAuth loops.
 - [Clerk getAuth pattern](clerk-getauth-pattern.md) — req.auth is a callable in @clerk/express v2+; use getAuth(req).userId not req.auth.userId (undefined on a function object).
 - [Drizzle migration journal](drizzle-migration-journal.md) — new migrations/*.sql run ONLY if added to migrations/meta/_journal.json; otherwise silently skipped while startup logs success.
+- [Migration repair guard ordering](migration-repair-guard-ordering.md) — CREATE TABLE repair guards must run AFTER drizzle migrate(), never before; migration 0000 lacks IF NOT EXISTS on some tables so pre-migrate creation causes it to fail on fresh DBs.
