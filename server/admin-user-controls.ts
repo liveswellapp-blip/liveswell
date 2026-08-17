@@ -14,6 +14,7 @@ import {
   verifiedPhones, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens,
   phoneVerificationTokens,
 } from "@shared/schema";
+import { getWhopClient } from "./whopClient";
 
 export function registerAdminUserControls(app: Express, requireAdminAuth: RequestHandler): void {
   // ── Permanently delete a user and all their data ─────────────────────────
@@ -22,6 +23,26 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
       const { userId } = req.params;
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Cancel the Whop membership BEFORE deleting local data so the user
+      // stops being billed. A failure here is logged as a warning but does
+      // not block deletion — admins can cancel manually in the Whop dashboard
+      // if the API is temporarily unavailable.
+      if (user.whopMembershipId) {
+        try {
+          const whopClient = await getWhopClient();
+          await whopClient.memberships.cancel(user.whopMembershipId, {
+            cancellation_mode: 'immediate',
+          });
+          console.log(`✅ Cancelled Whop membership ${user.whopMembershipId} for user ${userId}`);
+        } catch (whopErr) {
+          console.warn(
+            `⚠️  Failed to cancel Whop membership ${user.whopMembershipId} for user ${userId} — ` +
+            `the local account will still be deleted but the membership may need manual cancellation in the Whop dashboard.`,
+            whopErr,
+          );
+        }
+      }
 
       // Delete the Clerk sign-in account FIRST. If Clerk fails we abort with
       // an error and touch no local data — otherwise a Clerk outage would

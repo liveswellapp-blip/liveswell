@@ -660,10 +660,28 @@ export default function AdminUserDetail() {
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete {getDisplayName()}?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete all their alerts, favorites, and data,
-                    and remove their sign-in account so they cannot log back in.
-                    This cannot be undone.
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      <p>
+                        This will permanently delete all their alerts, favorites, and data,
+                        and remove their sign-in account so they cannot log back in.
+                        This cannot be undone.
+                      </p>
+                      {userDetails?.user.whopMembershipId && (
+                        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-700 dark:text-amber-400">
+                          <p className="font-medium flex items-center gap-1.5">
+                            <CreditCard className="h-4 w-4 shrink-0" />
+                            Active Whop subscription detected
+                          </p>
+                          <p className="mt-1 text-xs">
+                            Membership <span className="font-mono">{userDetails.user.whopMembershipId}</span> will be
+                            cancelled immediately via the Whop API so the user stops being billed.
+                            If the cancellation fails, a warning will be logged and you may need to
+                            cancel it manually in the Whop dashboard.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
