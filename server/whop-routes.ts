@@ -25,9 +25,9 @@ import { isAuthenticated } from './auth';
 import { getWhopClient } from './whopClient';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
 import { users } from '@shared/schema';
 import { z } from 'zod';
+import { activateWhopMembership, transitionProStatus } from './pro-transitions';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -213,12 +213,13 @@ export function registerWhopRoutes(app: Express): void {
         const membership = await client.memberships.retrieve(user.whopMembershipId);
         const isActive   = ACTIVE_STATUSES.has(membership.status);
 
-        // Sync DB if status changed
+        // Sync DB if status changed (catches missed/delayed webhooks).
+        // transitionProStatus conditions the UPDATE on the prior isPro value
+        // and inserts the audit event in the same transaction.
         if (isActive !== user.isPro) {
-          await db
-            .update(users)
-            .set({ isPro: isActive })
-            .where(eq(users.id, userId!));
+          await transitionProStatus(userId!, isActive, 'whop', {
+            extraPayload: { via: 'subscription_reconciliation', membershipId: user.whopMembershipId },
+          });
         }
 
         const planId = (membership as any).plan?.id as string | undefined;
@@ -315,26 +316,17 @@ export function registerWhopRoutes(app: Express): void {
           return res.json({ received: true });
         }
 
-        // Upsert the user row so membership events are never silently dropped
-        // because the Clerk user hasn't called /api/auth/user yet.
-        // On conflict (user already exists), update only the Pro fields.
-        await db
-          .insert(users)
-          .values({
-            id:               clerkUserId,
-            isPro:            true,
-            whopMembershipId: membership.id,
-          })
-          .onConflictDoUpdate({
-            target: users.id,
-            set: {
-              isPro:            true,
-              whopMembershipId: membership.id,
-              updatedAt:        sql`now()`,
-            },
-          });
-
-        console.log(`[whop/webhook] Set isPro=true for ${clerkUserId} (membership ${membership.id})`);
+        // activateWhopMembership upserts the user row (in case they haven't
+        // called /api/auth/user yet) and then conditionally grants Pro — all
+        // inside a single transaction.  The conditional UPDATE is gated on
+        // isPro=false so concurrent/retried deliveries of the same event only
+        // ever record one pro_granted entry.
+        const { changed } = await activateWhopMembership(clerkUserId, membership.id);
+        console.log(
+          changed
+            ? `[whop/webhook] Set isPro=true for ${clerkUserId} (membership ${membership.id})`
+            : `[whop/webhook] membership.activated: ${clerkUserId} was already Pro — skipped duplicate event`,
+        );
       }
 
       // ── membership.deactivated (went_invalid) ──────────────────────────────
@@ -344,17 +336,26 @@ export function registerWhopRoutes(app: Express): void {
           return res.status(400).json({ error: 'Missing membership data' });
         }
 
-        // Look up user by stored membership ID and clear their pro status.
-        const updated = await db
-          .update(users)
-          .set({ isPro: false, updatedAt: sql`now()` })
+        // Look up user by the stored membership ID so we have their primary key.
+        const [target] = await db
+          .select({ id: users.id })
+          .from(users)
           .where(eq(users.whopMembershipId, membership.id))
-          .returning({ id: users.id });
+          .limit(1);
 
-        if (updated.length > 0) {
-          console.log(`[whop/webhook] Set isPro=false for ${updated[0].id} (membership ${membership.id})`);
+        if (target) {
+          // transitionProStatus conditions the UPDATE on isPro=true, so
+          // idempotent re-deliveries return { changed: false } without writing.
+          const { changed } = await transitionProStatus(target.id, false, 'whop', {
+            extraPayload: { membershipId: membership.id },
+          });
+          if (changed) {
+            console.log(`[whop/webhook] Set isPro=false for ${target.id} (membership ${membership.id})`);
+          } else {
+            console.warn(`[whop/webhook] membership.deactivated: ${target.id} was already not-Pro — skipped duplicate event`);
+          }
         } else {
-          console.warn(`[whop/webhook] membership.deactivated: no local user found for membership ${membership.id} — Pro status may already be false`);
+          console.warn(`[whop/webhook] membership.deactivated: no local user found for membership ${membership.id}`);
         }
       }
 

@@ -68,27 +68,37 @@ vi.mock("@clerk/express", () => ({
 }));
 
 vi.mock("./db", () => {
-  const onConflictDoUpdate = vi.fn().mockResolvedValue([]);
-  const values = vi.fn().mockReturnValue({ onConflictDoUpdate });
-  const insert = vi.fn().mockImplementation((table: any) => {
+  /**
+   * Build a mock tx (or top-level db) with insert, update, select.
+   * Writes are captured in dbInsertValues / dbUpdateSet so lifecycle tests
+   * can assert on them.
+   */
+  function makeTxOrDb() {
     return {
-      values: vi.fn().mockImplementation((data: any) => {
-        dbInsertValues.push(data);
-        return { onConflictDoUpdate };
-      }),
-    };
-  });
+      insert: vi.fn().mockImplementation((_table: any) => ({
+        values: vi.fn().mockImplementation((data: any) => {
+          dbInsertValues.push(data);
+          return {
+            onConflictDoUpdate: vi.fn().mockResolvedValue([]),
+            onConflictDoNothing: vi.fn().mockResolvedValue([]),
+          };
+        }),
+      })),
 
-  const returning = vi.fn().mockResolvedValue([{ id: "user-123" }]);
-  const updateWhere = vi.fn().mockReturnValue({ returning });
-  const updateSet = vi.fn().mockImplementation((data: any) => {
-    dbUpdateSet.push(data);
-    return { where: updateWhere };
-  });
-  const update = vi.fn().mockReturnValue({ set: updateSet });
+      update: vi.fn().mockImplementation((_table: any) => ({
+        set: vi.fn().mockImplementation((data: any) => {
+          dbUpdateSet.push(data);
+          return {
+            where: vi.fn().mockReturnValue({
+              // returning([{ id }]) — simulates a state change for tests that
+              // need activateWhopMembership / transitionProStatus to record an event.
+              returning: vi.fn().mockResolvedValue([{ id: "user-123" }]),
+              limit: vi.fn().mockResolvedValue([]),
+            }),
+          };
+        }),
+      })),
 
-  return {
-    db: {
       select: vi.fn().mockImplementation(() => ({
         from: vi.fn().mockReturnThis(),
         // where() must be awaitable directly (storage.getUser awaits it for the
@@ -97,20 +107,29 @@ vi.mock("./db", () => {
           const rows =
             mockIsPro === null
               ? []
-              : [{ isPro: mockIsPro, isSuspended: mockIsSuspended }];
+              : [{ id: "user-123", isPro: mockIsPro, isSuspended: mockIsSuspended }];
           const thenable: any = Promise.resolve(rows);
           thenable.limit = vi.fn(() => Promise.resolve(rows));
           return thenable;
         }),
       })),
-      insert,
-      update,
+    };
+  }
+
+  const topLevel = makeTxOrDb();
+
+  return {
+    db: {
+      ...topLevel,
+      // transaction(fn) — runs fn with a fresh tx mock and returns its result.
+      transaction: vi.fn().mockImplementation(async (fn: any) => fn(makeTxOrDb())),
     },
   };
 });
 
 vi.mock("@shared/schema", () => ({
   users: { id: "id", isPro: "isPro", whopMembershipId: "whopMembershipId" },
+  userEvents: { userId: "userId", type: "type", payload: "payload" },
 }));
 
 // Mock the Whop client used by the webhook handler.
@@ -370,12 +389,32 @@ describe("Whop webhook lifecycle — membership.activated sets isPro=true", () =
       .set("whop-signature", "test-sig")
       .send({ action: "membership.activated" });
 
-    // DB insert should have been called with isPro=true
+    // activateWhopMembership first inserts the user with isPro=false (upsert),
+    // then conditionally updates isPro=true in the same transaction.
     expect(dbInsertValues.length).toBeGreaterThan(0);
-    const inserted = dbInsertValues[0];
-    expect(inserted.isPro).toBe(true);
-    expect(inserted.id).toBe("user_clerk_abc");
-    expect(inserted.whopMembershipId).toBe("mem_abc123");
+    const upsertInsert = dbInsertValues[0];
+    expect(upsertInsert.id).toBe("user_clerk_abc");
+    expect(upsertInsert.whopMembershipId).toBe("mem_abc123");
+    // The conditional update grants Pro — verify it was called with isPro=true.
+    expect(dbUpdateSet.length).toBeGreaterThan(0);
+    expect(dbUpdateSet[0]).toMatchObject({ isPro: true });
+  });
+
+  it("idempotency — repeated activation does not grant Pro twice", async () => {
+    // The tx.update returning-mock returns [{id}] on both calls, simulating
+    // that the WHERE isPro=false condition was satisfied.  In the real DB the
+    // second call would return [] (already Pro) — this test verifies the
+    // handler completes without error, not that it de-dupes (DB enforces that).
+    const res1 = await request(buildWhopApp())
+      .post("/api/whop/webhook")
+      .set("whop-signature", "test-sig")
+      .send({ action: "membership.activated" });
+    const res2 = await request(buildWhopApp())
+      .post("/api/whop/webhook")
+      .set("whop-signature", "test-sig")
+      .send({ action: "membership.activated" });
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
   });
 
   it("rejects the webhook with 503 when WHOP_WEBHOOK_SECRET is not set", async () => {

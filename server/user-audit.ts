@@ -173,6 +173,20 @@ export async function assembleUserAuditEvents(user: User): Promise<AuditEvent[]>
       description = `Alert deleted: ${name}${loc}`;
     } else if (e.type === "spot_unfavorited") {
       description = `Unfavorited ${(payload.locationName as string | null) ?? "a spot"}`;
+    } else if (e.type === "pro_granted") {
+      const src = payload.source as string | undefined;
+      const sourceLabel =
+        src === "whop" ? "Whop subscription" :
+        src === "test" ? "test account" :
+        src === "comp" ? "comp" : src ?? "unknown";
+      description = `Pro access granted (${sourceLabel})`;
+    } else if (e.type === "pro_revoked") {
+      const src = payload.source as string | undefined;
+      const sourceLabel =
+        src === "whop" ? "Whop subscription" :
+        src === "test" ? "test account" :
+        src === "comp" ? "comp" : src ?? "unknown";
+      description = `Pro access revoked (${sourceLabel})`;
     }
     events.push({
       type: e.type,
@@ -182,9 +196,14 @@ export async function assembleUserAuditEvents(user: User): Promise<AuditEvent[]>
     });
   }
 
-  // Pro status (current state — no historical table, so surface the
-  // grant as of the last user update if the user is Pro)
-  if (user.isPro) {
+  // Pro status: if the user is Pro but has no recorded pro_granted event
+  // (e.g. the status was set before history tracking was introduced), fall
+  // back to a single inferred entry timestamped by updatedAt so the timeline
+  // is never completely empty for long-standing Pro users.
+  const hasProEvent = storedEvents.some(
+    (e) => e.type === "pro_granted" || e.type === "pro_revoked",
+  );
+  if (user.isPro && !hasProEvent) {
     const source = user.isTestAccount
       ? "test account"
       : user.whopMembershipId
@@ -193,7 +212,7 @@ export async function assembleUserAuditEvents(user: User): Promise<AuditEvent[]>
     events.push({
       type: "pro_granted",
       timestamp: new Date(user.updatedAt ?? user.createdAt ?? new Date()).toISOString(),
-      description: `Pro access active (${source})`,
+      description: `Pro access active (${source}) — date estimated from last profile update`,
     });
   }
 

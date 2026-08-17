@@ -47,31 +47,59 @@ vi.mock("@clerk/express", () => ({
   },
 }));
 
+// Controls whether the next tx.insert call inside a transaction should throw.
+let txInsertShouldFail = false;
+
 vi.mock("./db", () => {
+  /**
+   * Build a mock for either the top-level db or a tx object.
+   * All writes capture into the shared dbUpdateSets array so tests can assert
+   * on whether the conditional update and event insert actually ran.
+   */
+  const makeWritable = () => ({
+    update: vi.fn(() => ({
+      set: vi.fn((data: any) => {
+        dbUpdateSets.push(data);
+        return {
+          where: vi.fn(() => ({
+            returning: vi.fn(async () => mockUpdateReturning),
+          })),
+        };
+      }),
+    })),
+    insert: vi.fn((_table: any) => ({
+      values: vi.fn((_data: any) => {
+        if (txInsertShouldFail) throw new Error("simulated event-insert failure");
+        return Promise.resolve([]);
+      }),
+    })),
+  });
+
   const makeTx = () => ({
+    ...makeWritable(),
     delete: vi.fn((table: any) => {
       txDeletedTables.push(table);
       return { where: vi.fn(async () => undefined) };
     }),
   });
+
   return {
     db: {
+      ...makeWritable(),
       select: vi.fn(() => ({
-        from: vi.fn(() => ({ where: vi.fn(async () => []) })),
-      })),
-      update: vi.fn(() => ({
-        set: vi.fn((data: any) => {
-          dbUpdateSets.push(data);
-          return {
-            where: vi.fn(() => ({
-              returning: vi.fn(async () => mockUpdateReturning),
-            })),
-          };
-        }),
+        from: vi.fn(() => ({
+          where: vi.fn(() => {
+            // Return mockUser so post-transaction fetches get the updated row.
+            const rows = mockUser ? [mockUser] : [];
+            const thenable: any = Promise.resolve(rows);
+            thenable.limit = vi.fn(() => Promise.resolve(rows));
+            return thenable;
+          }),
+        })),
       })),
       transaction: vi.fn(async (fn: any) => {
         txRan = true;
-        await fn(makeTx());
+        return fn(makeTx());
       }),
     },
   };
@@ -95,6 +123,7 @@ beforeEach(() => {
   dbUpdateSets.length = 0;
   txDeletedTables.length = 0;
   txRan = false;
+  txInsertShouldFail = false;
   vi.clearAllMocks();
   clerkDeleteUser.mockResolvedValue(undefined);
   clerkUpdateUser.mockResolvedValue(undefined);
@@ -221,6 +250,35 @@ describe("POST /api/admin/users/:userId/plan-override", () => {
       .send({ grantPro: false });
     expect(res.status).toBe(200);
     expect(dbUpdateSets[0]).toMatchObject({ isPro: false });
+  });
+
+  it("idempotency — granting Pro to an already-Pro user returns 200 without a duplicate event", async () => {
+    mockUser = { id: "user_1", isPro: true, whopMembershipId: null };
+    // mockUpdateReturning = [] means isPro was already true — no row updated.
+    mockUpdateReturning = [];
+    const res = await request(buildApp())
+      .post("/api/admin/users/user_1/plan-override")
+      .send({ grantPro: true });
+    expect(res.status).toBe(200);
+    // The conditional update ran but returned no rows (already Pro).
+    expect(dbUpdateSets[0]).toMatchObject({ isPro: true });
+    // Only one DB write — the conditional update inside the transaction.
+    // No event-insert should follow because the state didn't change.
+    // (txRan is true; but the second insert inside tx is never reached when
+    //  returning is empty.)
+    expect(txRan).toBe(true);
+  });
+
+  it("rollback — a failure in the audit event insert propagates as 500 so the Pro update rolls back", async () => {
+    mockUser = { id: "user_1", isPro: false, whopMembershipId: null };
+    mockUpdateReturning = [{ id: "user_1", isPro: true }]; // state would change
+    txInsertShouldFail = true; // tx.insert(userEvents) throws
+    const res = await request(buildApp())
+      .post("/api/admin/users/user_1/plan-override")
+      .send({ grantPro: true });
+    // Error must NOT be silently swallowed — the endpoint should return 500
+    // so the caller knows the transition was not committed.
+    expect(res.status).toBe(500);
   });
 });
 

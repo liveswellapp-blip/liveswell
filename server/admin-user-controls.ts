@@ -15,6 +15,7 @@ import {
   phoneVerificationTokens, userEvents,
 } from "@shared/schema";
 import { getWhopClient } from "./whopClient";
+import { transitionProStatus } from "./pro-transitions";
 
 export function registerAdminUserControls(app: Express, requireAdminAuth: RequestHandler): void {
   // ── Permanently delete a user and all their data ─────────────────────────
@@ -149,11 +150,17 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
         });
       }
 
+      // transitionProStatus conditions its UPDATE on the prior isPro value and
+      // inserts the audit event in the same transaction — both succeed or both
+      // roll back.  Returns { changed: false } when already in target state.
+      await transitionProStatus(userId, grantPro, "comp");
+
+      // Fetch and return the updated row.
       const [updated] = await db
-        .update(users)
-        .set({ isPro: grantPro, updatedAt: new Date() })
+        .select()
+        .from(users)
         .where(eq(users.id, userId))
-        .returning();
+        .limit(1);
 
       res.json(updated);
     } catch (error) {

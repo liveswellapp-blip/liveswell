@@ -59,6 +59,7 @@ import OpenAI from "openai";
 import { buildConditionsSummary } from "./chat-helpers";
 import { registerWhopRoutes, logWhopStartupWarnings, requirePro } from "./whop-routes";
 import { recordUserEvent } from "./user-events";
+import { transitionProStatus } from "./pro-transitions";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -841,11 +842,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const target = await storage.getUserByEmail(email.trim().toLowerCase());
       if (!target) return res.status(404).json({ message: `No user found with email: ${email}` });
 
-      const [updated] = await db
+      // transitionProStatus conditions its UPDATE on the prior isPro value and
+      // inserts the audit event in the same transaction — both succeed or both
+      // roll back.  It returns { changed: false } when already in target state.
+      await transitionProStatus(target.id, !revoke, "test");
+
+      // isTestAccount is managed independently — it must always be set/cleared
+      // even when isPro was already at the target value (e.g. granting test
+      // access to an existing Whop subscriber should still set isTestAccount).
+      await db
         .update(users)
-        .set({ isPro: !revoke, isTestAccount: !revoke, updatedAt: new Date() })
+        .set({ isTestAccount: !revoke, updatedAt: new Date() })
+        .where(eq(users.id, target.id));
+
+      // Fetch the updated row to return accurate field values.
+      const updated = await db
+        .select()
+        .from(users)
         .where(eq(users.id, target.id))
-        .returning();
+        .limit(1)
+        .then((rows: any[]) => rows[0]);
 
       // When granting access, pre-verify all existing alert phone numbers so
       // the tester doesn't have to go through the SMS verification flow.
