@@ -24,6 +24,7 @@ import {
 } from './rate-limiter';
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
 import { registerAdminUserControls } from "./admin-user-controls";
+import { assembleUserAuditEvents, paginateAuditEvents } from "./user-audit";
 import { SMSService, PhoneConflictError } from "./sms-service";
 import { EmailService } from "./email-service";
 import { findNearbyStations } from "./noaa-integration";
@@ -804,6 +805,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // ── Admin: user activity audit log ───────────────────────────────────────
+  // Assembles a chronological timeline of user activity from existing tables.
+  app.get("/api/admin/users/:userId/audit", requireAdminAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const page = Math.max(1, parseInt(String(req.query.page ?? "1"), 10) || 1);
+      const pageSize = Math.min(100, Math.max(1, parseInt(String(req.query.pageSize ?? "20"), 10) || 20));
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Full history is assembled, then paginated — `total` always reflects
+      // the complete available timeline (no silent truncation), so clients
+      // can walk sequential pages to reach every event.
+      const events = await assembleUserAuditEvents(user);
+      res.json(paginateAuditEvents(events, page, pageSize));
+    } catch (error) {
+      console.error("Get user audit log error:", error);
+      res.status(500).json({ message: "Failed to get audit log" });
+    }
+  });
+
   // ── Admin: grant / revoke test-account access ────────────────────────────
   // Sets isPro + isTestAccount on the user, which also bypasses SMS phone
   // verification so store reviewers can use any phone number without a code.

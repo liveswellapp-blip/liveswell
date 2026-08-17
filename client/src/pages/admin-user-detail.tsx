@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,9 @@ import {
   User, Mail, Calendar, Heart, MapPin, Settings,
   ArrowLeft, Clock, FileText, Trash2, CreditCard,
   ShieldCheck, Activity, FlaskConical, Pencil, Ban,
+  Bell, Star, Phone,
 } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 
 interface AdminStatus { authenticated: boolean }
 
@@ -74,6 +76,13 @@ export default function AdminUserDetail() {
   const [editFirstName, setEditFirstName] = useState('');
   const [editLastName, setEditLastName] = useState('');
   const [editEmail, setEditEmail] = useState('');
+  const queryClient = useQueryClient();
+
+  // Refresh both the user details and the audit timeline after admin mutations.
+  const refreshUser = () => {
+    refetchUser();
+    queryClient.invalidateQueries({ queryKey: ['/api/admin/users', userId, 'audit'] });
+  };
 
   // Check admin auth via session cookie
   const { data: adminStatus, isLoading: authLoading } = useQuery<AdminStatus>({
@@ -110,7 +119,7 @@ export default function AdminUserDetail() {
           ? 'User is back on the free plan.'
           : 'User now has Pro access and phone verification bypassed.',
       });
-      refetchUser();
+      refreshUser();
     },
     onError: (err: Error) => {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -160,7 +169,7 @@ export default function AdminUserDetail() {
           ? 'All API access is now blocked for this user.'
           : 'Access has been restored.',
       });
-      refetchUser();
+      refreshUser();
     },
     onError: (err: Error) => {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -189,7 +198,7 @@ export default function AdminUserDetail() {
           ? 'User now has complimentary Pro access.'
           : 'User is back on the free plan.',
       });
-      refetchUser();
+      refreshUser();
     },
     onError: (err: Error) => {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -218,7 +227,7 @@ export default function AdminUserDetail() {
     onSuccess: () => {
       toast({ title: 'Profile updated', description: 'Name and email saved to the database and Clerk.' });
       setEditingProfile(false);
-      refetchUser();
+      refreshUser();
     },
     onError: (err: Error) => {
       toast({ title: 'Update failed', description: err.message, variant: 'destructive' });
@@ -554,26 +563,9 @@ export default function AdminUserDetail() {
           </Card>
         );
 
-      // ── Audit Log (placeholder) ───────────────────────────────────────────
+      // ── Audit Log ─────────────────────────────────────────────────────────
       case 'audit':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Audit Log
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
-                <FileText className="h-10 w-10 text-muted-foreground/40" />
-                <p className="font-medium text-muted-foreground">Audit log coming soon</p>
-                <p className="text-sm text-muted-foreground max-w-sm">
-                  Future: login history, setting changes, alert modifications, and other account events will appear here.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        );
+        return <AuditLogTab userId={userId!} />;
 
       // ── Danger Zone (placeholder) ─────────────────────────────────────────
       case 'danger':
@@ -775,5 +767,141 @@ export default function AdminUserDetail() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Audit Log tab ───────────────────────────────────────────────────────────
+
+interface AuditEvent {
+  type: string;
+  timestamp: string;
+  description: string;
+  meta?: Record<string, unknown>;
+}
+
+interface AuditResponse {
+  events: AuditEvent[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+const AUDIT_ICONS: Record<string, React.ReactNode> = {
+  account_created: <User className="h-4 w-4 text-blue-600" />,
+  alert_created:   <Bell className="h-4 w-4 text-emerald-600" />,
+  alert_updated:   <Bell className="h-4 w-4 text-amber-600" />,
+  alert_fired:     <Bell className="h-4 w-4 text-red-500" />,
+  spot_favorited:  <MapPin className="h-4 w-4 text-pink-500" />,
+  pro_granted:     <Star className="h-4 w-4 text-yellow-500" />,
+  pro_revoked:     <Star className="h-4 w-4 text-muted-foreground" />,
+  phone_verified:  <Phone className="h-4 w-4 text-indigo-500" />,
+};
+
+function AuditLogTab({ userId }: { userId: string }) {
+  const pageSize = 20;
+
+  // True sequential pagination: each "Load more" fetches the next page and
+  // appends it. Keyed as ['/api/admin/users', userId, 'audit'] so admin
+  // mutations can invalidate the whole audit history by prefix.
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<AuditResponse>({
+    queryKey: ['/api/admin/users', userId, 'audit'],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const res = await fetch(`/api/admin/users/${userId}/audit?page=${pageParam}&pageSize=${pageSize}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.page * lastPage.pageSize < lastPage.total ? lastPage.page + 1 : undefined,
+  });
+
+  const events = data?.pages.flatMap((p) => p.events) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
+  const hasMore = hasNextPage ?? false;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <FileText className="h-4 w-4" /> Audit Log
+          {data && (
+            <Badge variant="secondary" className="ml-1">{total} events</Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-4 py-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : isError ? (
+          <p className="text-sm text-destructive py-4">Failed to load audit log.</p>
+        ) : events.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+            <FileText className="h-10 w-10 text-muted-foreground/40" />
+            <p className="font-medium text-muted-foreground">No activity recorded yet</p>
+          </div>
+        ) : (
+          <>
+            <ol className="relative space-y-0" data-testid="audit-timeline">
+              {events.map((event, i) => (
+                <li
+                  key={`${event.type}-${event.timestamp}-${i}`}
+                  className="relative flex items-start gap-3 pb-6 last:pb-0"
+                  data-testid={`audit-event-${i}`}
+                >
+                  {/* vertical connector */}
+                  {i < events.length - 1 && (
+                    <span className="absolute left-4 top-8 bottom-0 w-px bg-border" aria-hidden />
+                  )}
+                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border bg-background">
+                    {AUDIT_ICONS[event.type] ?? <FileText className="h-4 w-4 text-muted-foreground" />}
+                  </span>
+                  <div className="min-w-0 pt-1">
+                    <p className="text-sm font-medium leading-snug">{event.description}</p>
+                    <p
+                      className="text-xs text-muted-foreground mt-0.5"
+                      title={format(new Date(event.timestamp), 'PPpp')}
+                    >
+                      {formatDistanceToNow(new Date(event.timestamp), { addSuffix: true })}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            {hasMore && (
+              <div className="pt-4 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  data-testid="button-load-more-audit"
+                >
+                  {isFetchingNextPage ? 'Loading…' : 'Load more'}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
