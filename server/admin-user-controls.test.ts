@@ -26,6 +26,14 @@ const clerkGetUser = vi.fn();
 const clerkCreateEmail = vi.fn();
 const clerkDeleteEmail = vi.fn();
 
+// Whop client mock
+const whopMembershipsCancel = vi.fn();
+vi.mock("./whopClient", () => ({
+  getWhopClient: vi.fn(async () => ({
+    memberships: { cancel: (...a: any[]) => whopMembershipsCancel(...a) },
+  })),
+}));
+
 vi.mock("./storage", () => ({
   storage: {
     getUser: vi.fn(async () => mockUser),
@@ -130,6 +138,7 @@ beforeEach(() => {
   clerkGetUser.mockResolvedValue({ emailAddresses: [] });
   clerkCreateEmail.mockResolvedValue({ id: "email_new" });
   clerkDeleteEmail.mockResolvedValue(undefined);
+  whopMembershipsCancel.mockResolvedValue(undefined);
 });
 
 // ---------------------------------------------------------------------------
@@ -176,6 +185,40 @@ describe("DELETE /api/admin/users/:userId", () => {
     const res = await request(buildApp()).delete("/api/admin/users/45116786");
     expect(res.status).toBe(204);
     expect(clerkDeleteUser).not.toHaveBeenCalled();
+    expect(txRan).toBe(true);
+  });
+
+  // -- Whop membership cancellation ------------------------------------------
+
+  it("calls memberships.cancel with the correct ID and immediate mode when user has whopMembershipId", async () => {
+    mockUser = { id: "user_1", email: "a@b.co", whopMembershipId: "mem_abc123" };
+    const res = await request(buildApp()).delete("/api/admin/users/user_1");
+    expect(res.status).toBe(204);
+    expect(whopMembershipsCancel).toHaveBeenCalledOnce();
+    expect(whopMembershipsCancel).toHaveBeenCalledWith("mem_abc123", {
+      cancellation_mode: "immediate",
+    });
+    expect(txRan).toBe(true);
+  });
+
+  it("proceeds with deletion (204) and logs a warning when the Whop API throws", async () => {
+    mockUser = { id: "user_1", email: "a@b.co", whopMembershipId: "mem_abc123" };
+    whopMembershipsCancel.mockRejectedValue(new Error("Whop API unavailable"));
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const res = await request(buildApp()).delete("/api/admin/users/user_1");
+    expect(res.status).toBe(204);
+    expect(txRan).toBe(true);
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(warnSpy.mock.calls[0][0]).toMatch(/Failed to cancel Whop membership/i);
+    warnSpy.mockRestore();
+  });
+
+  it("does NOT call memberships.cancel when the user has no whopMembershipId", async () => {
+    mockUser = { id: "user_1", email: "a@b.co", whopMembershipId: null };
+    const res = await request(buildApp()).delete("/api/admin/users/user_1");
+    expect(res.status).toBe(204);
+    expect(whopMembershipsCancel).not.toHaveBeenCalled();
     expect(txRan).toBe(true);
   });
 });
