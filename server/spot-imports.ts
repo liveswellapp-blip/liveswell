@@ -35,10 +35,18 @@ const GLOBAL_SURF_SPOTS: SurfSpotData[] = [
 
   // HAWAII (Pacific)
   { name: "Pipeline", city: "Haleiwa", country: "USA", latitude: "21.6692", longitude: "-158.0489", region: "Hawaii", difficulty: "Expert", break_type: "Reef Break", optimal_swell: "N-NW", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
-  { name: "Waimea Bay", city: "Haleiwa", country: "USA", latitude: "21.6419", longitude: "-158.0661", region: "Hawaii", difficulty: "Expert", break_type: "Beach Break", optimal_swell: "N-NW", optimal_wind: "S-SW" },
-  { name: "Sunset Beach", city: "Haleiwa", country: "USA", latitude: "21.6736", longitude: "-158.0469", region: "Hawaii", difficulty: "Advanced", break_type: "Beach Break", optimal_swell: "N-NW", optimal_wind: "S-SW" },
+  { name: "Backdoor Pipeline", city: "Haleiwa", country: "USA", latitude: "21.6695", longitude: "-158.0481", region: "Hawaii", difficulty: "Expert", break_type: "Reef Break", optimal_swell: "N-NE", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
+  { name: "Waimea Bay", city: "Haleiwa", country: "USA", latitude: "21.6419", longitude: "-158.0661", region: "Hawaii", difficulty: "Expert", break_type: "Beach Break", optimal_swell: "N-NW", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
+  { name: "Sunset Beach", city: "Haleiwa", country: "USA", latitude: "21.6736", longitude: "-158.0469", region: "Hawaii", difficulty: "Advanced", break_type: "Beach Break", optimal_swell: "N-NW", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
   { name: "Waikiki Beach", city: "Honolulu", country: "USA", latitude: "21.2777", longitude: "-157.8340", region: "Hawaii", difficulty: "Beginner", break_type: "Reef Break", optimal_swell: "S", optimal_wind: "NE", noaa_tide_station: "1612340" },
-  { name: "Diamond Head", city: "Honolulu", country: "USA", latitude: "21.2642", longitude: "-157.8081", region: "Hawaii", difficulty: "Intermediate", break_type: "Reef Break", optimal_swell: "S", optimal_wind: "NE" },
+  { name: "Diamond Head", city: "Honolulu", country: "USA", latitude: "21.2642", longitude: "-157.8081", region: "Hawaii", difficulty: "Intermediate", break_type: "Reef Break", optimal_swell: "S", optimal_wind: "NE", noaa_tide_station: "1612340" },
+  { name: "Ala Moana Bowls", city: "Honolulu", country: "USA", latitude: "21.2881", longitude: "-157.8558", region: "Hawaii", difficulty: "Advanced", break_type: "Reef Break", optimal_swell: "S-SW", optimal_wind: "NE-E", noaa_tide_station: "1612340" },
+  { name: "Makaha Beach", city: "Waianae", country: "USA", latitude: "21.4743", longitude: "-158.2178", region: "Hawaii", difficulty: "Advanced", break_type: "Point Break", optimal_swell: "W-NW", optimal_wind: "E-NE", noaa_buoy_id: "51001" },
+  { name: "Jaws (Pe'ahi)", city: "Haiku", country: "USA", latitude: "20.9486", longitude: "-156.3283", region: "Hawaii", difficulty: "Expert", break_type: "Reef Break", optimal_swell: "N-NW", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
+  { name: "Ho'okipa Beach", city: "Paia", country: "USA", latitude: "20.9369", longitude: "-156.3608", region: "Hawaii", difficulty: "Advanced", break_type: "Reef Break", optimal_swell: "N-NW", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
+  { name: "Honolua Bay", city: "Lahaina", country: "USA", latitude: "21.0186", longitude: "-156.6381", region: "Hawaii", difficulty: "Advanced", break_type: "Point Break", optimal_swell: "N-NW", optimal_wind: "S-SE", noaa_buoy_id: "51001" },
+  { name: "Hanalei Bay", city: "Hanalei", country: "USA", latitude: "22.2072", longitude: "-159.5044", region: "Hawaii", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "N-NW", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
+  { name: "Tunnels Beach (Makua)", city: "Hanalei", country: "USA", latitude: "22.2236", longitude: "-159.5661", region: "Hawaii", difficulty: "Advanced", break_type: "Reef Break", optimal_swell: "N-NW", optimal_wind: "S-SW", noaa_buoy_id: "51001" },
 
   // FLORIDA (Atlantic Coast)
   { name: "Cocoa Beach", city: "Cocoa Beach", country: "USA", latitude: "28.3200", longitude: "-80.6077", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W-SW", noaa_buoy_id: "41009" },
@@ -47,9 +55,30 @@ const GLOBAL_SURF_SPOTS: SurfSpotData[] = [
   { name: "Sebastian Inlet", city: "Sebastian", country: "USA", latitude: "27.8606", longitude: "-80.4469", region: "Florida", difficulty: "Advanced", break_type: "Reef Break", optimal_swell: "E-SE", optimal_wind: "W-NW" },
   { name: "South Beach", city: "Miami", country: "USA", latitude: "25.7907", longitude: "-80.1300", region: "Florida", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W" },
 
-  // EAST COAST USA
+  // EAST COAST USA — NEW YORK
   { name: "Montauk Point", city: "Montauk", country: "USA", latitude: "41.0358", longitude: "-71.8558", region: "New York", difficulty: "Intermediate", break_type: "Point Break", optimal_swell: "S-SE", optimal_wind: "N-NW", noaa_buoy_id: "44017" },
-  { name: "Manasquan Inlet", city: "Manasquan", country: "USA", latitude: "40.1151", longitude: "-74.0373", region: "New Jersey", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W-NW" },
+  { name: "Ditch Plains", city: "Montauk", country: "USA", latitude: "41.0294", longitude: "-71.9142", region: "New York", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "S-SE", optimal_wind: "N-NW", noaa_buoy_id: "44017" },
+  { name: "Rockaway Beach", city: "Queens", country: "USA", latitude: "40.5796", longitude: "-73.8131", region: "New York", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "S-SE", optimal_wind: "N-NW", noaa_buoy_id: "44025" },
+  { name: "Long Beach", city: "Long Beach", country: "USA", latitude: "40.5887", longitude: "-73.6579", region: "New York", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "S-SE", optimal_wind: "N-NW", noaa_buoy_id: "44025" },
+  { name: "Robert Moses State Park", city: "Fire Island", country: "USA", latitude: "40.6313", longitude: "-73.2638", region: "New York", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "S-SE", optimal_wind: "N-NW", noaa_buoy_id: "44025" },
+
+  // EAST COAST USA — NEW JERSEY
+  { name: "Manasquan Inlet", city: "Manasquan", country: "USA", latitude: "40.1151", longitude: "-74.0373", region: "New Jersey", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W-NW", noaa_buoy_id: "44025" },
+  { name: "Asbury Park", city: "Asbury Park", country: "USA", latitude: "40.2204", longitude: "-74.0121", region: "New Jersey", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W-NW", noaa_buoy_id: "44025" },
+  { name: "Sea Girt", city: "Sea Girt", country: "USA", latitude: "40.1326", longitude: "-74.0449", region: "New Jersey", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W-NW", noaa_buoy_id: "44025" },
+  { name: "Long Beach Island - Barnegat Light", city: "Barnegat Light", country: "USA", latitude: "39.7598", longitude: "-74.1087", region: "New Jersey", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W-NW", noaa_buoy_id: "44025" },
+  { name: "Long Beach Island - Beach Haven", city: "Beach Haven", country: "USA", latitude: "39.5598", longitude: "-74.2445", region: "New Jersey", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W-NW", noaa_buoy_id: "44025" },
+  { name: "Cape May", city: "Cape May", country: "USA", latitude: "38.9351", longitude: "-74.9060", region: "New Jersey", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "NW", noaa_buoy_id: "44009" },
+
+  // EAST COAST USA — MASSACHUSETTS
+  { name: "Nauset Beach", city: "Orleans", country: "USA", latitude: "41.7908", longitude: "-69.9404", region: "Massachusetts", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W-NW", noaa_buoy_id: "44018" },
+  { name: "Marconi Beach", city: "Wellfleet", country: "USA", latitude: "41.9151", longitude: "-69.9593", region: "Massachusetts", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W-NW", noaa_buoy_id: "44018" },
+  { name: "Coast Guard Beach", city: "Eastham", country: "USA", latitude: "41.8402", longitude: "-69.9524", region: "Massachusetts", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W-NW", noaa_buoy_id: "44018" },
+  { name: "Nantucket - Cisco Beach", city: "Nantucket", country: "USA", latitude: "41.2471", longitude: "-70.1282", region: "Massachusetts", difficulty: "Intermediate", break_type: "Beach Break", optimal_swell: "S-SW", optimal_wind: "N-NW", noaa_buoy_id: "44017" },
+  { name: "Nantucket - Surfside Beach", city: "Nantucket", country: "USA", latitude: "41.2454", longitude: "-70.0965", region: "Massachusetts", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "S-SE", optimal_wind: "N-NW", noaa_buoy_id: "44017" },
+  { name: "Nahant Beach", city: "Nahant", country: "USA", latitude: "42.4233", longitude: "-70.9187", region: "Massachusetts", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-NE", optimal_wind: "W-SW", noaa_buoy_id: "44013" },
+
+  // EAST COAST USA — NORTH CAROLINA / VIRGINIA
   { name: "Cape Hatteras", city: "Buxton", country: "USA", latitude: "35.2271", longitude: "-75.5492", region: "North Carolina", difficulty: "Advanced", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W-SW", noaa_buoy_id: "41025" },
   { name: "Virginia Beach", city: "Virginia Beach", country: "USA", latitude: "36.8529", longitude: "-75.9780", region: "Virginia", difficulty: "Beginner", break_type: "Beach Break", optimal_swell: "E-SE", optimal_wind: "W", noaa_tide_station: "8638610" },
 
