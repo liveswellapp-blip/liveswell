@@ -61,9 +61,19 @@ export default function UserDatabase({ onClose }: UserDatabaseProps) {
     refetchInterval: 60000,
   });
 
-  // Fetch all users with search
+  // Fetch all users with search.
+  // NOTE: must use a custom queryFn — the default joins the key with "/" which
+  // turns ['/api/admin/users', ''] into "/api/admin/users/" and hits the wrong route.
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ['/api/admin/users', searchTerm],
+    queryFn: async () => {
+      const url = searchTerm
+        ? `/api/admin/users?search=${encodeURIComponent(searchTerm)}`
+        : '/api/admin/users';
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      return res.json();
+    },
     refetchInterval: 30000,
   });
 
