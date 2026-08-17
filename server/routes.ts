@@ -23,6 +23,7 @@ import {
   trackOpenWeatherUsage 
 } from './rate-limiter';
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
+import { registerAdminUserControls } from "./admin-user-controls";
 import { SMSService, PhoneConflictError } from "./sms-service";
 import { EmailService } from "./email-service";
 import { findNearbyStations } from "./noaa-integration";
@@ -839,6 +840,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update test access" });
     }
   });
+
+  // Admin user management (delete / suspend / plan override / profile edit)
+  registerAdminUserControls(app, requireAdminAuth);
 
   app.get("/api/admin/user-stats", requireAdminAuth, async (req, res) => {
     try {

@@ -877,6 +877,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(userAlerts.active, true),
+          // Suspended accounts receive no outbound notifications
+          eq(users.isSuspended, false),
           or(
             eq(userAlerts.notificationTime, time),
             eq(userAlerts.notificationTimeTwo, time)
@@ -949,6 +951,8 @@ export class DatabaseStorage implements IStorage {
           eq(userAlerts.alertType, 'daily_report'),
           // Only deliver to users with an active Pro subscription
           eq(users.isPro, true),
+          // Suspended accounts receive no outbound notifications
+          eq(users.isSuspended, false),
         )
       );
   }
@@ -986,6 +990,8 @@ export class DatabaseStorage implements IStorage {
           ne(userAlerts.alertType, 'daily_report'),
           // Only deliver to users with an active Pro subscription
           eq(users.isPro, true),
+          // Suspended accounts receive no outbound notifications
+          eq(users.isSuspended, false),
         )
       );
   }

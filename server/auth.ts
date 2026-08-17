@@ -1,7 +1,8 @@
-import { clerkMiddleware, requireAuth } from "@clerk/express";
+import { clerkMiddleware, requireAuth, getAuth } from "@clerk/express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import type { Express, RequestHandler } from "express";
+import { storage } from "./storage";
 
 const PgSession = connectPgSimple(session);
 
@@ -47,5 +48,26 @@ export async function setupAuth(app: Express): Promise<void> {
 }
 
 // requireAuth() enforces that req.auth.userId is present; returns 401 otherwise.
-// All protected routes use this instead of the old session-based middleware.
-export const isAuthenticated: RequestHandler = requireAuth() as RequestHandler;
+const clerkRequireAuth: RequestHandler = requireAuth() as RequestHandler;
+
+// isAuthenticated = Clerk auth check + suspension gate.
+// A suspended user can still reach the sign-in page (unauthenticated routes are
+// unaffected) but every authenticated API request returns 403 until an admin
+// lifts the suspension.
+export const isAuthenticated: RequestHandler = (req, res, next) => {
+  clerkRequireAuth(req, res, async (err?: unknown) => {
+    if (err) return next(err);
+    try {
+      const userId = getAuth(req).userId;
+      if (userId) {
+        const user = await storage.getUser(userId);
+        if (user?.isSuspended) {
+          return res.status(403).json({ message: "Your account has been suspended" });
+        }
+      }
+      next();
+    } catch (e) {
+      next(e);
+    }
+  });
+};

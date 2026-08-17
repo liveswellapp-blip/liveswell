@@ -12,6 +12,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   isPro: boolean("is_pro").notNull().default(false),
   isTestAccount: boolean("is_test_account").notNull().default(false),
+  isSuspended: boolean("is_suspended").notNull().default(false),
   whopMembershipId: text("whop_membership_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -37,6 +37,7 @@ import request from "supertest";
 
 let mockUserId: string | null = "user-test";
 let mockIsPro: boolean | null = false;
+let mockIsSuspended = false;
 
 // Capture DB calls so lifecycle tests can assert on them.
 const dbInsertValues: any[] = [];
@@ -90,10 +91,17 @@ vi.mock("./db", () => {
     db: {
       select: vi.fn().mockImplementation(() => ({
         from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockImplementation(() =>
-          Promise.resolve(mockIsPro === null ? [] : [{ isPro: mockIsPro }])
-        ),
+        // where() must be awaitable directly (storage.getUser awaits it for the
+        // suspension gate in isAuthenticated) AND support .limit() (requirePro).
+        where: vi.fn().mockImplementation(() => {
+          const rows =
+            mockIsPro === null
+              ? []
+              : [{ isPro: mockIsPro, isSuspended: mockIsSuspended }];
+          const thenable: any = Promise.resolve(rows);
+          thenable.limit = vi.fn(() => Promise.resolve(rows));
+          return thenable;
+        }),
       })),
       insert,
       update,
@@ -240,6 +248,21 @@ describe("Pro gate — Pro-plan user → 200 (handler reached)", () => {
       const res = await (request(buildGatedApp()) as any)[method](url).send({});
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({ ok: true });
+    }
+  );
+});
+
+describe("Suspension gate — suspended user → 403 (isAuthenticated blocks)", () => {
+  beforeEach(() => { mockUserId = "suspended-user"; mockIsPro = true; mockIsSuspended = true; });
+  afterEach(() => { mockIsSuspended = false; });
+
+  it.each(HTTP_ROUTES)(
+    "$method $path → 403 when the account is suspended",
+    async ({ method, path }) => {
+      const url = path.replace(/:[\w]+/g, "1");
+      const res = await (request(buildGatedApp()) as any)[method](url).send({});
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({ message: "Your account has been suspended" });
     }
   );
 });

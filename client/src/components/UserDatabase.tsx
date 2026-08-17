@@ -14,6 +14,7 @@ interface User {
   firstName: string | null;
   lastName: string | null;
   profileImageUrl: string | null;
+  isSuspended: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -202,7 +203,14 @@ export default function UserDatabase({ onClose }: UserDatabaseProps) {
                       </div>
                     )}
                     <div>
-                      <p className="font-medium">{getUserDisplayName(user)}</p>
+                      <p className="font-medium flex items-center gap-2">
+                        {getUserDisplayName(user)}
+                        {user.isSuspended && (
+                          <Badge variant="destructive" data-testid={`badge-suspended-${user.id}`}>
+                            Suspended
+                          </Badge>
+                        )}
+                      </p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                   </div>

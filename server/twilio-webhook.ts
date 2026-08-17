@@ -272,12 +272,17 @@ export async function handleIncomingSms(req: Request, res: Response): Promise<vo
   const history = await getSmsThread(from);
   const isFirstContact = history.length === 0;
 
-  // ── 6b. Pro subscription check — AI agent is a Pro-only feature ──────────
+  // ── 6b. Account status checks — suspension gate, then Pro gate ───────────
   const [userRow] = await db
-    .select({ isPro: users.isPro })
+    .select({ isPro: users.isPro, isSuspended: users.isSuspended })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
+  if (userRow?.isSuspended) {
+    console.log(`[twilio-webhook] Suspended user ${userId} tried SMS agent — blocking`);
+    twimlReply(res, "Your LiveSwell account has been suspended. Contact support if you believe this is a mistake.");
+    return;
+  }
   if (!userRow?.isPro) {
     console.log(`[twilio-webhook] Non-Pro user ${userId} tried SMS agent — blocking`);
     twimlReply(
