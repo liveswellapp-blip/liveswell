@@ -2,9 +2,9 @@
  * user-audit.ts
  *
  * Assembles a chronological activity timeline for a user from existing
- * tables (users, userAlerts, alertTriggerLog, favorites, verifiedPhones).
- * No dedicated event-sourcing table — deletion events (alert deleted,
- * spot unfavorited) and historical Pro transitions are not reconstructable.
+ * tables (users, userAlerts, alertTriggerLog, favorites, verifiedPhones)
+ * plus the append-only user_events table which records deletion events
+ * (alert_deleted, spot_unfavorited) that would otherwise leave no trace.
  */
 import { eq, inArray, desc } from "drizzle-orm";
 import { db } from "./db";
@@ -15,6 +15,7 @@ import {
   locations as locationsTable,
   alertTriggerLog,
   verifiedPhones,
+  userEvents,
   type User,
 } from "@shared/schema";
 
@@ -146,6 +147,38 @@ export async function assembleUserAuditEvents(user: User): Promise<AuditEvent[]>
       type: "phone_verified",
       timestamp: new Date(p.verifiedAt).toISOString(),
       description: `Phone verified: ${maskPhone(p.phone)}`,
+    });
+  }
+
+  // Deletion events recorded by user-events.ts at mutation time
+  const storedEvents = await db
+    .select({
+      type: userEvents.type,
+      payload: userEvents.payload,
+      createdAt: userEvents.createdAt,
+    })
+    .from(userEvents)
+    .where(eq(userEvents.userId, userId))
+    .orderBy(desc(userEvents.createdAt));
+
+  for (const e of storedEvents) {
+    const payload = (e.payload ?? {}) as Record<string, unknown>;
+    let description = e.type;
+    if (e.type === "alert_deleted") {
+      const name =
+        (payload.label as string | null) ||
+        (payload.locationName as string | null) ||
+        `Alert #${payload.alertId}`;
+      const loc = payload.locationName ? ` at ${payload.locationName}` : "";
+      description = `Alert deleted: ${name}${loc}`;
+    } else if (e.type === "spot_unfavorited") {
+      description = `Unfavorited ${(payload.locationName as string | null) ?? "a spot"}`;
+    }
+    events.push({
+      type: e.type,
+      timestamp: new Date(e.createdAt).toISOString(),
+      description,
+      meta: Object.keys(payload).length > 0 ? payload : undefined,
     });
   }
 

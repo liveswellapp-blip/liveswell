@@ -12,7 +12,7 @@ import {
   users, userAlerts, favorites, userProfiles, notificationSettings,
   pushSubscriptions, alertTriggerLog, agentConversations, agentSmsThreads,
   verifiedPhones, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens,
-  phoneVerificationTokens,
+  phoneVerificationTokens, userEvents,
 } from "@shared/schema";
 import { getWhopClient } from "./whopClient";
 
@@ -93,6 +93,7 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
         await tx.delete(apnsDeviceTokens).where(eq(apnsDeviceTokens.userId, userId));
         await tx.delete(fcmDeviceTokens).where(eq(fcmDeviceTokens.userId, userId));
         await tx.delete(phoneVerificationTokens).where(eq(phoneVerificationTokens.userId, userId));
+        await tx.delete(userEvents).where(eq(userEvents.userId, userId));
         await tx.delete(users).where(eq(users.id, userId));
       });
 

@@ -58,6 +58,7 @@ import {
 import OpenAI from "openai";
 import { buildConditionsSummary } from "./chat-helpers";
 import { registerWhopRoutes, logWhopStartupWarnings, requirePro } from "./whop-routes";
+import { recordUserEvent } from "./user-events";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -3252,10 +3253,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid location ID" });
       }
 
+      // Capture location name before removal so we can record a meaningful event
+      const location = await storage.getLocation(locationId);
       const success = await storage.removeFavorite(userId, locationId);
       if (!success) {
         return res.status(404).json({ message: "Favorite not found" });
       }
+
+      // Append-only audit event — awaited so the event is visible on an
+      // immediately-following audit request; errors are swallowed inside helper
+      await recordUserEvent(userId, "spot_unfavorited", {
+        locationId,
+        locationName: location?.name ?? null,
+      });
 
       res.json({ message: "Favorite removed successfully" });
     } catch (error) {
@@ -3643,8 +3653,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = getAuth(req).userId;
       const id = parseInt(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid alert ID" });
+
+      // Capture alert details before deletion so the audit log remains meaningful
+      const alertToDelete = await storage.getUserAlertById(id, userId);
       const deleted = await storage.deleteUserAlert(id, userId);
       if (!deleted) return res.status(404).json({ message: "Alert not found" });
+
+      // Append-only audit event — awaited so the event is visible on an
+      // immediately-following audit request; errors are swallowed inside helper
+      if (alertToDelete) {
+        const alertLocation = alertToDelete.locationId
+          ? await storage.getLocation(alertToDelete.locationId)
+          : undefined;
+        await recordUserEvent(userId, "alert_deleted", {
+          alertId: id,
+          label: alertToDelete.label ?? null,
+          locationId: alertToDelete.locationId,
+          locationName: alertLocation?.name ?? null,
+          alertType: alertToDelete.alertType,
+          deliveryChannels: alertToDelete.deliveryChannels,
+        });
+      }
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting alert:", error);

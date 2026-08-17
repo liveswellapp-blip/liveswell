@@ -213,6 +213,21 @@ export const pushHealthAlertState = pgTable("push_health_alert_state", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+/**
+ * Append-only event log for mutations that delete data and would otherwise
+ * leave no trace in the audit timeline.
+ * Known types: 'alert_deleted', 'spot_unfavorited'
+ */
+export const userEvents = pgTable("user_events", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  type: text("type").notNull(),
+  payload: jsonb("payload"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("IDX_user_events_user_id_created_at").on(table.userId, table.createdAt),
+]);
+
 export const upsertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true,
