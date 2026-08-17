@@ -132,6 +132,19 @@ export default function SurfAgentChat() {
         setIsTyping(false);
         return;
       }
+      if (msg.startsWith("403") && msg.toLowerCase().includes("suspended")) {
+        // Account is suspended — the global QueryCache handler already fires a toast;
+        // also inject a clear bubble so the chat thread itself explains the failure.
+        setLocalMessages((prev) => [
+          ...prev.filter((m) => !(m.pending && m.role === "assistant")),
+          {
+            role: "assistant",
+            content: "Your account has been suspended. Please contact support for assistance.",
+          },
+        ]);
+        setIsTyping(false);
+        return;
+      }
       // Remove pending assistant placeholder, keep user message; inject error bubble
       setLocalMessages((prev) => [
         ...prev.filter((m) => !(m.pending && m.role === "assistant")),

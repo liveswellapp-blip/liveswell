@@ -111,6 +111,10 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
         return;
       }
 
+      if (res.status === 403) {
+        throw new Error("Your account has been suspended. Please contact support.");
+      }
+
       if (res.status === 401) {
         throw new Error("Not signed in — please refresh the page.");
       }
@@ -184,8 +188,14 @@ export default function AISurfChat({ location, conditions, aiSummary }: AISurfCh
           return updated;
         });
       }
-    } catch {
-      setError("Couldn't connect. Tap retry to try again.");
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "";
+      const isSuspended = errMsg.toLowerCase().includes("suspended");
+      setError(
+        isSuspended
+          ? "Your account has been suspended. Please contact support."
+          : "Couldn't connect. Tap retry to try again."
+      );
       // Roll back to the pre-send message list
       setMessages(nextMessages.slice(0, -1).concat(
         // keep user message visible so they can see what they sent

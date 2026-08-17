@@ -1,4 +1,6 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, QueryCache, MutationCache, QueryFunction } from "@tanstack/react-query";
+import { toast } from "@/hooks/use-toast";
+import { isSuspendedError } from "./authUtils";
 
 /** Get the current Clerk session JWT to attach to API requests. */
 export async function getClerkToken(): Promise<string | null> {
@@ -67,7 +69,28 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+/**
+ * Global error handler for query/mutation errors.
+ * Shows a clear "account suspended" toast when the server returns 403 + suspended.
+ * Only fires once per error event, not once per retry.
+ */
+function handleGlobalError(error: unknown) {
+  if (error instanceof Error && isSuspendedError(error)) {
+    toast({
+      title: "Account suspended",
+      description: "Your account has been suspended. Please contact support for assistance.",
+      variant: "destructive",
+    });
+  }
+}
+
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: handleGlobalError,
+  }),
+  mutationCache: new MutationCache({
+    onError: handleGlobalError,
+  }),
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
