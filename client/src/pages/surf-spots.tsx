@@ -580,7 +580,7 @@ export default function SurfSpots() {
                 <div className="rounded-2xl px-4 py-8 text-center" style={{ background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(16,185,129,0.15)" }}>
                   <Search size={20} className="text-slate-700 mx-auto mb-2" />
                   <p className="text-slate-500 text-[12px] font-semibold mb-1">Search or filter to explore spots</p>
-                  <p className="text-slate-700 text-[10px]">229+ locations worldwide</p>
+                  <p className="text-slate-700 text-[10px]">230+ locations worldwide</p>
                 </div>
               </div>
             )}

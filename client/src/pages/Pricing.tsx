@@ -15,7 +15,7 @@ const FREE_FEATURES = [
   { icon: "🌊", text: "Real-time surf conditions (NOAA buoy data)" },
   { icon: "📅", text: "5-day swell & wind forecast" },
   { icon: "🌙", text: "Tide charts & sunrise/sunset times" },
-  { icon: "📍", text: "229+ surf spots worldwide" },
+  { icon: "📍", text: "230+ surf spots worldwide" },
 ];
 
 const PRO_FEATURES = [

@@ -262,14 +262,14 @@ export default function Landing() {
     { icon: "🌊", title: "Live NOAA Buoy Data", body: "Real wave height, period, and direction pulled directly from NOAA's network of offshore buoys — updated every 30 minutes." },
     { icon: "📅", title: "5-Day Swell Forecast", body: "See what's coming. Daily wave and wind forecasts for your break so you can plan your sessions days in advance." },
     { icon: "📱", title: "SMS Condition Alerts", body: "Set your own thresholds. When the swell hits your criteria, you get a text — before you even think to check the app." },
-    { icon: "📍", title: "229+ Breaks Worldwide", body: "From Pipeline to Portugal. Search any coastal spot and get the same depth of data as your home break." },
+    { icon: "📍", title: "230+ Breaks Worldwide", body: "From Pipeline to Portugal. Search any coastal spot and get the same depth of data as your home break." },
     { icon: "✨", title: "AI Surf Summary", body: "A plain-English read of current conditions written by AI — wind, swell, tide, all translated into whether it's worth paddling out." },
     { icon: "🌙", title: "Tide Charts & Sunrise", body: "Full tide curve for the day with high/low times, plus sunrise and sunset so you can time your dawn patrol perfectly." },
   ];
 
   const screenshots = [
     { label: "Live Conditions",  caption: "Full detail — swell height, wind, real NOAA tide chart, and sunrise/sunset for your break.",   img: screenConditions },
-    { label: "Discover Spots",   caption: "Browse 229+ breaks worldwide with live wave heights, periods, and conditions ratings.", img: screenExplore    },
+    { label: "Discover Spots",   caption: "Browse 230+ breaks worldwide with live wave heights, periods, and conditions ratings.", img: screenExplore    },
     { label: "Wave History",     caption: "24-hour buoy history — every reading plotted so you can see the swell trend.",           img: screenHistory    },
     { label: "SMS Alerts",       caption: "Set swell, wind, or tide thresholds and get a text the moment conditions hit your criteria.", img: screenAlerts },
   ];
@@ -557,7 +557,7 @@ export default function Landing() {
       <div className="landing-stats-bar">
         <div className="landing-stats-inner">
           {[
-            { num: "229+",      label: "Surf Spots"    },
+            { num: "230+",      label: "Surf Spots"    },
             { num: "1,355+",    label: "NOAA Stations" },
             { num: "6",         label: "Continents"    },
             { num: "Real-time", label: "Wave Data"     },
@@ -590,7 +590,7 @@ export default function Landing() {
           <div className="landing-hiw-grid">
             <div className="landing-hiw-connector" />
             {[
-              { n: "1", title: "Search your break", body: "Type any beach, point break, or reef. LiveSwell covers 229+ spots across every surfing continent." },
+              { n: "1", title: "Search your break", body: "Type any beach, point break, or reef. LiveSwell covers 230+ spots across every surfing continent." },
               { n: "2", title: "Get live conditions", body: "Instantly see real buoy readings, wind speed and direction, tide times, and today's AI surf summary." },
               { n: "3", title: "Set your alerts", body: "Tell us your conditions — wave height, wind speed — and we'll text you the moment they're met." },
             ].map(step => (
