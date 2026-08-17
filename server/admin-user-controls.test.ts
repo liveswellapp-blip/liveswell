@@ -201,13 +201,18 @@ describe("DELETE /api/admin/users/:userId", () => {
     expect(txRan).toBe(true);
   });
 
-  it("proceeds with deletion (204) and logs a warning when the Whop API throws", async () => {
+  it("proceeds with deletion (200 + warning payload) and logs a warning when the Whop API throws", async () => {
     mockUser = { id: "user_1", email: "a@b.co", whopMembershipId: "mem_abc123" };
     whopMembershipsCancel.mockRejectedValue(new Error("Whop API unavailable"));
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const res = await request(buildApp()).delete("/api/admin/users/user_1");
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      deleted: true,
+      whopCancellationFailed: true,
+      whopMembershipId: "mem_abc123",
+    });
     expect(txRan).toBe(true);
     expect(warnSpy).toHaveBeenCalledOnce();
     expect(warnSpy.mock.calls[0][0]).toMatch(/Failed to cancel Whop membership/i);

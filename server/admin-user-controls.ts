@@ -29,6 +29,8 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
       // stops being billed. A failure here is logged as a warning but does
       // not block deletion — admins can cancel manually in the Whop dashboard
       // if the API is temporarily unavailable.
+      let whopCancellationFailed = false;
+      const attemptedMembershipId = user.whopMembershipId ?? null;
       if (user.whopMembershipId) {
         try {
           const whopClient = await getWhopClient();
@@ -37,6 +39,7 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
           });
           console.log(`✅ Cancelled Whop membership ${user.whopMembershipId} for user ${userId}`);
         } catch (whopErr) {
+          whopCancellationFailed = true;
           console.warn(
             `⚠️  Failed to cancel Whop membership ${user.whopMembershipId} for user ${userId} — ` +
             `the local account will still be deleted but the membership may need manual cancellation in the Whop dashboard.`,
@@ -99,7 +102,15 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
       });
 
       console.log(`🗑️  Admin deleted user ${userId} (${user.email ?? "no email"})`);
-      res.status(204).end();
+      if (whopCancellationFailed) {
+        res.status(200).json({
+          deleted: true,
+          whopCancellationFailed: true,
+          whopMembershipId: attemptedMembershipId,
+        });
+      } else {
+        res.status(204).end();
+      }
     } catch (error) {
       console.error("Admin delete user error:", error);
       res.status(500).json({ message: "Failed to delete user" });

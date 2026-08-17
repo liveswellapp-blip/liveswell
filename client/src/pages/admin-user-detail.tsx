@@ -137,9 +137,22 @@ export default function AdminUserDetail() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message ?? 'Failed to delete user');
       }
+      // 204 = clean delete; 200 = deleted but with a warning payload
+      if (res.status === 200) {
+        return res.json() as Promise<{ deleted: boolean; whopCancellationFailed?: boolean; whopMembershipId?: string | null }>;
+      }
+      return null;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({ title: 'User deleted', description: 'The account and all its data have been permanently removed.' });
+      if (data?.whopCancellationFailed) {
+        toast({
+          title: 'Whop membership cancellation failed',
+          description: `The user's Whop membership (${data.whopMembershipId ?? 'unknown ID'}) could not be cancelled automatically. Please cancel it manually in the Whop dashboard to stop billing.`,
+          variant: 'destructive',
+          duration: Infinity, // keep visible until the admin manually dismisses it
+        });
+      }
       navigate('/admin?view=users');
     },
     onError: (err: Error) => {
