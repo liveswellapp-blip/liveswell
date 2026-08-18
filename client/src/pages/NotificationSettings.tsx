@@ -473,7 +473,7 @@ function AlertCard({ alert, onToggle, onEdit, onDelete, isPro }: {
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, initialEmailUnsubscribed, existingAlerts, isPro }: {
+export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, initialEmailUnsubscribed, existingAlerts, isPro, isProLoading }: {
   open: boolean;
   onClose: () => void;
   onSaveSuccess?: (alertId: number) => void;
@@ -1389,7 +1389,7 @@ function saveDismissedSmsOptOutBanner(dismissed: boolean) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { toast } = useToast();
-  const { user, isPro, isProLoading } = useAuth();
+  const { user, isPro, isProLoading, isLoading: isAuthLoading } = useAuth();
   const [, navigate] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editAlert, setEditAlert] = useState<UserAlert | null>(null);
@@ -1594,7 +1594,7 @@ export default function NotificationSettings() {
             <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
             <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
           </div>
-          {isProLoading ? (
+          {(isAuthLoading || isProLoading) ? (
             <div className="h-8 w-28 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.08)" }} />
           ) : isPro ? (
             <button onClick={openCreate}
@@ -1754,7 +1754,7 @@ export default function NotificationSettings() {
             <Bell size={36} className="text-slate-700 mx-auto mb-3" />
             <p className="text-slate-500 text-[14px]">No alerts yet</p>
             <p className="text-slate-600 text-[12px] mt-1">Daily reports or real-time condition triggers</p>
-            {isProLoading ? (
+            {(isAuthLoading || isProLoading) ? (
               <div className="mt-5 h-10 w-44 rounded-2xl animate-pulse mx-auto" style={{ background: "rgba(255,255,255,0.08)" }} />
             ) : isPro ? (
               <button onClick={openCreate}
@@ -1873,7 +1873,7 @@ export default function NotificationSettings() {
         initialEmailUnsubscribed={editAlert?.emailUnsubscribed ?? false}
         existingAlerts={alerts}
         isPro={isPro}
-        isProLoading={isProLoading}
+        isProLoading={isAuthLoading || isProLoading}
       />
 
       <Footer />
