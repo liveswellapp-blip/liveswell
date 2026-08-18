@@ -377,11 +377,15 @@ export default function Landing() {
         .landing-partner {
           display: flex; align-items: center; gap: 10px;
           opacity: 0.45; transition: opacity 0.2s;
-          filter: brightness(0) invert(1);
         }
         .landing-partner:hover { opacity: 0.7; }
         .landing-partner img { height: 28px; width: auto; object-fit: contain; }
         .landing-partner svg { height: 28px; width: auto; }
+        /* transparent-bg logos → force solid white */
+        .lp-invert { filter: brightness(0) invert(1); }
+        /* white-bg black logos → invert makes bg black, logo white;
+           screen blend dissolves the black on our dark page background */
+        .lp-screen { filter: invert(1); mix-blend-mode: screen; }
 
         /* ── Features ───────────────────────────────────────── */
         .landing-features { max-width: 1280px; margin: 0 auto; padding: 72px 48px 56px; }
@@ -590,48 +594,24 @@ export default function Landing() {
           <p className="landing-partners-label">Powered by trusted data sources</p>
           <div className="landing-partners-row">
 
-            {/* NOAA */}
+            {/* NOAA — SVG with transparent bg → force white */}
             <div className="landing-partner">
-              <img src="/partners-noaa.png" alt="NOAA" style={{ height: 32, width: 32, borderRadius: "50%" }} />
-              <svg viewBox="0 0 72 18" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 16 }}>
-                <text x="0" y="14" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="16" letterSpacing="1">NOAA</text>
-              </svg>
+              <img src="/partners-noaa.svg" alt="NOAA" className="lp-invert" style={{ height: 36, width: "auto" }} />
             </div>
 
-            {/* OpenWeatherMap */}
+            {/* OpenWeatherMap — PNG with white bg → screen blend */}
             <div className="landing-partner">
-              <svg viewBox="0 0 200 32" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 22 }}>
-                {/* Sun icon */}
-                <circle cx="14" cy="16" r="6" fill="white"/>
-                <line x1="14" y1="4" x2="14" y2="1" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="14" y1="28" x2="14" y2="31" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="2" y1="16" x2="5" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round" transform="rotate(0 14 16)"/>
-                <line x1="26" y1="16" x2="23" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="5.8" y1="5.8" x2="7.9" y2="7.9" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="22.1" y1="24.1" x2="20.1" y2="22.1" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="22.1" y1="5.8" x2="20.1" y2="7.9" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <line x1="5.8" y1="24.1" x2="7.9" y2="22.1" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                <text x="32" y="22" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="14">OpenWeatherMap</text>
-              </svg>
+              <img src="/partners-openweather.png" alt="OpenWeatherMap" className="lp-screen" style={{ height: 30, width: "auto" }} />
             </div>
 
-            {/* Open-Meteo */}
+            {/* Open-Meteo — PNG with white bg → screen blend */}
             <div className="landing-partner">
-              <svg viewBox="0 0 148 32" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 22 }}>
-                {/* Wave icon */}
-                <path d="M4 20 Q8 12 12 20 Q16 28 20 20 Q24 12 28 20" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <text x="36" y="22" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="14">Open-Meteo</text>
-              </svg>
+              <img src="/partners-openmeteo.png" alt="Open-Meteo" className="lp-screen" style={{ height: 30, width: "auto" }} />
             </div>
 
-            {/* Windy */}
+            {/* Windy — PNG, transparent bg → force white */}
             <div className="landing-partner">
-              <svg viewBox="0 0 100 32" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 22 }}>
-                {/* Wind swirl icon */}
-                <path d="M6 12 Q14 6 18 12 Q22 18 30 14" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                <path d="M6 18 Q12 12 16 18 Q20 24 28 20" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-                <text x="36" y="22" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="14">Windy</text>
-              </svg>
+              <img src="/partners-windy.png" alt="Windy" className="lp-invert" style={{ height: 28, width: "auto" }} />
             </div>
 
           </div>
