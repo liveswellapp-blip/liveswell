@@ -591,7 +591,6 @@ export default function Landing() {
       {/* ── Data partners ───────────────────────────────────────── */}
       <div className="landing-partners">
         <div className="landing-partners-inner">
-          <p className="landing-partners-label">Powered by trusted data sources</p>
           <div className="landing-partners-row">
 
             <div className="landing-partner">
