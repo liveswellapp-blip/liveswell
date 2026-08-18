@@ -1,4 +1,4 @@
-import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, phoneVerificationTokens, userEvents, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
+import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, phoneVerificationTokens, userEvents, adminSettings, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
 
@@ -132,6 +132,10 @@ export interface IStorage {
   addFcmDeviceToken(userId: string, deviceToken: string): Promise<FcmDeviceToken>;
   removeFcmDeviceToken(userId: string, deviceToken: string): Promise<boolean>;
   removeAllUserFcmDeviceTokens(userId: string): Promise<boolean>;
+
+  // Admin settings (global key-value store)
+  getAdminSetting(key: string): Promise<string | null>;
+  setAdminSetting(key: string, value: string): Promise<void>;
 }
 
 // Initialize surf spots data for DatabaseStorage
@@ -1224,6 +1228,25 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sql`${alertTriggerLog.firedAt} DESC`)
       .limit(limit);
     return result;
+  }
+
+  async getAdminSetting(key: string): Promise<string | null> {
+    const [row] = await db
+      .select()
+      .from(adminSettings)
+      .where(eq(adminSettings.key, key))
+      .limit(1);
+    return row?.value ?? null;
+  }
+
+  async setAdminSetting(key: string, value: string): Promise<void> {
+    await db
+      .insert(adminSettings)
+      .values({ key, value, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: adminSettings.key,
+        set: { value, updatedAt: new Date() },
+      });
   }
 }
 

@@ -64,6 +64,13 @@
       "when": 1786100000000,
       "tag": "0008_add_user_events",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786200000000,
+      "tag": "0009_add_admin_settings",
+      "breakpoints": true
     }
   ]
 }

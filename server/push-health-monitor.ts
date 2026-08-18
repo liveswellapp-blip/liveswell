@@ -24,8 +24,26 @@ import { eq } from 'drizzle-orm';
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL || 'LiveSwell <onboarding@resend.dev>';
 
+/** Env-var fallback for the admin alert email (used if no DB setting exists). */
 export const ADMIN_ALERT_EMAIL =
   process.env.ADMIN_ALERT_EMAIL || 'admin@liveswell.app';
+
+/**
+ * Resolve the admin alert email address.
+ * Priority: DB setting ('alert_email') → ADMIN_ALERT_EMAIL env var → default.
+ * Falls back gracefully if the DB is unavailable.
+ */
+async function resolveAlertEmail(): Promise<string> {
+  try {
+    // Lazy import to avoid circular deps at module load time
+    const { storage } = await import('./storage') as { storage: import('./storage').IStorage };
+    const dbValue = await storage.getAdminSetting('alert_email');
+    if (dbValue && dbValue.trim()) return dbValue.trim();
+  } catch {
+    // DB unavailable — fall through to env var
+  }
+  return ADMIN_ALERT_EMAIL;
+}
 
 // --------------------------------------------------------------------------
 // Health-check logic
@@ -139,6 +157,7 @@ export function checkPushHealth(): PushHealthResult {
 async function sendAdminAlert(result: PushHealthResult): Promise<void> {
   const subject = '🚨 LiveSwell — Push notifications may be broken after deploy';
   const reason = result.reason ?? 'Unknown reason';
+  const alertEmail = await resolveAlertEmail();
 
   const text = `LiveSwell push notification health check FAILED.
 
@@ -188,7 +207,7 @@ This alert was generated automatically at ${new Date().toISOString()}.
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: FROM_EMAIL,
-        to: ADMIN_ALERT_EMAIL,
+        to: alertEmail,
         subject,
         text,
         html,
@@ -197,7 +216,7 @@ This alert was generated automatically at ${new Date().toISOString()}.
 
     if (response.ok) {
       console.log(
-        `[push-health-monitor] Admin alert sent to ${ADMIN_ALERT_EMAIL}`
+        `[push-health-monitor] Admin alert sent to ${alertEmail}`
       );
     } else {
       const body = await response.text();
@@ -245,6 +264,7 @@ export function checkApnsHealth(): ApnsHealthResult {
 async function sendApnsAdminAlert(result: ApnsHealthResult): Promise<void> {
   const subject = '⚠️ LiveSwell — APNs credentials not configured (iOS push disabled)';
   const reason = result.reason ?? 'APNs credentials missing';
+  const alertEmail = await resolveAlertEmail();
 
   const text = `LiveSwell APNs (Apple Push Notification service) health check FAILED.
 
@@ -305,7 +325,7 @@ until the credentials are configured.</p>
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: FROM_EMAIL,
-        to: ADMIN_ALERT_EMAIL,
+        to: alertEmail,
         subject,
         text,
         html,
@@ -313,7 +333,7 @@ until the credentials are configured.</p>
     });
 
     if (response.ok) {
-      console.log(`[push-health-monitor] APNs alert sent to ${ADMIN_ALERT_EMAIL}`);
+      console.log(`[push-health-monitor] APNs alert sent to ${alertEmail}`);
     } else {
       const body = await response.text();
       console.error(`[push-health-monitor] Failed to send APNs alert: ${body}`);

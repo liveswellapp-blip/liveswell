@@ -556,6 +556,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: VAPID / web-push health status (GET = latest synchronous check, POST /recheck = async with email alert)
+  // ── Admin settings (key-value store) ───────────────────────────────────────
+  app.get("/api/admin/settings", requireAdminAuth, async (_req, res) => {
+    try {
+      const alertEmail = await storage.getAdminSetting('alert_email');
+      res.json({ alertEmail: alertEmail ?? null });
+    } catch (err) {
+      console.error('[admin/settings GET] error:', err);
+      res.status(500).json({ message: 'Failed to load admin settings' });
+    }
+  });
+
+  app.post("/api/admin/settings", requireAdminAuth, async (req, res) => {
+    try {
+      const { alertEmail } = req.body as { alertEmail?: string };
+      if (alertEmail !== undefined) {
+        const trimmed = (alertEmail ?? '').trim();
+        if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+          return res.status(400).json({ message: 'Invalid email address' });
+        }
+        await storage.setAdminSetting('alert_email', trimmed);
+      }
+      const saved = await storage.getAdminSetting('alert_email');
+      res.json({ alertEmail: saved ?? null });
+    } catch (err) {
+      console.error('[admin/settings POST] error:', err);
+      res.status(500).json({ message: 'Failed to save admin settings' });
+    }
+  });
+
   app.get("/api/admin/push-health", requireAdminAuth, (req, res) => {
     const { checkPushHealth } = require('./push-health-monitor') as typeof import('./push-health-monitor');
     const result = checkPushHealth();

@@ -10,6 +10,7 @@ import {
   Shield, Activity, Database, Globe, BarChart3,
   AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp,
   Bell, LayoutDashboard, Users, Bug, MessageSquare, RefreshCw,
+  Settings, Save,
 } from "lucide-react";
 import AdminNav, { AdminSection } from "@/components/AdminNav";
 import UserDatabase from "@/components/UserDatabase";
@@ -251,6 +252,44 @@ export default function AdminDashboard() {
   const [location] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // ── Admin settings state ────────────────────────────────────────────────
+  const [alertEmailDraft, setAlertEmailDraft] = useState('');
+
+  const { data: adminSettingsData, isLoading: settingsLoading } = useQuery<{ alertEmail: string | null }>({
+    queryKey: ['/api/admin/settings'],
+    enabled: isAuthenticated,
+  });
+
+  // Sync draft with server value when loaded
+  useEffect(() => {
+    if (adminSettingsData !== undefined) {
+      setAlertEmailDraft(adminSettingsData.alertEmail ?? '');
+    }
+  }, [adminSettingsData]);
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (payload: { alertEmail: string }) => {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Failed to save settings' }));
+        throw new Error(err.message ?? 'Failed to save settings');
+      }
+      return res.json() as Promise<{ alertEmail: string | null }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/settings'] });
+      toast({ title: 'Settings saved', description: 'Alert email updated successfully.' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    },
+  });
 
   // Check for an existing valid session cookie on mount so the admin
   // doesn't have to log in again after a page refresh.
@@ -946,6 +985,48 @@ export default function AdminDashboard() {
               </p>
             </div>
           ) : <p className="text-sm text-muted-foreground">Loading forecast...</p>}
+        </CardContent>
+      </Card>
+
+      {/* Alert email setting */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Settings className="h-5 w-5" />
+            <span>Admin Settings</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4 max-w-md">
+            <div className="space-y-1">
+              <Label htmlFor="alert-email">Alert email</Label>
+              <p className="text-xs text-muted-foreground">
+                Monitoring alerts (push health, APNs) are sent to this address.
+                Leave blank to use the <code>ADMIN_ALERT_EMAIL</code> env var
+                (default: <code>admin@liveswell.app</code>).
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                id="alert-email"
+                type="email"
+                placeholder={settingsLoading ? 'Loading…' : 'admin@liveswell.app'}
+                value={alertEmailDraft}
+                onChange={e => setAlertEmailDraft(e.target.value)}
+                disabled={settingsLoading || saveSettingsMutation.isPending}
+                className="flex-1"
+              />
+              <Button
+                onClick={() => saveSettingsMutation.mutate({ alertEmail: alertEmailDraft })}
+                disabled={settingsLoading || saveSettingsMutation.isPending}
+                size="sm"
+                className="shrink-0"
+              >
+                <Save className="h-4 w-4 mr-1" />
+                {saveSettingsMutation.isPending ? 'Saving…' : 'Save'}
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

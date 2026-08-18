@@ -218,6 +218,17 @@ export const pushHealthAlertState = pgTable("push_health_alert_state", {
  * leave no trace in the audit timeline.
  * Known types: 'alert_deleted', 'spot_unfavorited'
  */
+/**
+ * Global admin-configurable key-value settings.
+ * Keys are short snake_case identifiers (e.g. 'alert_email').
+ * Values are stored as text; callers parse as needed.
+ */
+export const adminSettings = pgTable("admin_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const userEvents = pgTable("user_events", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
