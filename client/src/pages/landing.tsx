@@ -595,19 +595,19 @@ export default function Landing() {
           <div className="landing-partners-row">
 
             <div className="landing-partner">
-              <img src="/partners-noaa.png" alt="NOAA" style={{ height: 36, width: "auto" }} />
+              <img src="/partners-noaa.png?v=3" alt="NOAA" style={{ height: 36, width: "auto" }} />
             </div>
 
             <div className="landing-partner">
-              <img src="/partners-openweather.png" alt="OpenWeatherMap" style={{ height: 30, width: "auto" }} />
+              <img src="/partners-openweather.png?v=3" alt="OpenWeatherMap" style={{ height: 30, width: "auto" }} />
             </div>
 
             <div className="landing-partner">
-              <img src="/partners-openmeteo.png" alt="Open-Meteo" style={{ height: 30, width: "auto" }} />
+              <img src="/partners-openmeteo.png?v=3" alt="Open-Meteo" style={{ height: 30, width: "auto" }} />
             </div>
 
             <div className="landing-partner">
-              <img src="/partners-windy.png" alt="Windy" style={{ height: 28, width: "auto" }} />
+              <img src="/partners-windy.png?v=3" alt="Windy" style={{ height: 28, width: "auto" }} />
             </div>
 
           </div>
