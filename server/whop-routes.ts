@@ -207,37 +207,74 @@ export function registerWhopRoutes(app: Express): void {
         });
       }
 
-      // Live path — verify current status with Whop
+      // Live path — verify current status with Whop.
+      // The timeout races the ENTIRE chain — including getWhopClient() which
+      // performs the connector credential fetch (up to 10 s on a cold client).
+      // Starting the timer before the chain ensures the 5-second budget is
+      // enforced end-to-end, not just for the memberships.retrieve() call.
+      const LIVE_TIMEOUT_MS = 5_000;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let membership: any = null;
+      let whopCallFailed = false;
+
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('Whop API timeout')),
+          LIVE_TIMEOUT_MS,
+        );
+      });
+
       try {
-        const client     = await getWhopClient();
-        const membership = await client.memberships.retrieve(user.whopMembershipId);
-        const isActive   = ACTIVE_STATUSES.has(membership.status);
-
-        // Sync DB if status changed (catches missed/delayed webhooks).
-        // transitionProStatus conditions the UPDATE on the prior isPro value
-        // and inserts the audit event in the same transaction.
-        if (isActive !== user.isPro) {
-          await transitionProStatus(userId!, isActive, 'whop', {
-            extraPayload: { via: 'subscription_reconciliation', membershipId: user.whopMembershipId },
-          });
-        }
-
-        const planId = (membership as any).plan?.id as string | undefined;
-
-        return res.json({
-          isPro:    isActive,
-          plan:     planId ? planLabel(planId) : null,
-          renewsAt: membership.renewal_period_end ?? null,
-        });
+        membership = await Promise.race([
+          getWhopClient().then(client =>
+            client.memberships.retrieve(user.whopMembershipId),
+          ),
+          timeoutPromise,
+        ]);
       } catch (whopErr) {
-        // If Whop API is down, fall back to cached DB value
-        console.warn('[whop/subscription] Whop API error, using cached value:', whopErr);
+        whopCallFailed = true;
+        console.warn('[whop/subscription] Whop API error or timeout, falling back to cached DB value:', whopErr);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      if (whopCallFailed || !membership) {
+        // Whop was unreachable or timed out.
+        // Trust the DB isPro flag — never show "Free" to a user whose DB row
+        // says isPro=true just because the upstream had a transient issue.
         return res.json({
           isPro:    user.isPro,
           plan:     null,
           renewsAt: null,
         });
       }
+
+      const isActive = ACTIVE_STATUSES.has(membership.status);
+
+      // Sync DB if status changed (catches missed/delayed webhooks).
+      // transitionProStatus conditions the UPDATE on the prior isPro value
+      // and inserts the audit event in the same transaction.
+      // Only sync on confirmed deactivation — never downgrade based on a
+      // transient or ambiguous Whop response (handled above by whopCallFailed).
+      if (isActive !== user.isPro) {
+        await transitionProStatus(userId!, isActive, 'whop', {
+          extraPayload: { via: 'subscription_reconciliation', membershipId: user.whopMembershipId },
+        });
+      }
+
+      const planId = (membership as any).plan?.id as string | undefined;
+
+      // If the DB said isPro=true but Whop's live call says inactive, we
+      // return the live value (and have already synced the DB above).  This is
+      // a genuine deactivation, not a transient error.
+      // If the DB said isPro=false but Whop says active, the live value wins.
+      return res.json({
+        isPro:    isActive,
+        plan:     planId ? planLabel(planId) : null,
+        renewsAt: (membership as any).renewal_period_end ?? null,
+      });
     } catch (err) {
       console.error('[whop/subscription] Error:', err);
       return res.status(500).json({ error: 'Failed to fetch subscription status' });
