@@ -473,7 +473,7 @@ function AlertCard({ alert, onToggle, onEdit, onDelete, isPro }: {
 }
 
 // ─── Alert Form Dialog ────────────────────────────────────────────────────────
-export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, initialEmailUnsubscribed, existingAlerts }: {
+export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, editId, userEmail, favorites, initialPhoneVerified, initialEmailUnsubscribed, existingAlerts, isPro }: {
   open: boolean;
   onClose: () => void;
   onSaveSuccess?: (alertId: number) => void;
@@ -485,9 +485,27 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
   /** True when the alert's email was removed via the unsubscribe link. */
   initialEmailUnsubscribed?: boolean;
   existingAlerts: UserAlert[];
+  /** When false and editId is set, the dialog closes immediately and redirects to /pricing. */
+  isPro?: boolean;
 }) {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [form, setForm] = useState<AlertFormState>({ ...BLANK_FORM, ...initialData });
+
+  // Secondary guard: if the dialog is opened for editing while the user is not
+  // Pro (e.g. via dev-tools or a direct call), close it immediately and send
+  // them to /pricing so the lock icon is never just cosmetic.
+  useEffect(() => {
+    if (open && editId != null && isPro === false) {
+      onClose();
+      toast({
+        title: "Pro plan required",
+        description: "Upgrade to Pro to edit alerts.",
+        variant: "destructive",
+      });
+      navigate("/pricing");
+    }
+  }, [open, editId, isPro]);
   const [proRequired, setProRequired] = useState(false);
 
   // Track the visual viewport height so the drawer shrinks/grows correctly when the
@@ -1369,7 +1387,19 @@ export default function NotificationSettings() {
   });
 
   const openCreate = () => { setEditAlert(null); setDialogOpen(true); };
-  const openEdit = (a: UserAlert) => { setEditAlert(a); setDialogOpen(true); };
+  const openEdit = (a: UserAlert) => {
+    if (!isPro) {
+      toast({
+        title: "Pro plan required",
+        description: "Upgrade to Pro to edit alerts.",
+        variant: "destructive",
+      });
+      navigate("/pricing");
+      return;
+    }
+    setEditAlert(a);
+    setDialogOpen(true);
+  };
 
   const userEmail = (user as any)?.email ?? null;
 
@@ -1775,6 +1805,7 @@ export default function NotificationSettings() {
         initialPhoneVerified={editAlert?.phoneVerified ?? false}
         initialEmailUnsubscribed={editAlert?.emailUnsubscribed ?? false}
         existingAlerts={alerts}
+        isPro={isPro}
       />
 
       <Footer />
