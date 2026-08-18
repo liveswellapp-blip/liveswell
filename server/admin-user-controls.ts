@@ -18,6 +18,79 @@ import { getWhopClient } from "./whopClient";
 import { transitionProStatus } from "./pro-transitions";
 
 export function registerAdminUserControls(app: Express, requireAdminAuth: RequestHandler): void {
+  // ── Create a new user account (Clerk + local DB) ─────────────────────────
+  app.post("/api/admin/users", requireAdminAuth, async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, grantPro } = req.body as {
+        email?: string;
+        password?: string;
+        firstName?: string | null;
+        lastName?: string | null;
+        grantPro?: boolean;
+      };
+
+      // Validate required fields
+      if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        return res.status(400).json({ message: "A valid email address is required" });
+      }
+      if (!password || typeof password !== "string" || password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanFirst = typeof firstName === "string" ? firstName.trim() || null : null;
+      const cleanLast = typeof lastName === "string" ? lastName.trim() || null : null;
+
+      // Check local DB for email uniqueness before hitting Clerk
+      const existing = await storage.getUserByEmail(cleanEmail);
+      if (existing) {
+        return res.status(409).json({ message: "An account with that email address already exists" });
+      }
+
+      // Create the Clerk identity — this is the source of truth for sign-in
+      let clerkUser: Awaited<ReturnType<typeof clerkClient.users.createUser>>;
+      try {
+        clerkUser = await clerkClient.users.createUser({
+          emailAddress: [cleanEmail],
+          password,
+          firstName: cleanFirst ?? undefined,
+          lastName: cleanLast ?? undefined,
+          skipPasswordChecks: false,
+        });
+      } catch (clerkErr: any) {
+        const detail = clerkErr?.errors?.[0]?.longMessage
+          ?? clerkErr?.errors?.[0]?.message
+          ?? "Clerk rejected the request";
+        return res.status(422).json({ message: `Could not create sign-in account: ${detail}` });
+      }
+
+      // Upsert the local user row (same path as the post-login reconciliation)
+      const newUser = await storage.upsertUser({
+        id: clerkUser.id,
+        email: clerkUser.emailAddresses[0]?.emailAddress ?? cleanEmail,
+        firstName: clerkUser.firstName ?? null,
+        lastName: clerkUser.lastName ?? null,
+        profileImageUrl: clerkUser.imageUrl ?? null,
+      });
+
+      // Optionally grant a complimentary Pro plan
+      if (grantPro) {
+        try {
+          await transitionProStatus(clerkUser.id, true, "comp");
+        } catch (proErr) {
+          // Non-fatal — account was created; admin can grant Pro separately
+          console.warn(`⚠️  Admin create-user: account created but Pro grant failed for ${clerkUser.id}:`, proErr);
+        }
+      }
+
+      console.log(`✅ Admin created user ${clerkUser.id} (${cleanEmail})${grantPro ? " with Pro" : ""}`);
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error("Admin create user error:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
   // ── Permanently delete a user and all their data ─────────────────────────
   app.delete("/api/admin/users/:userId", requireAdminAuth, async (req, res) => {
     try {
