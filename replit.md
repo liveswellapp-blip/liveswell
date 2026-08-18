@@ -114,6 +114,32 @@ Current value: `LiveSwell <alerts@liveswell.io>` (set in Replit Secrets panel).
 - `client/src/pages/support/ContactForm.tsx` — the contact form UI (unauthenticated; no auth required)
 - Replit Secrets panel — where `RESEND_FROM_EMAIL` and `SUPPORT_EMAIL` are stored
 
+## Whop Subscription Integration
+
+LiveSwell uses Whop to manage Pro subscriptions. Webhooks from Whop notify the server when a membership is activated or deactivated.
+
+### Required Replit Secrets
+
+| Secret | Where to obtain | Purpose |
+|---|---|---|
+| `WHOP_WEBHOOK_SECRET` | Whop dashboard → Developer → Webhooks → your endpoint → **Signing secret** | Verifies that incoming webhook events were sent by Whop — **required**; the endpoint returns 503 for all events until this is set |
+| `WHOP_MONTHLY_PLAN_ID` | Whop dashboard → Products → your monthly plan → Plan ID | Allowlists the monthly plan; checkout and webhook activation are disabled until at least one plan ID is set |
+| `WHOP_ANNUAL_PLAN_ID` | Whop dashboard → Products → your annual plan → Plan ID | Allowlists the annual plan (optional if only monthly is offered) |
+
+### Security notes
+- The webhook endpoint (`POST /api/whop/webhook`) **always** enforces HMAC signature verification — there is no unsigned fallback, even in development.
+- A missing `WHOP_WEBHOOK_SECRET` causes the endpoint to return **503** (misconfiguration) rather than silently accepting unsigned events.
+- Only plan IDs in the allowlist (`WHOP_MONTHLY_PLAN_ID`, `WHOP_ANNUAL_PLAN_ID`) can grant Pro status; events for unlisted plans are ignored.
+
+### Rotating the webhook secret
+1. In the Whop dashboard, go to **Developer → Webhooks** and regenerate the signing secret.
+2. Update the `WHOP_WEBHOOK_SECRET` Replit Secret with the new value.
+3. Restart the server — the startup log will confirm the secret is present.
+
+**Relevant files:** `server/whop-routes.ts`, `server/whopClient.ts`
+
+---
+
 ## SMS A2P 10DLC Registration (Twilio)
 
 US carriers require Application-to-Person (A2P) 10DLC registration for SMS sent at scale. Without it, messages are increasingly filtered or blocked as volume grows, and Twilio may suspend the number.
