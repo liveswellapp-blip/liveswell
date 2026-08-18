@@ -235,4 +235,55 @@ describe("NotificationSettings – Add Alert skeleton during loading", () => {
       }
     }
   });
+
+  it("shows green 'Create your first alert' body button without extra click when isPro resolves (empty-state branch)", async () => {
+    // Phase 1 – subscription check still in-flight, alerts list is empty
+    mockAuth({
+      user: AUTHED_USER,
+      isLoading: false,
+      isAuthenticated: true,
+      isPro: false,
+      isProLoading: true,
+    });
+
+    const { rerender } = render(<NotificationSettings />);
+
+    // Skeleton placeholder should be present while loading
+    const skeletonsBefore = document.querySelectorAll(".animate-pulse");
+    expect(skeletonsBefore.length).toBeGreaterThan(0);
+
+    // Neither "Create your first alert" button variant should appear yet
+    expect(screen.queryByText("PRO")).toBeNull();
+
+    // Phase 2 – Whop query resolves: user is Pro
+    mockAuth({
+      user: AUTHED_USER,
+      isLoading: false,
+      isAuthenticated: true,
+      isPro: true,
+      isProLoading: false,
+    });
+
+    await act(async () => {
+      rerender(<NotificationSettings />);
+    });
+
+    // The green "Create your first alert" button must now be visible
+    const createBtn = screen.getByText("Create your first alert");
+    expect(createBtn).toBeTruthy();
+
+    // It must not contain a PRO badge
+    const btnEl = createBtn.closest("button");
+    expect(btnEl).not.toBeNull();
+    expect(btnEl!.textContent).not.toContain("PRO");
+
+    // It must not contain a Lock icon (no aria-label, but Lock renders an svg inside the button)
+    // The locked variant has three child nodes: Lock icon, text, and PRO span.
+    // The green Pro button has only the text node — confirm PRO text is absent.
+    expect(btnEl!.querySelector("svg")).toBeNull();
+
+    // The skeleton placeholder in the empty-state area must be gone
+    // (isPro is now true so the skeleton branch is no longer active)
+    expect(screen.queryByText("PRO")).toBeNull();
+  });
 });
