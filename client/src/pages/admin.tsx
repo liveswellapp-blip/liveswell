@@ -10,7 +10,7 @@ import {
   Shield, Activity, Database, Globe, BarChart3,
   AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp,
   Bell, LayoutDashboard, Users, Bug, MessageSquare, RefreshCw,
-  Settings, Save,
+  Settings, Save, Mail,
 } from "lucide-react";
 import AdminNav, { AdminSection } from "@/components/AdminNav";
 import UserDatabase from "@/components/UserDatabase";
@@ -64,6 +64,14 @@ interface PushHealthStatus {
   vapidKeyConfigured: boolean;
   vapidKeyValid: boolean;
   pushServiceStatus: 'healthy' | 'degraded' | 'unhealthy';
+  reason?: string;
+  checkedAt: string;
+}
+
+interface EmailHealthStatus {
+  ok: boolean;
+  connectorReachable: boolean;
+  status: 'healthy' | 'degraded' | 'unhealthy';
   reason?: string;
   checkedAt: string;
 }
@@ -378,6 +386,12 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
+  const { data: emailHealth, isLoading: emailHealthLoading } = useQuery<EmailHealthStatus>({
+    queryKey: ['/api/admin/email-health'],
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
+
   const recheckPushMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch('/api/admin/push-health/recheck', {
@@ -392,6 +406,28 @@ export default function AdminDashboard() {
       toast({
         title: 'Push health re-checked',
         description: data.ok ? 'Push notifications are healthy.' : (data.reason ?? 'Issues detected — see card for details.'),
+        variant: data.ok ? 'default' : 'destructive',
+      });
+    },
+    onError: () => {
+      toast({ title: 'Re-check failed', description: 'Could not contact the server.', variant: 'destructive' });
+    },
+  });
+
+  const recheckEmailMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/email-health/recheck', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Recheck failed');
+      return res.json() as Promise<EmailHealthStatus>;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['/api/admin/email-health'], data);
+      toast({
+        title: 'Email health re-checked',
+        description: data.ok ? 'Resend connector is healthy.' : (data.reason ?? 'Issues detected — see card for details.'),
         variant: data.ok ? 'default' : 'destructive',
       });
     },
@@ -765,6 +801,56 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Push health unavailable.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Email (Resend) Health */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Mail className="h-5 w-5" />
+              <span>Email Delivery Health (Resend)</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => recheckEmailMutation.mutate()}
+              disabled={recheckEmailMutation.isPending}
+              className="shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${recheckEmailMutation.isPending ? 'animate-spin' : ''}`} />
+              {recheckEmailMutation.isPending ? 'Checking…' : 'Re-check now'}
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {emailHealthLoading ? (
+            <p className="text-sm text-muted-foreground">Loading email health…</p>
+          ) : emailHealth ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                {getStatusIcon(emailHealth.status)}
+                <span className="font-medium capitalize">{emailHealth.status}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <span className="text-muted-foreground">Resend connector reachable</span>
+                <span className={emailHealth.connectorReachable ? 'text-green-600' : 'text-red-600'}>
+                  {emailHealth.connectorReachable ? 'Yes' : 'No'}
+                </span>
+              </div>
+              {!emailHealth.ok && emailHealth.reason && (
+                <div className="rounded-md p-3 text-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200">
+                  <p><strong>Issue:</strong> {emailHealth.reason}</p>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Last checked: {new Date(emailHealth.checkedAt).toLocaleString()}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Email health unavailable.</p>
           )}
         </CardContent>
       </Card>

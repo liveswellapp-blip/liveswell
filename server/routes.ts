@@ -560,6 +560,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email (Resend) health — mirrors the push-health endpoints
+  app.get("/api/admin/email-health", requireAdminAuth, (req, res) => {
+    const { checkEmailHealth } = require('./email-health-monitor') as typeof import('./email-health-monitor');
+    res.json(checkEmailHealth());
+  });
+
+  app.post("/api/admin/email-health/recheck", requireAdminAuth, async (req, res) => {
+    try {
+      const { runEmailHealthCheck } = require('./email-health-monitor') as typeof import('./email-health-monitor');
+      const result = await runEmailHealthCheck('manual');
+      res.json(result);
+    } catch (error) {
+      console.error('[admin email-health/recheck] unexpected error:', error);
+      res.status(500).json({ message: 'Email health recheck failed' });
+    }
+  });
+
   // Admin: smoke-test push notification delivery to a specific user
   // APNs (native iOS) smoke-test — sends a real notification to all registered iOS devices for a user
   app.post("/api/admin/apns-test", requireAdminAuth, async (req, res) => {
@@ -1974,7 +1991,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if ((weatherData as any).quotaExceeded || getQuotaExceededAt()) {
             console.warn(`⚠️ Skipping DB write for location ${locationId} (${location.name}) — OpenWeather quota exceeded; returning ${conditions ? 'cached' : 'no'} conditions.`);
             if (conditions) {
-              res.json({ ...conditions, warning: "Live weather data temporarily unavailable — OpenWeather daily quota reached. Showing last known conditions.", dataUnavailable: true });
+              res.json({ ...conditions, tideSource: 'estimated', warning: "Live weather data temporarily unavailable — OpenWeather daily quota reached. Showing last known conditions.", dataUnavailable: true });
               return;
             }
             res.status(503).json({ message: "Weather data temporarily unavailable — daily API quota exceeded. Try again after midnight UTC." });
@@ -2097,7 +2114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (buoyError) {
         console.warn('Buoy data error:', buoyError);
-        res.json({ ...conditions, timezone: tz });
+        res.json({ ...conditions, timezone: tz, tideSource: 'estimated' });
       }
     } catch (error) {
       console.error('Conditions error:', error);

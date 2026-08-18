@@ -25,8 +25,9 @@ export class NotificationScheduler {
       console.warn('⚠️ SMS service not properly configured');
     }
 
-    const emailHealthy = await EmailService.checkHealth();
-    if (!emailHealthy) {
+    const { runEmailHealthCheck } = await import('./email-health-monitor');
+    const emailHealth = await runEmailHealthCheck('startup');
+    if (!emailHealth.ok) {
       console.warn('⚠️ Email service health-check failed — emails may not be delivered until the connector is restored');
     }
 
