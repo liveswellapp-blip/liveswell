@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 
@@ -182,5 +182,57 @@ describe("NotificationSettings – Add Alert skeleton during loading", () => {
     // Clicking the locked button should navigate to /pricing
     await user.click(lockedButton!);
     expect(mockNavigate).toHaveBeenCalledWith("/pricing");
+  });
+
+  it("transitions from skeleton to green Add Alert button without extra user action when isPro resolves to true", async () => {
+    // Phase 1 – subscription check still in-flight
+    mockAuth({
+      user: AUTHED_USER,
+      isLoading: false,
+      isAuthenticated: true,
+      isPro: false,
+      isProLoading: true,
+    });
+
+    const { rerender } = render(<NotificationSettings />);
+
+    // Skeleton must be present and green "Add Alert" button must not exist
+    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+    // The green button has no PRO badge and no Lock icon — its text is just "Add Alert"
+    // but since the locked button also contains "Add Alert", we look for absence of PRO badge
+    expect(screen.queryByText("PRO")).toBeNull();
+
+    // Phase 2 – Whop query resolves: user is Pro
+    mockAuth({
+      user: AUTHED_USER,
+      isLoading: false,
+      isAuthenticated: true,
+      isPro: true,
+      isProLoading: false,
+    });
+
+    await act(async () => {
+      rerender(<NotificationSettings />);
+    });
+
+    // The skeleton divs that guard the Add Alert area must be gone:
+    // specifically, neither of the two subscription-gated skeletons should remain.
+    // (Other animate-pulse elements from data loading may still exist, so we check
+    //  for the PRO badge being absent rather than requiring zero skeletons.)
+    expect(screen.queryByText("PRO")).toBeNull();
+
+    // The green Add Alert button must now be visible — it contains the text "Add Alert"
+    // and does NOT contain a Lock icon or a PRO badge.
+    const addAlertButtons = screen.getAllByText("Add Alert");
+    // At least the header-bar green button should appear
+    expect(addAlertButtons.length).toBeGreaterThan(0);
+
+    // Confirm none of those buttons navigate to /pricing (i.e. none are the locked variant)
+    for (const el of addAlertButtons) {
+      const btn = el.closest("button");
+      if (btn) {
+        expect(btn.textContent).not.toContain("PRO");
+      }
+    }
   });
 });
