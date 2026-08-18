@@ -39,7 +39,7 @@ export function useAuth() {
   });
 
   // Fetch Pro subscription status. Cached for 5 min; only runs when authenticated.
-  const { data: subData } = useQuery<{ isPro: boolean }>({
+  const { data: subData, isLoading: isSubLoading } = useQuery<{ isPro: boolean }>({
     queryKey: ["/api/whop/subscription"],
     enabled: !demo && isLoaded && !!clerkUser,
     staleTime: 5 * 60 * 1000,
@@ -78,11 +78,17 @@ export function useAuth() {
   // The previous `sessionRestorePending` guard checked localStorage for a
   // __clerk_db_jwt key even after isLoaded=true, which caused a permanent
   // spinner whenever a stored JWT was expired or invalid (no recovery path).
+  // isProLoading is true while Clerk is ready but the Whop subscription
+  // check hasn't resolved yet — consumers should show a neutral skeleton
+  // rather than flashing "Free" during this window.
+  const isProLoading = isLoaded && !!clerkUser && isSubLoading;
+
   return {
     user,
     isLoading: !isLoaded,
     isAuthenticated: !!clerkUser,
     isPro: subData?.isPro ?? false,
+    isProLoading,
     logout,
   };
 }

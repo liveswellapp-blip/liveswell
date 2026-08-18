@@ -487,6 +487,8 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
   existingAlerts: UserAlert[];
   /** When false and editId is set, the dialog closes immediately and redirects to /pricing. */
   isPro?: boolean;
+  /** True while the Whop subscription check is still in-flight — suppresses the redirect guard so a Pro user whose status hasn't loaded yet isn't incorrectly bounced. */
+  isProLoading?: boolean;
 }) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -525,7 +527,7 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
   // Pro (e.g. via dev-tools or a direct call), close it immediately and send
   // them to /pricing so the lock icon is never just cosmetic.
   useEffect(() => {
-    if (open && editId != null && isPro === false) {
+    if (open && editId != null && isPro === false && !isProLoading) {
       onClose();
       toast({
         title: "Pro plan required",
@@ -1387,7 +1389,7 @@ function saveDismissedSmsOptOutBanner(dismissed: boolean) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NotificationSettings() {
   const { toast } = useToast();
-  const { user, isPro } = useAuth();
+  const { user, isPro, isProLoading } = useAuth();
   const [, navigate] = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editAlert, setEditAlert] = useState<UserAlert | null>(null);
@@ -1592,7 +1594,9 @@ export default function NotificationSettings() {
             <h1 className="text-white font-black text-xl leading-tight">Alerts</h1>
             <p className="text-slate-500 text-[12px]">Scheduled reports & condition triggers</p>
           </div>
-          {isPro ? (
+          {isProLoading ? (
+            <div className="h-8 w-28 rounded-2xl animate-pulse" style={{ background: "rgba(255,255,255,0.08)" }} />
+          ) : isPro ? (
             <button onClick={openCreate}
               className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
               style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
@@ -1750,7 +1754,9 @@ export default function NotificationSettings() {
             <Bell size={36} className="text-slate-700 mx-auto mb-3" />
             <p className="text-slate-500 text-[14px]">No alerts yet</p>
             <p className="text-slate-600 text-[12px] mt-1">Daily reports or real-time condition triggers</p>
-            {isPro ? (
+            {isProLoading ? (
+              <div className="mt-5 h-10 w-44 rounded-2xl animate-pulse mx-auto" style={{ background: "rgba(255,255,255,0.08)" }} />
+            ) : isPro ? (
               <button onClick={openCreate}
                 className="mt-5 px-6 py-2.5 rounded-2xl text-[13px] font-bold text-white"
                 style={{ background: "linear-gradient(135deg,#059669,#10b981)" }}>
@@ -1867,6 +1873,7 @@ export default function NotificationSettings() {
         initialEmailUnsubscribed={editAlert?.emailUnsubscribed ?? false}
         existingAlerts={alerts}
         isPro={isPro}
+        isProLoading={isProLoading}
       />
 
       <Footer />
