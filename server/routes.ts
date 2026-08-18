@@ -555,6 +555,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Admin: VAPID / web-push health status (GET = latest synchronous check, POST /recheck = async with email alert)
+  app.get("/api/admin/push-health", requireAdminAuth, (req, res) => {
+    const { checkPushHealth } = require('./push-health-monitor') as typeof import('./push-health-monitor');
+    const result = checkPushHealth();
+    res.json({ ...result, checkedAt: new Date().toISOString() });
+  });
+
+  app.post("/api/admin/push-health/recheck", requireAdminAuth, async (req, res) => {
+    try {
+      const { runPushHealthCheck } = require('./push-health-monitor') as typeof import('./push-health-monitor');
+      const result = await runPushHealthCheck('scheduled');
+      res.json({ ...result, checkedAt: new Date().toISOString() });
+    } catch (error) {
+      console.error('[admin push-health/recheck] unexpected error:', error);
+      res.status(500).json({ message: 'Push health recheck failed' });
+    }
+  });
+
   // Admin: smoke-test push notification delivery to a specific user
   // APNs (native iOS) smoke-test — sends a real notification to all registered iOS devices for a user
   app.post("/api/admin/apns-test", requireAdminAuth, async (req, res) => {

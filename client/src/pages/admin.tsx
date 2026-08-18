@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Shield, Activity, Database, Globe, BarChart3,
   AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp,
-  Bell, LayoutDashboard, Users, Bug, MessageSquare,
+  Bell, LayoutDashboard, Users, Bug, MessageSquare, RefreshCw,
 } from "lucide-react";
 import AdminNav, { AdminSection } from "@/components/AdminNav";
 import UserDatabase from "@/components/UserDatabase";
@@ -56,6 +56,15 @@ interface UsageForecast {
   quotaExceededAt: string | null;
   planUpgradeUrl?: string;
   planNote?: string;
+}
+
+interface PushHealthStatus {
+  ok: boolean;
+  vapidKeyConfigured: boolean;
+  vapidKeyValid: boolean;
+  pushServiceStatus: 'healthy' | 'degraded' | 'unhealthy';
+  reason?: string;
+  checkedAt: string;
 }
 
 /** Fetches and displays the Sentry "Errors (last 24h)" count. */
@@ -241,6 +250,7 @@ export default function AdminDashboard() {
   const [activeView, setActiveView] = useState<AdminView>('dashboard');
   const [location] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Check for an existing valid session cookie on mount so the admin
   // doesn't have to log in again after a page refresh.
@@ -321,6 +331,34 @@ export default function AdminDashboard() {
     queryKey: ['/api/admin/twilio-status'],
     enabled: isAuthenticated,
     refetchInterval: 60000,
+  });
+
+  const { data: pushHealth, isLoading: pushHealthLoading } = useQuery<PushHealthStatus>({
+    queryKey: ['/api/admin/push-health'],
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
+
+  const recheckPushMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/push-health/recheck', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Recheck failed');
+      return res.json() as Promise<PushHealthStatus>;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['/api/admin/push-health'], data);
+      toast({
+        title: 'Push health re-checked',
+        description: data.ok ? 'Push notifications are healthy.' : (data.reason ?? 'Issues detected — see card for details.'),
+        variant: data.ok ? 'default' : 'destructive',
+      });
+    },
+    onError: () => {
+      toast({ title: 'Re-check failed', description: 'Could not contact the server.', variant: 'destructive' });
+    },
   });
 
   const handleLogin = (e: React.FormEvent) => {
@@ -628,6 +666,67 @@ export default function AdminDashboard() {
               </div>
             );
           })() : <p className="text-sm text-muted-foreground">Loading push metrics...</p>}
+        </CardContent>
+      </Card>
+
+      {/* VAPID / Web-Push Health */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Bell className="h-5 w-5" />
+              <span>Web Push Notification Health (VAPID)</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => recheckPushMutation.mutate()}
+              disabled={recheckPushMutation.isPending}
+              className="shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${recheckPushMutation.isPending ? 'animate-spin' : ''}`} />
+              {recheckPushMutation.isPending ? 'Checking…' : 'Re-check now'}
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {pushHealthLoading ? (
+            <p className="text-sm text-muted-foreground">Loading push health…</p>
+          ) : pushHealth ? (
+            <div className="space-y-3">
+              {/* Overall status row */}
+              <div className="flex items-center gap-2">
+                {getStatusIcon(pushHealth.pushServiceStatus)}
+                <span className="font-medium capitalize">{pushHealth.pushServiceStatus}</span>
+              </div>
+
+              {/* Detail rows */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <span className="text-muted-foreground">VAPID key configured</span>
+                <span className={pushHealth.vapidKeyConfigured ? 'text-green-600' : 'text-red-600'}>
+                  {pushHealth.vapidKeyConfigured ? 'Yes' : 'No'}
+                </span>
+                <span className="text-muted-foreground">VAPID key valid</span>
+                <span className={pushHealth.vapidKeyValid ? 'text-green-600' : 'text-red-600'}>
+                  {pushHealth.vapidKeyValid ? 'Yes' : 'No'}
+                </span>
+              </div>
+
+              {/* Reason banner when unhealthy/degraded */}
+              {!pushHealth.ok && pushHealth.reason && (
+                <div className={`rounded-md p-3 text-sm space-y-1 ${pushHealth.pushServiceStatus === 'unhealthy' ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-200' : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200'}`}>
+                  <p><strong>Issue:</strong> {pushHealth.reason}</p>
+                </div>
+              )}
+
+              {/* Last-checked timestamp */}
+              <p className="text-xs text-muted-foreground">
+                Last checked: {new Date(pushHealth.checkedAt).toLocaleString()}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Push health unavailable.</p>
+          )}
         </CardContent>
       </Card>
 
