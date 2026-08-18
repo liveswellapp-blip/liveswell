@@ -594,24 +594,20 @@ export default function Landing() {
           <p className="landing-partners-label">Powered by trusted data sources</p>
           <div className="landing-partners-row">
 
-            {/* NOAA — SVG with transparent bg → force white */}
             <div className="landing-partner">
-              <img src="/partners-noaa.svg" alt="NOAA" className="lp-invert" style={{ height: 36, width: "auto" }} />
+              <img src="/partners-noaa.png" alt="NOAA" style={{ height: 36, width: "auto" }} />
             </div>
 
-            {/* OpenWeatherMap — PNG with white bg → screen blend */}
             <div className="landing-partner">
-              <img src="/partners-openweather.png" alt="OpenWeatherMap" className="lp-screen" style={{ height: 30, width: "auto" }} />
+              <img src="/partners-openweather.png" alt="OpenWeatherMap" style={{ height: 30, width: "auto" }} />
             </div>
 
-            {/* Open-Meteo — PNG with white bg → screen blend */}
             <div className="landing-partner">
-              <img src="/partners-openmeteo.png" alt="Open-Meteo" className="lp-screen" style={{ height: 30, width: "auto" }} />
+              <img src="/partners-openmeteo.png" alt="Open-Meteo" style={{ height: 30, width: "auto" }} />
             </div>
 
-            {/* Windy — PNG, transparent bg → force white */}
             <div className="landing-partner">
-              <img src="/partners-windy.png" alt="Windy" className="lp-invert" style={{ height: 28, width: "auto" }} />
+              <img src="/partners-windy.png" alt="Windy" style={{ height: 28, width: "auto" }} />
             </div>
 
           </div>
