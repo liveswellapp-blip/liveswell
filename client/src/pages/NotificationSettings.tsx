@@ -492,6 +492,35 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
   const [, navigate] = useLocation();
   const [form, setForm] = useState<AlertFormState>({ ...BLANK_FORM, ...initialData });
 
+  // ── Dirty-state tracking for discard-confirmation ─────────────────────────
+  // Capture the form state at the moment the dialog opens so we can detect
+  // whether the user has made any changes before dismissing.
+  const initialFormRef = useRef<AlertFormState>({ ...BLANK_FORM, ...initialData });
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      initialFormRef.current = { ...BLANK_FORM, ...initialData };
+      setShowDiscardConfirm(false);
+    }
+  }, [open]); // intentionally only re-snapshot when open toggles, not on every initialData reference change
+
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialFormRef.current);
+
+  /** Called instead of onClose() directly — shows a prompt when the form is dirty. */
+  const handleAttemptClose = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    onClose();
+  };
+
   // Secondary guard: if the dialog is opened for editing while the user is not
   // Pro (e.g. via dev-tools or a direct call), close it immediately and send
   // them to /pricing so the lock icon is never just cosmetic.
@@ -1205,6 +1234,35 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
         </div>
   );
 
+  // ── Discard-confirmation overlay (rendered inside the sheet / dialog) ────────
+  const discardOverlay = showDiscardConfirm && (
+    <div
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 px-6"
+      style={{ background: "rgba(13,27,46,0.96)", backdropFilter: "blur(4px)" }}
+    >
+      <div className="text-center space-y-1.5">
+        <p className="text-[15px] font-bold text-white">Discard changes?</p>
+        <p className="text-[13px] text-slate-400">Your edits won't be saved.</p>
+      </div>
+      <div className="flex flex-col gap-2 w-full max-w-xs">
+        <button
+          onClick={handleConfirmDiscard}
+          className="w-full h-11 rounded-2xl text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+          style={{ background: "rgba(239,68,68,0.85)", border: "1px solid rgba(239,68,68,0.5)" }}
+        >
+          Discard
+        </button>
+        <button
+          onClick={() => setShowDiscardConfirm(false)}
+          className="w-full h-11 rounded-2xl text-[13px] font-semibold text-slate-300 transition-opacity hover:opacity-80"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
+          Keep editing
+        </button>
+      </div>
+    </div>
+  );
+
   if (isMobile) {
     // Cap at 92% of the *visual* viewport so the drawer never taller than what's
     // visible — and so it snaps back correctly when the soft keyboard dismisses.
@@ -1212,7 +1270,7 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
     return (
       <Drawer
         open={open}
-        onOpenChange={v => { if (!v) onClose(); }}
+        onOpenChange={v => { if (!v) handleAttemptClose(); }}
         shouldScaleBackground={false}
         noBodyStyles
         repositionInputs={false}
@@ -1226,8 +1284,10 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
             maxHeight: drawerMaxHeight,
             display: "flex",
             flexDirection: "column",
+            position: "relative",
           }}
         >
+          {discardOverlay}
           <DrawerHeader className="px-4 pt-3 pb-0 shrink-0">
             <DrawerTitle className="text-white text-base font-bold text-left">
               {editId ? "Edit Alert" : "Add Alert"}
@@ -1242,9 +1302,10 @@ export function AlertFormDialog({ open, onClose, onSaveSuccess, initialData, edi
   }
 
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v) onClose(); }}>
+    <Dialog open={open} onOpenChange={v => { if (!v) handleAttemptClose(); }}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto"
-        style={{ background: "#0d1b2e", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0" }}>
+        style={{ background: "#0d1b2e", border: "1px solid rgba(255,255,255,0.08)", color: "#e2e8f0", position: "relative" }}>
+        {discardOverlay}
         <DialogHeader>
           <DialogTitle className="text-white text-base font-bold">
             {editId ? "Edit Alert" : "Add Alert"}
