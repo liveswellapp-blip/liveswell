@@ -280,6 +280,30 @@ Source maps are uploaded to Sentry automatically during production builds when t
 
 ---
 
+## Production Schema Audit (2026-08-18)
+
+A full audit of the production Neon database was run against the schema defined in `shared/schema.ts` and `server/migrate.ts`.
+
+### Results
+
+| Object | Status | Notes |
+|---|---|---|
+| `push_health_alert_state` | ✅ present | — |
+| `users.is_test_account` | ✅ present | — |
+| `apns_device_tokens` | ❌ missing | Covered by post-migration repair guard in `server/migrate.ts` (line ~218) and migration 0007 |
+| `fcm_device_tokens` | ❌ missing | Covered by post-migration repair guard in `server/migrate.ts` (line ~232) and migration 0007 |
+| `users.is_suspended` | ❌ missing | Covered by pre-flight guard in `server/migrate.ts` (line ~149) |
+
+### Fix status
+
+All three gaps are handled by existing startup guards in `server/migrate.ts`:
+- **`users.is_suspended`** — pre-flight `ALTER TABLE IF EXISTS … ADD COLUMN IF NOT EXISTS` runs before every migration pass.
+- **`apns_device_tokens` / `fcm_device_tokens`** — post-migration `CREATE TABLE IF NOT EXISTS` repair guards run after `migrate()` on every startup.
+
+These will be applied automatically the next time production is deployed and the server restarts. No manual DDL intervention is required.
+
+---
+
 ## External Dependencies
 
 ### Core Infrastructure
