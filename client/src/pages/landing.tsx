@@ -355,6 +355,34 @@ export default function Landing() {
         .landing-stat-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; font-weight: 500; }
         .landing-stat-divider { border-right: 1px solid rgba(255,255,255,0.06); }
 
+        /* ── Data partners ──────────────────────────────────── */
+        .landing-partners {
+          border-top: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          padding: 28px 48px;
+          background: rgba(255,255,255,0.015);
+        }
+        .landing-partners-inner {
+          max-width: 1280px; margin: 0 auto;
+          display: flex; flex-direction: column; align-items: center; gap: 18px;
+        }
+        .landing-partners-label {
+          font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+          color: rgba(255,255,255,0.25); text-transform: uppercase;
+        }
+        .landing-partners-row {
+          display: flex; align-items: center; justify-content: center;
+          gap: 52px; flex-wrap: wrap;
+        }
+        .landing-partner {
+          display: flex; align-items: center; gap: 10px;
+          opacity: 0.45; transition: opacity 0.2s;
+          filter: brightness(0) invert(1);
+        }
+        .landing-partner:hover { opacity: 0.7; }
+        .landing-partner img { height: 28px; width: auto; object-fit: contain; }
+        .landing-partner svg { height: 28px; width: auto; }
+
         /* ── Features ───────────────────────────────────────── */
         .landing-features { max-width: 1280px; margin: 0 auto; padding: 72px 48px 56px; }
         .landing-features-heading { font-size: 34px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 10px; text-align: center; }
@@ -497,6 +525,10 @@ export default function Landing() {
           .landing-stat { min-width: 50%; padding: 10px 0; }
           .landing-stat-divider { border-right: none; }
 
+          .landing-partners { padding: 24px 20px; }
+          .landing-partners-row { gap: 28px; }
+          .landing-partner img, .landing-partner svg { height: 22px; }
+
           .landing-features { padding: 40px 20px; }
           .landing-features-grid { grid-template-columns: 1fr; gap: 12px; }
           .landing-feature-card { padding: 22px 20px; }
@@ -542,7 +574,6 @@ export default function Landing() {
 
           <div className="landing-cta-row">
             <button className="landing-cta-btn" onClick={handleSignUp}>Get Started Free</button>
-            <span className="landing-cta-note">No credit card needed</span>
           </div>
         </div>
 
@@ -553,6 +584,60 @@ export default function Landing() {
           </PhoneShell>
         </div>
       </div>
+      {/* ── Data partners ───────────────────────────────────────── */}
+      <div className="landing-partners">
+        <div className="landing-partners-inner">
+          <p className="landing-partners-label">Powered by trusted data sources</p>
+          <div className="landing-partners-row">
+
+            {/* NOAA */}
+            <div className="landing-partner">
+              <img src="/partners-noaa.png" alt="NOAA" style={{ height: 32, width: 32, borderRadius: "50%" }} />
+              <svg viewBox="0 0 72 18" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 16 }}>
+                <text x="0" y="14" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="16" letterSpacing="1">NOAA</text>
+              </svg>
+            </div>
+
+            {/* OpenWeatherMap */}
+            <div className="landing-partner">
+              <svg viewBox="0 0 200 32" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 22 }}>
+                {/* Sun icon */}
+                <circle cx="14" cy="16" r="6" fill="white"/>
+                <line x1="14" y1="4" x2="14" y2="1" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="14" y1="28" x2="14" y2="31" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="2" y1="16" x2="5" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round" transform="rotate(0 14 16)"/>
+                <line x1="26" y1="16" x2="23" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="5.8" y1="5.8" x2="7.9" y2="7.9" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="22.1" y1="24.1" x2="20.1" y2="22.1" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="22.1" y1="5.8" x2="20.1" y2="7.9" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="5.8" y1="24.1" x2="7.9" y2="22.1" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <text x="32" y="22" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="14">OpenWeatherMap</text>
+              </svg>
+            </div>
+
+            {/* Open-Meteo */}
+            <div className="landing-partner">
+              <svg viewBox="0 0 148 32" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 22 }}>
+                {/* Wave icon */}
+                <path d="M4 20 Q8 12 12 20 Q16 28 20 20 Q24 12 28 20" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <text x="36" y="22" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="14">Open-Meteo</text>
+              </svg>
+            </div>
+
+            {/* Windy */}
+            <div className="landing-partner">
+              <svg viewBox="0 0 100 32" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ height: 22 }}>
+                {/* Wind swirl icon */}
+                <path d="M6 12 Q14 6 18 12 Q22 18 30 14" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                <path d="M6 18 Q12 12 16 18 Q20 24 28 20" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+                <text x="36" y="22" fontFamily="Arial, sans-serif" fontWeight="700" fontSize="14">Windy</text>
+              </svg>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
       {/* ── Stats bar ───────────────────────────────────────────── */}
       <div className="landing-stats-bar">
         <div className="landing-stats-inner">
