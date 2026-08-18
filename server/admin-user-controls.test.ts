@@ -25,6 +25,7 @@ const clerkUpdateUser = vi.fn();
 const clerkGetUser = vi.fn();
 const clerkCreateEmail = vi.fn();
 const clerkDeleteEmail = vi.fn();
+const clerkCreateSignInToken = vi.fn();
 
 // Whop client mock
 const whopMembershipsCancel = vi.fn();
@@ -52,6 +53,22 @@ vi.mock("@clerk/express", () => ({
       createEmailAddress: (...a: any[]) => clerkCreateEmail(...a),
       deleteEmailAddress: (...a: any[]) => clerkDeleteEmail(...a),
     },
+    signInTokens: {
+      createSignInToken: (...a: any[]) => clerkCreateSignInToken(...a),
+    },
+  },
+}));
+
+// mockProxy is a plain vi.fn() so vi.clearAllMocks() clears calls but we
+// re-configure its resolved value in beforeEach.  ReplitConnectors is a plain
+// constructor (not vi.fn()) so vi.clearAllMocks() never touches it — the
+// constructor always wires up the fresh mockProxy on every call.
+const mockProxy = vi.fn();
+
+vi.mock("@replit/connectors-sdk", () => ({
+  // Plain class, not vi.fn(), so it survives vi.clearAllMocks()
+  ReplitConnectors: function MockConnectors(this: any) {
+    this.proxy = mockProxy;
   },
 }));
 
@@ -138,7 +155,9 @@ beforeEach(() => {
   clerkGetUser.mockResolvedValue({ emailAddresses: [] });
   clerkCreateEmail.mockResolvedValue({ id: "email_new" });
   clerkDeleteEmail.mockResolvedValue(undefined);
+  clerkCreateSignInToken.mockResolvedValue({ token: "tok_test123" });
   whopMembershipsCancel.mockResolvedValue(undefined);
+  mockProxy.mockResolvedValue({ ok: true, text: async () => "" });
 });
 
 // ---------------------------------------------------------------------------
@@ -434,6 +453,87 @@ describe("PUT /api/admin/users/:userId/profile", () => {
       .send({ firstName: "A", email: "legacy@b.co" });
     expect(res.status).toBe(200);
     expect(clerkUpdateUser).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/admin/users/:userId/reset-password
+// ---------------------------------------------------------------------------
+describe("POST /api/admin/users/:userId/reset-password", () => {
+  it("404 when the user does not exist", async () => {
+    const res = await request(buildApp()).post("/api/admin/users/user_missing/reset-password");
+    expect(res.status).toBe(404);
+    expect(clerkCreateSignInToken).not.toHaveBeenCalled();
+  });
+
+  it("422 when the user has no email address", async () => {
+    mockUser = { id: "user_1", email: null };
+    const res = await request(buildApp()).post("/api/admin/users/user_1/reset-password");
+    expect(res.status).toBe(422);
+    expect(res.body.message).toMatch(/no email/i);
+    expect(clerkCreateSignInToken).not.toHaveBeenCalled();
+  });
+
+  it("422 for non-Clerk (legacy) user IDs", async () => {
+    mockUser = { id: "45116786", email: "legacy@b.co" };
+    const res = await request(buildApp()).post("/api/admin/users/45116786/reset-password");
+    expect(res.status).toBe(422);
+    expect(res.body.message).toMatch(/clerk/i);
+    expect(clerkCreateSignInToken).not.toHaveBeenCalled();
+  });
+
+  it("502 when Clerk token creation fails", async () => {
+    mockUser = { id: "user_1", email: "a@b.co" };
+    clerkCreateSignInToken.mockRejectedValue(
+      Object.assign(new Error("clerk down"), { errors: [{ longMessage: "service unavailable" }] }),
+    );
+    const res = await request(buildApp()).post("/api/admin/users/user_1/reset-password");
+    expect(res.status).toBe(502);
+    expect(res.body.message).toMatch(/service unavailable/i);
+    expect(mockProxy).not.toHaveBeenCalled();
+  });
+
+  it("502 when the Resend proxy call fails", async () => {
+    mockUser = { id: "user_1", email: "a@b.co" };
+    mockProxy.mockResolvedValue({ ok: false, text: async () => "Resend error" });
+    const res = await request(buildApp()).post("/api/admin/users/user_1/reset-password");
+    expect(res.status).toBe(502);
+    expect(res.body.message).toMatch(/email delivery failed/i);
+  });
+
+  it("200 with { sent: true, email } on success", async () => {
+    mockUser = { id: "user_1", email: "a@b.co", firstName: "Ada", lastName: "Lovelace" };
+    const res = await request(buildApp()).post("/api/admin/users/user_1/reset-password");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ sent: true, email: "a@b.co" });
+  });
+
+  it("creates the sign-in token with the correct userId and a 24-hour expiry", async () => {
+    mockUser = { id: "user_1", email: "a@b.co" };
+    await request(buildApp()).post("/api/admin/users/user_1/reset-password");
+    expect(clerkCreateSignInToken).toHaveBeenCalledWith({
+      userId: "user_1",
+      expiresInSeconds: 86400,
+    });
+  });
+
+  it("emails a URL that uses liveswell.io, includes the Clerk ticket, and redirects to /change-password", async () => {
+    mockUser = { id: "user_1", email: "a@b.co" };
+    await request(buildApp()).post("/api/admin/users/user_1/reset-password");
+
+    expect(mockProxy).toHaveBeenCalledOnce();
+    const [, , callOpts] = mockProxy.mock.calls[0] as [string, string, any];
+    const body = JSON.parse(callOpts.body);
+    expect(body.to).toBe("a@b.co");
+
+    // The sign-in URL must use the canonical liveswell.io origin — NOT any
+    // other host — so the Clerk ticket is never sent to the wrong server.
+    expect(body.html).toContain("https://liveswell.io/sign-in");
+    expect(body.html).toContain("tok_test123");
+    expect(body.html).toContain("change-password");
+
+    // Confirm the plain-text version also carries the correct origin
+    expect(body.text).toContain("https://liveswell.io/sign-in");
   });
 });
 

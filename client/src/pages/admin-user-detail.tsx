@@ -16,7 +16,7 @@ import {
   User, Mail, Calendar, Heart, MapPin, Settings,
   ArrowLeft, Clock, FileText, Trash2, CreditCard,
   ShieldCheck, Activity, FlaskConical, Pencil, Ban,
-  Bell, Star, Phone,
+  Bell, Star, Phone, KeyRound,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -215,6 +215,34 @@ export default function AdminUserDetail() {
     },
     onError: (err: Error) => {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  // Send password-reset email (admin-triggered)
+  const [resetPasswordStatus, setResetPasswordStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [resetPasswordError, setResetPasswordError] = useState<string | null>(null);
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? 'Request failed');
+      }
+      return res.json() as Promise<{ sent: boolean; email: string }>;
+    },
+    onSuccess: (data) => {
+      setResetPasswordStatus('sent');
+      setResetPasswordError(null);
+      toast({ title: 'Reset email sent', description: `A sign-in link was emailed to ${data.email}.` });
+    },
+    onError: (err: Error) => {
+      setResetPasswordStatus('error');
+      setResetPasswordError(err.message);
+      toast({ title: 'Failed to send reset email', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -584,6 +612,51 @@ export default function AdminUserDetail() {
       case 'danger':
         return (
           <div className="space-y-4">
+            {/* Password reset — not destructive, shown above the danger card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" /> Password Reset
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="text-sm text-muted-foreground max-w-sm">
+                    <p>
+                      Send this user a one-time sign-in link so they can access their account and set a new password.
+                      The link expires in 24 hours and can only be used once.
+                    </p>
+                    {resetPasswordStatus === 'sent' && (
+                      <p className="mt-2 text-green-600 font-medium">
+                        ✓ Sign-in link sent to {user.email}
+                      </p>
+                    )}
+                    {resetPasswordStatus === 'error' && resetPasswordError && (
+                      <p className="mt-2 text-destructive text-xs">{resetPasswordError}</p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    disabled={resetPasswordMutation.isPending || resetPasswordStatus === 'sent'}
+                    onClick={() => {
+                      setResetPasswordStatus('sending');
+                      resetPasswordMutation.mutate();
+                    }}
+                    data-testid="button-reset-password"
+                  >
+                    <KeyRound className="h-3.5 w-3.5 mr-1.5" />
+                    {resetPasswordMutation.isPending
+                      ? 'Sending…'
+                      : resetPasswordStatus === 'sent'
+                        ? 'Email sent'
+                        : 'Send password reset email'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="border-destructive/40">
               <CardHeader>
                 <CardTitle className="text-base text-destructive flex items-center gap-2">

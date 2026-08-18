@@ -1,12 +1,14 @@
 /**
  * Admin user-management endpoints: delete, suspend/unsuspend, plan override
- * (comp), and profile editing. Extracted from routes.ts so the handlers can be
- * integration-tested with mocked DB/Clerk (see admin-user-controls.test.ts).
+ * (comp), profile editing, and admin-triggered password reset.
+ * Extracted from routes.ts so the handlers can be integration-tested with
+ * mocked DB/Clerk (see admin-user-controls.test.ts).
  */
 import type { Express, RequestHandler } from "express";
 import { db } from "./db";
 import { storage } from "./storage";
 import { clerkClient } from "@clerk/express";
+import { ReplitConnectors } from '@replit/connectors-sdk';
 import { eq, inArray } from "drizzle-orm";
 import {
   users, userAlerts, favorites, userProfiles, notificationSettings,
@@ -335,6 +337,115 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
     } catch (error) {
       console.error("Admin edit profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // ── Admin-triggered password reset ──────────────────────────────────────
+  // Creates a short-lived Clerk sign-in token and emails the user a link
+  // they can click to sign in and then set a new password in account settings.
+  app.post("/api/admin/users/:userId/reset-password", requireAdminAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user.email) return res.status(422).json({ message: "This user has no email address on file" });
+
+      if (!userId.startsWith("user_")) {
+        return res.status(422).json({ message: "Password reset is only supported for Clerk-managed accounts" });
+      }
+
+      // Create a short-lived sign-in token via the Clerk Backend API.
+      // The token is valid for 24 h and produces a URL the user clicks to
+      // authenticate; from there they can navigate to settings and change
+      // their password.
+      let signInToken: string;
+      try {
+        const tokenResponse = await clerkClient.signInTokens.createSignInToken({
+          userId,
+          expiresInSeconds: 86400, // 24 hours
+        });
+        signInToken = tokenResponse.token;
+      } catch (clerkErr: any) {
+        const detail = clerkErr?.errors?.[0]?.longMessage
+          ?? clerkErr?.errors?.[0]?.message
+          ?? "Clerk rejected the request";
+        console.error(`Clerk createSignInToken failed for ${userId}:`, clerkErr);
+        return res.status(502).json({ message: `Could not generate reset link: ${detail}` });
+      }
+
+      const APP_BASE_URL = "https://liveswell.io";
+      // After Clerk processes the one-time ticket on /sign-in it follows
+      // redirect_url, landing the user directly on the password-change page.
+      const resetUrl = `${APP_BASE_URL}/sign-in?__clerk_ticket=${signInToken}&redirect_url=${encodeURIComponent("/change-password")}`;
+      const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+
+      const FALLBACK_FROM = "LiveSwell <onboarding@resend.dev>";
+      const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || FALLBACK_FROM;
+
+      const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
+        <tr><td style="background:#0f172a;padding:28px 32px;text-align:center">
+          <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px">🌊 LiveSwell</span>
+        </td></tr>
+        <tr><td style="padding:32px">
+          <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700">Set your password</h2>
+          <p style="margin:0 0 8px;color:#475569;font-size:15px">Hi ${displayName},</p>
+          <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.6">
+            A LiveSwell admin has sent you a sign-in link to help you access your account.
+            Click the button below to sign in, then visit your account settings to set a new password.
+          </p>
+          <div style="text-align:center;margin:0 0 24px">
+            <a href="${resetUrl}"
+               style="display:inline-block;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;
+                      text-decoration:none;padding:13px 28px;border-radius:8px">
+              Sign in to your account
+            </a>
+          </div>
+          <p style="margin:0 0 6px;color:#94a3b8;font-size:13px">This link expires in 24 hours and can only be used once.</p>
+          <p style="margin:0;color:#94a3b8;font-size:13px">If you didn't expect this email, you can safely ignore it.</p>
+        </td></tr>
+        <tr><td style="padding:20px 32px;border-top:1px solid #e2e8f0;text-align:center">
+          <p style="margin:0;color:#94a3b8;font-size:12px">© LiveSwell · <a href="${APP_BASE_URL}" style="color:#94a3b8">liveswell.app</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      const text = `Hi ${displayName},\n\nA LiveSwell admin has sent you a sign-in link to help you access your account.\n\nClick the link below to sign in, then visit your account settings to set a new password:\n\n${resetUrl}\n\nThis link expires in 24 hours and can only be used once.\n\nIf you didn't expect this email, you can safely ignore it.\n\n— The LiveSwell Team`;
+
+      const connectors = new ReplitConnectors();
+      const emailResponse = await connectors.proxy("resend", "/emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: FROM_EMAIL,
+          to: user.email,
+          subject: "Sign in to LiveSwell — set your password",
+          text,
+          html,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errBody = await emailResponse.text();
+        console.error(`Password reset email failed for ${userId} (${user.email}): ${errBody}`);
+        return res.status(502).json({ message: "Sign-in link generated but email delivery failed — please try again." });
+      }
+
+      console.log(`📧 Admin sent password-reset email to ${user.email} (${userId})`);
+      res.json({ sent: true, email: user.email });
+    } catch (error) {
+      console.error("Admin password reset error:", error);
+      res.status(500).json({ message: "Failed to send password reset email" });
     }
   });
 }
