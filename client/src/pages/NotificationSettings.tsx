@@ -334,11 +334,12 @@ function TriggerHistoryPanel({ alertId }: { alertId: number }) {
 }
 
 // ─── Alert Card ───────────────────────────────────────────────────────────────
-function AlertCard({ alert, onToggle, onEdit, onDelete }: {
+function AlertCard({ alert, onToggle, onEdit, onDelete, isPro }: {
   alert: UserAlert;
   onToggle: (active: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
+  isPro: boolean;
 }) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const isCondition = alert.alertType !== "daily_report";
@@ -449,9 +450,17 @@ function AlertCard({ alert, onToggle, onEdit, onDelete }: {
                 <History size={12} className={historyOpen ? "text-amber-400" : "text-slate-400"} />
               </button>
             )}
-            <button onClick={onEdit} className="p-1.5 rounded-lg transition-colors hover:bg-white/5">
-              <Pencil size={12} className="text-slate-400" />
-            </button>
+            {isPro ? (
+              <button onClick={onEdit} className="p-1.5 rounded-lg transition-colors hover:bg-white/5" title="Edit alert">
+                <Pencil size={12} className="text-slate-400" />
+              </button>
+            ) : (
+              <Link href="/pricing">
+                <button className="p-1.5 rounded-lg transition-colors hover:bg-amber-500/10" title="Pro required to edit alerts">
+                  <Lock size={12} className="text-amber-400" />
+                </button>
+              </Link>
+            )}
             <button onClick={onDelete} className="p-1.5 rounded-lg transition-colors hover:bg-red-500/10">
               <Trash2 size={12} className="text-red-400" />
             </button>
@@ -1682,6 +1691,7 @@ export default function NotificationSettings() {
                       onToggle={active => toggleMutation.mutate({ id: a.id, active })}
                       onEdit={() => openEdit(a)}
                       onDelete={() => deleteMutation.mutate(a.id)}
+                      isPro={isPro}
                     />
                   ))}
                 </div>
@@ -1699,6 +1709,7 @@ export default function NotificationSettings() {
                       onToggle={active => toggleMutation.mutate({ id: a.id, active })}
                       onEdit={() => openEdit(a)}
                       onDelete={() => deleteMutation.mutate(a.id)}
+                      isPro={isPro}
                     />
                   ))}
                 </div>
