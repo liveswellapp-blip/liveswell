@@ -99,7 +99,6 @@ interface OpenWeatherUVResponse {
 }
 
 
-
 function generateRealisticTides(dayOffset: number, timezone: string = 'UTC') {
   const tides: Array<{
     time: string;
@@ -2941,7 +2940,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-
   // Get surf spot statistics
   app.get("/api/spots/stats", async (req, res) => {
     try {
@@ -2975,7 +2973,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get surf spot statistics" });
     }
   });
-
 
 
   // Legacy NOAA import endpoint - now shows comprehensive network status
@@ -4120,9 +4117,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const outcome = await storage.disableEmailForAlert(parsed.alertId, parsed.email);
+      const result = await storage.disableEmailForAlert(parsed.alertId, parsed.email);
 
-      if (outcome === 'email_mismatch') {
+      if (result.outcome === 'email_mismatch') {
         console.warn(`⚠️  Unsubscribe token email mismatch for alertId=${parsed.alertId}`);
         return res.status(403).send(unsubHtml('Invalid Link', `
     <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
@@ -4130,7 +4127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This unsubscribe link is not valid for your account.</p>`));
       }
 
-      if (outcome === 'not_found') {
+      if (result.outcome === 'not_found') {
         // Alert already deleted — treat as already unsubscribed
         return res.status(200).send(unsubHtml('Already Unsubscribed', `
     <div style="font-size:48px;margin-bottom:16px;">✅</div>
@@ -4141,14 +4138,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📧 Unsubscribed alertId=${parsed.alertId} email=${parsed.email} from email delivery`);
 
+      const { createUndoToken } = await import('./unsubscribe-token');
+      // Embed the pre-unsubscribe active state so the undo handler can restore
+      // it exactly rather than inferring it from the current DB state.
+      const undoToken = createUndoToken(parsed.alertId, parsed.email, result.preActionActive);
+      const undoUrl = `/api/unsubscribe/undo?token=${encodeURIComponent(undoToken)}`;
+
       return res.status(200).send(unsubHtml('Unsubscribed', `
     <div style="font-size:48px;margin-bottom:16px;">✅</div>
     <h1 style="color:#10b981;font-size:22px;margin-bottom:8px;">You've been unsubscribed</h1>
     <p style="color:#94a3b8;font-size:14px;line-height:1.6;">Email delivery has been disabled for this alert. You won't receive any more emails from it.</p>
     <p style="color:#64748b;font-size:12px;margin-top:8px;">SMS and push notifications are not affected.</p>
+    <div style="margin-top:20px;padding:16px;background:#0f172a;border:1px solid #1e293b;border-radius:12px;">
+      <p style="color:#94a3b8;font-size:13px;margin:0 0 12px;">Did you unsubscribe by accident?</p>
+      <a href="${undoUrl}" style="display:inline-block;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;text-decoration:none;padding:10px 22px;border-radius:10px;font-size:13px;font-weight:700;">↩ Undo — re-enable email</a>
+      <p style="color:#475569;font-size:11px;margin:10px 0 0;">This link expires in 15 minutes.</p>
+    </div>
     <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Manage your alerts on LiveSwell</a></p>`));
     } catch (error) {
       console.error('Unsubscribe error:', error);
+      return res.status(500).send(unsubHtml('Error', `
+    <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+    <h1 style="color:#ef4444;font-size:22px;margin-bottom:8px;">Something went wrong</h1>
+    <p style="color:#94a3b8;font-size:14px;">Please try again or <a href="https://liveswell.app" style="color:#10b981;">manage your alerts directly</a>.</p>`));
+    }
+  });
+
+  // ── Undo unsubscribe ─────────────────────────────────────────────────────
+  // GET  /api/unsubscribe/undo?token=...  — shows confirmation page (no mutation)
+  // POST /api/unsubscribe/undo            — re-enables email for the alert
+  //
+  // The undo token is separate from the plain unsubscribe token: it embeds an
+  // expiry timestamp and is single-use (consumed in-process via an in-memory set).
+
+  app.get('/api/unsubscribe/undo', async (req, res) => {
+    const { verifyUndoToken } = await import('./unsubscribe-token');
+    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    const parsed = verifyUndoToken(token);
+
+    if (!parsed) {
+      return res.status(400).send(unsubHtml('Link Expired', `
+    <div style="font-size:48px;margin-bottom:16px;">⏰</div>
+    <h1 style="color:#f59e0b;font-size:22px;margin-bottom:8px;">Undo link has expired</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This undo link is no longer valid (it expires after 15 minutes). To re-enable email alerts, open the app and edit the alert directly.</p>
+    <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Manage your alerts on LiveSwell</a></p>`));
+    }
+
+    const safeToken = token.replace(/"/g, '&quot;');
+    return res.status(200).send(unsubHtml('Undo Unsubscribe', `
+    <div style="font-size:48px;margin-bottom:16px;">↩️</div>
+    <h1 style="color:#e2e8f0;font-size:22px;margin-bottom:8px;">Re-enable email alerts?</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin-bottom:24px;">Click below to undo the unsubscribe and start receiving email alerts again.</p>
+    <form method="POST" action="/api/unsubscribe/undo">
+      <input type="hidden" name="token" value="${safeToken}">
+      <button type="submit" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;padding:12px 28px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;">↩ Yes, re-enable email</button>
+    </form>
+    <p style="margin-top:20px;"><a href="https://liveswell.app" style="color:#64748b;font-size:13px;">← Keep me unsubscribed</a></p>`));
+  });
+
+  app.post('/api/unsubscribe/undo', async (req, res) => {
+    const { verifyUndoToken, hashUndoToken } = await import('./unsubscribe-token');
+
+    const rawToken =
+      (typeof req.body?.token === 'string' ? req.body.token : '') ||
+      (typeof req.query.token === 'string' ? req.query.token : '');
+
+    if (!rawToken) {
+      return res.status(400).json({ error: 'Missing token' });
+    }
+
+    // Step 1 — verify HMAC signature and expiry (cheap, synchronous)
+    const parsed = verifyUndoToken(rawToken);
+    if (!parsed) {
+      return res.status(400).send(unsubHtml('Link Expired', `
+    <div style="font-size:48px;margin-bottom:16px;">⏰</div>
+    <h1 style="color:#f59e0b;font-size:22px;margin-bottom:8px;">Undo link has expired</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This undo link is no longer valid (it expires after 15 minutes or has already been used). To re-enable email alerts, open the app and edit the alert directly.</p>
+    <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Manage your alerts on LiveSwell</a></p>`));
+    }
+
+    // Step 2 — atomically consume the token and restore the alert in one
+    // DB transaction.  consumeAndReenableEmail uses INSERT … ON CONFLICT DO
+    // NOTHING for the token record so exactly one concurrent caller wins, then
+    // restores deliveryChannels and the exact pre-unsubscribe active state
+    // (carried in the signed token as wasActive).
+    const tokenHash = hashUndoToken(rawToken);
+
+    try {
+      const outcome = await storage.consumeAndReenableEmail(
+        tokenHash,
+        parsed.alertId,
+        parsed.email,
+        parsed.wasActive,
+      );
+
+      if (outcome === 'already_used') {
+        return res.status(400).send(unsubHtml('Link Already Used', `
+    <div style="font-size:48px;margin-bottom:16px;">⏰</div>
+    <h1 style="color:#f59e0b;font-size:22px;margin-bottom:8px;">Undo link already used</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This undo link has already been used or is no longer valid. To re-enable email alerts, open the app and edit the alert directly.</p>
+    <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Manage your alerts on LiveSwell</a></p>`));
+      }
+
+      if (outcome === 'email_mismatch') {
+        console.warn(`⚠️  Undo-unsubscribe token email mismatch for alertId=${parsed.alertId}`);
+        return res.status(403).send(unsubHtml('Invalid Link', `
+    <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+    <h1 style="color:#ef4444;font-size:22px;margin-bottom:8px;">Invalid Link</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">This undo link is not valid for your account.</p>`));
+      }
+
+      if (outcome === 'not_found') {
+        return res.status(200).send(unsubHtml('Alert Not Found', `
+    <div style="font-size:48px;margin-bottom:16px;">🌊</div>
+    <h1 style="color:#f59e0b;font-size:22px;margin-bottom:8px;">Alert no longer exists</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">The alert could not be found — it may have been deleted. You can create a new one in the app.</p>
+    <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Back to LiveSwell</a></p>`));
+      }
+
+      console.log(`📧 Undo-unsubscribed alertId=${parsed.alertId} email=${parsed.email} — email re-enabled, active restored to ${parsed.wasActive}`);
+
+      return res.status(200).send(unsubHtml('Email Re-enabled', `
+    <div style="font-size:48px;margin-bottom:16px;">✅</div>
+    <h1 style="color:#10b981;font-size:22px;margin-bottom:8px;">Email alerts re-enabled!</h1>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;">You'll start receiving email notifications for this alert again.</p>
+    <p style="margin-top:24px;"><a href="https://liveswell.app" style="color:#10b981;font-size:14px;">← Manage your alerts on LiveSwell</a></p>`));
+    } catch (error) {
+      console.error('Undo-unsubscribe error:', error);
       return res.status(500).send(unsubHtml('Error', `
     <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
     <h1 style="color:#ef4444;font-size:22px;margin-bottom:8px;">Something went wrong</h1>

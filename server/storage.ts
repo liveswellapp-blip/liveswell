@@ -1,6 +1,6 @@
 import { users, locations, surfConditions, favorites, userProfiles, notificationSettings, pushSubscriptions, userAlerts, alertTriggerLog, agentConversations, agentSmsThreads, verifiedPhones as verifiedPhonesTable, smsRateLimits, apnsDeviceTokens, fcmDeviceTokens, phoneVerificationTokens, userEvents, adminSettings, type User, type InsertUser, type UpsertUser, type Location, type InsertLocation, type SurfConditions, type InsertSurfConditions, type Favorite, type InsertFavorite, type UserProfile, type InsertUserProfile, type UpdateUserProfile, type NotificationSettings, type InsertNotificationSettings, type UpdateNotificationSettings, type PushSubscription, type InsertPushSubscription, type UserAlert, type InsertUserAlert, type UpdateUserAlert, type AlertTriggerLog, type AgentConversation, type AgentSmsThread, type ApnsDeviceToken, type FcmDeviceToken } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, or, sql, ne, gt } from "drizzle-orm";
+import { eq, and, like, or, sql, ne, gt, lt } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -102,11 +102,14 @@ export interface IStorage {
   /**
    * Removes 'email' from the alert's deliveryChannels for the given alert,
    * but only if the alert belongs to a user whose email matches tokenEmail.
-   * Returns 'ok' on success, 'not_found' when the alertId doesn't exist,
-   * and 'email_mismatch' when the token email doesn't match the user's email.
+   * Returns the outcome and the alert's active state BEFORE the mutation so
+   * the caller can embed it in an undo token for exact state restoration.
    * If 'email' was the only channel the alert is also deactivated.
    */
-  disableEmailForAlert(alertId: number, tokenEmail: string): Promise<'ok' | 'not_found' | 'email_mismatch'>;
+  disableEmailForAlert(alertId: number, tokenEmail: string): Promise<
+    { outcome: 'not_found' | 'email_mismatch'; preActionActive: false } |
+    { outcome: 'ok'; preActionActive: boolean }
+  >;
 
   /**
    * Re-adds 'sms' to the deliveryChannels of all alerts for the given user
@@ -114,6 +117,23 @@ export interface IStorage {
    * Returns the number of alerts that were re-enabled.
    */
   reenableSmsForUser(userId: string): Promise<number>;
+
+  /**
+   * Atomically (single DB transaction):
+   *   1. Purges expired undo-token records older than 15 min from admin_settings.
+   *   2. Marks the token hash as consumed (INSERT … ON CONFLICT DO NOTHING).
+   *      Returns 'already_used' if the token was already consumed.
+   *   3. Re-adds 'email' to the alert's deliveryChannels, clears emailUnsubscribed,
+   *      and restores active to exactly restoreActive (the pre-unsubscribe state
+   *      captured in the signed token — no inference from current DB state).
+   * Returns 'ok', 'already_used', 'not_found', or 'email_mismatch'.
+   */
+  consumeAndReenableEmail(
+    tokenHash: string,
+    alertId: number,
+    tokenEmail: string,
+    restoreActive: boolean,
+  ): Promise<'ok' | 'already_used' | 'not_found' | 'email_mismatch'>;
 
   // Agent conversation history
   getAgentHistory(userId: string): Promise<AgentConversation[]>;
@@ -1033,12 +1053,16 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async disableEmailForAlert(alertId: number, tokenEmail: string): Promise<'ok' | 'not_found' | 'email_mismatch'> {
+  async disableEmailForAlert(alertId: number, tokenEmail: string): Promise<
+    { outcome: 'not_found' | 'email_mismatch'; preActionActive: false } |
+    { outcome: 'ok'; preActionActive: boolean }
+  > {
     // Join with users to verify ownership by email
     const [row] = await db
       .select({
         id: userAlerts.id,
         deliveryChannels: userAlerts.deliveryChannels,
+        active: userAlerts.active,
         userEmail: users.email,
       })
       .from(userAlerts)
@@ -1046,13 +1070,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userAlerts.id, alertId))
       .limit(1);
 
-    if (!row) return 'not_found';
+    if (!row) return { outcome: 'not_found', preActionActive: false };
 
     // Validate the token email against the user's actual email (case-insensitive)
     if ((row.userEmail ?? '').toLowerCase() !== tokenEmail.toLowerCase()) {
-      return 'email_mismatch';
+      return { outcome: 'email_mismatch', preActionActive: false };
     }
 
+    const preActionActive = row.active;
     const remaining = (row.deliveryChannels ?? []).filter((ch: string) => ch !== 'email');
     const nowDeactivate = remaining.length === 0;
 
@@ -1066,7 +1091,79 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(userAlerts.id, alertId));
 
-    return 'ok';
+    return { outcome: 'ok', preActionActive };
+  }
+
+  async consumeAndReenableEmail(
+    tokenHash: string,
+    alertId: number,
+    tokenEmail: string,
+    restoreActive: boolean,
+  ): Promise<'ok' | 'already_used' | 'not_found' | 'email_mismatch'> {
+    // Best-effort cleanup of expired consumed-token records (outside the
+    // transaction — a failure here must never block the undo action).
+    try {
+      const expiryCutoff = new Date(Date.now() - 15 * 60 * 1000);
+      await db
+        .delete(adminSettings)
+        .where(and(
+          like(adminSettings.key, 'undo_token_used:%'),
+          lt(adminSettings.updatedAt, expiryCutoff),
+        ));
+    } catch {
+      // swallow — cleanup is best-effort
+    }
+
+    return db.transaction(async (tx) => {
+      // ── Step 1: atomic consume ────────────────────────────────────────────
+      // INSERT … ON CONFLICT DO NOTHING: exactly one concurrent winner across
+      // all app instances (Postgres uniqueness on the PK guarantees this).
+      const consumed = await tx
+        .insert(adminSettings)
+        .values({
+          key: `undo_token_used:${tokenHash}`,
+          value: new Date().toISOString(),
+          updatedAt: new Date(),
+        })
+        .onConflictDoNothing()
+        .returning({ key: adminSettings.key });
+
+      if (consumed.length === 0) return 'already_used';
+
+      // ── Step 2: verify alert ownership ───────────────────────────────────
+      const [row] = await tx
+        .select({
+          id: userAlerts.id,
+          deliveryChannels: userAlerts.deliveryChannels,
+          userEmail: users.email,
+        })
+        .from(userAlerts)
+        .innerJoin(users, eq(users.id, userAlerts.userId))
+        .where(eq(userAlerts.id, alertId))
+        .limit(1);
+
+      if (!row) return 'not_found';
+
+      if ((row.userEmail ?? '').toLowerCase() !== tokenEmail.toLowerCase()) {
+        return 'email_mismatch';
+      }
+
+      // ── Step 3: restore email channel and exact pre-unsubscribe active state
+      const channels = row.deliveryChannels ?? [];
+      const updated = channels.includes('email') ? channels : [...channels, 'email'];
+
+      await tx
+        .update(userAlerts)
+        .set({
+          deliveryChannels: updated,
+          emailUnsubscribed: false,
+          active: restoreActive,
+          updatedAt: new Date(),
+        })
+        .where(eq(userAlerts.id, alertId));
+
+      return 'ok';
+    });
   }
 
   async reenableSmsForUser(userId: string): Promise<number> {
