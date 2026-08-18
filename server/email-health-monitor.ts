@@ -78,18 +78,28 @@ export async function runEmailHealthCheck(
 
 async function sendAdminSmsAlert(): Promise<void> {
   const adminPhone = process.env.ADMIN_ALERT_PHONE;
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+
   if (!adminPhone) {
     console.warn('[email-health-monitor] No ADMIN_ALERT_PHONE configured — skipping SMS alert for Resend failure.');
     return;
   }
+  if (!accountSid || !authToken || (!fromNumber && !messagingServiceSid)) {
+    console.warn('[email-health-monitor] Twilio not configured — cannot send SMS alert for Resend failure.');
+    return;
+  }
 
   try {
-    // Lazy import to avoid circular dependencies
-    const { SMSService } = await import('./sms-service') as typeof import('./sms-service');
-    await SMSService.sendSMS(
-      adminPhone,
-      '⚠️ LiveSwell: Email delivery is down. The Resend connector failed its health check at startup. Check the admin dashboard.',
-    );
+    const twilio = (await import('twilio')).default;
+    const client = twilio(accountSid, authToken);
+    await client.messages.create({
+      to: adminPhone,
+      body: '⚠️ LiveSwell: Email delivery is down. The Resend connector failed its health check at startup. Check the admin dashboard.',
+      ...(messagingServiceSid ? { messagingServiceSid } : { from: fromNumber }),
+    });
     console.log(`[email-health-monitor] Admin SMS alert sent to ${adminPhone}`);
   } catch (err) {
     console.error('[email-health-monitor] Failed to send admin SMS alert:', err);
