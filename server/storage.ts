@@ -1072,8 +1072,11 @@ export class DatabaseStorage implements IStorage {
 
     if (!row) return { outcome: 'not_found', preActionActive: false };
 
-    // Validate the token email against the user's actual email (case-insensitive)
-    if ((row.userEmail ?? '').toLowerCase() !== tokenEmail.toLowerCase()) {
+    // Validate the token email against the user's actual email (case-insensitive).
+    // Explicitly reject null/empty user email — an account without an email address
+    // should never match any token (including an empty-string tokenEmail), so the
+    // unsubscribe round-trip fails loudly rather than silently succeeding.
+    if (!row.userEmail || row.userEmail.toLowerCase() !== tokenEmail.toLowerCase()) {
       return { outcome: 'email_mismatch', preActionActive: false };
     }
 
@@ -1144,7 +1147,8 @@ export class DatabaseStorage implements IStorage {
 
       if (!row) return 'not_found';
 
-      if ((row.userEmail ?? '').toLowerCase() !== tokenEmail.toLowerCase()) {
+      // Explicitly reject null/empty user email — matches disableEmailForAlert behaviour.
+      if (!row.userEmail || row.userEmail.toLowerCase() !== tokenEmail.toLowerCase()) {
         return 'email_mismatch';
       }
 
