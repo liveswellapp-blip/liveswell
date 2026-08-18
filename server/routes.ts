@@ -60,6 +60,7 @@ import { buildConditionsSummary } from "./chat-helpers";
 import { registerWhopRoutes, logWhopStartupWarnings, requirePro } from "./whop-routes";
 import { recordUserEvent } from "./user-events";
 import { transitionProStatus } from "./pro-transitions";
+import { testAlertHandler } from "./test-alert-handler";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -470,51 +471,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ── Admin: smoke-test SMS and/or email delivery ──────────────────────────
-  app.post("/api/admin/test-alert", requireAdminAuth, async (req, res) => {
-    try {
-      const {
-        channel,          // 'sms' | 'email' | 'both'
-        toPhone,          // E.164 phone number for SMS
-        toEmail,          // email address for email
-        locationId,       // numeric location ID to fetch conditions for
-        alertId,          // optional: real alert ID — includes unsubscribe link in test email
-      } = req.body;
-
-      const locId = parseInt(locationId, 10);
-      if (!locId || isNaN(locId)) {
-        return res.status(400).json({ message: "locationId is required" });
-      }
-
-      const parsedAlertId = alertId ? parseInt(alertId, 10) : undefined;
-
-      const results: Record<string, boolean> = {};
-
-      if ((channel === 'sms' || channel === 'both') && toPhone) {
-        console.log(`🔧 Admin test SMS → ${toPhone} (locationId ${locId})`);
-        results.sms = await SMSService.sendDailyConditions('admin-test', toPhone, locId);
-      }
-
-      if ((channel === 'email' || channel === 'both') && toEmail) {
-        const logExtra = parsedAlertId ? ` with unsubscribe link (alertId ${parsedAlertId})` : ' (no unsubscribe link — alertId not provided)';
-        console.log(`🔧 Admin test email → ${toEmail} (locationId ${locId})${logExtra}`);
-        results.email = await EmailService.sendDailyConditions(toEmail, locId, parsedAlertId);
-      }
-
-      if (Object.keys(results).length === 0) {
-        return res.status(400).json({
-          message: "No valid channel/recipient combination. Provide toPhone for sms or toEmail for email.",
-        });
-      }
-
-      res.json({
-        success: Object.values(results).some(ok => ok),
-        results,
-      });
-    } catch (error) {
-      console.error("Error in admin test-alert:", error);
-      res.status(500).json({ message: "Test alert failed" });
-    }
-  });
+  // Handler extracted to server/test-alert-handler.ts for testability.
+  app.post("/api/admin/test-alert", requireAdminAuth, testAlertHandler);
 
   // Admin: Twilio SMS sender mode status
   app.get("/api/admin/twilio-status", requireAdminAuth, (req, res) => {
