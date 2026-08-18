@@ -5,7 +5,7 @@ import type { Location } from '@shared/schema';
 import { generateNotificationSummary } from './ai-service';
 import { createUnsubscribeToken } from './unsubscribe-token';
 
-const APP_BASE_URL = 'https://liveswell.app';
+const APP_BASE_URL = 'https://liveswell.io';
 
 // ─── Session quality rater ────────────────────────────────────────────────────
 /**
@@ -418,16 +418,92 @@ LiveSwell · Manage alerts at liveswell.app`;
   }
 
   /**
-   * Sends a proactive admin alert when the Sentry error count rises above the
-   * configured threshold.  Called from the /api/admin/sentry-error-count cache
-   * refresh path so admins are notified within one 5-minute polling cycle.
+   * Sends a welcome email to a newly admin-created user with a one-time Clerk
+   * sign-in token link so they can authenticate and set their own password.
    *
-   * @param toEmail     Admin email address (RESEND_FROM_EMAIL or similar)
-   * @param count       Number of new unresolved Sentry issues detected
-   * @param threshold   The configured threshold that was exceeded
-   * @param sentryUrl   Direct link to the Sentry issues list
-   * @param detectedAt  ISO timestamp of when the spike was detected
+   * @param toEmail     New user's email address
+   * @param firstName   User's first name (may be null)
+   * @param lastName    User's last name (may be null)
+   * @param signInUrl   One-time Clerk sign-in ticket URL (expires in 7 days)
    */
+  static async sendWelcomeEmail(
+    toEmail: string,
+    firstName: string | null,
+    lastName: string | null,
+    signInUrl: string,
+  ): Promise<boolean> {
+    try {
+      const displayName =
+        [firstName, lastName].filter(Boolean).join(' ') || toEmail.split('@')[0];
+
+      const subject = `Welcome to LiveSwell — your account is ready`;
+
+      const text = `Hi ${displayName},
+
+An account has been created for you on LiveSwell.
+
+Your sign-in email: ${toEmail}
+
+Click the link below to sign in and set your password (link valid for 7 days, one-time use):
+${signInUrl}
+
+If you weren't expecting this, you can safely ignore it.
+
+— The LiveSwell Team`;
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
+        <tr><td style="background:#0f172a;padding:28px 32px;text-align:center">
+          <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px">🌊 LiveSwell</span>
+        </td></tr>
+        <tr><td style="padding:32px">
+          <h2 style="margin:0 0 12px;color:#0f172a;font-size:20px;font-weight:700">Welcome to LiveSwell!</h2>
+          <p style="margin:0 0 8px;color:#475569;font-size:15px">Hi ${displayName},</p>
+          <p style="margin:0 0 20px;color:#475569;font-size:15px;line-height:1.6">
+            An account has been created for you. Use the email address below to sign in:
+          </p>
+          <div style="background:#f1f5f9;border-radius:8px;padding:12px 16px;margin:0 0 24px;font-size:15px;color:#0f172a;font-weight:600;text-align:center;">
+            ${toEmail}
+          </div>
+          <p style="margin:0 0 24px;color:#475569;font-size:14px;line-height:1.6">
+            Click the button below to sign in and set your password. This link is valid for 7 days and can only be used once.
+          </p>
+          <div style="text-align:center;margin:0 0 24px">
+            <a href="${signInUrl}"
+               style="display:inline-block;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;
+                      text-decoration:none;padding:13px 28px;border-radius:8px">
+              Sign in &amp; set your password
+            </a>
+          </div>
+          <p style="margin:0;color:#94a3b8;font-size:13px">If you weren't expecting this, you can safely ignore it.</p>
+        </td></tr>
+        <tr><td style="padding:20px 32px;border-top:1px solid #e2e8f0;text-align:center">
+          <p style="margin:0;color:#94a3b8;font-size:12px">© LiveSwell · <a href="${APP_BASE_URL}" style="color:#94a3b8">liveswell.io</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      const result = await sendEmail({ from: FROM_EMAIL, to: toEmail, subject, text, html });
+      if (result.error) {
+        console.error(`❌ Welcome email failed for ${toEmail}: ${result.error}`);
+        return false;
+      }
+      console.log(`📧 Welcome email sent to ${toEmail} (id: ${result.id})`);
+      return true;
+    } catch (err) {
+      console.error('Error sending welcome email:', err);
+      return false;
+    }
+  }
+
   static async sendSentryErrorAlert(
     toEmail: string,
     count: number,

@@ -18,6 +18,7 @@ import {
 } from "@shared/schema";
 import { getWhopClient } from "./whopClient";
 import { transitionProStatus } from "./pro-transitions";
+import { EmailService } from "./email-service";
 
 export function registerAdminUserControls(app: Express, requireAdminAuth: RequestHandler): void {
   // ── Create a new user account (Clerk + local DB) ─────────────────────────
@@ -74,6 +75,32 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
         lastName: clerkUser.lastName ?? null,
         profileImageUrl: clerkUser.imageUrl ?? null,
       });
+
+      // Send a welcome email so the user knows their account exists.
+      // We generate a short-lived Clerk sign-in token so the user can sign in
+      // and set their own password without needing to know the admin-supplied one.
+      // Non-fatal — account creation succeeds even if email delivery fails.
+      (async () => {
+        try {
+          const APP_BASE_URL = "https://liveswell.io";
+          const tokenResponse = await clerkClient.signInTokens.createSignInToken({
+            userId: clerkUser.id,
+            expiresInSeconds: 7 * 24 * 60 * 60, // 7 days
+          });
+          const welcomeUrl =
+            `${APP_BASE_URL}/sign-in` +
+            `?__clerk_ticket=${tokenResponse.token}` +
+            `&redirect_url=${encodeURIComponent("/change-password")}`;
+          await EmailService.sendWelcomeEmail(
+            newUser.email ?? cleanEmail,
+            newUser.firstName ?? null,
+            newUser.lastName ?? null,
+            welcomeUrl,
+          );
+        } catch (err) {
+          console.warn(`⚠️  Admin create-user: welcome email failed for ${cleanEmail}:`, err);
+        }
+      })();
 
       // Optionally grant a complimentary Pro plan
       if (grantPro) {

@@ -432,6 +432,11 @@ export default function UserDatabase({ onClose }: UserDatabaseProps) {
               </Label>
             </div>
 
+            {/* Welcome email notice */}
+            <p className="text-xs text-muted-foreground pt-1">
+              📧 A welcome email with sign-in instructions will be sent to the address above.
+            </p>
+
             {/* Error */}
             {formError && (
               <p className="text-sm text-destructive" role="alert">
