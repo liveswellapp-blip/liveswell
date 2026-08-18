@@ -379,8 +379,8 @@ export default function Landing() {
           opacity: 0.45; transition: opacity 0.2s;
         }
         .landing-partner:hover { opacity: 0.7; }
-        .landing-partner img { height: 28px; width: auto; object-fit: contain; }
-        .landing-partner svg { height: 28px; width: auto; }
+        .landing-partner img { height: 44px; width: auto; object-fit: contain; }
+        .landing-partner svg { height: 44px; width: auto; }
         /* transparent-bg logos → force solid white */
         .lp-invert { filter: brightness(0) invert(1); }
         /* white-bg black logos → invert makes bg black, logo white;
@@ -594,19 +594,19 @@ export default function Landing() {
           <div className="landing-partners-row">
 
             <div className="landing-partner">
-              <img src="/partners-noaa.png?v=3" alt="NOAA" style={{ height: 36, width: "auto" }} />
+              <img src="/partners-noaa.png?v=3" alt="NOAA" />
             </div>
 
             <div className="landing-partner">
-              <img src="/partners-openweather.png?v=3" alt="OpenWeatherMap" style={{ height: 30, width: "auto" }} />
+              <img src="/partners-openweather.png?v=3" alt="OpenWeatherMap" />
             </div>
 
             <div className="landing-partner">
-              <img src="/partners-openmeteo.png?v=3" alt="Open-Meteo" style={{ height: 30, width: "auto" }} />
+              <img src="/partners-openmeteo.png?v=3" alt="Open-Meteo" />
             </div>
 
             <div className="landing-partner">
-              <img src="/partners-windy.png?v=3" alt="Windy" style={{ height: 28, width: "auto" }} />
+              <img src="/partners-windy.png?v=3" alt="Windy" />
             </div>
 
           </div>
