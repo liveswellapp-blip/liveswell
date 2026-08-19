@@ -267,8 +267,7 @@ export default function PricingPage() {
       <section className="plan-grid" aria-label="LiveSwell plans">
         <PlanCard label="Free" price="$0" description="The essential read on every session." features={freeFeatures} button={<Link href={isAuthenticated ? "/" : "/sign-up"} className="button secondary">{isAuthenticated ? "Current plan" : "Start exploring"} <ChevronRight size={16} /></Link>} />
         <div className="plan-card pro-card">
-          <div className="pro-ribbon">LIVE SWELL PRO</div>
-          <div className="plan-card-top"><div><span className="plan-label">For narrow windows</span><h2>Pro</h2></div><Waves className="wave-mark" size={28} /></div>
+          <div className="plan-card-top"><div><h2>Pro</h2></div><Waves className="wave-mark" size={28} /></div>
           <div className="billing-toggle" role="group" aria-label="Choose billing interval">
             {(Object.keys(plans) as SelectedPlan[]).map((plan) => (
               <button key={plan} className={selectedPlan === plan ? "selected" : ""} onClick={() => setSelectedPlan(plan)} aria-pressed={selectedPlan === plan} disabled={!!bootstrap || confirmationPending}>
@@ -326,7 +325,7 @@ export default function PricingPage() {
 }
 
 function PlanCard({ label, price, description, features, button }: { label: string; price: string; description: string; features: string[]; button: React.ReactNode }) {
-  return <div className="plan-card free-card"><span className="plan-label">{label}</span><h2>{price}</h2><p className="plan-copy">{description}</p>{button}<div className="feature-list">{features.map((feature) => <div key={feature}><Check size={16} /><span>{feature}</span></div>)}</div></div>;
+  return <div className="plan-card free-card"><h2>{price}</h2><p className="plan-copy">{description}</p>{button}<div className="feature-list">{features.map((feature) => <div key={feature}><Check size={16} /><span>{feature}</span></div>)}</div></div>;
 }
 function TrustItem({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return <div className="trust-item"><div className="trust-icon">{icon}</div><div><h3>{title}</h3><p>{body}</p></div></div>;
