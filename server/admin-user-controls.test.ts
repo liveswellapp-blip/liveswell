@@ -617,6 +617,26 @@ describe("POST /api/admin/users/:userId/reset-password", () => {
     expect(res.body.message).toMatch(/email delivery failed/i);
   });
 
+  it("503 without creating a token when no verified sender is configured", async () => {
+    mockUser = { id: "user_1", email: "a@b.co" };
+    const originalFromEmail = process.env.RESEND_FROM_EMAIL;
+    delete process.env.RESEND_FROM_EMAIL;
+
+    try {
+      const res = await request(buildApp()).post("/api/admin/users/user_1/reset-password");
+      expect(res.status).toBe(503);
+      expect(res.body.message).toMatch(/no verified sender/i);
+      expect(clerkCreateSignInToken).not.toHaveBeenCalled();
+      expect(mockProxy).not.toHaveBeenCalled();
+    } finally {
+      if (originalFromEmail === undefined) {
+        delete process.env.RESEND_FROM_EMAIL;
+      } else {
+        process.env.RESEND_FROM_EMAIL = originalFromEmail;
+      }
+    }
+  });
+
   it("200 with { sent: true, email } on success", async () => {
     mockUser = { id: "user_1", email: "a@b.co", firstName: "Ada", lastName: "Lovelace" };
     const res = await request(buildApp()).post("/api/admin/users/user_1/reset-password");

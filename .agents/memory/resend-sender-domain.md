@@ -1,10 +1,10 @@
 ---
 name: Resend sender domain
-description: The attached Resend connector does not currently recognize the LiveSwell sender domain.
+description: The attached Resend connector verifies the LiveSwell sender domain for branded transactional email.
 ---
 
-The Resend connector rejects the configured LiveSwell sender and email delivery falls back to Resend's shared onboarding sender.
+The attached Resend account recognizes `liveswell.io` as a verified sending domain. Its required DKIM record and the SPF TXT and MX records on `send.liveswell.io` are verified.
 
-**Why:** A live welcome-email delivery test succeeded only after the fallback path ran; the connector account has not verified the domain used by `RESEND_FROM_EMAIL`.
+**Why:** The domain must remain verifiable for Resend to accept branded transactional email. A connector health check alone only proves the API is reachable; it does not prove the configured sender is accepted.
 
-**How to apply:** Verify the LiveSwell sender domain in the attached Resend account before relying on branded transactional mail. Keep the fallback as an outage-safe delivery path.
+**How to apply:** Keep the corresponding DNS records intact and configure `RESEND_FROM_EMAIL` with a LiveSwell sender. Treat a domain-verification failure as a delivery error rather than sending via a third-party fallback address.

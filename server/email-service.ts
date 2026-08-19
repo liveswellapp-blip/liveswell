@@ -30,16 +30,14 @@ function rateSession(
   return { label: 'Poor', color: '#ef4444', bg: 'rgba(239,68,68,0.12)', emoji: '⚠️' };
 }
 
-const FALLBACK_FROM = 'LiveSwell <onboarding@resend.dev>';
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || FALLBACK_FROM;
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? '';
 
-if (process.env.RESEND_FROM_EMAIL) {
+if (FROM_EMAIL) {
   console.log(`📧 Email from-address: ${FROM_EMAIL} (verified domain)`);
 } else {
-  console.warn(
-    `⚠️  RESEND_FROM_EMAIL is not set — falling back to shared test address "${FALLBACK_FROM}". ` +
-    `Emails may be rejected or spam-filtered in production. ` +
-    `Set the RESEND_FROM_EMAIL secret to a verified Resend domain address.`,
+  console.error(
+    '❌ RESEND_FROM_EMAIL is not set — email delivery is disabled. ' +
+    'Set it to a sender on a verified Resend domain; LiveSwell mail will never use Resend’s shared fallback address.',
   );
 }
 console.log('✅ Resend email service configured via Replit Connectors');
@@ -48,35 +46,33 @@ async function sendEmail(
   payload: { from: string; to: string; subject: string; text: string; html: string; headers?: Record<string, string> },
   retries = 2,
 ): Promise<{ id?: string; error?: string }> {
+  if (!payload.from) {
+    return {
+      error:
+        'RESEND_FROM_EMAIL is not configured. Email delivery requires a sender on a verified Resend domain.',
+    };
+  }
+
   let lastError: string | undefined;
-  let currentPayload = payload;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     const connectors = new ReplitConnectors();
     const response = await connectors.proxy('resend', '/emails', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(currentPayload),
+      body: JSON.stringify(payload),
     });
 
     // Transient server-side errors (5xx) — wait briefly and retry
     if (!response.ok) {
       const body = await response.text();
 
-      // Domain not verified in this Resend account (common in Replit dev connector)
-      // — fall back to Resend's shared onboarding sender and retry once.
-      if (
-        response.status === 403 &&
-        body.includes('domain is not verified') &&
-        currentPayload.from !== FALLBACK_FROM
-      ) {
-        console.warn(
-          `⚠️  Resend rejected from-address "${currentPayload.from}" (domain not verified in connector account). ` +
-          `Retrying with fallback sender "${FALLBACK_FROM}". ` +
-          `To fix permanently, verify the domain at https://resend.com/domains.`,
-        );
-        currentPayload = { ...currentPayload, from: FALLBACK_FROM };
-        continue;
+      if (response.status === 403 && body.includes('domain is not verified')) {
+        return {
+          error:
+            `Resend rejected configured sender "${payload.from}" because its domain is not verified. ` +
+            'Verify the domain in the connected Resend account before sending email.',
+        };
       }
 
       if (response.status >= 500 && attempt < retries) {

@@ -21,9 +21,6 @@ import { db } from './db';
 import { pushHealthAlertState } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
-const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || 'LiveSwell <onboarding@resend.dev>';
-
 /** Env-var fallback for the admin alert email (used if no DB setting exists). */
 export const ADMIN_ALERT_EMAIL =
   process.env.ADMIN_ALERT_EMAIL || 'admin@liveswell.app';
@@ -154,10 +151,18 @@ export function checkPushHealth(): PushHealthResult {
 // Admin email alert
 // --------------------------------------------------------------------------
 
-async function sendAdminAlert(result: PushHealthResult): Promise<void> {
+export async function sendAdminAlert(result: PushHealthResult): Promise<void> {
   const subject = '🚨 LiveSwell — Push notifications may be broken after deploy';
   const reason = result.reason ?? 'Unknown reason';
   const alertEmail = await resolveAlertEmail();
+  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
+
+  if (!fromEmail) {
+    console.error(
+      '[push-health-monitor] Cannot send VAPID health alert: RESEND_FROM_EMAIL is not configured',
+    );
+    return;
+  }
 
   const text = `LiveSwell push notification health check FAILED.
 
@@ -206,7 +211,7 @@ This alert was generated automatically at ${new Date().toISOString()}.
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: FROM_EMAIL,
+        from: fromEmail,
         to: alertEmail,
         subject,
         text,
@@ -261,10 +266,18 @@ export function checkApnsHealth(): ApnsHealthResult {
   return { ok: true, configured: true, missing: [] };
 }
 
-async function sendApnsAdminAlert(result: ApnsHealthResult): Promise<void> {
+export async function sendApnsAdminAlert(result: ApnsHealthResult): Promise<void> {
   const subject = '⚠️ LiveSwell — APNs credentials not configured (iOS push disabled)';
   const reason = result.reason ?? 'APNs credentials missing';
   const alertEmail = await resolveAlertEmail();
+  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
+
+  if (!fromEmail) {
+    console.error(
+      '[push-health-monitor] Cannot send APNs health alert: RESEND_FROM_EMAIL is not configured',
+    );
+    return;
+  }
 
   const text = `LiveSwell APNs (Apple Push Notification service) health check FAILED.
 
@@ -324,7 +337,7 @@ until the credentials are configured.</p>
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: FROM_EMAIL,
+        from: fromEmail,
         to: alertEmail,
         subject,
         text,

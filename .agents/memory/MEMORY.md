@@ -5,5 +5,5 @@
 - [Drizzle migration journal](drizzle-migration-journal.md) — new migrations/*.sql run ONLY if added to migrations/meta/_journal.json; otherwise silently skipped while startup logs success.
 - [Migration repair guard ordering](migration-repair-guard-ordering.md) — CREATE TABLE repair guards must run AFTER drizzle migrate(), never before; migration 0000 lacks IF NOT EXISTS on some tables so pre-migrate creation causes it to fail on fresh DBs.
 - [Admin-created Clerk accounts](admin-created-clerk-accounts.md) — the live Clerk tenant requires an E.164 phone number when admins provision a user.
-- [Resend sender domain](resend-sender-domain.md) — the connector falls back to Resend's shared sender until the LiveSwell domain is verified there.
+- [Resend sender domain](resend-sender-domain.md) — branded mail requires the verified LiveSwell domain; direct callers must fail instead of using Resend's shared sender.
 - [Pro entitlement ownership](pro-entitlement-ownership.md) — track paid, complimentary, and test grants independently; billing events may mutate only their own paid source.

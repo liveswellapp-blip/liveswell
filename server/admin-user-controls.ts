@@ -437,6 +437,16 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
         return res.status(422).json({ message: "Password reset is only supported for Clerk-managed accounts" });
       }
 
+      const FROM_EMAIL = process.env.RESEND_FROM_EMAIL?.trim();
+      if (!FROM_EMAIL) {
+        console.error(
+          `Password reset email unavailable for ${userId}: RESEND_FROM_EMAIL is not configured`,
+        );
+        return res.status(503).json({
+          message: "Password reset email is unavailable because no verified sender is configured.",
+        });
+      }
+
       // Create a short-lived sign-in token via the Clerk Backend API.
       // The token is valid for 24 h and produces a URL the user clicks to
       // authenticate; from there they can navigate to settings and change
@@ -461,9 +471,6 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
       // redirect_url, landing the user directly on the password-change page.
       const resetUrl = `${APP_BASE_URL}/sign-in?__clerk_ticket=${signInToken}&redirect_url=${encodeURIComponent("/change-password")}`;
       const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
-
-      const FALLBACK_FROM = "LiveSwell <onboarding@resend.dev>";
-      const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || FALLBACK_FROM;
 
       const html = `
 <!DOCTYPE html>
