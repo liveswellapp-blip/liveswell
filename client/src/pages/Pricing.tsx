@@ -43,7 +43,7 @@ const plans: Record<SelectedPlan, { price: string; interval: string; copy: strin
   monthly: { price: "$4.99", interval: "month", copy: "Billed monthly. Change or cancel before your next renewal." },
   annual: { price: "$29.99", interval: "year", copy: "Billed once a year. That is about $2.50 per month." },
 };
-const proFeatures = ["SMS, push, and email condition alerts", "AI surf chat and daily summaries", "230+ spots with the full forecast picture"];
+const proFeatures = ["SMS, push, and email condition alerts", "AI surf chat and daily summaries"];
 const freeFeatures = ["Real-time NOAA buoy conditions", "Five-day swell and wind forecast", "Tides, sunrise, and sunset times"];
 
 export default function PricingPage() {
@@ -221,7 +221,6 @@ export default function PricingPage() {
       </nav>
 
       <section className="pricing-hero">
-        <div className="eyebrow"><span className="eyebrow-dot" /> PRO FOR THE WINDOW</div>
         <h1>When the swell turns on,<br /><em>be ready.</em></h1>
         <p>LiveSwell Pro keeps the right signal close: alerts, AI context, and the confidence to act before the window closes.</p>
       </section>
