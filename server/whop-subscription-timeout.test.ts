@@ -23,8 +23,17 @@ import request from "supertest";
 // ---------------------------------------------------------------------------
 
 let mockUserId: string | null = "pro-user-id";
-let mockUserRow: { isPro: boolean; whopMembershipId: string | null } | null = {
+let mockUserRow: {
+  isPro: boolean;
+  paidPro: boolean;
+  complimentaryPro: boolean;
+  isTestAccount: boolean;
+  whopMembershipId: string | null;
+} | null = {
   isPro: true,
+  paidPro: true,
+  complimentaryPro: false,
+  isTestAccount: false,
   whopMembershipId: "mem_test123",
 };
 
@@ -71,7 +80,14 @@ vi.mock("./db", () => {
 });
 
 vi.mock("@shared/schema", () => ({
-  users: { id: "id", isPro: "isPro", whopMembershipId: "whopMembershipId" },
+  users: {
+    id: "id",
+    isPro: "isPro",
+    paidPro: "paidPro",
+    complimentaryPro: "complimentaryPro",
+    isTestAccount: "isTestAccount",
+    whopMembershipId: "whopMembershipId",
+  },
   userEvents: { userId: "userId", type: "type", payload: "payload" },
 }));
 
@@ -118,7 +134,13 @@ describe("GET /api/whop/subscription — Pro badge resilience to Whop API failur
     process.env.WHOP_WEBHOOK_SECRET = "test-secret";
     process.env.WHOP_MONTHLY_PLAN_ID = "plan_monthly";
     mockUserId = "pro-user-id";
-    mockUserRow = { isPro: true, whopMembershipId: "mem_test123" };
+    mockUserRow = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      whopMembershipId: "mem_test123",
+    };
   });
 
   afterEach(() => {
@@ -165,7 +187,13 @@ describe("GET /api/whop/subscription — Pro badge resilience to Whop API failur
 
   it("returns isPro=false (free) when DB row has isPro=false and Whop API also errors", async () => {
     // A genuinely free user whose DB row is correct should still see Free
-    mockUserRow = { isPro: false, whopMembershipId: "mem_free123" };
+    mockUserRow = {
+      isPro: false,
+      paidPro: false,
+      complimentaryPro: false,
+      isTestAccount: false,
+      whopMembershipId: "mem_free123",
+    };
 
     vi.mocked(getWhopClient).mockResolvedValue({
       memberships: {
@@ -209,7 +237,13 @@ describe("GET /api/whop/subscription — Pro badge resilience to Whop API failur
   it("fast-paths to DB value without calling Whop when there is no whopMembershipId", async () => {
     // User has no membership ID yet (webhook may be delayed).
     // The fast path should return whatever isPro is in the DB without any Whop call.
-    mockUserRow = { isPro: true, whopMembershipId: null };
+    mockUserRow = {
+      isPro: true,
+      paidPro: false,
+      complimentaryPro: true,
+      isTestAccount: false,
+      whopMembershipId: null,
+    };
 
     const res = await request(buildSubscriptionApp())
       .get("/api/whop/subscription");

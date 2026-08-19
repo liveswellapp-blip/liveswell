@@ -61,6 +61,7 @@ import { registerWhopRoutes, logWhopStartupWarnings, requirePro } from "./whop-r
 import { recordUserEvent } from "./user-events";
 import { transitionProStatus } from "./pro-transitions";
 import { testAlertHandler } from "./test-alert-handler";
+import { registerStripeBillingRoutes } from "./stripe-billing-routes";
 
 const API_KEY = process.env.OPENWEATHER_API_KEY || process.env.WEATHER_API_KEY || "demo_key";
 
@@ -863,18 +864,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const target = await storage.getUserByEmail(email.trim().toLowerCase());
       if (!target) return res.status(404).json({ message: `No user found with email: ${email}` });
 
-      // transitionProStatus conditions its UPDATE on the prior isPro value and
-      // inserts the audit event in the same transaction — both succeed or both
-      // roll back.  It returns { changed: false } when already in target state.
+      // The test entitlement is source-specific; removing it preserves any
+      // paid or complimentary access the user still has.
       await transitionProStatus(target.id, !revoke, "test");
-
-      // isTestAccount is managed independently — it must always be set/cleared
-      // even when isPro was already at the target value (e.g. granting test
-      // access to an existing Whop subscriber should still set isTestAccount).
-      await db
-        .update(users)
-        .set({ isTestAccount: !revoke, updatedAt: new Date() })
-        .where(eq(users.id, target.id));
 
       // Fetch the updated row to return accurate field values.
       const updated = await db
@@ -4564,6 +4556,7 @@ Do not discuss topics unrelated to surfing or ocean activities.`;
   // ── Whop subscription routes ─────────────────────────────────────────────
   logWhopStartupWarnings();
   registerWhopRoutes(app);
+  registerStripeBillingRoutes(app);
 
   // Add error handling middleware (should be last)
   app.use(errorTrackingMiddleware);

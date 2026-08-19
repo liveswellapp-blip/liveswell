@@ -78,6 +78,19 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
   return new Stripe(secretKey);
 }
 
+/** Verifies a webhook against the connector-managed signing secret. */
+export async function constructStripeWebhookEvent(
+  payload: Buffer,
+  signature: string,
+): Promise<Stripe.Event> {
+  const credentials = await getStripeCredentials();
+  if (!credentials.webhookSecret) {
+    throw new Error("Stripe webhook signing secret is not configured.");
+  }
+  const stripe = new Stripe(credentials.secretKey);
+  return stripe.webhooks.constructEvent(payload, signature, credentials.webhookSecret);
+}
+
 /** Returns a fresh Stripe synchronization engine backed by the app database. */
 export async function getStripeSync(): Promise<StripeSync> {
   const [databaseUrl, credentials] = [getDatabaseUrl(), await getStripeCredentials()];

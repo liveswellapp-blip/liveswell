@@ -11,13 +11,16 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   isPro: boolean("is_pro").notNull().default(false),
+  // Source-specific cached entitlements. isPro is their user-facing union.
+  paidPro: boolean("paid_pro").notNull().default(false),
+  complimentaryPro: boolean("complimentary_pro").notNull().default(false),
   isTestAccount: boolean("is_test_account").notNull().default(false),
   isSuspended: boolean("is_suspended").notNull().default(false),
   whopMembershipId: text("whop_membership_id"),
   stripeCustomerId: text("stripe_customer_id").unique(),
   stripeSubscriptionId: text("stripe_subscription_id").unique(),
-  // `whop` for legacy paid accounts, `stripe` once the new flow is enabled.
-  // Complimentary and test access intentionally remain null.
+  // Paid billing owner: `whop` for legacy accounts or `stripe` for the new flow.
+  // Comp/test-only accounts remain null; overlays do not erase a paid owner.
   billingProvider: varchar("billing_provider", { length: 16 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

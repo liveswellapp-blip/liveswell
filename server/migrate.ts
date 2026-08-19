@@ -119,6 +119,26 @@ export async function runMigrations(): Promise<void> {
   console.log('[migrate] Checking database migrations…');
 
   try {
+    const { rows: [{ entitlement_columns_exist }] } = await pool.query<{
+      entitlement_columns_exist: boolean;
+    }>(`
+      SELECT (
+        EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'users'
+            AND column_name = 'paid_pro'
+        )
+        AND EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'users'
+            AND column_name = 'complimentary_pro'
+        )
+      ) AS entitlement_columns_exist
+    `);
+    const needsEntitlementBackfill = !entitlement_columns_exist;
+
     // Pre-flight: directly add any columns / indexes that migration-system bugs may have missed.
     // Using pool.query (not Drizzle) so it runs regardless of migration state.
     await pool.query(`
@@ -165,6 +185,15 @@ export async function runMigrations(): Promise<void> {
     await pool.query(`
       ALTER TABLE IF EXISTS "users"
       ADD COLUMN IF NOT EXISTS "billing_provider" varchar(16)
+    `);
+    // Pre-flight: source-specific Pro entitlement caches (migration 0011).
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "paid_pro" boolean NOT NULL DEFAULT false
+    `);
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "complimentary_pro" boolean NOT NULL DEFAULT false
     `);
     // Pre-flight: canonicalize phone values and enforce uniqueness on
     // verified_phones.phone — but only if the table already exists.
@@ -231,6 +260,28 @@ export async function runMigrations(): Promise<void> {
       WHERE "whop_membership_id" IS NOT NULL
         AND "billing_provider" IS NULL
     `);
+    // Only backfill when the source columns were absent at process start.
+    // Re-running this on every boot would incorrectly resurrect paidPro for a
+    // canceled subscriber who currently has a separate comp/test entitlement.
+    if (needsEntitlementBackfill) {
+      await pool.query(`
+        UPDATE "users"
+        SET "paid_pro" = true
+        WHERE "is_pro" = true
+          AND "billing_provider" IN ('whop', 'stripe')
+      `);
+      await pool.query(`
+        UPDATE "users"
+        SET "complimentary_pro" = true
+        WHERE "is_pro" = true
+          AND "billing_provider" IS NULL
+          AND "is_test_account" = false
+      `);
+      await pool.query(`
+        UPDATE "users"
+        SET "is_pro" = ("paid_pro" OR "complimentary_pro" OR "is_test_account")
+      `);
+    }
 
     // The migration creates these indexes on normal installs. Keep repair
     // guards after migrate() so a fresh database still reaches migration 0000
@@ -358,6 +409,8 @@ async function checkSchemaHealth(): Promise<void> {
     ['users', 'last_name'],
     ['users', 'profile_image_url'],
     ['users', 'is_pro'],
+    ['users', 'paid_pro'],
+    ['users', 'complimentary_pro'],
     ['users', 'is_test_account'],
     ['users', 'is_suspended'],
     ['users', 'whop_membership_id'],

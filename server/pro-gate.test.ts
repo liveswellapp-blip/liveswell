@@ -104,12 +104,26 @@ vi.mock("./db", () => {
         // where() must be awaitable directly (storage.getUser awaits it for the
         // suspension gate in isAuthenticated) AND support .limit() (requirePro).
         where: vi.fn().mockImplementation(() => {
+          const membershipId = mockWebhookEvent?.data?.id ?? null;
           const rows =
             mockIsPro === null
               ? []
-              : [{ id: "user-123", isPro: mockIsPro, isSuspended: mockIsSuspended }];
+              : [{
+                  id: "user-123",
+                  isPro: mockIsPro,
+                  paidPro: mockIsPro,
+                  complimentaryPro: false,
+                  isTestAccount: false,
+                  isSuspended: mockIsSuspended,
+                  billingProvider: mockIsPro ? "whop" : null,
+                  whopMembershipId: membershipId,
+                }];
           const thenable: any = Promise.resolve(rows);
-          thenable.limit = vi.fn(() => Promise.resolve(rows));
+          thenable.limit = vi.fn(() => {
+            const limited: any = Promise.resolve(rows);
+            limited.for = vi.fn(() => Promise.resolve(rows));
+            return limited;
+          });
           return thenable;
         }),
       })),
@@ -128,7 +142,16 @@ vi.mock("./db", () => {
 });
 
 vi.mock("@shared/schema", () => ({
-  users: { id: "id", isPro: "isPro", whopMembershipId: "whopMembershipId" },
+  users: {
+    id: "id",
+    isPro: "isPro",
+    paidPro: "paidPro",
+    complimentaryPro: "complimentaryPro",
+    isTestAccount: "isTestAccount",
+    isSuspended: "isSuspended",
+    billingProvider: "billingProvider",
+    whopMembershipId: "whopMembershipId",
+  },
   userEvents: { userId: "userId", type: "type", payload: "payload" },
 }));
 
@@ -347,6 +370,7 @@ describe("Whop webhook lifecycle — membership.activated sets isPro=true", () =
   const originalEnv: Record<string, string | undefined> = {};
 
   beforeEach(() => {
+    mockIsPro = false;
     // Set required env vars for the webhook handler
     originalEnv.WHOP_WEBHOOK_SECRET = process.env.WHOP_WEBHOOK_SECRET;
     originalEnv.WHOP_MONTHLY_PLAN_ID = process.env.WHOP_MONTHLY_PLAN_ID;
@@ -462,6 +486,7 @@ describe("Whop webhook lifecycle — membership.deactivated sets isPro=false", (
   const originalEnv: Record<string, string | undefined> = {};
 
   beforeEach(() => {
+    mockIsPro = true;
     originalEnv.WHOP_WEBHOOK_SECRET = process.env.WHOP_WEBHOOK_SECRET;
     originalEnv.WHOP_MONTHLY_PLAN_ID = process.env.WHOP_MONTHLY_PLAN_ID;
     process.env.WHOP_WEBHOOK_SECRET = TEST_WEBHOOK_SECRET;

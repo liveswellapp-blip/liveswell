@@ -179,6 +179,40 @@ connection's live mode and registers the published runtime domain automatically.
 `server/stripe-catalog.ts`, `scripts/seed-stripe-products.ts`,
 `migrations/0010_add_stripe_billing_foundation.sql`
 
+### Subscription backend API
+
+The Stripe subscription backend is additive; existing Whop checkout and webhook
+handling remain active during the migration.
+
+- `POST /api/stripe/subscription` requires Clerk authentication and accepts only
+  `{ "plan": "monthly" | "annual" }`. The server resolves and verifies the
+  allowlisted Stripe lookup key, creates/reuses the Stripe customer
+  idempotently, blocks duplicate subscriptions/checkouts, and returns an
+  embedded Checkout Session ID and client secret.
+- `GET /api/billing/subscription` returns the provider-neutral billing state:
+  `isPro`, `provider`, `plan`, `renewsAt`, `canManageBilling`, and
+  `managementType`. Providers are `stripe`, `whop`, `complimentary`, `test`, or
+  `free`. Provider outages fall back to the locally cached access state.
+- `POST /api/stripe/billing-portal` creates a short-lived Stripe Billing Portal
+  URL only for users whose billing provider is Stripe.
+- `/api/stripe/webhook` signature-verifies the raw body, synchronizes the Stripe
+  model, and reconciles LiveSwell access. Active/trialing subscriptions grant
+  Pro; past-due, unpaid, canceled, incomplete, incomplete-expired, and paused
+  subscriptions do not. Replays and stale cancellations are idempotent.
+- Stripe lifecycle events cannot revoke Whop, complimentary, or test access. No
+  card data or payment credentials are stored by LiveSwell.
+- Paid, complimentary, and test entitlements are cached independently
+  (`paid_pro`, `complimentary_pro`, and `is_test_account`); `is_pro` is their
+  union. Billing webhooks may change only the paid source they currently own.
+  Migration `0011_add_pro_entitlement_sources` backfills existing users.
+- Stripe lifecycle reconciliation re-fetches the subscription after locking the
+  user row, so delayed or concurrently processed events cannot restore stale
+  access. Whop revocations similarly require the locked membership ID to match.
+
+**Relevant files:** `server/stripe-billing.ts`,
+`server/stripe-billing-routes.ts`, `server/pro-transitions.ts`,
+`migrations/0011_add_pro_entitlement_sources.sql`
+
 ---
 
 ## SMS A2P 10DLC Registration (Twilio)

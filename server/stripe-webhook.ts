@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response } from "express";
 import { runMigrations as runStripeMigrations } from "stripe-replit-sync";
-import { getStripeSync } from "./stripe-client";
+import { constructStripeWebhookEvent, getStripeSync } from "./stripe-client";
+import { processStripeBillingEvent } from "./stripe-billing";
 
 const STRIPE_WEBHOOK_PATH = "/api/stripe/webhook";
 
@@ -22,13 +23,22 @@ export function registerStripeWebhook(app: Express): void {
         return res.status(500).json({ error: "Stripe webhook body was parsed too early" });
       }
 
+      let event;
+      try {
+        event = await constructStripeWebhookEvent(req.body, signature);
+      } catch (error) {
+        console.warn("[stripe/webhook] Signature verification failed:", error);
+        return res.status(400).json({ error: "Invalid Stripe webhook signature" });
+      }
+
       try {
         const stripeSync = await getStripeSync();
         await stripeSync.processWebhook(req.body, signature);
+        await processStripeBillingEvent(event);
         return res.status(200).json({ received: true });
       } catch (error) {
-        console.error("[stripe/webhook] Signature verification or sync failed:", error);
-        return res.status(400).json({ error: "Stripe webhook processing failed" });
+        console.error("[stripe/webhook] Verified event processing failed:", error);
+        return res.status(500).json({ error: "Stripe webhook processing failed" });
       }
     },
   );

@@ -250,8 +250,8 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
   });
 
   // ── Grant / revoke a complimentary Pro plan ──────────────────────────────
-  // Separate from test access: sets isPro only, never touches isTestAccount
-  // or whopMembershipId. Revoking refuses to downgrade a paying Whop member.
+  // Separate from paid and test access. Revoking the complimentary source
+  // preserves any paid/test entitlement that still grants Pro.
   app.post("/api/admin/users/:userId/plan-override", requireAdminAuth, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -263,15 +263,6 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      if (!grantPro && user.whopMembershipId) {
-        return res.status(409).json({
-          message: "This user has an active Whop subscription — revoking a comp would cancel a paying plan. Manage their subscription in Whop instead.",
-        });
-      }
-
-      // transitionProStatus conditions its UPDATE on the prior isPro value and
-      // inserts the audit event in the same transaction — both succeed or both
-      // roll back.  Returns { changed: false } when already in target state.
       await transitionProStatus(userId, grantPro, "comp");
 
       // Fetch and return the updated row.

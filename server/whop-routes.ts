@@ -188,6 +188,9 @@ export function registerWhopRoutes(app: Express): void {
       const [user] = await db
         .select({
           isPro:            users.isPro,
+          paidPro:          users.paidPro,
+          complimentaryPro: users.complimentaryPro,
+          isTestAccount:    users.isTestAccount,
           whopMembershipId: users.whopMembershipId,
         })
         .from(users)
@@ -229,7 +232,7 @@ export function registerWhopRoutes(app: Express): void {
       try {
         membership = await Promise.race([
           getWhopClient().then(client =>
-            client.memberships.retrieve(user.whopMembershipId),
+            client.memberships.retrieve(user.whopMembershipId!),
           ),
           timeoutPromise,
         ]);
@@ -258,9 +261,10 @@ export function registerWhopRoutes(app: Express): void {
       // and inserts the audit event in the same transaction.
       // Only sync on confirmed deactivation — never downgrade based on a
       // transient or ambiguous Whop response (handled above by whopCallFailed).
-      if (isActive !== user.isPro) {
+      if (isActive !== user.paidPro) {
         await transitionProStatus(userId!, isActive, 'whop', {
           extraPayload: { via: 'subscription_reconciliation', membershipId: user.whopMembershipId },
+          expectedWhopMembershipId: user.whopMembershipId,
         });
       }
 
@@ -271,7 +275,7 @@ export function registerWhopRoutes(app: Express): void {
       // a genuine deactivation, not a transient error.
       // If the DB said isPro=false but Whop says active, the live value wins.
       return res.json({
-        isPro:    isActive,
+        isPro:    isActive || user.complimentaryPro || user.isTestAccount,
         plan:     planId ? planLabel(planId) : null,
         renewsAt: (membership as any).renewal_period_end ?? null,
       });
@@ -385,6 +389,7 @@ export function registerWhopRoutes(app: Express): void {
           // idempotent re-deliveries return { changed: false } without writing.
           const { changed } = await transitionProStatus(target.id, false, 'whop', {
             extraPayload: { membershipId: membership.id },
+            expectedWhopMembershipId: membership.id,
           });
           if (changed) {
             console.log(`[whop/webhook] Set isPro=false for ${target.id} (membership ${membership.id})`);

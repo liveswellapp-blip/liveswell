@@ -113,6 +113,20 @@ vi.mock("./db", () => {
 
   const makeTx = () => ({
     ...makeWritable(),
+    select: vi.fn(() => {
+      const chain: any = {
+        from: vi.fn(() => chain),
+        where: vi.fn(() => chain),
+        limit: vi.fn(() => chain),
+        for: vi.fn(async () => mockUser ? [{
+          paidPro: mockUser.paidPro ?? false,
+          complimentaryPro: mockUser.complimentaryPro ?? false,
+          isTestAccount: mockUser.isTestAccount ?? false,
+          billingProvider: mockUser.billingProvider ?? null,
+        }] : []),
+      };
+      return chain;
+    }),
     delete: vi.fn((table: any) => {
       txDeletedTables.push(table);
       return { where: vi.fn(async () => undefined) };
@@ -354,30 +368,58 @@ describe("POST /api/admin/users/:userId/plan-override", () => {
     expect(res.status).toBe(400);
   });
 
-  it("409 when revoking would downgrade a paying Whop subscriber", async () => {
-    mockUser = { id: "user_1", isPro: true, whopMembershipId: "mem_123" };
+  it("revokes only complimentary access while preserving a paying Whop subscriber", async () => {
+    mockUser = {
+      id: "user_1",
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: true,
+      isTestAccount: false,
+      billingProvider: "whop",
+      whopMembershipId: "mem_123",
+    };
     const res = await request(buildApp())
       .post("/api/admin/users/user_1/plan-override")
       .send({ grantPro: false });
-    expect(res.status).toBe(409);
-    expect(dbUpdateSets).toHaveLength(0); // isPro untouched
+    expect(res.status).toBe(200);
+    expect(dbUpdateSets[0]).toMatchObject({
+      complimentaryPro: false,
+      isPro: true,
+    });
   });
 
   it("grants Pro without touching isTestAccount or whopMembershipId", async () => {
-    mockUser = { id: "user_1", isPro: false, whopMembershipId: null };
-    mockUpdateReturning = [{ id: "user_1", isPro: true }];
+    mockUser = {
+      id: "user_1",
+      isPro: false,
+      paidPro: false,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: null,
+      whopMembershipId: null,
+    };
     const res = await request(buildApp())
       .post("/api/admin/users/user_1/plan-override")
       .send({ grantPro: true });
     expect(res.status).toBe(200);
-    expect(dbUpdateSets[0]).toMatchObject({ isPro: true });
+    expect(dbUpdateSets[0]).toMatchObject({
+      isPro: true,
+      complimentaryPro: true,
+    });
     expect(dbUpdateSets[0]).not.toHaveProperty("isTestAccount");
     expect(dbUpdateSets[0]).not.toHaveProperty("whopMembershipId");
   });
 
   it("revokes a comp when there is no Whop membership", async () => {
-    mockUser = { id: "user_1", isPro: true, whopMembershipId: null };
-    mockUpdateReturning = [{ id: "user_1", isPro: false }];
+    mockUser = {
+      id: "user_1",
+      isPro: true,
+      paidPro: false,
+      complimentaryPro: true,
+      isTestAccount: false,
+      billingProvider: null,
+      whopMembershipId: null,
+    };
     const res = await request(buildApp())
       .post("/api/admin/users/user_1/plan-override")
       .send({ grantPro: false });
@@ -386,25 +428,33 @@ describe("POST /api/admin/users/:userId/plan-override", () => {
   });
 
   it("idempotency — granting Pro to an already-Pro user returns 200 without a duplicate event", async () => {
-    mockUser = { id: "user_1", isPro: true, whopMembershipId: null };
-    // mockUpdateReturning = [] means isPro was already true — no row updated.
-    mockUpdateReturning = [];
+    mockUser = {
+      id: "user_1",
+      isPro: true,
+      paidPro: false,
+      complimentaryPro: true,
+      isTestAccount: false,
+      billingProvider: null,
+      whopMembershipId: null,
+    };
     const res = await request(buildApp())
       .post("/api/admin/users/user_1/plan-override")
       .send({ grantPro: true });
     expect(res.status).toBe(200);
-    // The conditional update ran but returned no rows (already Pro).
-    expect(dbUpdateSets[0]).toMatchObject({ isPro: true });
-    // Only one DB write — the conditional update inside the transaction.
-    // No event-insert should follow because the state didn't change.
-    // (txRan is true; but the second insert inside tx is never reached when
-    //  returning is empty.)
+    expect(dbUpdateSets).toHaveLength(0);
     expect(txRan).toBe(true);
   });
 
   it("rollback — a failure in the audit event insert propagates as 500 so the Pro update rolls back", async () => {
-    mockUser = { id: "user_1", isPro: false, whopMembershipId: null };
-    mockUpdateReturning = [{ id: "user_1", isPro: true }]; // state would change
+    mockUser = {
+      id: "user_1",
+      isPro: false,
+      paidPro: false,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: null,
+      whopMembershipId: null,
+    };
     txInsertShouldFail = true; // tx.insert(userEvents) throws
     const res = await request(buildApp())
       .post("/api/admin/users/user_1/plan-override")

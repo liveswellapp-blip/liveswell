@@ -9,27 +9,25 @@
  * (e.g. a Whop webhook handler) can safely return a 5xx and let the delivery
  * platform retry.
  *
- * Idempotency: the UPDATE is conditioned on the prior `isPro` value using a
- * WHERE clause.  If the state is already the target value the transaction
- * commits immediately with `{ changed: false }` and no rows are written.
- * PostgreSQL's row-level locking serialises concurrent requests that target
- * the same user, so only one transaction ever writes the event.
+ * `isPro` is the union of paid, complimentary, and test entitlements. Source
+ * changes lock the user row and mutate only their own entitlement, so one
+ * provider can never revoke access owned by another source.
  */
 
 import { db } from "./db";
 import { users, userEvents } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
-export type ProSource = "whop" | "comp" | "test";
+export type ProSource = "whop" | "stripe" | "comp" | "test";
 
 export interface TransitionResult {
-  /** true when isPro was actually changed (false = already in target state) */
+  /** true when this source's entitlement actually changed */
   changed: boolean;
 }
 
 /**
- * Atomically sets `users.isPro` to `newIsPro` for the given user and records
- * the matching `pro_granted` or `pro_revoked` event in `user_events`.
+ * Atomically changes one source entitlement, derives `users.isPro`, and records
+ * the matching source grant/revoke event in `user_events`.
  *
  * Both writes happen inside a single DB transaction.
  *
@@ -44,33 +42,80 @@ export async function transitionProStatus(
   {
     extraSet,
     extraPayload,
+    expectedWhopMembershipId,
   }: {
     extraSet?: Record<string, unknown>;
     extraPayload?: Record<string, unknown>;
+    expectedWhopMembershipId?: string;
   } = {},
 ): Promise<TransitionResult> {
   return db.transaction(async (tx) => {
-    // Conditional update — only fires when the current state differs from the
-    // target.  PostgreSQL acquires a row-level lock before evaluating WHERE, so
-    // a concurrent transaction that targets the same row waits here; after the
-    // first commits with isPro=true the second's WHERE isPro=false fails and it
-    // returns { changed: false } without inserting a duplicate event.
-    const updated = await tx
+    const [current] = await tx
+      .select({
+        paidPro: users.paidPro,
+        complimentaryPro: users.complimentaryPro,
+        isTestAccount: users.isTestAccount,
+        billingProvider: users.billingProvider,
+        whopMembershipId: users.whopMembershipId,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+      .for("update");
+
+    if (!current) return { changed: false };
+    if (source === "stripe") {
+      throw new Error("Stripe entitlement changes must use reconcileStripeSubscription.");
+    }
+
+    let nextPaidPro = current.paidPro;
+    let nextComplimentaryPro = current.complimentaryPro;
+    let nextIsTestAccount = current.isTestAccount;
+    const sourceSet: Record<string, unknown> = {};
+    let sourceChanged = false;
+
+    if (source === "comp") {
+      sourceChanged = current.complimentaryPro !== newIsPro;
+      nextComplimentaryPro = newIsPro;
+      sourceSet.complimentaryPro = newIsPro;
+    } else if (source === "test") {
+      sourceChanged = current.isTestAccount !== newIsPro;
+      nextIsTestAccount = newIsPro;
+      sourceSet.isTestAccount = newIsPro;
+    } else {
+      // Whop may only change the paid entitlement if it currently owns it.
+      if (!newIsPro && current.billingProvider !== "whop") {
+        return { changed: false };
+      }
+      if (
+        !newIsPro &&
+        expectedWhopMembershipId &&
+        current.whopMembershipId !== expectedWhopMembershipId
+      ) {
+        return { changed: false };
+      }
+      if (newIsPro && current.paidPro && current.billingProvider !== "whop") {
+        return { changed: false };
+      }
+      sourceChanged = current.paidPro !== newIsPro;
+      nextPaidPro = newIsPro;
+      sourceSet.paidPro = newIsPro;
+      if (newIsPro) sourceSet.billingProvider = "whop";
+    }
+
+    if (!sourceChanged) return { changed: false };
+
+    const nextIsPro = nextPaidPro || nextComplimentaryPro || nextIsTestAccount;
+    await tx
       .update(users)
       .set({
-        isPro: newIsPro,
+        ...sourceSet,
+        isPro: nextIsPro,
         updatedAt: new Date(),
         ...(extraSet ?? {}),
       })
-      .where(and(eq(users.id, userId), eq(users.isPro, !newIsPro)))
-      .returning({ id: users.id });
+      .where(eq(users.id, userId));
 
-    if (updated.length === 0) {
-      return { changed: false };
-    }
-
-    // Event INSERT is inside the same transaction — it rolls back with the
-    // users update if anything fails, so the history is never orphaned.
     await tx.insert(userEvents).values({
       userId,
       type: newIsPro ? "pro_granted" : "pro_revoked",
@@ -103,37 +148,221 @@ export async function activateWhopMembership(
       .values({
         id: clerkUserId,
         isPro: false,
+        paidPro: false,
         whopMembershipId: membershipId,
         billingProvider: "whop",
       })
       .onConflictDoNothing();
 
-    // Conditional grant — only when not already Pro.
-    const updated = await tx
+    const [current] = await tx
+      .select({
+        paidPro: users.paidPro,
+        billingProvider: users.billingProvider,
+      })
+      .from(users)
+      .where(eq(users.id, clerkUserId))
+      .limit(1)
+      .for("update");
+
+    if (!current) return { changed: false };
+
+    // A delayed legacy Whop activation must not take paid ownership from Stripe.
+    if (current.paidPro && current.billingProvider !== "whop") {
+      await tx
+        .update(users)
+        .set({ whopMembershipId: membershipId, updatedAt: new Date() })
+        .where(eq(users.id, clerkUserId));
+      return { changed: false };
+    }
+
+    if (current.paidPro) {
+      await tx
+        .update(users)
+        .set({ whopMembershipId: membershipId, updatedAt: new Date() })
+        .where(eq(users.id, clerkUserId));
+      return { changed: false };
+    }
+
+    await tx
       .update(users)
       .set({
         isPro: true,
+        paidPro: true,
         whopMembershipId: membershipId,
         billingProvider: "whop",
         updatedAt: new Date(),
       })
-      .where(and(eq(users.id, clerkUserId), eq(users.isPro, false)))
-      .returning({ id: users.id });
+      .where(eq(users.id, clerkUserId));
+    await tx.insert(userEvents).values({
+      userId: clerkUserId,
+      type: "pro_granted",
+      payload: { source: "whop", membershipId },
+    });
 
-    if (updated.length > 0) {
-      await tx.insert(userEvents).values({
-        userId: clerkUserId,
-        type: "pro_granted",
-        payload: { source: "whop", membershipId },
-      });
-    } else {
-      // User was already Pro — still keep whopMembershipId current.
-      await tx
-        .update(users)
-        .set({ whopMembershipId: membershipId, billingProvider: "whop" })
-        .where(eq(users.id, clerkUserId));
+    return { changed: true };
+  });
+}
+
+export interface StripeSubscriptionTransition {
+  userId: string;
+  customerId: string;
+  subscriptionId: string;
+  status: string;
+  active: boolean;
+  eventId?: string;
+  /** Re-fetches canonical Stripe state after the user row is locked. */
+  refreshAfterLock?: () => Promise<{
+    customerId: string;
+    subscriptionId: string;
+    status: string;
+    active: boolean;
+  }>;
+}
+
+export interface StripeTransitionResult extends TransitionResult {
+  /** true when another provider or a newer Stripe subscription owns access */
+  ignored: boolean;
+}
+
+/**
+ * Reconciles a verified Stripe subscription without disturbing access owned by
+ * Whop, a complimentary grant, or a test account.
+ *
+ * Stale cancellation events are ignored unless their subscription ID still
+ * matches the Stripe subscription currently stored on the user.
+ */
+export async function reconcileStripeSubscription(
+  input: StripeSubscriptionTransition,
+): Promise<StripeTransitionResult> {
+  return db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({
+        isPro: users.isPro,
+        paidPro: users.paidPro,
+        complimentaryPro: users.complimentaryPro,
+        isTestAccount: users.isTestAccount,
+        billingProvider: users.billingProvider,
+        stripeSubscriptionId: users.stripeSubscriptionId,
+      })
+      .from(users)
+      .where(eq(users.id, input.userId))
+      .limit(1)
+      .for("update");
+
+    if (!current) {
+      return { changed: false, ignored: true };
     }
 
-    return { changed: updated.length > 0 };
+    // Webhook callers refresh Stripe after acquiring the row lock. This closes
+    // the retrieve-to-commit race where a cancellation could occur while an
+    // older active handler was waiting to enter this transaction.
+    const transition = input.refreshAfterLock
+      ? { ...input, ...(await input.refreshAfterLock()) }
+      : input;
+
+    if (transition.active) {
+      // Never let Stripe take ownership of access that is currently provided
+      // by Whop, a complimentary grant, or a test account.
+      if (current.paidPro && current.billingProvider !== "stripe") {
+        return { changed: false, ignored: true };
+      }
+
+      if (current.paidPro) {
+        // A delayed activation for an older subscription must not replace the
+        // newer subscription that currently owns access.
+        if (
+          current.stripeSubscriptionId &&
+          current.stripeSubscriptionId !== transition.subscriptionId
+        ) {
+          return { changed: false, ignored: true };
+        }
+
+        // Replayed activation/resumption: refresh references but do not emit a
+        // duplicate pro_granted event.
+        await tx
+          .update(users)
+          .set({
+            isPro: true,
+            stripeCustomerId: transition.customerId,
+            stripeSubscriptionId: transition.subscriptionId,
+            billingProvider: "stripe",
+            updatedAt: new Date(),
+          })
+          .where(and(eq(users.id, input.userId), eq(users.billingProvider, "stripe")));
+        return { changed: false, ignored: false };
+      }
+
+      const updated = await tx
+        .update(users)
+        .set({
+          isPro: true,
+          paidPro: true,
+          stripeCustomerId: transition.customerId,
+          stripeSubscriptionId: transition.subscriptionId,
+          billingProvider: "stripe",
+          updatedAt: new Date(),
+        })
+        .where(and(eq(users.id, input.userId), eq(users.paidPro, false)))
+        .returning({ id: users.id });
+
+      if (updated.length === 0) {
+        return { changed: false, ignored: true };
+      }
+
+      await tx.insert(userEvents).values({
+        userId: input.userId,
+        type: "pro_granted",
+        payload: {
+          source: "stripe",
+          subscriptionId: transition.subscriptionId,
+          status: transition.status,
+          eventId: transition.eventId,
+        },
+      });
+      return { changed: true, ignored: false };
+    }
+
+    // Only the current Stripe subscription may revoke Stripe-owned access.
+    // This makes duplicate and out-of-order cancellation events harmless.
+    if (
+      current.billingProvider !== "stripe" ||
+      current.stripeSubscriptionId !== transition.subscriptionId ||
+      !current.paidPro
+    ) {
+      return { changed: false, ignored: true };
+    }
+
+    const updated = await tx
+      .update(users)
+      .set({
+        isPro: current.complimentaryPro || current.isTestAccount,
+        paidPro: false,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(users.id, input.userId),
+          eq(users.paidPro, true),
+          eq(users.billingProvider, "stripe"),
+          eq(users.stripeSubscriptionId, transition.subscriptionId),
+        ),
+      )
+      .returning({ id: users.id });
+
+    if (updated.length === 0) {
+      return { changed: false, ignored: false };
+    }
+
+    await tx.insert(userEvents).values({
+      userId: input.userId,
+      type: "pro_revoked",
+      payload: {
+        source: "stripe",
+        subscriptionId: transition.subscriptionId,
+        status: transition.status,
+        eventId: transition.eventId,
+      },
+    });
+    return { changed: true, ignored: false };
   });
 }
