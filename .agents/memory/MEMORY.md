@@ -1,6 +1,6 @@
 - [Neon migration deploy pitfalls](neon-migration-deploy-pitfalls.md) — migrations/ must be copied into dist/ at build time; DO $$ PL/pgSQL blocks fail silently on Neon HTTP driver; use ADD COLUMN IF NOT EXISTS instead.
 - [Open-Meteo Marine fallback](open-meteo-marine-fallback.md) — NOAA NDBC is US-only; non-US surf spots need Open-Meteo Marine (marine-api.open-meteo.com) as a fallback for current wave data.
-- [Clerk SSO callback routing](clerk-sso-callback-routing.md) — Clerk appends /sso-callback to the component path prop; /sign-in/sso-callback AND /sign-up/sso-callback must be registered explicitly or OAuth loops.
+- [Clerk auth subpath routing](clerk-sso-callback-routing.md) — embedded Clerk flows use nested paths such as factor-one and sso-callback; Wouter auth routes must use the exact optional wildcard syntax.
 - [Clerk getAuth pattern](clerk-getauth-pattern.md) — req.auth is a callable in @clerk/express v2+; use getAuth(req).userId not req.auth.userId (undefined on a function object).
 - [Drizzle migration journal](drizzle-migration-journal.md) — new migrations/*.sql run ONLY if added to migrations/meta/_journal.json; otherwise silently skipped while startup logs success.
 - [Migration repair guard ordering](migration-repair-guard-ordering.md) — CREATE TABLE repair guards must run AFTER drizzle migrate(), never before; migration 0000 lacks IF NOT EXISTS on some tables so pre-migrate creation causes it to fail on fresh DBs.

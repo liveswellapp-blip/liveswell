@@ -19,7 +19,6 @@ import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
 import ClerkSignIn from "@/pages/ClerkSignIn";
 import ClerkSignUp from "@/pages/ClerkSignUp";
-import SsoCallback from "@/pages/SsoCallback";
 import AdminDashboard from "@/pages/admin";
 import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
@@ -82,20 +81,15 @@ function Router() {
     <>
       <Switch>
         {/* Clerk auth pages */}
-        <Route path="/sign-in" component={ClerkSignIn} />
-        <Route path="/sign-up" component={ClerkSignUp} />
+        {/* Clerk owns nested route segments such as /sign-in/factor-one,
+            /sign-in/factor-two, and /sign-in/sso-callback. The optional
+            wildcard keeps those steps inside the branded auth page instead
+            of falling through to the public landing page. */}
+        <Route path="/sign-in/*?" component={ClerkSignIn} />
+        <Route path="/sign-up/*?" component={ClerkSignUp} />
         {/* Keep /login as alias so old links still work */}
-        <Route path="/login" component={ClerkSignIn} />
-        <Route path="/register" component={ClerkSignUp} />
-        {/* OAuth callbacks — Clerk appends /sso-callback to the component's `path`
-            prop, so <SignIn path="/sign-in"> uses /sign-in/sso-callback and
-            <SignUp path="/sign-up"> uses /sign-up/sso-callback.  All three are
-            registered here so the AuthenticateWithRedirectCallback component can
-            complete the session handshake regardless of which flow the user came from.
-            These must appear before all auth-gated routes. */}
-        <Route path="/sso-callback" component={SsoCallback} />
-        <Route path="/sign-in/sso-callback" component={SsoCallback} />
-        <Route path="/sign-up/sso-callback" component={SsoCallback} />
+        <Route path="/login/*?" component={ClerkSignIn} />
+        <Route path="/register/*?" component={ClerkSignUp} />
 
         {/* Public info pages */}
         <Route path="/pricing" component={PricingPage} />
