@@ -207,14 +207,13 @@ export default function AccountPage() {
     <div className="min-h-screen flex flex-col bg-[#030a14]">
       <Header />
       <main className="flex-1 w-full max-w-2xl mx-auto px-5 pt-8 pb-14">
-        <div className="flex items-end justify-between gap-4 mb-7">
-          <div>
+        <div className="mb-7">
+          <Link href="/profile" className="flex items-center gap-1 text-slate-500 hover:text-slate-300 text-[12px] mb-4 transition-colors">
+            <ChevronLeft size={14} />
+            Profile
+          </Link>
+          <div className="flex items-end justify-between gap-4">
             <h1 className="text-white font-bold text-2xl tracking-tight">Account &amp; Billing</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/profile" className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-300/15">
-              <ChevronLeft size={14} /> Profile
-            </Link>
             <Link href="/pricing" className="text-emerald-300 text-xs font-semibold inline-flex items-center gap-1">
               Plans <ChevronRight size={14} />
             </Link>
