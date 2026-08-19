@@ -219,31 +219,30 @@ export default function PricingPage() {
           <div className="nav-links"><Link href="/sign-in">Sign in</Link><Link href="/sign-up" className="nav-action">Create account</Link></div>
         )}
       </nav>
-
       <section className="pricing-hero">
         <h1>When the swell turns on,<br /><em>be ready.</em></h1>
-        <p>LiveSwell Pro keeps the right signal close: alerts, AI context, and the confidence to act before the window closes.</p>
+        <p>LiveSwell Pro keeps the right signal close.
+        Custom alerts (SMS, in-app, email) and AI chat.</p>
       </section>
-
       {confirming && !isPro && (
         <ConfirmationCard delayed={confirmationDelayed} onRetry={retryConfirmation} />
       )}
-       {isPro && !migrationEligible && <SuccessCard status={subscription.data} />}
-       {migrationEligible && (
-         <div className="alert confirmation" role="status">
-           <div>
-             <strong>Move billing from Whop to Stripe — two separate steps</strong>
-             <span>
-               First, start a new Stripe subscription here. Then cancel Whop yourself
-               in the Whop Hub. LiveSwell cannot transfer your saved card or cancel
-               Whop for you, and both subscriptions may renew until you finish both steps.
-             </span>
-             {!migrationAvailableForCohort && !checkoutConfig.isLoading && (
-               <span>Stripe migration is not enabled for this account yet. Keep managing your current membership in Whop.</span>
-             )}
-           </div>
-         </div>
-       )}
+      {isPro && !migrationEligible && <SuccessCard status={subscription.data} />}
+      {migrationEligible && (
+        <div className="alert confirmation" role="status">
+          <div>
+            <strong>Move billing from Whop to Stripe — two separate steps</strong>
+            <span>
+              First, start a new Stripe subscription here. Then cancel Whop yourself
+              in the Whop Hub. LiveSwell cannot transfer your saved card or cancel
+              Whop for you, and both subscriptions may renew until you finish both steps.
+            </span>
+            {!migrationAvailableForCohort && !checkoutConfig.isLoading && (
+              <span>Stripe migration is not enabled for this account yet. Keep managing your current membership in Whop.</span>
+            )}
+          </div>
+        </div>
+      )}
       {statusUnavailable && (
         <div className="alert alert-error" role="alert">
           <div>
@@ -263,7 +262,6 @@ export default function PricingPage() {
           <button onClick={() => { setCheckoutOpen(true); setCheckoutDismissed(false); }}>Resume checkout</button>
         </div>
       )}
-
       <section className="plan-grid" aria-label="LiveSwell plans">
         <PlanCard label="Free" price="$0" description="The essential read on every session." features={freeFeatures} button={<Link href={isAuthenticated ? "/" : "/sign-up"} className="button secondary">{isAuthenticated ? "Current plan" : "Start exploring"} <ChevronRight size={16} /></Link>} />
         <div className="plan-card pro-card">
@@ -296,15 +294,12 @@ export default function PricingPage() {
           <div className="feature-list">{proFeatures.map((feature) => <div key={feature}><Check size={16} /><span>{feature}</span></div>)}</div>
         </div>
       </section>
-
       {isPro && subscription.data?.canManageBilling && <div className="manage-row">Already Pro? <Link href="/account">Manage billing <ChevronRight size={14} /></Link></div>}
-
       <section className="trust-grid">
         <TrustItem icon={<ShieldCheck />} title="No card copying" body="Your selected billing provider handles payment details directly. LiveSwell never moves or stores full card numbers." />
         <TrustItem icon={<RotateCcw />} title="Change your mind" body="Cancel anytime before renewal. Your access stays clear and predictable." />
         <TrustItem icon={<LockKeyhole />} title="Built for trust" body="Auto-renewal terms and your selected interval are shown before payment." />
       </section>
-
       {bootstrap && stripe && (
         <Dialog.Root open={checkoutOpen} onOpenChange={(open) => { if (!open) closeCheckout(); }}>
           <Dialog.Portal>
