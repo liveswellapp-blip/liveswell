@@ -235,7 +235,8 @@ export class DatabaseStorage implements IStorage {
       await tx.update(notificationSettings).set({ userId: newClerkId }).where(eq(notificationSettings.userId, oldId));
       await tx.update(pushSubscriptions).set({ userId: newClerkId }).where(eq(pushSubscriptions.userId, oldId));
       await tx.update(userAlerts).set({ userId: newClerkId }).where(eq(userAlerts.userId, oldId));
-      await tx.update(alertTriggerLog).set({ userId: newClerkId }).where(eq(alertTriggerLog.userId, oldId));
+      // alert_trigger_log belongs to an alert by alert_id, not directly to a
+      // user. Its parent alert above carries the migrated user_id.
       await tx.update(agentConversations).set({ userId: newClerkId }).where(eq(agentConversations.userId, oldId));
       // agentSmsThreads is keyed by phoneNumber, not userId — no migration needed
       await tx.update(verifiedPhonesTable).set({ userId: newClerkId }).where(eq(verifiedPhonesTable.userId, oldId));
