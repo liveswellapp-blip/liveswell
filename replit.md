@@ -202,7 +202,8 @@ subscriber handling remain active during the migration.
   URL only for users whose billing provider is Stripe.
 - `/api/stripe/webhook` signature-verifies the raw body, synchronizes the Stripe
   model, and reconciles LiveSwell access. Active/trialing subscriptions grant
-  Pro; past-due, unpaid, canceled, incomplete, incomplete-expired, and paused
+  Pro; past-due remains Pro during Stripe's payment-retry grace period, while unpaid,
+  canceled, incomplete, incomplete-expired, and paused are inactive
   subscriptions do not. Replays and stale cancellations are idempotent.
 - Stripe lifecycle events cannot revoke Whop, complimentary, or test access. No
   card data or payment credentials are stored by LiveSwell.

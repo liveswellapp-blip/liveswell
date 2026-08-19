@@ -41,10 +41,15 @@ vi.mock("./pro-transitions", () => ({
 
 import {
   BillingRequestError,
+  changeStripePlan,
+  completeStripePaymentMethodSetup,
+  createStripePaymentMethodSetup,
   createStripeSubscriptionSession,
+  getStripeInvoiceDocument,
   getBillingStatus,
   processStripeBillingEvent,
   resolveStripePrice,
+  setStripeCancellation,
 } from "./stripe-billing";
 
 const validMonthlyPrice = {
@@ -70,6 +75,15 @@ const validProduct = {
     liveswell_app: "liveswell",
     catalog_version: "v1",
   },
+};
+
+const validAnnualPrice = {
+  ...validMonthlyPrice,
+  id: "price_annual",
+  lookup_key: "liveswell_pro_annual_v1",
+  unit_amount: 2999,
+  recurring: { interval: "year" },
+  metadata: { ...validMonthlyPrice.metadata, liveswell_plan: "pro_annual" },
 };
 
 describe("Stripe catalog allowlist", () => {
@@ -310,7 +324,7 @@ describe("unified billing status", () => {
       billingProvider: null,
     }];
 
-    await expect(getBillingStatus("user_comp")).resolves.toEqual({
+    await expect(getBillingStatus("user_comp")).resolves.toMatchObject({
       isPro: true,
       provider: "complimentary",
       plan: null,
@@ -350,7 +364,7 @@ describe("unified billing status", () => {
       },
     });
 
-    await expect(getBillingStatus("user_whop")).resolves.toEqual({
+    await expect(getBillingStatus("user_whop")).resolves.toMatchObject({
       isPro: true,
       provider: "whop",
       plan: "annual",
@@ -382,13 +396,13 @@ describe("unified billing status", () => {
     }];
     mocks.getUncachableStripeClient.mockRejectedValue(new Error("temporary outage"));
 
-    await expect(getBillingStatus("user_stripe")).resolves.toEqual({
+    await expect(getBillingStatus("user_stripe")).resolves.toMatchObject({
       isPro: true,
       provider: "stripe",
       plan: null,
       renewsAt: null,
       canManageBilling: true,
-      managementType: "stripe_portal",
+      managementType: "stripe_in_app",
     });
   });
 
@@ -456,6 +470,13 @@ describe("unified billing status", () => {
       .mockResolvedValueOnce(canceledSubscription);
     mocks.getUncachableStripeClient.mockResolvedValue({
       subscriptions: { retrieve },
+      customers: {
+        retrieve: vi.fn().mockResolvedValue({
+          deleted: false,
+          invoice_settings: { default_payment_method: null },
+        }),
+      },
+      invoices: { list: vi.fn().mockResolvedValue({ data: [] }) },
     });
     mocks.reconcileStripeSubscription.mockImplementation(async (input: any) => {
       await input.refreshAfterLock();
@@ -505,12 +526,166 @@ describe("unified billing status", () => {
   });
 });
 
+describe("Stripe subscription management", () => {
+  const managedUser = {
+    id: "user_stripe",
+    email: "surfer@example.test",
+    isPro: true,
+    paidPro: true,
+    complimentaryPro: false,
+    isTestAccount: false,
+    whopMembershipId: null,
+    stripeCustomerId: "cus_owned",
+    stripeSubscriptionId: "sub_owned",
+    billingProvider: "stripe",
+  };
+  const ownedSubscription = {
+    id: "sub_owned",
+    customer: "cus_owned",
+    status: "active",
+    cancel_at_period_end: false,
+    items: { data: [{ id: "si_owned", price: { id: "price_monthly", lookup_key: "liveswell_pro_monthly_v1" } }] },
+  };
+
+  beforeEach(() => {
+    mockUserRows = [{ ...managedUser }];
+    mocks.getStripePublishableKey.mockResolvedValue("pk_test_liveswell");
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("cancels only the authenticated user's linked Stripe subscription with an idempotency key", async () => {
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue(ownedSubscription),
+        update: vi.fn().mockResolvedValue({ ...ownedSubscription, cancel_at_period_end: true }),
+      },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await setStripeCancellation("user_stripe", true, "11111111-1111-4111-8111-111111111111");
+
+    expect(stripe.subscriptions.update).toHaveBeenCalledWith(
+      "sub_owned",
+      { cancel_at_period_end: true },
+      { idempotencyKey: "liveswell-cancel-user_stripe-11111111-1111-4111-8111-111111111111" },
+    );
+  });
+
+  it("rejects a subscription whose Stripe customer is not owned by the signed-in user", async () => {
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue({ ...ownedSubscription, customer: "cus_other" }),
+        update: vi.fn(),
+      },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await expect(
+      setStripeCancellation("user_stripe", true, "11111111-1111-4111-8111-111111111111"),
+    ).rejects.toMatchObject({ statusCode: 403, code: "billing_ownership_mismatch" });
+    expect(stripe.subscriptions.update).not.toHaveBeenCalled();
+  });
+
+  it("switches only an owned subscription to the verified catalog price", async () => {
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue(ownedSubscription),
+        update: vi.fn().mockResolvedValue({ ...ownedSubscription }),
+      },
+      prices: { list: vi.fn().mockResolvedValue({ data: [validAnnualPrice] }) },
+      products: { retrieve: vi.fn().mockResolvedValue(validProduct) },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await changeStripePlan("user_stripe", "annual", "22222222-2222-4222-8222-222222222222");
+
+    expect(stripe.subscriptions.update).toHaveBeenCalledWith(
+      "sub_owned",
+      expect.objectContaining({
+        items: [{ id: "si_owned", price: "price_annual" }],
+        proration_behavior: "create_prorations",
+      }),
+      { idempotencyKey: "liveswell-plan-annual-user_stripe-22222222-2222-4222-8222-222222222222" },
+    );
+  });
+
+  it("verifies a successful SetupIntent belongs to the user before setting it as default", async () => {
+    const stripe = {
+      subscriptions: {
+        retrieve: vi.fn().mockResolvedValue(ownedSubscription),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      customers: { update: vi.fn().mockResolvedValue({}) },
+      setupIntents: {
+        retrieve: vi.fn().mockResolvedValue({
+          id: "seti_owned",
+          status: "succeeded",
+          customer: "cus_owned",
+          payment_method: "pm_card",
+        }),
+      },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await completeStripePaymentMethodSetup("user_stripe", "seti_owned");
+
+    expect(stripe.customers.update).toHaveBeenCalledWith(
+      "cus_owned",
+      { invoice_settings: { default_payment_method: "pm_card" } },
+      { idempotencyKey: "liveswell-payment-customer-seti_owned" },
+    );
+    expect(stripe.subscriptions.update).toHaveBeenCalledWith(
+      "sub_owned",
+      { default_payment_method: "pm_card" },
+      { idempotencyKey: "liveswell-payment-subscription-seti_owned" },
+    );
+  });
+
+  it("does not expose another customer's invoice document", async () => {
+    const stripe = {
+      invoices: {
+        retrieve: vi.fn().mockResolvedValue({
+          customer: "cus_other",
+          invoice_pdf: "https://stripe.example/invoice.pdf",
+        }),
+      },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await expect(getStripeInvoiceDocument("user_stripe", "in_other")).rejects.toMatchObject({
+      statusCode: 404,
+      code: "invoice_not_found",
+    });
+  });
+
+  it("returns only Stripe.js bootstrap material when preparing a secure payment update", async () => {
+    const stripe = {
+      subscriptions: { retrieve: vi.fn().mockResolvedValue(ownedSubscription) },
+      setupIntents: {
+        create: vi.fn().mockResolvedValue({ id: "seti_owned", client_secret: "seti_secret" }),
+      },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await expect(
+      createStripePaymentMethodSetup("user_stripe", "33333333-3333-4333-8333-333333333333"),
+    ).resolves.toEqual({ clientSecret: "seti_secret", publishableKey: "pk_test_liveswell" });
+    expect(stripe.setupIntents.create).toHaveBeenCalledWith(
+      expect.objectContaining({ customer: "cus_owned", usage: "off_session" }),
+      { idempotencyKey: "liveswell-payment-setup-user_stripe-33333333-3333-4333-8333-333333333333" },
+    );
+  });
+});
+
 describe("Stripe lifecycle event routing", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it("maps a past-due verified subscription event to a Stripe revocation reconciliation", async () => {
+  it("maps a past-due verified subscription event to a Stripe grace-period reconciliation", async () => {
     mockUserRows = [];
     mocks.reconcileStripeSubscription.mockResolvedValue({ changed: true, ignored: false });
     const subscription = {
@@ -539,7 +714,7 @@ describe("Stripe lifecycle event routing", () => {
       customerId: "cus_1",
       subscriptionId: "sub_failed",
       status: "past_due",
-      active: false,
+      active: true,
       eventId: "evt_failed",
       refreshAfterLock: expect.any(Function),
     }));

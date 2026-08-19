@@ -7,7 +7,12 @@ let mockUserId: string | null = "user_free";
 const mocks = vi.hoisted(() => ({
   createStripeBillingPortalSession: vi.fn(),
   createStripeSubscriptionSession: vi.fn(),
+  changeStripePlan: vi.fn(),
+  completeStripePaymentMethodSetup: vi.fn(),
+  createStripePaymentMethodSetup: vi.fn(),
+  getStripeInvoiceDocument: vi.fn(),
   getBillingStatus: vi.fn(),
+  setStripeCancellation: vi.fn(),
 }));
 
 vi.mock("@clerk/express", () => ({
@@ -34,7 +39,12 @@ vi.mock("./stripe-billing", () => ({
   },
   createStripeBillingPortalSession: mocks.createStripeBillingPortalSession,
   createStripeSubscriptionSession: mocks.createStripeSubscriptionSession,
+  changeStripePlan: mocks.changeStripePlan,
+  completeStripePaymentMethodSetup: mocks.completeStripePaymentMethodSetup,
+  createStripePaymentMethodSetup: mocks.createStripePaymentMethodSetup,
+  getStripeInvoiceDocument: mocks.getStripeInvoiceDocument,
   getBillingStatus: mocks.getBillingStatus,
+  setStripeCancellation: mocks.setStripeCancellation,
 }));
 
 import { registerStripeBillingRoutes } from "./stripe-billing-routes";
@@ -111,5 +121,48 @@ describe("Stripe billing route contracts", () => {
     expect(response.status).toBe(200);
     expect(response.body.provider).toBe("complimentary");
     expect(response.body.canManageBilling).toBe(false);
+  });
+
+  it("requires a retry token before canceling a Stripe subscription", async () => {
+    const response = await request(buildApp())
+      .post("/api/stripe/subscription/cancel")
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(mocks.setStripeCancellation).not.toHaveBeenCalled();
+  });
+
+  it("passes the signed-in user and idempotency request ID to a cancellation", async () => {
+    mocks.setStripeCancellation.mockResolvedValue(undefined);
+
+    const response = await request(buildApp())
+      .post("/api/stripe/subscription/cancel")
+      .send({ requestId: "11111111-1111-4111-8111-111111111111" });
+
+    expect(response.status).toBe(200);
+    expect(mocks.setStripeCancellation).toHaveBeenCalledWith(
+      "user_free",
+      true,
+      "11111111-1111-4111-8111-111111111111",
+    );
+  });
+
+  it("does not accept unrecognized plans for a billing change", async () => {
+    const response = await request(buildApp())
+      .post("/api/stripe/subscription/plan")
+      .send({ plan: "forever", requestId: "11111111-1111-4111-8111-111111111111" });
+
+    expect(response.status).toBe(400);
+    expect(mocks.changeStripePlan).not.toHaveBeenCalled();
+  });
+
+  it("redirects only the ownership-checked invoice document URL", async () => {
+    mocks.getStripeInvoiceDocument.mockResolvedValue({ url: "https://stripe.example/invoice.pdf" });
+
+    const response = await request(buildApp()).get("/api/stripe/invoices/in_1/document");
+
+    expect(response.status).toBe(303);
+    expect(response.headers.location).toBe("https://stripe.example/invoice.pdf");
+    expect(mocks.getStripeInvoiceDocument).toHaveBeenCalledWith("user_free", "in_1");
   });
 });

@@ -59,7 +59,7 @@ type BillingStatus = {
   plan: "monthly" | "annual" | null;
   renewsAt: number | null;
   canManageBilling: boolean;
-  managementType: "stripe_portal" | "whop_hub" | null;
+  managementType: "stripe_in_app" | "whop_hub" | null;
 };
 
 const freeStatus: BillingStatus = {
@@ -213,7 +213,7 @@ describe("LiveSwell Stripe pricing checkout", () => {
       plan: "annual",
       renewsAt: 1_800_000_000,
       canManageBilling: true,
-      managementType: "stripe_portal",
+      managementType: "stripe_in_app",
     });
 
     const current = await screen.findByRole("button", { name: /pro is active/i });

@@ -12,8 +12,29 @@ import { reconcileStripeSubscription, transitionProStatus } from "./pro-transiti
 
 export type BillingPlan = "monthly" | "annual";
 export type AccessProvider = "stripe" | "whop" | "complimentary" | "test" | "free";
+export type StripeAccessState = "active" | "grace" | "canceled" | "incomplete" | "unpaid" | "unknown";
 
-const ACTIVE_STRIPE_STATUSES = new Set(["active", "trialing"]);
+export type BillingPaymentMethod = {
+  brand: string;
+  last4: string;
+  expMonth: number | null;
+  expYear: number | null;
+};
+
+export type BillingInvoice = {
+  id: string;
+  number: string | null;
+  status: string | null;
+  createdAt: number;
+  amountPaid: number;
+  currency: string;
+  hostedUrl: string | null;
+  pdfUrl: string | null;
+};
+
+// Stripe keeps retrying a failed renewal while a subscription is past_due.
+// LiveSwell treats that provider-controlled retry window as a grace period.
+const ACTIVE_STRIPE_STATUSES = new Set(["active", "trialing", "past_due"]);
 const TERMINAL_STRIPE_STATUSES = new Set(["canceled", "incomplete_expired"]);
 const ACTIVE_WHOP_STATUSES = new Set(["active", "trialing", "canceling"]);
 const PROVIDER_TIMEOUT_MS = 5_000;
@@ -36,8 +57,15 @@ export interface BillingStatus {
   provider: AccessProvider;
   plan: BillingPlan | null;
   renewsAt: number | null;
+  periodEndsAt: number | null;
+  subscriptionStatus: Stripe.Subscription.Status | null;
+  accessState: StripeAccessState;
+  cancelAtPeriodEnd: boolean;
+  paymentMethod: BillingPaymentMethod | null;
+  invoices: BillingInvoice[];
+  providerState: "live" | "cached" | "not_applicable";
   canManageBilling: boolean;
-  managementType: "stripe_portal" | "whop_hub" | null;
+  managementType: "stripe_in_app" | "whop_hub" | null;
 }
 
 export class BillingRequestError extends Error {
@@ -324,6 +352,178 @@ export async function createStripeBillingPortalSession(
   return { url: session.url };
 }
 
+async function getOwnedStripeSubscription(
+  userId: string,
+  stripe: Stripe,
+): Promise<{ user: BillingUser; subscription: Stripe.Subscription }> {
+  const user = await loadBillingUser(userId);
+  if (
+    !user ||
+    user.billingProvider !== "stripe" ||
+    !user.stripeCustomerId ||
+    !user.stripeSubscriptionId
+  ) {
+    throw new BillingRequestError(
+      400,
+      "stripe_billing_unavailable",
+      "This account does not have an active Stripe-managed subscription.",
+    );
+  }
+  const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+    expand: ["default_payment_method"],
+  });
+  if (stripeCustomerId(subscription.customer) !== user.stripeCustomerId) {
+    throw new BillingRequestError(
+      403,
+      "billing_ownership_mismatch",
+      "This Stripe subscription is not linked to your account.",
+    );
+  }
+  return { user, subscription };
+}
+
+function mutationKey(userId: string, action: string, requestId: string): string {
+  return `liveswell-${action}-${userId}-${requestId}`;
+}
+
+export async function setStripeCancellation(
+  userId: string,
+  cancelAtPeriodEnd: boolean,
+  requestId: string,
+): Promise<void> {
+  const stripe = await getUncachableStripeClient();
+  const { subscription } = await getOwnedStripeSubscription(userId, stripe);
+  if (TERMINAL_STRIPE_STATUSES.has(subscription.status) || subscription.status === "unpaid") {
+    throw new BillingRequestError(409, "subscription_not_manageable", "This subscription can no longer be changed.");
+  }
+  await stripe.subscriptions.update(
+    subscription.id,
+    { cancel_at_period_end: cancelAtPeriodEnd },
+    { idempotencyKey: mutationKey(userId, cancelAtPeriodEnd ? "cancel" : "resume", requestId) },
+  );
+}
+
+export async function changeStripePlan(
+  userId: string,
+  plan: BillingPlan,
+  requestId: string,
+): Promise<void> {
+  const stripe = await getUncachableStripeClient();
+  const { subscription } = await getOwnedStripeSubscription(userId, stripe);
+  if (TERMINAL_STRIPE_STATUSES.has(subscription.status) || subscription.status === "unpaid") {
+    throw new BillingRequestError(409, "subscription_not_manageable", "This subscription can no longer be changed.");
+  }
+  const currentItem = subscription.items.data[0];
+  if (!currentItem) {
+    throw new BillingRequestError(409, "subscription_item_missing", "This subscription has no billable plan item.");
+  }
+  const price = await resolveStripePrice(stripe, plan);
+  if (currentItem.price.id === price.id) {
+    throw new BillingRequestError(409, "already_on_plan", "This is already your current plan.");
+  }
+  await stripe.subscriptions.update(
+    subscription.id,
+    {
+      items: [{ id: currentItem.id, price: price.id }],
+      proration_behavior: "create_prorations",
+      metadata: {
+        clerk_user_id: userId,
+        liveswell_app: "liveswell",
+        liveswell_plan: plan,
+      },
+    },
+    { idempotencyKey: mutationKey(userId, `plan-${plan}`, requestId) },
+  );
+}
+
+export async function createStripePaymentMethodSetup(
+  userId: string,
+  requestId: string,
+): Promise<{ clientSecret: string; publishableKey: string }> {
+  const stripe = await getUncachableStripeClient();
+  const { user, subscription } = await getOwnedStripeSubscription(userId, stripe);
+  if (TERMINAL_STRIPE_STATUSES.has(subscription.status) || subscription.status === "unpaid") {
+    throw new BillingRequestError(409, "subscription_not_manageable", "This subscription can no longer be changed.");
+  }
+  const [setupIntent, publishableKey] = await Promise.all([
+    stripe.setupIntents.create(
+      {
+        customer: user.stripeCustomerId!,
+        usage: "off_session",
+        payment_method_types: ["card"],
+        metadata: {
+          clerk_user_id: userId,
+          liveswell_app: "liveswell",
+          stripe_subscription_id: subscription.id,
+        },
+      },
+      { idempotencyKey: mutationKey(userId, "payment-setup", requestId) },
+    ),
+    getStripePublishableKey(),
+  ]);
+  if (!setupIntent.client_secret) {
+    throw new BillingRequestError(502, "setup_intent_incomplete", "Stripe did not prepare a payment update form.");
+  }
+  return { clientSecret: setupIntent.client_secret, publishableKey };
+}
+
+export async function completeStripePaymentMethodSetup(
+  userId: string,
+  setupIntentId: string,
+): Promise<void> {
+  const stripe = await getUncachableStripeClient();
+  const { user, subscription } = await getOwnedStripeSubscription(userId, stripe);
+  const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+  const setupCustomer = setupIntent.customer;
+  if (
+    setupIntent.status !== "succeeded" ||
+    !setupCustomer ||
+    stripeCustomerId(setupCustomer) !== user.stripeCustomerId
+  ) {
+    throw new BillingRequestError(403, "payment_setup_unverified", "This payment update could not be verified for your account.");
+  }
+  const paymentMethodId =
+    typeof setupIntent.payment_method === "string"
+      ? setupIntent.payment_method
+      : setupIntent.payment_method?.id;
+  if (!paymentMethodId) {
+    throw new BillingRequestError(409, "payment_method_missing", "Stripe did not attach a payment method.");
+  }
+  await Promise.all([
+    stripe.customers.update(
+      user.stripeCustomerId!,
+      { invoice_settings: { default_payment_method: paymentMethodId } },
+      { idempotencyKey: `liveswell-payment-customer-${setupIntent.id}` },
+    ),
+    stripe.subscriptions.update(
+      subscription.id,
+      { default_payment_method: paymentMethodId },
+      { idempotencyKey: `liveswell-payment-subscription-${setupIntent.id}` },
+    ),
+  ]);
+}
+
+export async function getStripeInvoiceDocument(
+  userId: string,
+  invoiceId: string,
+): Promise<{ url: string }> {
+  const user = await loadBillingUser(userId);
+  if (!user?.stripeCustomerId || user.billingProvider !== "stripe") {
+    throw new BillingRequestError(400, "stripe_billing_unavailable", "This account does not have Stripe billing documents.");
+  }
+  const stripe = await getUncachableStripeClient();
+  const invoice = await stripe.invoices.retrieve(invoiceId);
+  if (!invoice.customer || stripeCustomerId(invoice.customer) !== user.stripeCustomerId) {
+    // Return 404 to avoid confirming another customer's invoice ID.
+    throw new BillingRequestError(404, "invoice_not_found", "Invoice not found.");
+  }
+  const url = invoice.invoice_pdf ?? invoice.hosted_invoice_url;
+  if (!url || !url.startsWith("https://")) {
+    throw new BillingRequestError(404, "invoice_document_unavailable", "This invoice has no downloadable document.");
+  }
+  return { url };
+}
+
 function providerFromUser(user: BillingUser): AccessProvider {
   if (user.billingProvider === "stripe") return "stripe";
   if (user.billingProvider === "whop") return "whop";
@@ -339,10 +539,17 @@ function cachedBillingStatus(user: BillingUser): BillingStatus {
     provider,
     plan: null,
     renewsAt: null,
+    periodEndsAt: null,
+    subscriptionStatus: null,
+    accessState: "unknown",
+    cancelAtPeriodEnd: false,
+    paymentMethod: null,
+    invoices: [],
+    providerState: provider === "stripe" || provider === "whop" ? "cached" : "not_applicable",
     canManageBilling: provider === "stripe" || provider === "whop",
     managementType:
       provider === "stripe"
-        ? "stripe_portal"
+        ? "stripe_in_app"
         : provider === "whop"
           ? "whop_hub"
           : null,
@@ -363,6 +570,77 @@ async function withProviderTimeout<T>(promise: Promise<T>): Promise<T> {
   }
 }
 
+function stripeCustomerId(customer: string | Stripe.Customer | Stripe.DeletedCustomer): string {
+  return typeof customer === "string" ? customer : customer.id;
+}
+
+function currentPeriodEnd(subscription: Stripe.Subscription): number | null {
+  return (subscription as Stripe.Subscription & { current_period_end?: number }).current_period_end ?? null;
+}
+
+function accessStateForSubscription(status: Stripe.Subscription.Status): StripeAccessState {
+  if (status === "past_due") return "grace";
+  if (status === "active" || status === "trialing") return "active";
+  if (status === "canceled") return "canceled";
+  if (status === "incomplete" || status === "incomplete_expired") return "incomplete";
+  if (status === "unpaid") return "unpaid";
+  return "unknown";
+}
+
+function summarizePaymentMethod(
+  paymentMethod: string | Stripe.PaymentMethod | null | undefined,
+): BillingPaymentMethod | null {
+  if (!paymentMethod || typeof paymentMethod === "string" || paymentMethod.type !== "card" || !paymentMethod.card) {
+    return null;
+  }
+  return {
+    brand: paymentMethod.card.brand,
+    last4: paymentMethod.card.last4,
+    expMonth: paymentMethod.card.exp_month ?? null,
+    expYear: paymentMethod.card.exp_year ?? null,
+  };
+}
+
+function summarizeInvoice(invoice: Stripe.Invoice): BillingInvoice {
+  return {
+    id: invoice.id ?? "",
+    number: invoice.number ?? null,
+    status: invoice.status ?? null,
+    createdAt: invoice.created,
+    amountPaid: invoice.amount_paid,
+    currency: invoice.currency ?? "usd",
+    hostedUrl: invoice.hosted_invoice_url ?? null,
+    pdfUrl: invoice.invoice_pdf ?? null,
+  };
+}
+
+async function getSubscriptionPaymentMethod(
+  stripe: Stripe,
+  customerId: string,
+  subscription: Stripe.Subscription,
+): Promise<BillingPaymentMethod | null> {
+  const direct = summarizePaymentMethod(
+    (subscription as Stripe.Subscription & {
+      default_payment_method?: string | Stripe.PaymentMethod | null;
+    }).default_payment_method,
+  );
+  if (direct) return direct;
+
+  const customer = await stripe.customers.retrieve(customerId, {
+    expand: ["invoice_settings.default_payment_method"],
+  });
+  if (customer.deleted) return null;
+  return summarizePaymentMethod(customer.invoice_settings.default_payment_method);
+}
+
+async function listSubscriptionInvoices(
+  stripe: Stripe,
+  customerId: string,
+): Promise<BillingInvoice[]> {
+  const invoices = await stripe.invoices.list({ customer: customerId, limit: 12 });
+  return invoices.data.map(summarizeInvoice);
+}
+
 export async function getBillingStatus(userId: string): Promise<BillingStatus> {
   const user = await loadBillingUser(userId);
   if (!user) {
@@ -371,6 +649,13 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
       provider: "free",
       plan: null,
       renewsAt: null,
+      periodEndsAt: null,
+      subscriptionStatus: null,
+      accessState: "unknown",
+      cancelAtPeriodEnd: false,
+      paymentMethod: null,
+      invoices: [],
+      providerState: "not_applicable",
       canManageBilling: false,
       managementType: null,
     };
@@ -382,7 +667,9 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
     try {
       const stripe = await getUncachableStripeClient();
       const subscription = await withProviderTimeout(
-        stripe.subscriptions.retrieve(user.stripeSubscriptionId),
+        stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+          expand: ["default_payment_method"],
+        }),
       );
       const active = isStripeSubscriptionActive(subscription.status);
       let effectiveSubscription = subscription;
@@ -396,7 +683,9 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
         status: subscription.status,
         active,
         refreshAfterLock: async () => {
-          const latest = await stripe.subscriptions.retrieve(user.stripeSubscriptionId!);
+          const latest = await stripe.subscriptions.retrieve(user.stripeSubscriptionId!, {
+            expand: ["default_payment_method"],
+          });
           effectiveSubscription = latest;
           return {
             customerId:
@@ -410,16 +699,36 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
         },
       });
       const effectiveActive = isStripeSubscriptionActive(effectiveSubscription.status);
-      const currentPeriodEnd = (effectiveSubscription as Stripe.Subscription & {
-        current_period_end?: number;
-      }).current_period_end;
+      const customerId = stripeCustomerId(effectiveSubscription.customer);
+      const [paymentMethod, invoices] = await Promise.all([
+        getSubscriptionPaymentMethod(stripe, customerId, effectiveSubscription),
+        listSubscriptionInvoices(stripe, customerId),
+      ]);
+      const accessProvider: AccessProvider = effectiveActive
+        ? "stripe"
+        : user.isTestAccount && user.isPro
+          ? "test"
+          : user.complimentaryPro && user.isPro
+            ? "complimentary"
+            : "stripe";
+      const periodEndsAt = currentPeriodEnd(effectiveSubscription);
       return {
         isPro: effectiveActive || user.complimentaryPro || user.isTestAccount,
-        provider: "stripe",
+        provider: accessProvider,
         plan: getStripePlanFromSubscription(effectiveSubscription),
-        renewsAt: currentPeriodEnd ?? null,
-        canManageBilling: true,
-        managementType: "stripe_portal",
+        renewsAt: periodEndsAt,
+        periodEndsAt,
+        subscriptionStatus: effectiveSubscription.status,
+        accessState: accessStateForSubscription(effectiveSubscription.status),
+        cancelAtPeriodEnd: effectiveSubscription.cancel_at_period_end,
+        paymentMethod,
+        invoices,
+        providerState: "live",
+        canManageBilling:
+          accessProvider === "stripe" &&
+          !TERMINAL_STRIPE_STATUSES.has(effectiveSubscription.status) &&
+          effectiveSubscription.status !== "unpaid",
+        managementType: accessProvider === "stripe" ? "stripe_in_app" : null,
       };
     } catch (error) {
       console.warn("[billing/status] Stripe unavailable; using cached access:", error);
@@ -455,6 +764,14 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
         plan,
         renewsAt:
           (membership as unknown as { renewal_period_end?: number }).renewal_period_end ?? null,
+        periodEndsAt:
+          (membership as unknown as { renewal_period_end?: number }).renewal_period_end ?? null,
+        subscriptionStatus: null,
+        accessState: active ? "active" : "unknown",
+        cancelAtPeriodEnd: membership.status === "canceling",
+        paymentMethod: null,
+        invoices: [],
+        providerState: "live",
         canManageBilling: true,
         managementType: "whop_hub",
       };

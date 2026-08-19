@@ -16,7 +16,7 @@ type BillingStatus = {
   plan: SelectedPlan | null;
   renewsAt: number | null;
   canManageBilling: boolean;
-  managementType: "stripe_portal" | "whop_hub" | null;
+  managementType: "stripe_in_app" | "whop_hub" | null;
 };
 type CheckoutBootstrap = {
   checkoutSessionId: string;

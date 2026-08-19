@@ -150,7 +150,7 @@ describe("reconcileStripeSubscription", () => {
     }));
   });
 
-  it("revokes access for the current failed Stripe subscription", async () => {
+  it("keeps access during Stripe's current past-due retry window", async () => {
     state.current = {
       isPro: true,
       paidPro: true,
@@ -162,17 +162,11 @@ describe("reconcileStripeSubscription", () => {
 
     await expect(reconcileStripeSubscription({
       ...activeInput,
-      active: false,
+        active: true,
       status: "past_due",
       eventId: "evt_failed",
-    })).resolves.toEqual({ changed: true, ignored: false });
-    expect(state.insertedEvents[0]).toEqual(expect.objectContaining({
-      type: "pro_revoked",
-      payload: expect.objectContaining({
-        source: "stripe",
-        status: "past_due",
-      }),
-    }));
+    })).resolves.toEqual({ changed: false, ignored: false });
+    expect(state.insertedEvents).toHaveLength(0);
   });
 
   it("restores Pro access when the same Stripe subscription resumes", async () => {
