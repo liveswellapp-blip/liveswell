@@ -23,9 +23,11 @@ let txRan = false;
 const clerkDeleteUser = vi.fn();
 const clerkUpdateUser = vi.fn();
 const clerkGetUser = vi.fn();
+const clerkCreateUser = vi.fn();
 const clerkCreateEmail = vi.fn();
 const clerkDeleteEmail = vi.fn();
 const clerkCreateSignInToken = vi.fn();
+const sendWelcomeEmail = vi.fn();
 
 // Whop client mock
 const whopMembershipsCancel = vi.fn();
@@ -39,12 +41,14 @@ vi.mock("./storage", () => ({
   storage: {
     getUser: vi.fn(async () => mockUser),
     getUserByEmail: vi.fn(async () => mockUserByEmail),
+    upsertUser: vi.fn(async () => mockUser),
   },
 }));
 
 vi.mock("@clerk/express", () => ({
   clerkClient: {
     users: {
+      createUser: (...a: any[]) => clerkCreateUser(...a),
       deleteUser: (...a: any[]) => clerkDeleteUser(...a),
       updateUser: (...a: any[]) => clerkUpdateUser(...a),
       getUser: (...a: any[]) => clerkGetUser(...a),
@@ -56,6 +60,12 @@ vi.mock("@clerk/express", () => ({
     signInTokens: {
       createSignInToken: (...a: any[]) => clerkCreateSignInToken(...a),
     },
+  },
+}));
+
+vi.mock("./email-service", () => ({
+  EmailService: {
+    sendWelcomeEmail: (...a: any[]) => sendWelcomeEmail(...a),
   },
 }));
 
@@ -153,11 +163,66 @@ beforeEach(() => {
   clerkDeleteUser.mockResolvedValue(undefined);
   clerkUpdateUser.mockResolvedValue(undefined);
   clerkGetUser.mockResolvedValue({ emailAddresses: [] });
+  clerkCreateUser.mockResolvedValue({
+    id: "user_new",
+    emailAddresses: [{ emailAddress: "new@example.com" }],
+    firstName: "New",
+    lastName: "User",
+    imageUrl: null,
+  });
   clerkCreateEmail.mockResolvedValue({ id: "email_new" });
   clerkDeleteEmail.mockResolvedValue(undefined);
   clerkCreateSignInToken.mockResolvedValue({ token: "tok_test123" });
+  sendWelcomeEmail.mockResolvedValue(true);
   whopMembershipsCancel.mockResolvedValue(undefined);
   mockProxy.mockResolvedValue({ ok: true, text: async () => "" });
+});
+
+describe("POST /api/admin/users", () => {
+  it("400 when phoneNumber is absent", async () => {
+    const res = await request(buildApp())
+      .post("/api/admin/users")
+      .send({ email: "new@example.com", password: "a-secure-password" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/phone number/i);
+    expect(clerkCreateUser).not.toHaveBeenCalled();
+  });
+
+  it("creates the Clerk account with the required phone number and sends a welcome link", async () => {
+    mockUser = {
+      id: "user_new",
+      email: "new@example.com",
+      firstName: "New",
+      lastName: "User",
+      profileImageUrl: null,
+    };
+
+    const res = await request(buildApp())
+      .post("/api/admin/users")
+      .send({
+        email: "new@example.com",
+        phoneNumber: "+14155552671",
+        password: "a-secure-password",
+        firstName: "New",
+        lastName: "User",
+      });
+
+    expect(res.status).toBe(201);
+    expect(clerkCreateUser).toHaveBeenCalledWith(expect.objectContaining({
+      emailAddress: ["new@example.com"],
+      phoneNumber: ["+14155552671"],
+      password: "a-secure-password",
+    }));
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(sendWelcomeEmail).toHaveBeenCalledWith(
+      "new@example.com",
+      "New",
+      "User",
+      expect.stringContaining("https://liveswell.io/sign-in?__clerk_ticket=tok_test123"),
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

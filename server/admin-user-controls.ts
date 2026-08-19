@@ -24,9 +24,10 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
   // ── Create a new user account (Clerk + local DB) ─────────────────────────
   app.post("/api/admin/users", requireAdminAuth, async (req, res) => {
     try {
-      const { email, password, firstName, lastName, grantPro } = req.body as {
+      const { email, password, phoneNumber, firstName, lastName, grantPro } = req.body as {
         email?: string;
         password?: string;
+        phoneNumber?: string;
         firstName?: string | null;
         lastName?: string | null;
         grantPro?: boolean;
@@ -39,8 +40,12 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
       if (!password || typeof password !== "string" || password.length < 8) {
         return res.status(400).json({ message: "Password must be at least 8 characters" });
       }
+      if (!phoneNumber || typeof phoneNumber !== "string" || !/^\+[1-9]\d{7,14}$/.test(phoneNumber.trim())) {
+        return res.status(400).json({ message: "A valid phone number in international format is required" });
+      }
 
       const cleanEmail = email.trim().toLowerCase();
+      const cleanPhoneNumber = phoneNumber.trim();
       const cleanFirst = typeof firstName === "string" ? firstName.trim() || null : null;
       const cleanLast = typeof lastName === "string" ? lastName.trim() || null : null;
 
@@ -55,6 +60,7 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
       try {
         clerkUser = await clerkClient.users.createUser({
           emailAddress: [cleanEmail],
+          phoneNumber: [cleanPhoneNumber],
           password,
           firstName: cleanFirst ?? undefined,
           lastName: cleanLast ?? undefined,

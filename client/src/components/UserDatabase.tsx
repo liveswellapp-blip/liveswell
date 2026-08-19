@@ -39,6 +39,7 @@ interface CreateUserForm {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber: string;
   password: string;
   confirmPassword: string;
   grantPro: boolean;
@@ -48,6 +49,7 @@ const emptyForm = (): CreateUserForm => ({
   firstName: "",
   lastName: "",
   email: "",
+  phoneNumber: "",
   password: "",
   confirmPassword: "",
   grantPro: false,
@@ -94,6 +96,7 @@ export default function UserDatabase({ onClose }: UserDatabaseProps) {
         credentials: "include",
         body: JSON.stringify({
           email: data.email.trim().toLowerCase(),
+          phoneNumber: data.phoneNumber.trim(),
           password: data.password,
           firstName: data.firstName.trim() || null,
           lastName: data.lastName.trim() || null,
@@ -126,6 +129,10 @@ export default function UserDatabase({ onClose }: UserDatabaseProps) {
 
     if (!form.email.trim()) {
       setFormError("Email address is required.");
+      return;
+    }
+    if (!/^\+[1-9]\d{7,14}$/.test(form.phoneNumber.trim())) {
+      setFormError("Enter a phone number in international format, for example +14155552671.");
       return;
     }
     if (form.password.length < 8) {
@@ -381,6 +388,26 @@ export default function UserDatabase({ onClose }: UserDatabaseProps) {
                 required
                 autoComplete="off"
               />
+            </div>
+
+            {/* Phone number */}
+            <div className="space-y-1.5">
+              <Label htmlFor="cu-phone">
+                Phone Number <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="cu-phone"
+                type="tel"
+                placeholder="+14155552671"
+                value={form.phoneNumber}
+                onChange={(e) => setForm((f) => ({ ...f, phoneNumber: e.target.value }))}
+                disabled={createUserMutation.isPending}
+                required
+                autoComplete="tel"
+              />
+              <p className="text-xs text-muted-foreground">
+                Required by the sign-in provider. Use the user&apos;s number in international format.
+              </p>
             </div>
 
             {/* Password */}
