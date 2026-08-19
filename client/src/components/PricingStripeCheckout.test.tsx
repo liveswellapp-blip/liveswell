@@ -280,7 +280,7 @@ describe("LiveSwell Stripe pricing checkout", () => {
     expect(screen.getByText("Confirming your Pro access")).toBeInTheDocument();
   });
 
-  it("resumes confirmation polling when Stripe returns to the pricing URL", async () => {
+  it("securely confirms the completed checkout when Stripe returns to the pricing URL", async () => {
     routeMocks.search = "stripe_session_id=cs_test_1";
     renderPricing();
 
@@ -290,7 +290,10 @@ describe("LiveSwell Stripe pricing checkout", () => {
     });
     expect(pendingButton).toBeDisabled();
     await waitFor(() => {
-      expect(apiMocks.apiRequest).not.toHaveBeenCalled();
+      expect(apiMocks.apiRequest).toHaveBeenCalledWith("/api/billing/checkout/confirm", {
+        method: "POST",
+        body: { sessionId: "cs_test_1" },
+      });
     });
   });
 

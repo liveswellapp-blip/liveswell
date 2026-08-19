@@ -420,6 +420,94 @@ export async function createStripeSubscriptionSession(
   };
 }
 
+/**
+ * Confirms an embedded Checkout return against Stripe's canonical state.
+ *
+ * Webhooks remain the authority for ongoing subscription changes. This narrow
+ * recovery path prevents a completed checkout from leaving a customer waiting
+ * when a webhook is delayed, while requiring both the signed-in Clerk user and
+ * Stripe session metadata to agree on ownership.
+ */
+export async function confirmStripeCheckoutReturn(
+  userId: string,
+  checkoutSessionId: string,
+): Promise<{ confirmed: boolean; isPro: boolean }> {
+  if (!/^cs_(?:test|live)_/.test(checkoutSessionId)) {
+    throw new BillingRequestError(400, "invalid_checkout_session", "Invalid checkout session.");
+  }
+
+  const stripe = await getUncachableStripeClient();
+  const session = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+  const sessionUserId = session.metadata?.clerk_user_id ?? session.client_reference_id;
+  if (
+    session.mode !== "subscription" ||
+    !sessionUserId ||
+    sessionUserId !== userId
+  ) {
+    throw new BillingRequestError(404, "checkout_session_not_found", "Checkout session not found.");
+  }
+
+  if (session.status !== "complete") {
+    return { confirmed: false, isPro: false };
+  }
+
+  const subscriptionId =
+    typeof session.subscription === "string"
+      ? session.subscription
+      : session.subscription?.id;
+  if (!subscriptionId) {
+    throw new BillingRequestError(
+      409,
+      "checkout_subscription_pending",
+      "The subscription is still being created. Check again shortly.",
+    );
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const sessionCustomerId =
+    typeof session.customer === "string" ? session.customer : session.customer?.id;
+  const subscriptionCustomerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer.id;
+  if (
+    subscription.metadata?.clerk_user_id !== userId ||
+    !sessionCustomerId ||
+    sessionCustomerId !== subscriptionCustomerId
+  ) {
+    throw new BillingRequestError(404, "checkout_session_not_found", "Checkout session not found.");
+  }
+
+  const result = await reconcileStripeSubscription({
+    userId,
+    customerId: subscriptionCustomerId,
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    active: isStripeSubscriptionActive(subscription.status),
+    eventId: `checkout_return:${session.id}`,
+    migrationIntentId: subscription.metadata?.migration_intent_id,
+    subscriptionCreatedAt: subscription.created,
+    verifyWhopActiveAfterLock: verifyCanonicalWhopMembershipActive,
+    refreshAfterLock: async () => {
+      const latest = await stripe.subscriptions.retrieve(subscription.id);
+      return {
+        customerId:
+          typeof latest.customer === "string" ? latest.customer : latest.customer.id,
+        subscriptionId: latest.id,
+        status: latest.status,
+        active: isStripeSubscriptionActive(latest.status),
+        migrationIntentId: latest.metadata?.migration_intent_id,
+        subscriptionCreatedAt: latest.created,
+      };
+    },
+  });
+
+  return {
+    confirmed: !result.ignored,
+    isPro: !result.ignored && isStripeSubscriptionActive(subscription.status),
+  };
+}
+
 export async function createStripeBillingPortalSession(
   userId: string,
 ): Promise<{ url: string }> {

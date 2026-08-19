@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -63,6 +63,7 @@ export default function PricingPage() {
   const [confirmationDelayed, setConfirmationDelayed] = useState(false);
   const [confirmationStartedAt, setConfirmationStartedAt] = useState<number | null>(null);
   const [migrationConfirmed, setMigrationConfirmed] = useState(false);
+  const confirmedCheckoutSessionRef = useRef<string | null>(null);
   const stripeSessionId = useMemo(() => new URLSearchParams(search).get("stripe_session_id"), [search]);
   const requestedWhopMigration = useMemo(
     () => new URLSearchParams(search).get("migrate") === "whop",
@@ -103,6 +104,26 @@ export default function PricingPage() {
       setConfirmationStartedAt(Date.now());
     }
   }, [stripeSessionId, isAuthenticated]);
+
+  useEffect(() => {
+    if (
+      !stripeSessionId ||
+      !isAuthenticated ||
+      confirmedCheckoutSessionRef.current === stripeSessionId
+    ) return;
+
+    confirmedCheckoutSessionRef.current = stripeSessionId;
+    void apiRequest("/api/billing/checkout/confirm", {
+      method: "POST",
+      body: { sessionId: stripeSessionId },
+    })
+      .then(() => queryClient.invalidateQueries({ queryKey: BILLING_QUERY_KEY }))
+      .catch(() => {
+        // Keep polling after a transient confirmation failure. The webhook can
+        // still update access independently, and the delayed state exposes a
+        // manual retry without inviting a duplicate payment.
+      });
+  }, [isAuthenticated, queryClient, stripeSessionId]);
 
   useEffect(() => {
     if (isPro) {

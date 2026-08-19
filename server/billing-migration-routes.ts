@@ -13,6 +13,7 @@ import {
 } from "./billing-cutover";
 import {
   BillingRequestError,
+  confirmStripeCheckoutReturn,
   createStripeSubscriptionSession,
 } from "./stripe-billing";
 import {
@@ -30,6 +31,9 @@ import { safeLogger } from "./safe-logging";
 const checkoutSchema = z.object({
   plan: z.enum(["monthly", "annual"]),
   confirmWhopMigration: z.boolean().optional().default(false),
+});
+const checkoutConfirmationSchema = z.object({
+  sessionId: z.string().min(1).max(255),
 });
 
 export function registerBillingMigrationRoutes(
@@ -98,6 +102,26 @@ export function registerBillingMigrationRoutes(
       });
       await recordCheckoutOutcome(provider, "technical_failure");
       return res.status(500).json({ error: "billing_checkout_failed" });
+    }
+  });
+
+  app.post("/api/billing/checkout/confirm", isAuthenticated, async (req, res) => {
+    const parsed = checkoutConfirmationSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "invalid_checkout_session" });
+    const userId = getAuth(req).userId;
+    if (!userId) return res.status(401).json({ error: "unauthenticated" });
+
+    try {
+      return res.json(await confirmStripeCheckoutReturn(userId, parsed.data.sessionId));
+    } catch (error) {
+      if (error instanceof BillingRequestError) {
+        return res.status(error.statusCode).json({ error: error.code, message: error.message });
+      }
+      safeLogger.error("[stripe/checkout] Failed to confirm completed checkout", { error });
+      return res.status(502).json({
+        error: "checkout_confirmation_unavailable",
+        message: "We could not confirm the payment with Stripe. Check again shortly.",
+      });
     }
   });
 
