@@ -1,434 +1,280 @@
-import { useState, useEffect } from "react";
-import { useLocation, useSearch, Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import * as Dialog from "@radix-ui/react-dialog";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useLocation, useSearch } from "wouter";
+import { Check, ChevronRight, LockKeyhole, RotateCcw, ShieldCheck, Waves, X } from "lucide-react";
 import logoImage from "@assets/Live_(1500_x_500_px)_(2)_1780520244305.png";
+import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
 
-// ─── Plan IDs ──────────────────────────────────────────────────────────────
-// These are injected via environment variables exposed to the client build.
-// If not set, the checkout button will show a configuration error.
-const MONTHLY_PLAN_ID = import.meta.env.VITE_WHOP_MONTHLY_PLAN_ID ?? "";
-const ANNUAL_PLAN_ID  = import.meta.env.VITE_WHOP_ANNUAL_PLAN_ID  ?? "";
-
-// ─── Feature lists ─────────────────────────────────────────────────────────
-const FREE_FEATURES = [
-  { icon: "🌊", text: "Real-time surf conditions (NOAA buoy data)" },
-  { icon: "📅", text: "5-day swell & wind forecast" },
-  { icon: "🌙", text: "Tide charts & sunrise/sunset times" },
-  { icon: "📍", text: "230+ surf spots worldwide" },
-];
-
-const PRO_FEATURES = [
-  { icon: "🌊", text: "Everything in Free" },
-  { icon: "📱", text: "SMS condition alerts" },
-  { icon: "🔔", text: "Push notification alerts" },
-  { icon: "✉️",  text: "Email condition alerts" },
-  { icon: "✨", text: "AI surf chat & daily summaries" },
-];
-
-// ─── Subscription query ─────────────────────────────────────────────────────
-interface SubStatus {
+type SelectedPlan = "monthly" | "annual";
+type BillingStatus = {
   isPro: boolean;
-  plan: "monthly" | "annual" | null;
+  provider: "stripe" | "whop" | "complimentary" | "test" | "free";
+  plan: SelectedPlan | null;
   renewsAt: number | null;
-}
+  canManageBilling: boolean;
+  managementType: "stripe_portal" | "whop_hub" | null;
+};
+type CheckoutBootstrap = {
+  checkoutSessionId: string;
+  clientSecret: string;
+  publishableKey: string;
+};
+
+const BILLING_QUERY_KEY = ["/api/billing/subscription"] as const;
+const CONFIRMATION_TIMEOUT_MS = 45_000;
+
+const plans: Record<SelectedPlan, { price: string; interval: string; copy: string }> = {
+  monthly: { price: "$4.99", interval: "month", copy: "Billed monthly. Change or cancel before your next renewal." },
+  annual: { price: "$29.99", interval: "year", copy: "Billed once a year. That is about $2.50 per month." },
+};
+const proFeatures = ["SMS, push, and email condition alerts", "AI surf chat and daily summaries", "230+ spots with the full forecast picture"];
+const freeFeatures = ["Real-time NOAA buoy conditions", "Five-day swell and wind forecast", "Tides, sunrise, and sunset times"];
 
 export default function PricingPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [, navigate] = useLocation();
   const search = useSearch();
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
+  const [selectedPlan, setSelectedPlan] = useState<SelectedPlan>(() =>
+    new URLSearchParams(search).get("plan") === "monthly" ? "monthly" : "annual",
+  );
+  const [bootstrap, setBootstrap] = useState<CheckoutBootstrap | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<SelectedPlan | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutDismissed, setCheckoutDismissed] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [confirmationDelayed, setConfirmationDelayed] = useState(false);
+  const [confirmationStartedAt, setConfirmationStartedAt] = useState<number | null>(null);
+  const stripeSessionId = useMemo(() => new URLSearchParams(search).get("stripe_session_id"), [search]);
 
-  const params = new URLSearchParams(search);
-  const success = params.get("success") === "true";
-
-  // ── subscription status (logged-in users only) ──────────────────────────
-  // Poll on ?success=true until isPro becomes true (webhook can lag checkout redirect).
-  const pollOnSuccess = success && isAuthenticated;
-  const { data: subStatus, isLoading: subLoading } = useQuery<SubStatus>({
-    queryKey: ["/api/whop/subscription"],
+  const subscription = useQuery<BillingStatus>({
+    queryKey: BILLING_QUERY_KEY,
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
-    // While waiting for webhook confirmation, poll every 3 s up to ~30 s.
-    refetchInterval: (query) => {
-      if (!pollOnSuccess) return false;
-      if (query.state.data?.isPro) return false;   // confirmed — stop polling
-      const age = Date.now() - (query.state.dataUpdatedAt ?? 0);
-      return age < 30_000 ? 3_000 : false;          // give up after 30 s
-    },
+    refetchInterval: (query) =>
+      confirming && !confirmationDelayed && !query.state.data?.isPro ? 2500 : false,
   });
+  const isPro = subscription.data?.isPro === true;
+  const statusUnavailable = isAuthenticated && subscription.isError;
+  const statusUnknown = authLoading || (isAuthenticated && (subscription.isLoading || statusUnavailable));
+  const confirmationPending = confirming || Boolean(stripeSessionId && isAuthenticated);
 
-  // ── checkout mutation ───────────────────────────────────────────────────
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  useEffect(() => {
+    if (stripeSessionId && isAuthenticated) {
+      setConfirming(true);
+      setConfirmationDelayed(false);
+      setConfirmationStartedAt(Date.now());
+    }
+  }, [stripeSessionId, isAuthenticated]);
+
+  useEffect(() => {
+    if (isPro) {
+      setConfirming(false);
+      setConfirmationDelayed(false);
+      setConfirmationStartedAt(null);
+    }
+  }, [isPro]);
+
+  useEffect(() => {
+    if (!confirming || isPro || !confirmationStartedAt) return;
+    const remaining = Math.max(
+      0,
+      CONFIRMATION_TIMEOUT_MS - (Date.now() - confirmationStartedAt),
+    );
+    const timeout = window.setTimeout(() => setConfirmationDelayed(true), remaining);
+    return () => window.clearTimeout(timeout);
+  }, [confirming, confirmationStartedAt, isPro]);
 
   const checkout = useMutation({
-    mutationFn: async (planId: string) => {
-      const res = await fetch("/api/whop/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json() as Promise<{ purchaseUrl: string }>;
+    mutationFn: async (plan: SelectedPlan) => {
+      const response = await apiRequest("/api/stripe/subscription", { method: "POST", body: { plan } });
+      return (await response.json()) as CheckoutBootstrap;
     },
-    onSuccess: ({ purchaseUrl }) => {
-      window.location.href = purchaseUrl;
+    onSuccess: (data, plan) => {
+      setBootstrap(data);
+      setCheckoutPlan(plan);
+      setCheckoutOpen(true);
+      setCheckoutDismissed(false);
+      setCheckoutError(null);
     },
-    onError: (err: Error) => {
-      setCheckoutError(err.message);
-    },
+    onError: (error: Error) => setCheckoutError(formatCheckoutError(error)),
   });
 
-  function handleSubscribe(planId: string) {
+  const startCheckout = useCallback(() => {
     setCheckoutError(null);
     if (!isAuthenticated) {
-      const target = encodeURIComponent("/pricing");
-      navigate(`/sign-in?redirect_url=${target}`);
+      navigate(
+        `/sign-in?redirect_url=${encodeURIComponent(`/pricing?plan=${selectedPlan}`)}`,
+      );
       return;
     }
-    checkout.mutate(planId);
-  }
+    if (isPro || statusUnknown || confirmationPending) return;
+    if (bootstrap) {
+      setCheckoutOpen(true);
+      setCheckoutDismissed(false);
+      return;
+    }
+    checkout.mutate(selectedPlan);
+  }, [bootstrap, checkout, confirmationPending, isAuthenticated, isPro, navigate, selectedPlan, statusUnknown]);
 
-  // True while we don't yet know the user's subscription status.
-  // Checkout must be blocked until this resolves to prevent duplicate sessions.
-  const statusUnknown = authLoading || (isAuthenticated && subLoading);
-  const isProUser = subStatus?.isPro ?? false;
+  const onCheckoutComplete = useCallback(() => {
+    setConfirming(true);
+    setConfirmationDelayed(false);
+    setConfirmationStartedAt(Date.now());
+    setCheckoutOpen(false);
+    setCheckoutDismissed(false);
+    queryClient.invalidateQueries({ queryKey: BILLING_QUERY_KEY });
+  }, [queryClient]);
+
+  const closeCheckout = useCallback(() => {
+    setCheckoutOpen(false);
+    setCheckoutDismissed(true);
+  }, []);
+
+  const retryConfirmation = useCallback(() => {
+    setConfirmationDelayed(false);
+    setConfirmationStartedAt(Date.now());
+    void subscription.refetch();
+  }, [subscription]);
+
+  const stripe = useMemo(() => (bootstrap ? loadStripe(bootstrap.publishableKey) : null), [bootstrap]);
+  const displayedPlan = checkoutPlan ?? selectedPlan;
 
   return (
-    <div style={{ fontFamily: "'Poppins', sans-serif", background: "#030a14", minHeight: "100vh", color: "white", overflowX: "hidden" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-
-        .pricing-card {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 24px;
-          padding: 40px 36px;
-          flex: 1;
-          max-width: 440px;
-          transition: border-color 0.2s;
-        }
-        .pricing-card-pro {
-          background: linear-gradient(160deg, rgba(52,211,153,0.06) 0%, rgba(6,182,212,0.04) 100%);
-          border-color: rgba(52,211,153,0.3);
-          position: relative;
-        }
-        .pricing-card:hover { border-color: rgba(255,255,255,0.15); }
-        .pricing-card-pro:hover { border-color: rgba(52,211,153,0.5); }
-        .pricing-badge {
-          display: inline-flex; align-items: center; gap: 5px;
-          background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3);
-          border-radius: 20px; padding: 3px 12px;
-          font-size: 11px; font-weight: 700; color: #34d399; letter-spacing: 0.05em;
-          margin-bottom: 20px;
-        }
-        .pricing-tier-label { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
-        .pricing-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 6px; }
-        .pricing-price-amount { font-size: 52px; font-weight: 900; line-height: 1; }
-        .pricing-price-period { font-size: 14px; color: rgba(255,255,255,0.4); font-weight: 500; }
-        .pricing-price-free { font-size: 52px; font-weight: 900; line-height: 1; color: rgba(255,255,255,0.5); }
-        .pricing-desc { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 28px; line-height: 1.6; }
-        .pricing-btn {
-          width: 100%; padding: 15px; border-radius: 12px; font-family: inherit;
-          font-weight: 800; font-size: 15px; cursor: pointer; border: none;
-          transition: background 0.2s, opacity 0.2s, transform 0.1s;
-        }
-        .pricing-btn-free {
-          background: rgba(255,255,255,0.07);
-          border: 1px solid rgba(255,255,255,0.12);
-          color: rgba(255,255,255,0.6);
-        }
-        .pricing-btn-free:hover { background: rgba(255,255,255,0.1); color: white; }
-        .pricing-btn-pro { background: #34d399; color: #030a14; }
-        .pricing-btn-pro:hover:not(:disabled) { background: #2fd494; transform: translateY(-1px); }
-        .pricing-btn-pro:disabled { opacity: 0.6; cursor: not-allowed; }
-        .pricing-btn-current { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); color: #34d399; cursor: default; }
-        .pricing-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 24px 0; }
-        .pricing-feature { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
-        .pricing-feature-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
-        .pricing-feature-text { font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.5; }
-        .pricing-annual-note {
-          text-align: center; margin-top: 12px;
-          font-size: 12px; color: rgba(255,255,255,0.35); line-height: 1.6;
-        }
-        .pricing-annual-note strong { color: #34d399; }
-        .pricing-manage-link {
-          display: block; text-align: center; margin-top: 16px;
-          font-size: 12px; color: rgba(52,211,153,0.7); text-decoration: underline;
-          cursor: pointer;
-        }
-        .pricing-manage-link:hover { color: #34d399; }
-        .success-banner {
-          background: linear-gradient(135deg, rgba(52,211,153,0.12) 0%, rgba(6,182,212,0.08) 100%);
-          border: 1px solid rgba(52,211,153,0.3);
-          border-radius: 18px; padding: 28px 36px; text-align: center;
-          max-width: 600px; margin: 0 auto 48px;
-        }
-        .success-icon { font-size: 48px; margin-bottom: 16px; }
-        .success-title { font-size: 24px; font-weight: 900; margin-bottom: 10px; color: #34d399; }
-        .success-body { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.7; margin-bottom: 20px; }
-        .success-btn {
-          display: inline-block; background: #34d399; color: #030a14;
-          border-radius: 10px; padding: 12px 28px;
-          font-family: inherit; font-weight: 800; font-size: 14px;
-          text-decoration: none; cursor: pointer; border: none;
-          transition: background 0.2s;
-        }
-        .success-btn:hover { background: #2fd494; }
-        .plan-toggle { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 48px; }
-        .plan-toggle-btn {
-          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 8px; padding: 8px 20px;
-          font-family: inherit; font-weight: 600; font-size: 13px; cursor: pointer; color: rgba(255,255,255,0.5);
-          transition: all 0.2s;
-        }
-        .plan-toggle-btn-active {
-          background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.3); color: #34d399;
-        }
-        .plan-toggle-save { font-size: 11px; font-weight: 700; color: #34d399; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2); border-radius: 20px; padding: 2px 9px; }
-        .error-msg { font-size: 12px; color: #f87171; margin-top: 10px; text-align: center; }
-        @media (max-width: 768px) {
-          .pricing-columns { flex-direction: column !important; align-items: center; }
-          .pricing-card { max-width: 100% !important; width: 100%; }
-        }
-      `}</style>
-
-      {/* ── Nav ─────────────────────────────────────────────────────── */}
-      <nav style={{ padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", position: "sticky", top: 0, zIndex: 50, background: "rgba(3,10,20,0.92)", backdropFilter: "blur(12px)" }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-          <img src={logoImage} alt="LiveSwell" style={{ height: 32, objectFit: "contain" }} />
-        </a>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {isAuthenticated ? (
-            <a href="/" style={{ padding: "8px 20px", borderRadius: 8, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)", color: "#34d399", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>Open App</a>
-          ) : (
-            <>
-              <a href="/sign-in" style={{ padding: "8px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: 13, textDecoration: "none" }}>Sign In</a>
-              <a href="/sign-up" style={{ padding: "8px 20px", borderRadius: 8, background: "#34d399", color: "#030a14", fontWeight: 800, fontSize: 13, textDecoration: "none" }}>Get Started</a>
-            </>
-          )}
-        </div>
+    <main className="pricing-shell">
+      <style>{styles}</style>
+      <nav className="pricing-nav" aria-label="Main navigation">
+        <Link href="/" className="brand"><img src={logoImage} alt="LiveSwell" /></Link>
+        {isAuthenticated ? <Link href="/" className="nav-action">Open app <ChevronRight size={15} /></Link> : (
+          <div className="nav-links"><Link href="/sign-in">Sign in</Link><Link href="/sign-up" className="nav-action">Create account</Link></div>
+        )}
       </nav>
 
-      {/* ── Page content ────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "64px 24px 80px" }}>
+      <section className="pricing-hero">
+        <div className="eyebrow"><span className="eyebrow-dot" /> PRO FOR THE WINDOW</div>
+        <h1>When the swell turns on,<br /><em>be ready.</em></h1>
+        <p>LiveSwell Pro keeps the right signal close: alerts, AI context, and the confidence to act before the window closes.</p>
+      </section>
 
-        {/* ── Success banner ───────────────────────────────────────── */}
-        {success && (
-          <div className="success-banner">
-            {subStatus?.isPro ? (
-              <>
-                <div className="success-icon">🎉</div>
-                <div className="success-title">Welcome to LiveSwell Pro!</div>
-                <p className="success-body">
-                  Your subscription is active. You now have access to SMS alerts, push notifications, email alerts, and AI surf chat.
-                </p>
-                <a href="/notifications" className="success-btn">Set Up Alerts →</a>
-              </>
-            ) : (
-              <>
-                <div className="success-icon" style={{ fontSize: 36 }}>⏳</div>
-                <div className="success-title" style={{ color: "rgba(255,255,255,0.8)" }}>Confirming your subscription…</div>
-                <p className="success-body">
-                  Payment received — we're waiting for the confirmation to arrive (usually a few seconds).
-                  This page will update automatically.
-                </p>
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <div style={{ width: 24, height: 24, border: "2px solid rgba(52,211,153,0.3)", borderTopColor: "#34d399", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                </div>
-              </>
-            )}
+      {confirming && !isPro && (
+        <ConfirmationCard delayed={confirmationDelayed} onRetry={retryConfirmation} />
+      )}
+      {isPro && <SuccessCard status={subscription.data} />}
+      {statusUnavailable && (
+        <div className="alert alert-error" role="alert">
+          <div>
+            <strong>We could not verify your current plan.</strong>
+            <span>Checkout is paused so we do not accidentally create a second subscription.</span>
           </div>
-        )}
-
-        {/* ── Header ──────────────────────────────────────────────── */}
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(52,211,153,0.1)", border: "1px solid rgba(52,211,153,0.25)", borderRadius: 20, padding: "5px 14px", marginBottom: 20 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399" }} />
-            <span style={{ color: "#34d399", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em" }}>SIMPLE PRICING</span>
-          </div>
-          <h1 style={{ fontSize: 46, fontWeight: 900, letterSpacing: "-1.5px", margin: "0 0 16px", lineHeight: 1.1 }}>
-            Start free.<br />
-            <span style={{ color: "#34d399" }}>Upgrade when conditions call for it.</span>
-          </h1>
-          <p style={{ fontSize: 16, color: "rgba(255,255,255,0.5)", maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
-            Core surf data is always free. Add alerts and AI chat when you're ready to stop missing swells.
-          </p>
+          <button onClick={() => void subscription.refetch()}>Try again</button>
         </div>
+      )}
+      {checkoutError && <div className="alert alert-error" role="alert"><div><strong>Checkout could not start.</strong><span>{checkoutError}</span></div><button onClick={() => { setCheckoutError(null); setBootstrap(null); setCheckoutPlan(null); }}>Try again</button></div>}
+      {checkoutDismissed && bootstrap && (
+        <div className="alert checkout-paused" role="status">
+          <div>
+            <strong>Checkout paused.</strong>
+            <span>Your {checkoutPlan ?? selectedPlan} selection is still ready. No second checkout will be created.</span>
+          </div>
+          <button onClick={() => { setCheckoutOpen(true); setCheckoutDismissed(false); }}>Resume checkout</button>
+        </div>
+      )}
 
-        {/* ── Pricing columns ──────────────────────────────────────── */}
-        <div className="pricing-columns" style={{ display: "flex", gap: 24, justifyContent: "center", alignItems: "stretch" }}>
-
-          {/* ── Free ─────────────────────────────────────────────── */}
-          <div className="pricing-card">
-            <div className="pricing-tier-label">Free</div>
-            <div className="pricing-price">
-              <span className="pricing-price-free">$0</span>
-            </div>
-            <p className="pricing-desc">Everything you need to read the ocean — no card required.</p>
-
-            <button
-              className={`pricing-btn ${isProUser ? "pricing-btn-free" : "pricing-btn-free"}`}
-              onClick={() => !isAuthenticated && navigate("/sign-up")}
-              disabled={isAuthenticated}
-              style={isAuthenticated ? { cursor: "default", opacity: 0.45 } : {}}
-            >
-              {isAuthenticated ? "Your current plan" : "Get started free"}
-            </button>
-
-            <hr className="pricing-divider" />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>What's included</div>
-            {FREE_FEATURES.map(f => (
-              <div key={f.text} className="pricing-feature">
-                <span className="pricing-feature-icon">{f.icon}</span>
-                <span className="pricing-feature-text">{f.text}</span>
-              </div>
+      <section className="plan-grid" aria-label="LiveSwell plans">
+        <PlanCard label="Free" price="$0" description="The essential read on every session." features={freeFeatures} button={<Link href={isAuthenticated ? "/" : "/sign-up"} className="button secondary">{isAuthenticated ? "Current plan" : "Start exploring"} <ChevronRight size={16} /></Link>} />
+        <div className="plan-card pro-card">
+          <div className="pro-ribbon">LIVE SWELL PRO</div>
+          <div className="plan-card-top"><div><span className="plan-label">For narrow windows</span><h2>Pro</h2></div><Waves className="wave-mark" size={28} /></div>
+          <div className="billing-toggle" role="group" aria-label="Choose billing interval">
+            {(Object.keys(plans) as SelectedPlan[]).map((plan) => (
+              <button key={plan} className={selectedPlan === plan ? "selected" : ""} onClick={() => setSelectedPlan(plan)} aria-pressed={selectedPlan === plan} disabled={!!bootstrap || confirmationPending}>
+                {plan === "annual" ? "Annual" : "Monthly"}{plan === "annual" && <small>save 50%</small>}
+              </button>
             ))}
           </div>
-
-          {/* ── Pro ──────────────────────────────────────────────── */}
-          <div className="pricing-card pricing-card-pro">
-            <div className="pricing-badge">⭐ PRO</div>
-
-            {/* Monthly / Annual toggle */}
-            <PlanToggle
-              onSubscribe={handleSubscribe}
-              isLoading={checkout.isPending}
-              isAuthenticated={isAuthenticated}
-              isProUser={isProUser}
-              statusUnknown={statusUnknown}
-              checkoutError={checkoutError}
-            />
-          </div>
-        </div>
-
-        {/* ── Manage subscription link ─────────────────────────────── */}
-        {isAuthenticated && isProUser && (
-          <p style={{ textAlign: "center", marginTop: 32, fontSize: 13, color: "rgba(255,255,255,0.35)" }}>
-            Pro subscriber · <a href="/profile" style={{ color: "rgba(52,211,153,0.7)", textDecoration: "underline" }}>Manage billing</a>
-          </p>
-        )}
-
-        {/* ── FAQ / trust strip ─────────────────────────────────────── */}
-        <div style={{ marginTop: 72, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 56 }}>
-          {[
-            { icon: "🔒", title: "Secure checkout", body: "Payments are processed by Whop — we never store your card details." },
-            { icon: "🔄", title: "Cancel anytime", body: "No lock-in. Cancel from your account page before the next billing date." },
-            { icon: "📋", title: "Subscription terms", body: <span>By subscribing you agree to our <a href="/terms" style={{ color: "rgba(52,211,153,0.7)", textDecoration: "underline" }}>Terms of Service</a>. Auto-renews until cancelled.</span> },
-          ].map(item => (
-            <div key={item.title} style={{ textAlign: "center", padding: "0 8px" }}>
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{item.icon}</div>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>{item.title}</div>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.7 }}>{item.body}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Minimal footer ─────────────────────────────────────────── */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "28px 32px", textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>
-        © {new Date().getFullYear()} LiveSwell · <a href="/terms" style={{ color: "rgba(255,255,255,0.3)", textDecoration: "underline" }}>Terms</a> · <a href="/privacy" style={{ color: "rgba(255,255,255,0.3)", textDecoration: "underline" }}>Privacy</a>
-      </div>
-    </div>
-  );
-}
-
-// ─── Plan toggle sub-component ─────────────────────────────────────────────
-function PlanToggle({ onSubscribe, isLoading, isAuthenticated, isProUser, statusUnknown, checkoutError }: {
-  onSubscribe: (planId: string) => void;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  isProUser: boolean;
-  statusUnknown: boolean;
-  checkoutError: string | null;
-}) {
-  const [billing, setBilling] = useState<"monthly" | "annual">("annual");
-  const isMonthly = billing === "monthly";
-
-  const monthlyId = MONTHLY_PLAN_ID;
-  const annualId  = ANNUAL_PLAN_ID;
-  const planId    = isMonthly ? monthlyId : annualId;
-  const plansConfigured = !!(monthlyId || annualId);
-
-  return (
-    <>
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>Billing</div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className={`plan-toggle-btn ${isMonthly ? "plan-toggle-btn-active" : ""}`}
-            onClick={() => setBilling("monthly")}
-          >Monthly</button>
-          <button
-            className={`plan-toggle-btn ${!isMonthly ? "plan-toggle-btn-active" : ""}`}
-            onClick={() => setBilling("annual")}
-          >
-            Annual <span className="plan-toggle-save">Save 50%</span>
+          <div className="price-line"><strong>{plans[selectedPlan].price}</strong><span> / {plans[selectedPlan].interval}</span></div>
+          <p className="plan-copy">{plans[selectedPlan].copy}</p>
+          <button className="button primary" onClick={startCheckout} disabled={statusUnknown || isPro || checkout.isPending || confirmationPending} aria-busy={checkout.isPending || confirmationPending}>
+            {statusUnavailable ? "Plan status unavailable" : statusUnknown ? "Checking your plan…" : isPro ? "Pro is active" : confirmationPending ? "Payment confirmation pending" : checkout.isPending ? "Preparing secure checkout…" : bootstrap ? `Resume ${plans[displayedPlan].price} checkout` : isAuthenticated ? `Continue with ${plans[selectedPlan].price}` : "Sign in to get Pro"}
+            {!statusUnknown && !isPro && !checkout.isPending && !confirmationPending && <ChevronRight size={17} />}
           </button>
+          <div className="secure-line"><LockKeyhole size={14} /> Secure payment details handled by Stripe</div>
+          <div className="feature-list">{proFeatures.map((feature) => <div key={feature}><Check size={16} /><span>{feature}</span></div>)}</div>
         </div>
-      </div>
+      </section>
 
-      <div className="pricing-price" style={{ marginBottom: 4 }}>
-        <span className="pricing-price-amount" style={{ color: "#34d399" }}>
-          {isMonthly ? "$4.99" : "$29.99"}
-        </span>
-        <span className="pricing-price-period">/{isMonthly ? "mo" : "yr"}</span>
-      </div>
-      {!isMonthly && (
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>
-          ≈ $2.50/mo · billed annually
-        </div>
+      {isPro && subscription.data?.canManageBilling && <div className="manage-row">Already Pro? <Link href="/profile">Manage billing <ChevronRight size={14} /></Link></div>}
+
+      <section className="trust-grid">
+        <TrustItem icon={<ShieldCheck />} title="No billing handoff" body="Payment stays inside LiveSwell, with Stripe handling the sensitive parts." />
+        <TrustItem icon={<RotateCcw />} title="Change your mind" body="Cancel anytime before renewal. Your access stays clear and predictable." />
+        <TrustItem icon={<LockKeyhole />} title="Built for trust" body="Auto-renewal terms and your selected interval are shown before payment." />
+      </section>
+
+      {bootstrap && stripe && (
+        <Dialog.Root open={checkoutOpen} onOpenChange={(open) => { if (!open) closeCheckout(); }}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="checkout-overlay" />
+            <Dialog.Content className="checkout-panel">
+            <div className="checkout-header"><div><span className="eyebrow">SECURE CHECKOUT</span><Dialog.Title>Stay in the window.</Dialog.Title><Dialog.Description>{plans[displayedPlan].price} / {plans[displayedPlan].interval} · auto-renews until cancelled</Dialog.Description></div><Dialog.Close asChild><button className="icon-button" aria-label="Close checkout"><X /></button></Dialog.Close></div>
+            <div className="checkout-note"><LockKeyhole size={15} /> Stripe encrypts and processes your payment details. LiveSwell never sees your full card number.</div>
+            <EmbeddedCheckoutProvider stripe={stripe} options={{ clientSecret: bootstrap.clientSecret, onComplete: onCheckoutComplete }}>
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+            <Dialog.Close asChild><button className="cancel-checkout">Cancel and return to plans</button></Dialog.Close>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
       )}
-
-      <p className="pricing-desc" style={{ marginTop: 8 }}>
-        {isMonthly
-          ? "Alerts, AI chat, and everything in Free — billed monthly."
-          : "Alerts, AI chat, and everything in Free — billed once per year."}
-      </p>
-
-      {/* While auth or subscription status is resolving, always show a disabled
-          placeholder — this prevents a Pro user from opening a duplicate checkout
-          during the window before their isPro flag arrives from the server. */}
-      {statusUnknown ? (
-        <button className="pricing-btn pricing-btn-pro" disabled style={{ opacity: 0.5 }}>
-          Loading…
-        </button>
-      ) : isProUser ? (
-        <button className="pricing-btn pricing-btn-current" disabled>
-          ✓ Current plan
-        </button>
-      ) : (
-        <button
-          className="pricing-btn pricing-btn-pro"
-          disabled={isLoading || !plansConfigured}
-          onClick={() => planId && onSubscribe(planId)}
-        >
-          {isLoading
-            ? "Redirecting…"
-            : !plansConfigured
-              ? "Coming soon"
-              : isAuthenticated
-                ? `Subscribe — ${isMonthly ? "$4.99/mo" : "$29.99/yr"}`
-                : `Get Pro — ${isMonthly ? "$4.99/mo" : "$29.99/yr"}`}
-        </button>
-      )}
-
-      {checkoutError && (
-        <p className="error-msg">Error: {checkoutError}</p>
-      )}
-
-      <hr className="pricing-divider" />
-      <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>What's included</div>
-      {PRO_FEATURES.map(f => (
-        <div key={f.text} className="pricing-feature">
-          <span className="pricing-feature-icon">{f.icon}</span>
-          <span className="pricing-feature-text">{f.text}</span>
-        </div>
-      ))}
-    </>
+    </main>
   );
 }
+
+function PlanCard({ label, price, description, features, button }: { label: string; price: string; description: string; features: string[]; button: React.ReactNode }) {
+  return <div className="plan-card free-card"><span className="plan-label">{label}</span><h2>{price}</h2><p className="plan-copy">{description}</p>{button}<div className="feature-list">{features.map((feature) => <div key={feature}><Check size={16} /><span>{feature}</span></div>)}</div></div>;
+}
+function TrustItem({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+  return <div className="trust-item"><div className="trust-icon">{icon}</div><div><h3>{title}</h3><p>{body}</p></div></div>;
+}
+function ConfirmationCard({ delayed, onRetry }: { delayed: boolean; onRetry: () => void }) {
+  return <div className="alert confirmation" role="status"><div className="pulse-dot" /><div><strong>{delayed ? "Confirmation is taking longer than expected" : "Confirming your Pro access"}</strong><span>{delayed ? "Your payment may still be processing. Check again without submitting another payment." : "Your payment is secure. We are waiting for the subscription confirmation, usually just a few seconds."}</span></div>{delayed && <button onClick={onRetry}>Check again</button>}</div>;
+}
+function SuccessCard({ status }: { status?: BillingStatus }) {
+  const renewal = status?.renewsAt ? new Date(status.renewsAt * 1000).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : null;
+  return <div className="alert success" role="status"><div className="success-check"><Check size={19} /></div><div><strong>Pro is active. Go find the window.</strong><span>{renewal ? `Your ${status?.plan ?? ""} plan renews on ${renewal}.` : "Alerts and AI surf context are ready when you are."}</span></div><Link href="/" className="button small">Open app</Link></div>;
+}
+
+function formatCheckoutError(error: Error): string {
+  const jsonStart = error.message.indexOf("{");
+  if (jsonStart >= 0) {
+    try {
+      const body = JSON.parse(error.message.slice(jsonStart)) as { message?: string };
+      if (body.message) return body.message;
+    } catch {
+      // Fall through to a stable, user-facing message.
+    }
+  }
+  if (/network|fetch|offline/i.test(error.message)) {
+    return "The secure checkout could not be reached. Check your connection and try again.";
+  }
+  return "We could not prepare the secure checkout. Please try again.";
+}
+
+const styles = `
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+:root { --ink:#eef4f3; --muted:#9aaba9; --deep:#06171b; --panel:#0c2428; --line:rgba(185,224,218,.14); --aqua:#76e3cf; --coral:#ff9a78; }
+* { box-sizing:border-box; } .pricing-shell { min-height:100dvh; color:var(--ink); background:radial-gradient(circle at 85% 7%,rgba(51,137,135,.20),transparent 31rem),radial-gradient(circle at 8% 37%,rgba(255,120,89,.08),transparent 24rem),var(--deep); font-family:'DM Sans',sans-serif; overflow:hidden; }
+.pricing-shell:before { content:""; pointer-events:none; position:fixed; inset:0; opacity:.035; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E"); }
+.pricing-nav { max-width:1180px; margin:auto; padding:22px 28px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); position:relative; z-index:2; } .brand img{width:134px;height:auto;display:block}.nav-links{display:flex;gap:22px;align-items:center}.nav-links a,.manage-row a{color:var(--muted);text-decoration:none;font-size:13px}.nav-action{display:inline-flex;align-items:center;gap:5px;color:var(--deep)!important;background:var(--aqua);border-radius:7px;padding:10px 15px;text-decoration:none;font-weight:700;font-size:13px}
+.pricing-hero{max-width:850px;margin:0 auto;padding:82px 28px 58px;text-align:center;position:relative}.eyebrow{font:700 10px 'Space Mono',monospace;letter-spacing:.16em;color:var(--aqua)}.eyebrow-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--coral);margin-right:9px;box-shadow:0 0 0 5px rgba(255,154,120,.1)}h1{font-size:clamp(42px,7vw,78px);line-height:.98;letter-spacing:-.065em;margin:22px 0;color:var(--ink)}h1 em{color:var(--aqua);font-style:normal}.pricing-hero p{max-width:535px;margin:auto;color:var(--muted);font-size:16px;line-height:1.7}
+.plan-grid{max-width:1060px;margin:auto;padding:0 28px;display:grid;grid-template-columns:.83fr 1.17fr;gap:18px;align-items:stretch}.plan-card{border:1px solid var(--line);border-radius:14px;padding:32px;background:rgba(12,36,40,.72);position:relative}.pro-card{background:linear-gradient(145deg,rgba(15,53,54,.92),rgba(10,29,34,.92));border-color:rgba(118,227,207,.36);box-shadow:0 24px 70px rgba(0,0,0,.2)}.pro-ribbon{position:absolute;top:0;right:28px;padding:7px 11px;background:var(--coral);color:#261511;border-radius:0 0 7px 7px;font:700 9px 'Space Mono',monospace;letter-spacing:.1em}.plan-label{font:700 10px 'Space Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.plan-card h2{font-size:40px;letter-spacing:-.06em;margin:14px 0 8px}.plan-card-top{display:flex;justify-content:space-between;align-items:start}.wave-mark{color:var(--aqua)}.plan-copy{color:var(--muted);line-height:1.6;font-size:14px;min-height:46px;margin:0 0 24px}.billing-toggle{display:flex;gap:7px;background:rgba(0,0,0,.18);padding:5px;border-radius:8px;margin:22px 0 20px;width:max-content}.billing-toggle button{color:var(--muted);background:transparent;border:0;border-radius:5px;padding:8px 12px;font:600 12px 'DM Sans';cursor:pointer}.billing-toggle button.selected{background:#173d3d;color:var(--aqua)}.billing-toggle button:disabled{cursor:not-allowed;opacity:.62}.billing-toggle small{display:block;color:var(--coral);font-size:9px;margin-top:2px}.price-line{display:flex;align-items:baseline;margin-bottom:5px}.price-line strong{font-size:47px;letter-spacing:-.06em}.price-line span{color:var(--muted);font-size:14px}.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:7px;padding:13px 15px;text-decoration:none;font:700 13px 'DM Sans';cursor:pointer;transition:transform .18s,opacity .18s;width:100%}.button:hover:not(:disabled){transform:translateY(-2px)}.button.primary{background:var(--aqua);color:#072123}.button.secondary{background:rgba(185,224,218,.08);border:1px solid var(--line);color:var(--ink)}.button.small{width:auto;padding:10px 13px}.button:disabled{opacity:.55;cursor:not-allowed}.secure-line{display:flex;align-items:center;justify-content:center;gap:6px;color:#71918e;font-size:11px;margin:15px 0 25px}.feature-list{border-top:1px solid var(--line);padding-top:20px;margin-top:28px;display:grid;gap:14px}.feature-list div{display:flex;gap:10px;align-items:start;color:#c6d5d2;font-size:13px;line-height:1.35}.feature-list svg{color:var(--aqua);flex:none;margin-top:1px}.free-card .feature-list{margin-top:30px}
+.alert{max-width:1060px;margin:0 auto 24px;padding:17px 20px;border-radius:10px;display:flex;align-items:center;gap:13px}.alert strong{display:block;font-size:14px}.alert span{display:block;color:var(--muted);font-size:12px;margin-top:4px;line-height:1.4}.alert button{margin-left:auto;background:transparent;color:var(--coral);border:0;text-decoration:underline;cursor:pointer}.confirmation{border:1px solid rgba(118,227,207,.28);background:rgba(20,67,67,.35)}.confirmation button,.checkout-paused button{color:var(--aqua)}.checkout-paused{border:1px solid rgba(118,227,207,.22);background:rgba(12,36,40,.72)}.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--aqua);box-shadow:0 0 0 7px rgba(118,227,207,.12)}.success{border:1px solid rgba(118,227,207,.35);background:rgba(36,93,82,.35)}.success-check{background:var(--aqua);color:var(--deep);border-radius:50%;padding:7px;display:flex}.success .button{margin-left:auto}.alert-error{border:1px solid rgba(255,154,120,.4);background:rgba(117,47,37,.25)}.alert-error strong{color:var(--coral)}
+.manage-row{text-align:center;color:var(--muted);font-size:12px;margin:28px 0}.manage-row a{color:var(--aqua);display:inline-flex;align-items:center;gap:3px}.trust-grid{max-width:1060px;margin:65px auto 80px;padding:28px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);gap:26px}.trust-item{display:flex;gap:12px}.trust-icon{color:var(--aqua)}.trust-icon svg{width:21px}.trust-item h3{margin:0 0 6px;font-size:13px}.trust-item p{margin:0;color:var(--muted);font-size:12px;line-height:1.55}
+.checkout-overlay{position:fixed;inset:0;background:rgba(2,11,14,.82);backdrop-filter:blur(10px);z-index:20}.checkout-panel{position:fixed;z-index:21;top:30px;left:50%;transform:translateX(-50%);max-height:calc(100dvh - 60px);overflow:auto;background:#f5faf8;color:#193238;border-radius:14px;width:min(690px,calc(100% - 36px));padding:25px;box-shadow:0 25px 100px rgba(0,0,0,.5)}.checkout-header{display:flex;justify-content:space-between;gap:20px}.checkout-header h2{font-size:27px;letter-spacing:-.04em;margin:10px 0 4px}.checkout-header p{margin:0 0 18px;color:#607371;font-size:13px}.icon-button{border:1px solid #d7e2df;background:#fff;border-radius:7px;width:36px;height:36px;cursor:pointer;color:#193238}.checkout-note{display:flex;gap:8px;align-items:center;padding:11px 12px;background:#e7f3ef;color:#52706c;font-size:11px;border-radius:7px;margin-bottom:18px}.cancel-checkout{display:block;margin:15px auto 0;background:none;border:0;color:#607371;text-decoration:underline;cursor:pointer;font-size:12px}
+@media(max-width:720px){.pricing-nav{padding:18px 18px}.nav-links{gap:9px}.nav-links a:first-child{display:none}.pricing-hero{padding:65px 20px 42px}.plan-grid{grid-template-columns:1fr;padding:0 18px}.pro-card{order:-1}.plan-card{padding:25px}.trust-grid{grid-template-columns:1fr;margin-top:46px;margin-bottom:35px;padding:24px 18px}.alert{margin-left:18px;margin-right:18px}.success{align-items:flex-start;flex-wrap:wrap}.success .button{margin-left:42px}.checkout-panel{top:12px;max-height:calc(100dvh - 24px);width:calc(100% - 24px);padding:18px}}
+`;

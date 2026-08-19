@@ -77,6 +77,7 @@ describe("Stripe billing route contracts", () => {
     mocks.createStripeSubscriptionSession.mockResolvedValue({
       checkoutSessionId: "cs_1",
       clientSecret: "cs_secret_1",
+      publishableKey: "pk_test_1",
     });
 
     const response = await request(buildApp())
@@ -87,6 +88,7 @@ describe("Stripe billing route contracts", () => {
     expect(response.body).toEqual({
       checkoutSessionId: "cs_1",
       clientSecret: "cs_secret_1",
+      publishableKey: "pk_test_1",
     });
     expect(mocks.createStripeSubscriptionSession).toHaveBeenCalledWith(
       "user_free",

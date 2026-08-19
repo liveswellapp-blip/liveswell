@@ -4,6 +4,7 @@ import { StripeSync } from "stripe-replit-sync";
 type StripeCredentials = {
   secretKey: string;
   webhookSecret?: string;
+  publishableKey?: string;
 };
 
 /**
@@ -49,6 +50,8 @@ async function getStripeCredentials(): Promise<StripeCredentials> {
         secret_key?: string;
         api_key?: string;
         webhook_secret?: string;
+        publishable?: string;
+        publishable_key?: string;
       };
     }>;
   };
@@ -62,6 +65,7 @@ async function getStripeCredentials(): Promise<StripeCredentials> {
   return {
     secretKey,
     webhookSecret: settings?.webhook_secret,
+    publishableKey: settings?.publishable ?? settings?.publishable_key,
   };
 }
 
@@ -76,6 +80,19 @@ function getDatabaseUrl(): string {
 export async function getUncachableStripeClient(): Promise<Stripe> {
   const { secretKey } = await getStripeCredentials();
   return new Stripe(secretKey);
+}
+
+/**
+ * Returns the connector-managed Stripe.js key. Publishable keys are safe to
+ * expose to an authenticated browser; secret and webhook keys never leave the
+ * server.
+ */
+export async function getStripePublishableKey(): Promise<string> {
+  const { publishableKey } = await getStripeCredentials();
+  if (!publishableKey || !publishableKey.startsWith("pk_")) {
+    throw new Error("Stripe is connected but has no valid publishable key configured.");
+  }
+  return publishableKey;
 }
 
 /** Verifies a webhook against the connector-managed signing secret. */

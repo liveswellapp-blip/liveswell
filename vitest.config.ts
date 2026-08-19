@@ -3,6 +3,7 @@ import path from "path";
 
 const sharedDir = path.resolve(import.meta.dirname, "shared");
 const clientSrc = path.resolve(import.meta.dirname, "client", "src");
+const attachedAssets = path.resolve(import.meta.dirname, "attached_assets");
 
 export default defineConfig({
   // Configure the OXC JSX transform that vitest/vite-8 uses internally.
@@ -19,6 +20,7 @@ export default defineConfig({
     alias: {
       "@shared": sharedDir,
       "@": clientSrc,
+      "@assets": attachedAssets,
     },
   },
   test: {

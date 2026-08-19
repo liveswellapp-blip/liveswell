@@ -156,8 +156,9 @@ checkout and legacy paid subscriptions**.
   references and the billing provider needed to identify the source of access.
 - Existing Whop members are marked as `whop` and continue to use Whop during
   the migration. Complimentary and test Pro accounts have no billing provider.
-- New Stripe checkout, subscription management, and the Whop-to-Stripe customer
-  migration are intentionally deferred to the next billing tasks.
+- New subscriptions use embedded Stripe Checkout. Provider-aware account billing
+  management and the Whop-to-Stripe customer migration remain deferred to the
+  next billing tasks.
 
 ### Stripe product catalog
 
@@ -181,14 +182,18 @@ connection's live mode and registers the published runtime domain automatically.
 
 ### Subscription backend API
 
-The Stripe subscription backend is additive; existing Whop checkout and webhook
-handling remain active during the migration.
+Stripe is the in-app checkout for new subscriptions; existing Whop webhook and
+subscriber handling remain active during the migration.
 
 - `POST /api/stripe/subscription` requires Clerk authentication and accepts only
   `{ "plan": "monthly" | "annual" }`. The server resolves and verifies the
   allowlisted Stripe lookup key, creates/reuses the Stripe customer
-  idempotently, blocks duplicate subscriptions/checkouts, and returns an
-  embedded Checkout Session ID and client secret.
+  idempotently, blocks duplicate subscriptions/checkouts (including the
+  completed-session/webhook-delay window), and returns an embedded Checkout
+  Session ID, client secret, and connector-managed publishable key.
+- `/pricing` hosts Stripe Embedded Checkout, preserves plan choice through Clerk
+  sign-in, never handles raw card fields, and polls the provider-neutral status
+  endpoint after checkout until Pro access is confirmed.
 - `GET /api/billing/subscription` returns the provider-neutral billing state:
   `isPro`, `provider`, `plan`, `renewsAt`, `canManageBilling`, and
   `managementType`. Providers are `stripe`, `whop`, `complimentary`, `test`, or

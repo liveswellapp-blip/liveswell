@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 let mockUserRows: Array<Record<string, unknown>> = [];
 
 const mocks = vi.hoisted(() => ({
+  getStripePublishableKey: vi.fn(),
   getUncachableStripeClient: vi.fn(),
   getWhopClient: vi.fn(),
   reconcileStripeSubscription: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock("./db", () => ({
 }));
 
 vi.mock("./stripe-client", () => ({
+  getStripePublishableKey: mocks.getStripePublishableKey,
   getUncachableStripeClient: mocks.getUncachableStripeClient,
 }));
 
@@ -111,6 +113,7 @@ describe("Stripe catalog allowlist", () => {
 describe("Stripe subscription checkout", () => {
   beforeEach(() => {
     vi.stubEnv("APP_URL", "https://liveswell.example");
+    mocks.getStripePublishableKey.mockResolvedValue("pk_test_liveswell");
     mockUserRows = [{
       id: "user_free",
       email: "surfer@example.test",
@@ -132,6 +135,7 @@ describe("Stripe subscription checkout", () => {
 
   it("blocks a second checkout while an open Stripe session exists", async () => {
     const stripe = {
+      subscriptions: { list: vi.fn().mockResolvedValue({ data: [] }) },
       prices: { list: vi.fn().mockResolvedValue({ data: [validMonthlyPrice] }) },
       products: { retrieve: vi.fn().mockResolvedValue(validProduct) },
       checkout: {
@@ -171,6 +175,7 @@ describe("Stripe subscription checkout", () => {
 
   it("creates an embedded session using only the verified server-side price", async () => {
     const stripe = {
+      subscriptions: { list: vi.fn().mockResolvedValue({ data: [] }) },
       prices: { list: vi.fn().mockResolvedValue({ data: [validMonthlyPrice] }) },
       products: { retrieve: vi.fn().mockResolvedValue(validProduct) },
       checkout: {
@@ -190,6 +195,7 @@ describe("Stripe subscription checkout", () => {
     ).resolves.toEqual({
       checkoutSessionId: "cs_created",
       clientSecret: "cs_secret_for_embedded_checkout",
+      publishableKey: "pk_test_liveswell",
     });
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -201,6 +207,34 @@ describe("Stripe subscription checkout", () => {
       }),
       { idempotencyKey: "liveswell-subscription-checkout-user_free" },
     );
+  });
+
+  it("blocks checkout when Stripe already has a subscription before the webhook links it", async () => {
+    const stripe = {
+      subscriptions: {
+        list: vi.fn().mockResolvedValue({
+          data: [{ id: "sub_webhook_pending", status: "active" }],
+        }),
+      },
+      prices: { list: vi.fn().mockResolvedValue({ data: [validMonthlyPrice] }) },
+      products: { retrieve: vi.fn().mockResolvedValue(validProduct) },
+      checkout: {
+        sessions: {
+          list: vi.fn(),
+          create: vi.fn(),
+        },
+      },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await expect(
+      createStripeSubscriptionSession("user_free", "monthly"),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      code: "subscription_exists",
+    });
+    expect(stripe.checkout.sessions.list).not.toHaveBeenCalled();
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
   });
 
   it("rejects users who already have Pro access before calling Stripe", async () => {
@@ -222,6 +256,7 @@ describe("Stripe subscription checkout", () => {
       }),
     });
     const stripe = {
+      subscriptions: { list: vi.fn().mockResolvedValue({ data: [] }) },
       customers: {
         create: vi.fn().mockResolvedValue({ id: "cus_new" }),
       },

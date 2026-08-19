@@ -2,7 +2,10 @@ import type Stripe from "stripe";
 import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "./db";
 import { users } from "@shared/schema";
-import { getUncachableStripeClient } from "./stripe-client";
+import {
+  getStripePublishableKey,
+  getUncachableStripeClient,
+} from "./stripe-client";
 import { getWhopClient } from "./whopClient";
 import { LIVESWELL_STRIPE_PRICES } from "./stripe-catalog";
 import { reconcileStripeSubscription, transitionProStatus } from "./pro-transitions";
@@ -11,6 +14,7 @@ export type BillingPlan = "monthly" | "annual";
 export type AccessProvider = "stripe" | "whop" | "complimentary" | "test" | "free";
 
 const ACTIVE_STRIPE_STATUSES = new Set(["active", "trialing"]);
+const TERMINAL_STRIPE_STATUSES = new Set(["canceled", "incomplete_expired"]);
 const ACTIVE_WHOP_STATUSES = new Set(["active", "trialing", "canceling"]);
 const PROVIDER_TIMEOUT_MS = 5_000;
 
@@ -177,7 +181,11 @@ async function ensureStripeCustomer(stripe: Stripe, user: BillingUser): Promise<
 export async function createStripeSubscriptionSession(
   userId: string,
   plan: BillingPlan,
-): Promise<{ checkoutSessionId: string; clientSecret: string }> {
+): Promise<{
+  checkoutSessionId: string;
+  clientSecret: string;
+  publishableKey: string;
+}> {
   const user = await loadBillingUser(userId);
   if (!user) {
     throw new BillingRequestError(404, "user_not_found", "User account was not found.");
@@ -190,15 +198,17 @@ export async function createStripeSubscriptionSession(
     );
   }
 
-  const stripe = await getUncachableStripeClient();
+  const [stripe, publishableKey] = await Promise.all([
+    getUncachableStripeClient(),
+    getStripePublishableKey(),
+  ]);
 
   if (user.stripeSubscriptionId) {
     try {
       const existingSubscription = await stripe.subscriptions.retrieve(
         user.stripeSubscriptionId,
       );
-      const terminalStatuses = new Set(["canceled", "incomplete_expired"]);
-      if (!terminalStatuses.has(existingSubscription.status)) {
+      if (!TERMINAL_STRIPE_STATUSES.has(existingSubscription.status)) {
         throw new BillingRequestError(
           409,
           "subscription_exists",
@@ -218,6 +228,32 @@ export async function createStripeSubscriptionSession(
 
   const price = await resolveStripePrice(stripe, plan);
   const customerId = await ensureStripeCustomer(stripe, user);
+
+  try {
+    const customerSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 100,
+    });
+    const hasExistingSubscription = customerSubscriptions.data.some(
+      (subscription) => !TERMINAL_STRIPE_STATUSES.has(subscription.status),
+    );
+    if (hasExistingSubscription) {
+      throw new BillingRequestError(
+        409,
+        "subscription_exists",
+        "A Stripe subscription already exists for this account.",
+      );
+    }
+  } catch (error) {
+    if (error instanceof BillingRequestError) throw error;
+    console.warn("[stripe/checkout] Could not verify customer subscriptions:", error);
+    throw new BillingRequestError(
+      502,
+      "stripe_subscription_unavailable",
+      "Could not verify existing Stripe subscriptions.",
+    );
+  }
 
   const openSessions = await stripe.checkout.sessions.list({
     customer: customerId,
@@ -261,7 +297,11 @@ export async function createStripeSubscriptionSession(
     );
   }
 
-  return { checkoutSessionId: session.id, clientSecret: session.client_secret };
+  return {
+    checkoutSessionId: session.id,
+    clientSecret: session.client_secret,
+    publishableKey,
+  };
 }
 
 export async function createStripeBillingPortalSession(
