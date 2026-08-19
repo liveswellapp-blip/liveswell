@@ -151,6 +151,21 @@ export async function runMigrations(): Promise<void> {
       ADD COLUMN IF NOT EXISTS "is_suspended" boolean NOT NULL DEFAULT false
     `);
 
+    // Pre-flight: Stripe billing references (migration 0010). These are safe
+    // before migrate() because ALTER TABLE IF EXISTS is a no-op on fresh DBs.
+    // They also repair databases whose history was seeded after db:push.
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "stripe_customer_id" text
+    `);
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "stripe_subscription_id" text
+    `);
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "billing_provider" varchar(16)
+    `);
     // Pre-flight: canonicalize phone values and enforce uniqueness on
     // verified_phones.phone — but only if the table already exists.
     // On a fresh database migration 0000 hasn't run yet, so the table is
@@ -207,6 +222,29 @@ export async function runMigrations(): Promise<void> {
 
     await migrate(db, { migrationsFolder });
     console.log('[migrate] All migrations applied successfully.');
+
+    // This runs after migrate() so users is present on a fresh database, while
+    // still repairing db:push installations whose history was seeded.
+    await pool.query(`
+      UPDATE "users"
+      SET "billing_provider" = 'whop'
+      WHERE "whop_membership_id" IS NOT NULL
+        AND "billing_provider" IS NULL
+    `);
+
+    // The migration creates these indexes on normal installs. Keep repair
+    // guards after migrate() so a fresh database still reaches migration 0000
+    // before any object referencing users is created.
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "users_stripe_customer_id_unique"
+      ON "users" ("stripe_customer_id")
+      WHERE "stripe_customer_id" IS NOT NULL
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "users_stripe_subscription_id_unique"
+      ON "users" ("stripe_subscription_id")
+      WHERE "stripe_subscription_id" IS NOT NULL
+    `);
 
     // ── Post-migration repair guards for tables that suffered bootstrap drift ─
     // These run AFTER migrate() so a fresh database gets its tables from

@@ -9,6 +9,7 @@ import { NotificationScheduler } from "./notification-scheduler";
 import { initWeatherCache } from "./weather-service";
 import { runPushHealthCheck, runApnsHealthCheck } from "./push-health-monitor";
 import { runMigrations } from "./migrate";
+import { initializeStripeSync, registerStripeWebhook } from "./stripe-webhook";
 
 // In development, swap in the Clerk test secret key so the dev preview works
 // on any domain. clerkMiddleware reads CLERK_SECRET_KEY automatically.
@@ -44,6 +45,10 @@ function validateEnvironment() {
 }
 
 const app = express();
+// Must be registered before express.json(): Stripe verifies the signature
+// against the exact raw request bytes, unlike the existing Whop handler which
+// uses the raw-body capture callback below.
+registerStripeWebhook(app);
 // Capture the raw request body before the JSON parser consumes it.
 // The Whop webhook handler needs the exact original bytes to verify signatures.
 app.use(
@@ -168,6 +173,18 @@ app.use((req, res, next) => {
     // environment (or new deploy) always has the correct schema without manual
     // intervention.
     await runMigrations();
+
+    // Stripe is intentionally non-fatal while Whop remains the live checkout
+    // provider. A temporary Stripe/connector issue must never take down the
+    // existing subscription flow; a later cutover task can make it required.
+    try {
+      await initializeStripeSync();
+    } catch (stripeError) {
+      console.error(
+        "[stripe] Billing foundation initialization failed; Whop billing remains available:",
+        stripeError,
+      );
+    }
 
     console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode`);
     

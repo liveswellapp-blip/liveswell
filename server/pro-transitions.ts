@@ -100,13 +100,23 @@ export async function activateWhopMembership(
     // Ensure the user row exists; preserve all existing columns on conflict.
     await tx
       .insert(users)
-      .values({ id: clerkUserId, isPro: false, whopMembershipId: membershipId })
+      .values({
+        id: clerkUserId,
+        isPro: false,
+        whopMembershipId: membershipId,
+        billingProvider: "whop",
+      })
       .onConflictDoNothing();
 
     // Conditional grant — only when not already Pro.
     const updated = await tx
       .update(users)
-      .set({ isPro: true, whopMembershipId: membershipId, updatedAt: new Date() })
+      .set({
+        isPro: true,
+        whopMembershipId: membershipId,
+        billingProvider: "whop",
+        updatedAt: new Date(),
+      })
       .where(and(eq(users.id, clerkUserId), eq(users.isPro, false)))
       .returning({ id: users.id });
 
@@ -120,7 +130,7 @@ export async function activateWhopMembership(
       // User was already Pro — still keep whopMembershipId current.
       await tx
         .update(users)
-        .set({ whopMembershipId: membershipId })
+        .set({ whopMembershipId: membershipId, billingProvider: "whop" })
         .where(eq(users.id, clerkUserId));
     }
 

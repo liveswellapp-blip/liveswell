@@ -140,6 +140,47 @@ LiveSwell uses Whop to manage Pro subscriptions. Webhooks from Whop notify the s
 
 ---
 
+## Stripe Billing Foundation
+
+LiveSwell is preparing a white-label Stripe subscription experience. Until the
+Stripe cutover is explicitly enabled, **Whop remains the provider for all live
+checkout and legacy paid subscriptions**.
+
+### Current boundary
+
+- Stripe owns its catalog, customer, subscription, invoice, and payment data.
+  The `stripe` database schema is created and maintained by
+  `stripe-replit-sync`; application migrations must never create or write its
+  tables directly.
+- LiveSwell's public `users` table stores only Stripe customer/subscription
+  references and the billing provider needed to identify the source of access.
+- Existing Whop members are marked as `whop` and continue to use Whop during
+  the migration. Complimentary and test Pro accounts have no billing provider.
+- New Stripe checkout, subscription management, and the Whop-to-Stripe customer
+  migration are intentionally deferred to the next billing tasks.
+
+### Stripe product catalog
+
+Run `npm run stripe:seed` in development after the Stripe connection is
+attached. It is idempotent and creates/reuses:
+
+| Plan | Stripe lookup key | Price |
+|---|---|---|
+| LiveSwell Pro monthly | `liveswell_pro_monthly_v1` | $4.99/month |
+| LiveSwell Pro annual | `liveswell_pro_annual_v1` | $29.99/year |
+
+The server initializes Stripe's managed webhook at
+`/api/stripe/webhook` before JSON parsing and synchronizes Stripe data on
+startup. The managed connection supplies credentials; do not add Stripe keys
+to source files or request them in chat. Production uses the Stripe
+connection's live mode and registers the published runtime domain automatically.
+
+**Relevant files:** `server/stripe-client.ts`, `server/stripe-webhook.ts`,
+`server/stripe-catalog.ts`, `scripts/seed-stripe-products.ts`,
+`migrations/0010_add_stripe_billing_foundation.sql`
+
+---
+
 ## SMS A2P 10DLC Registration (Twilio)
 
 US carriers require Application-to-Person (A2P) 10DLC registration for SMS sent at scale. Without it, messages are increasingly filtered or blocked as volume grows, and Twilio may suspend the number.
