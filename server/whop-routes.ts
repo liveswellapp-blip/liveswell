@@ -65,6 +65,100 @@ const ACTIVE_STATUSES = new Set(['active', 'trialing', 'canceling']);
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+function isWhopNotFound(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { status?: number; statusCode?: number; code?: string };
+  return candidate.status === 404 ||
+    candidate.statusCode === 404 ||
+    candidate.code === 'not_found';
+}
+
+async function retrieveCanonicalMembership(membershipId: string): Promise<any | null> {
+  try {
+    const client = await getWhopClient();
+    return await client.memberships.retrieve(membershipId);
+  } catch (error) {
+    if (isWhopNotFound(error)) return null;
+    throw error;
+  }
+}
+
+async function verifyCanonicalMembershipActive(
+  membershipId: string,
+  expectedClerkUserId: string,
+): Promise<boolean> {
+  const membership = await retrieveCanonicalMembership(membershipId);
+  const planId: string | undefined = membership?.plan?.id;
+  return Boolean(
+    membership &&
+    ACTIVE_STATUSES.has(membership.status) &&
+    planId &&
+    getAllowedPlanIds().has(planId) &&
+    membership.metadata?.clerk_user_id === expectedClerkUserId,
+  );
+}
+
+async function verifyCanonicalMembershipInactive(membershipId: string): Promise<boolean> {
+  const membership = await retrieveCanonicalMembership(membershipId);
+  return !membership || !ACTIVE_STATUSES.has(membership.status);
+}
+
+export class WhopCheckoutError extends Error {
+  constructor(
+    public readonly statusCode: number,
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+async function createWhopCheckoutForPlanId(userId: string, planId: string): Promise<{ purchaseUrl: string }> {
+  const [existingUser] = await db
+    .select({ isPro: users.isPro })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (existingUser?.isPro) {
+    throw new WhopCheckoutError(409, 'already_subscribed', 'You already have active Pro access.');
+  }
+
+  const allowedPlanIds = getAllowedPlanIds();
+  if (allowedPlanIds.size === 0) {
+    throw new WhopCheckoutError(503, 'whop_catalog_unavailable', 'Whop subscription plans are not configured.');
+  }
+  if (!allowedPlanIds.has(planId)) {
+    throw new WhopCheckoutError(400, 'invalid_plan', 'Invalid Whop plan.');
+  }
+
+  const appOrigin = getAppOrigin();
+  if (!appOrigin) {
+    throw new WhopCheckoutError(503, 'app_url_unavailable', 'Application URL is not configured.');
+  }
+  const client = await getWhopClient();
+  const config = await client.checkoutConfigurations.create({
+    plan_id: planId,
+    redirect_url: `${appOrigin}/pricing?success=true`,
+    metadata: { clerk_user_id: userId },
+  });
+  if (!config.purchase_url) {
+    throw new WhopCheckoutError(502, 'whop_checkout_incomplete', 'Whop did not return a purchase URL.');
+  }
+  return { purchaseUrl: config.purchase_url };
+}
+
+export async function createWhopCheckoutForPlan(
+  userId: string,
+  plan: 'monthly' | 'annual',
+): Promise<{ purchaseUrl: string }> {
+  const planId =
+    plan === 'monthly' ? process.env.WHOP_MONTHLY_PLAN_ID : process.env.WHOP_ANNUAL_PLAN_ID;
+  if (!planId) {
+    throw new WhopCheckoutError(503, 'whop_catalog_unavailable', `The ${plan} Whop plan is not configured.`);
+  }
+  return createWhopCheckoutForPlanId(userId, planId);
+}
+
 // ─── requirePro middleware ───────────────────────────────────────────────────
 
 /**
@@ -118,59 +212,11 @@ export function registerWhopRoutes(app: Express): void {
       const { userId } = getAuth(req);
       const { planId } = parsed.data;
 
-      // Guard: block existing Pro subscribers from opening a duplicate checkout.
-      // This is the authoritative server-side check — client-side loading states
-      // are UX only and must not be relied on for billing correctness.
-      try {
-        const [existingUser] = await db
-          .select({ isPro: users.isPro })
-          .from(users)
-          .where(eq(users.id, userId!))
-          .limit(1);
-        if (existingUser?.isPro) {
-          return res.status(409).json({ error: 'already_subscribed', message: 'You already have an active Pro subscription.' });
-        }
-      } catch (dbErr) {
-        console.error('[whop/checkout] DB error checking Pro status:', dbErr);
-        return res.status(500).json({ error: 'Failed to verify subscription status' });
-      }
-
-      // Validate that the plan ID belongs to this app's configured plans.
-      // An empty allowlist (no env vars set) is treated as a server-side
-      // misconfiguration — never falls back to "allow any plan".
-      const allowedPlanIds = getAllowedPlanIds();
-      if (allowedPlanIds.size === 0) {
-        console.error('[whop/checkout] Neither WHOP_MONTHLY_PLAN_ID nor WHOP_ANNUAL_PLAN_ID is configured. Checkout is disabled.');
-        return res.status(503).json({ error: 'Subscription plans are not configured' });
-      }
-      if (!allowedPlanIds.has(planId)) {
-        console.warn(`[whop/checkout] Rejected unknown planId: ${planId}`);
-        return res.status(400).json({ error: 'Invalid plan ID' });
-      }
-
-      // Build an absolute redirect URL from a trusted configured origin, not
-      // from request-controlled forwarding headers (Host/X-Forwarded-*).
-      const appOrigin = getAppOrigin();
-      if (!appOrigin) {
-        console.error('[whop/checkout] Cannot determine app origin: set APP_URL or ensure REPLIT_DEV_DOMAIN is available.');
-        return res.status(503).json({ error: 'Application URL is not configured' });
-      }
-      const redirectUrl = `${appOrigin}/pricing?success=true`;
-
-      const client = await getWhopClient();
-      const config = await client.checkoutConfigurations.create({
-        plan_id:      planId,
-        redirect_url: redirectUrl,
-        metadata:     { clerk_user_id: userId },
-      });
-
-      if (!config.purchase_url) {
-        console.error('[whop/checkout] No purchase_url in response:', config);
-        return res.status(502).json({ error: 'Whop did not return a purchase URL' });
-      }
-
-      return res.json({ purchaseUrl: config.purchase_url });
+      return res.json(await createWhopCheckoutForPlanId(userId!, planId));
     } catch (err) {
+      if (err instanceof WhopCheckoutError) {
+        return res.status(err.statusCode).json({ error: err.code, message: err.message });
+      }
       console.error('[whop/checkout] Error:', err);
       return res.status(500).json({ error: 'Failed to create checkout session' });
     }
@@ -331,8 +377,8 @@ export function registerWhopRoutes(app: Express): void {
 
       // ── membership.activated (went_valid) ──────────────────────────────────
       if (eventType === 'membership.activated') {
-        const membership = (event as any).data;
-        if (!membership?.id) {
+        const eventMembership = (event as any).data;
+        if (!eventMembership?.id) {
           return res.status(400).json({ error: 'Missing membership data' });
         }
 
@@ -344,14 +390,20 @@ export function registerWhopRoutes(app: Express): void {
           console.error('[whop/webhook] membership.activated: no plan IDs configured — refusing to grant Pro. Set WHOP_MONTHLY_PLAN_ID and/or WHOP_ANNUAL_PLAN_ID.');
           return res.status(503).json({ error: 'Subscription plans not configured' });
         }
+        const membership = await retrieveCanonicalMembership(eventMembership.id);
+        if (!membership || !ACTIVE_STATUSES.has(membership.status)) {
+          console.warn(`[whop/webhook] membership.activated: ${eventMembership.id} is not currently active — ignoring stale event.`);
+          return res.json({ received: true });
+        }
         const membershipPlanId: string | undefined = membership.plan?.id;
-        if (membershipPlanId && !allowedPlanIds.has(membershipPlanId)) {
-          console.warn(`[whop/webhook] membership.activated: plan ${membershipPlanId} is not in the allowlist — ignoring.`);
+        if (!membershipPlanId || !allowedPlanIds.has(membershipPlanId)) {
+          console.warn(`[whop/webhook] membership.activated: missing or unlisted plan ${membershipPlanId ?? '(missing)'} — ignoring.`);
           return res.json({ received: true });
         }
 
         // The Clerk user ID is carried in the checkout configuration metadata.
-        const clerkUserId: string | undefined = membership.metadata?.clerk_user_id;
+        const clerkUserId: string | undefined =
+          membership.metadata?.clerk_user_id ?? eventMembership.metadata?.clerk_user_id;
         if (!clerkUserId) {
           console.warn('[whop/webhook] membership.activated: no clerk_user_id in metadata, skipping DB update');
           return res.json({ received: true });
@@ -362,7 +414,11 @@ export function registerWhopRoutes(app: Express): void {
         // inside a single transaction.  The conditional UPDATE is gated on
         // isPro=false so concurrent/retried deliveries of the same event only
         // ever record one pro_granted entry.
-        const { changed } = await activateWhopMembership(clerkUserId, membership.id);
+        const { changed } = await activateWhopMembership(
+          clerkUserId,
+          membership.id,
+          (membershipId) => verifyCanonicalMembershipActive(membershipId, clerkUserId),
+        );
         console.log(
           changed
             ? `[whop/webhook] Set isPro=true for ${clerkUserId} (membership ${membership.id})`
@@ -375,6 +431,11 @@ export function registerWhopRoutes(app: Express): void {
         const membership = (event as any).data;
         if (!membership?.id) {
           return res.status(400).json({ error: 'Missing membership data' });
+        }
+        const canonicalMembership = await retrieveCanonicalMembership(membership.id);
+        if (canonicalMembership && ACTIVE_STATUSES.has(canonicalMembership.status)) {
+          console.warn(`[whop/webhook] membership.deactivated: ${membership.id} is currently active — ignoring stale event.`);
+          return res.json({ received: true });
         }
 
         // Look up user by the stored membership ID so we have their primary key.
@@ -390,6 +451,7 @@ export function registerWhopRoutes(app: Express): void {
           const { changed } = await transitionProStatus(target.id, false, 'whop', {
             extraPayload: { membershipId: membership.id },
             expectedWhopMembershipId: membership.id,
+            verifyWhopInactiveAfterLock: verifyCanonicalMembershipInactive,
           });
           if (changed) {
             console.log(`[whop/webhook] Set isPro=false for ${target.id} (membership ${membership.id})`);

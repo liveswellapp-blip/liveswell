@@ -24,6 +24,7 @@ import {
 } from './rate-limiter';
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
 import { registerAdminUserControls } from "./admin-user-controls";
+import { registerBillingMigrationRoutes } from "./billing-migration-routes";
 import { assembleUserAuditEvents, paginateAuditEvents } from "./user-audit";
 import { SMSService, PhoneConflictError } from "./sms-service";
 import { EmailService } from "./email-service";
@@ -4557,6 +4558,7 @@ Do not discuss topics unrelated to surfing or ocean activities.`;
   logWhopStartupWarnings();
   registerWhopRoutes(app);
   registerStripeBillingRoutes(app);
+  registerBillingMigrationRoutes(app, requireAdminAuth);
 
   // Add error handling middleware (should be last)
   app.use(errorTrackingMiddleware);

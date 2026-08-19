@@ -10,7 +10,7 @@ import {
   Shield, Activity, Database, Globe, BarChart3,
   AlertTriangle, CheckCircle, XCircle, Clock, TrendingUp,
   Bell, LayoutDashboard, Users, Bug, MessageSquare, RefreshCw,
-  Settings, Save, Mail,
+  Settings, Save, Mail, CreditCard,
 } from "lucide-react";
 import AdminNav, { AdminSection } from "@/components/AdminNav";
 import UserDatabase from "@/components/UserDatabase";
@@ -74,6 +74,26 @@ interface EmailHealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
   reason?: string;
   checkedAt: string;
+}
+
+interface BillingMigrationStatus {
+  checkoutProvider: 'stripe' | 'whop';
+  stripeRolloutPercent: number;
+  defaultProvider: 'stripe' | 'whop';
+  summary: {
+    stripePaid: number;
+    whopPaid: number;
+    migrationPending: number;
+    awaitingWhopCancellation: number;
+    migrationCompleted: number;
+  };
+  attentionAccounts: Array<{
+    id: string;
+    email: string | null;
+    billingProvider: string | null;
+    migrationState: 'whop_to_stripe_pending' | 'awaiting_whop_cancellation';
+    migrationStartedAt: string | null;
+  }>;
 }
 
 /** Fetches and displays the Sentry "Errors (last 24h)" count. */
@@ -263,10 +283,17 @@ export default function AdminDashboard() {
 
   // ── Admin settings state ────────────────────────────────────────────────
   const [alertEmailDraft, setAlertEmailDraft] = useState('');
+  const [checkoutProviderDraft, setCheckoutProviderDraft] = useState<'stripe' | 'whop'>('stripe');
+  const [stripeRolloutDraft, setStripeRolloutDraft] = useState(100);
 
   const { data: adminSettingsData, isLoading: settingsLoading } = useQuery<{ alertEmail: string | null }>({
     queryKey: ['/api/admin/settings'],
     enabled: isAuthenticated,
+  });
+  const { data: billingMigration, isLoading: billingMigrationLoading } = useQuery<BillingMigrationStatus>({
+    queryKey: ['/api/admin/billing-migration'],
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
   });
 
   // Sync draft with server value when loaded
@@ -275,6 +302,12 @@ export default function AdminDashboard() {
       setAlertEmailDraft(adminSettingsData.alertEmail ?? '');
     }
   }, [adminSettingsData]);
+  useEffect(() => {
+    if (billingMigration) {
+      setCheckoutProviderDraft(billingMigration.checkoutProvider);
+      setStripeRolloutDraft(billingMigration.stripeRolloutPercent);
+    }
+  }, [billingMigration]);
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (payload: { alertEmail: string }) => {
@@ -296,6 +329,38 @@ export default function AdminDashboard() {
     },
     onError: (err: Error) => {
       toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    },
+  });
+  const saveBillingCutover = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/billing-migration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          checkoutProvider: checkoutProviderDraft,
+          stripeRolloutPercent: stripeRolloutDraft,
+          confirm: true,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ message: 'Failed to update billing cutover' }));
+        throw new Error(body.message ?? 'Failed to update billing cutover');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/billing-migration'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/billing/checkout-config'] });
+      toast({
+        title: 'Billing cutover updated',
+        description: checkoutProviderDraft === 'whop'
+          ? 'New checkout now uses Whop. Existing Stripe subscriptions were not changed.'
+          : `Stripe is enabled for ${stripeRolloutDraft}% of new checkout accounts.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Billing cutover failed', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -1071,6 +1136,112 @@ export default function AdminDashboard() {
               </p>
             </div>
           ) : <p className="text-sm text-muted-foreground">Loading forecast...</p>}
+        </CardContent>
+      </Card>
+
+      {/* Billing migration controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <CreditCard className="h-5 w-5" />
+            <span>Billing Cutover</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {billingMigrationLoading || !billingMigration ? (
+            <p className="text-sm text-muted-foreground">Loading billing migration status…</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {[
+                  ['Stripe paid', billingMigration.summary.stripePaid],
+                  ['Whop paid', billingMigration.summary.whopPaid],
+                  ['Checkout pending', billingMigration.summary.migrationPending],
+                  ['Cancel Whop', billingMigration.summary.awaitingWhopCancellation],
+                  ['Completed', billingMigration.summary.migrationCompleted],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-lg border p-3">
+                    <div className="text-xl font-bold">{value}</div>
+                    <div className="text-xs text-muted-foreground">{label}</div>
+                  </div>
+                ))}
+              </div>
+              {billingMigration.attentionAccounts.length > 0 && (
+                <div className="rounded-lg border">
+                  <div className="border-b px-3 py-2 text-sm font-semibold">
+                    Accounts to monitor
+                  </div>
+                  <div className="divide-y">
+                    {billingMigration.attentionAccounts.map((account) => (
+                      <div key={account.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-medium">{account.email ?? account.id}</div>
+                          <div className="text-muted-foreground">
+                            {account.migrationState === 'whop_to_stripe_pending'
+                              ? 'Stripe checkout started; activation not confirmed'
+                              : 'Stripe active; member still needs to cancel Whop'}
+                          </div>
+                        </div>
+                        <div className="text-muted-foreground">
+                          {account.migrationStartedAt
+                            ? `Since ${new Date(account.migrationStartedAt).toLocaleDateString()}`
+                            : 'Start time unavailable'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="rounded-md border border-amber-300/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
+                Changing this affects <strong>new checkout only</strong>. It never
+                cancels or rewrites existing Stripe or Whop subscriptions. Select Whop
+                to roll back acquisition if Stripe has a production issue.
+              </div>
+              <div className="grid md:grid-cols-[220px_1fr_auto] gap-3 items-end">
+                <div className="space-y-1">
+                  <Label htmlFor="billing-provider">New checkout provider</Label>
+                  <select
+                    id="billing-provider"
+                    value={checkoutProviderDraft}
+                    onChange={(event) => setCheckoutProviderDraft(event.target.value as 'stripe' | 'whop')}
+                    disabled={saveBillingCutover.isPending}
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="stripe">Stripe</option>
+                    <option value="whop">Whop rollback</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="stripe-rollout">Stripe cohort: {stripeRolloutDraft}%</Label>
+                  <Input
+                    id="stripe-rollout"
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={stripeRolloutDraft}
+                    onChange={(event) => setStripeRolloutDraft(Number(event.target.value))}
+                    disabled={checkoutProviderDraft === 'whop' || saveBillingCutover.isPending}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Stable account assignment supports test, small cohort, and full rollout.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    const warning = checkoutProviderDraft === 'whop'
+                      ? 'Roll new checkout back to Whop? Existing Stripe subscriptions will stay active.'
+                      : `Enable Stripe checkout for ${stripeRolloutDraft}% of accounts? Existing Whop members stay on Whop unless they migrate voluntarily.`;
+                    if (window.confirm(warning)) saveBillingCutover.mutate();
+                  }}
+                  disabled={saveBillingCutover.isPending}
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  {saveBillingCutover.isPending ? 'Applying…' : 'Apply cutover'}
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

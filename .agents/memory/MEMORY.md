@@ -7,3 +7,4 @@
 - [Admin-created Clerk accounts](admin-created-clerk-accounts.md) — the live Clerk tenant requires an E.164 phone number when admins provision a user.
 - [Resend sender domain](resend-sender-domain.md) — branded mail requires the verified LiveSwell domain; direct callers must fail instead of using Resend's shared sender.
 - [Pro entitlement ownership](pro-entitlement-ownership.md) — track paid, complimentary, and test grants independently; billing events may mutate only their own paid source.
+- [Billing provider migration safety](billing-provider-migration-safety.md) — bind transfer consent to a short-lived provider intent and recheck canonical lifecycle state after locking.

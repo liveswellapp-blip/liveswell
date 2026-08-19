@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { randomUUID } from "node:crypto";
 import { and, eq, isNull, or } from "drizzle-orm";
 import { db } from "./db";
 import { users } from "@shared/schema";
@@ -8,7 +9,11 @@ import {
 } from "./stripe-client";
 import { getWhopClient } from "./whopClient";
 import { LIVESWELL_STRIPE_PRICES } from "./stripe-catalog";
-import { reconcileStripeSubscription, transitionProStatus } from "./pro-transitions";
+import {
+  beginWhopToStripeMigration,
+  reconcileStripeSubscription,
+  transitionProStatus,
+} from "./pro-transitions";
 
 export type BillingPlan = "monthly" | "annual";
 export type AccessProvider = "stripe" | "whop" | "complimentary" | "test" | "free";
@@ -50,6 +55,10 @@ type BillingUser = {
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   billingProvider: string | null;
+  billingMigrationState: string | null;
+  billingMigrationStartedAt: Date | null;
+  billingMigrationIntentId: string | null;
+  billingMigrationIntentExpiresAt: Date | null;
 };
 
 export interface BillingStatus {
@@ -66,6 +75,11 @@ export interface BillingStatus {
   providerState: "live" | "cached" | "not_applicable";
   canManageBilling: boolean;
   managementType: "stripe_in_app" | "whop_hub" | null;
+  migration: {
+    state: "not_applicable" | "available" | "pending" | "awaiting_whop_cancellation" | "completed";
+    from: "whop" | null;
+    canStart: boolean;
+  };
 }
 
 export class BillingRequestError extends Error {
@@ -105,6 +119,37 @@ export function getStripePlanFromSubscription(
 
 export function isStripeSubscriptionActive(status: string): boolean {
   return ACTIVE_STRIPE_STATUSES.has(status);
+}
+
+function isProviderNotFound(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { status?: number; statusCode?: number; code?: string };
+  return candidate.status === 404 ||
+    candidate.statusCode === 404 ||
+    candidate.code === "not_found";
+}
+
+async function verifyCanonicalWhopMembershipActive(membershipId: string): Promise<boolean> {
+  const allowedPlanIds = new Set(
+    [process.env.WHOP_MONTHLY_PLAN_ID, process.env.WHOP_ANNUAL_PLAN_ID].filter(
+      (planId): planId is string => Boolean(planId),
+    ),
+  );
+  if (allowedPlanIds.size === 0) {
+    throw new Error("Cannot verify Whop fallback without configured plan IDs.");
+  }
+  try {
+    const membership = await getWhopClient().then((client) =>
+      client.memberships.retrieve(membershipId),
+    );
+    const planId = (membership as { plan?: { id?: string } }).plan?.id;
+    return ACTIVE_WHOP_STATUSES.has(membership.status) &&
+      Boolean(planId) &&
+      allowedPlanIds.has(planId!);
+  } catch (error) {
+    if (isProviderNotFound(error)) return false;
+    throw error;
+  }
 }
 
 export async function resolveStripePrice(
@@ -164,6 +209,10 @@ async function loadBillingUser(userId: string): Promise<BillingUser | null> {
       stripeCustomerId: users.stripeCustomerId,
       stripeSubscriptionId: users.stripeSubscriptionId,
       billingProvider: users.billingProvider,
+      billingMigrationState: users.billingMigrationState,
+      billingMigrationStartedAt: users.billingMigrationStartedAt,
+      billingMigrationIntentId: users.billingMigrationIntentId,
+      billingMigrationIntentExpiresAt: users.billingMigrationIntentExpiresAt,
     })
     .from(users)
     .where(eq(users.id, userId))
@@ -209,6 +258,7 @@ async function ensureStripeCustomer(stripe: Stripe, user: BillingUser): Promise<
 export async function createStripeSubscriptionSession(
   userId: string,
   plan: BillingPlan,
+  options: { confirmWhopMigration?: boolean } = {},
 ): Promise<{
   checkoutSessionId: string;
   clientSecret: string;
@@ -218,14 +268,24 @@ export async function createStripeSubscriptionSession(
   if (!user) {
     throw new BillingRequestError(404, "user_not_found", "User account was not found.");
   }
-  if (user.isPro) {
+  const isWhopMigration =
+    user.paidPro &&
+    user.billingProvider === "whop" &&
+    Boolean(user.whopMembershipId);
+  if (user.isPro && !isWhopMigration) {
     throw new BillingRequestError(
       409,
       "already_subscribed",
       "You already have active Pro access.",
     );
   }
-
+  if (isWhopMigration && !options.confirmWhopMigration) {
+    throw new BillingRequestError(
+      409,
+      "whop_migration_confirmation_required",
+      "Confirm that Stripe will start a separate subscription and that Whop must be canceled separately.",
+    );
+  }
   const [stripe, publishableKey] = await Promise.all([
     getUncachableStripeClient(),
     getStripePublishableKey(),
@@ -296,10 +356,31 @@ export async function createStripeSubscriptionSession(
     );
   }
 
+  let migrationIntentId: string | undefined;
+  if (isWhopMigration) {
+    try {
+      migrationIntentId = await beginWhopToStripeMigration(
+        user.id,
+        user.whopMembershipId!,
+        randomUUID(),
+        new Date(Date.now() + 24 * 60 * 60 * 1000),
+      );
+    } catch {
+      throw new BillingRequestError(
+        409,
+        "whop_migration_no_longer_eligible",
+        "The Whop subscription changed before migration started. Refresh billing and try again.",
+      );
+    }
+  }
+
   const metadata = {
     clerk_user_id: user.id,
     liveswell_app: "liveswell",
     liveswell_plan: plan,
+    ...(isWhopMigration
+      ? { migration_from: "whop", migration_intent_id: migrationIntentId! }
+      : {}),
   };
   const session = await stripe.checkout.sessions.create(
     {
@@ -314,7 +395,11 @@ export async function createStripeSubscriptionSession(
     },
     // The same user cannot create two subscriptions concurrently. Sequential
     // attempts are also caught by the open-session lookup above.
-    { idempotencyKey: `liveswell-subscription-checkout-${user.id}` },
+    {
+      idempotencyKey: migrationIntentId
+        ? `liveswell-subscription-checkout-${user.id}-${migrationIntentId}`
+        : `liveswell-subscription-checkout-${user.id}`,
+    },
   );
 
   if (!session.client_secret) {
@@ -525,11 +610,30 @@ export async function getStripeInvoiceDocument(
 }
 
 function providerFromUser(user: BillingUser): AccessProvider {
-  if (user.billingProvider === "stripe") return "stripe";
-  if (user.billingProvider === "whop") return "whop";
+  if (user.billingProvider === "stripe" && user.paidPro) return "stripe";
+  if (user.billingProvider === "whop" && user.paidPro) return "whop";
   if (user.isTestAccount && user.isPro) return "test";
-  if (user.isPro) return "complimentary";
+  if (user.complimentaryPro && user.isPro) return "complimentary";
   return "free";
+}
+
+function migrationForUser(
+  user: BillingUser,
+  whopActive = user.billingProvider === "whop" && user.paidPro,
+): BillingStatus["migration"] {
+  if (user.billingMigrationState === "awaiting_whop_cancellation") {
+    return { state: "awaiting_whop_cancellation", from: "whop", canStart: false };
+  }
+  if (user.billingMigrationState === "whop_to_stripe_completed") {
+    return { state: "completed", from: "whop", canStart: false };
+  }
+  if (user.billingMigrationState === "whop_to_stripe_pending") {
+    return { state: "pending", from: "whop", canStart: whopActive };
+  }
+  if (whopActive) {
+    return { state: "available", from: "whop", canStart: true };
+  }
+  return { state: "not_applicable", from: null, canStart: false };
 }
 
 function cachedBillingStatus(user: BillingUser): BillingStatus {
@@ -553,6 +657,7 @@ function cachedBillingStatus(user: BillingUser): BillingStatus {
         : provider === "whop"
           ? "whop_hub"
           : null,
+    migration: migrationForUser(user),
   };
 }
 
@@ -658,6 +763,7 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
       providerState: "not_applicable",
       canManageBilling: false,
       managementType: null,
+      migration: { state: "not_applicable", from: null, canStart: false },
     };
   }
 
@@ -682,6 +788,9 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
         subscriptionId: subscription.id,
         status: subscription.status,
         active,
+        migrationIntentId: subscription.metadata?.migration_intent_id,
+        subscriptionCreatedAt: subscription.created,
+        verifyWhopActiveAfterLock: verifyCanonicalWhopMembershipActive,
         refreshAfterLock: async () => {
           const latest = await stripe.subscriptions.retrieve(user.stripeSubscriptionId!, {
             expand: ["default_payment_method"],
@@ -695,10 +804,22 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
             subscriptionId: latest.id,
             status: latest.status,
             active: isStripeSubscriptionActive(latest.status),
+            migrationIntentId: latest.metadata?.migration_intent_id,
+            subscriptionCreatedAt: latest.created,
           };
         },
       });
       const effectiveActive = isStripeSubscriptionActive(effectiveSubscription.status);
+      if (
+        !effectiveActive &&
+        user.billingMigrationState === "awaiting_whop_cancellation" &&
+        user.whopMembershipId
+      ) {
+        const refreshedUser = await loadBillingUser(userId);
+        if (refreshedUser?.billingProvider === "whop") {
+          return getBillingStatus(userId);
+        }
+      }
       const customerId = stripeCustomerId(effectiveSubscription.customer);
       const [paymentMethod, invoices] = await Promise.all([
         getSubscriptionPaymentMethod(stripe, customerId, effectiveSubscription),
@@ -729,6 +850,7 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
           !TERMINAL_STRIPE_STATUSES.has(effectiveSubscription.status) &&
           effectiveSubscription.status !== "unpaid",
         managementType: accessProvider === "stripe" ? "stripe_in_app" : null,
+        migration: migrationForUser(user),
       };
     } catch (error) {
       console.warn("[billing/status] Stripe unavailable; using cached access:", error);
@@ -758,9 +880,16 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
           : planId === process.env.WHOP_ANNUAL_PLAN_ID
             ? "annual"
             : null;
+      const accessProvider: AccessProvider = active
+        ? "whop"
+        : user.isTestAccount
+          ? "test"
+          : user.complimentaryPro
+            ? "complimentary"
+            : "free";
       return {
         isPro: active || user.complimentaryPro || user.isTestAccount,
-        provider: "whop",
+        provider: accessProvider,
         plan,
         renewsAt:
           (membership as unknown as { renewal_period_end?: number }).renewal_period_end ?? null,
@@ -772,8 +901,9 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
         paymentMethod: null,
         invoices: [],
         providerState: "live",
-        canManageBilling: true,
-        managementType: "whop_hub",
+        canManageBilling: active,
+        managementType: active ? "whop_hub" : null,
+        migration: migrationForUser(user, active),
       };
     } catch (error) {
       console.warn("[billing/status] Whop unavailable; using cached access:", error);
@@ -851,6 +981,9 @@ async function reconcileVerifiedSubscription(
     status: subscription.status,
     active: isStripeSubscriptionActive(subscription.status),
     eventId,
+    migrationIntentId: subscription.metadata?.migration_intent_id,
+    subscriptionCreatedAt: subscription.created,
+    verifyWhopActiveAfterLock: verifyCanonicalWhopMembershipActive,
     refreshAfterLock: stripe
       ? async () => {
           const latest = await stripe.subscriptions.retrieve(subscription.id);
@@ -862,6 +995,8 @@ async function reconcileVerifiedSubscription(
             subscriptionId: latest.id,
             status: latest.status,
             active: isStripeSubscriptionActive(latest.status),
+            migrationIntentId: latest.metadata?.migration_intent_id,
+            subscriptionCreatedAt: latest.created,
           };
         }
       : undefined,

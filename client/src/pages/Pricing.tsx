@@ -17,11 +17,23 @@ type BillingStatus = {
   renewsAt: number | null;
   canManageBilling: boolean;
   managementType: "stripe_in_app" | "whop_hub" | null;
+  migration: {
+    state: "not_applicable" | "available" | "pending" | "awaiting_whop_cancellation" | "completed";
+    from: "whop" | null;
+    canStart: boolean;
+  };
 };
 type CheckoutBootstrap = {
+  provider: "stripe";
   checkoutSessionId: string;
   clientSecret: string;
   publishableKey: string;
+};
+type CheckoutResponse = CheckoutBootstrap | { provider: "whop"; purchaseUrl: string };
+type CheckoutConfig = {
+  checkoutProvider: "stripe" | "whop";
+  assignedProvider: "stripe" | "whop";
+  stripeRolloutPercent: number;
 };
 
 const BILLING_QUERY_KEY = ["/api/billing/subscription"] as const;
@@ -50,7 +62,12 @@ export default function PricingPage() {
   const [confirming, setConfirming] = useState(false);
   const [confirmationDelayed, setConfirmationDelayed] = useState(false);
   const [confirmationStartedAt, setConfirmationStartedAt] = useState<number | null>(null);
+  const [migrationConfirmed, setMigrationConfirmed] = useState(false);
   const stripeSessionId = useMemo(() => new URLSearchParams(search).get("stripe_session_id"), [search]);
+  const requestedWhopMigration = useMemo(
+    () => new URLSearchParams(search).get("migrate") === "whop",
+    [search],
+  );
 
   const subscription = useQuery<BillingStatus>({
     queryKey: BILLING_QUERY_KEY,
@@ -59,9 +76,24 @@ export default function PricingPage() {
     refetchInterval: (query) =>
       confirming && !confirmationDelayed && !query.state.data?.isPro ? 2500 : false,
   });
+  const checkoutConfig = useQuery<CheckoutConfig>({
+    queryKey: ["/api/billing/checkout-config"],
+    refetchOnWindowFocus: false,
+  });
   const isPro = subscription.data?.isPro === true;
+  const migrationEligible =
+    requestedWhopMigration &&
+    subscription.data?.provider === "whop" &&
+    subscription.data.migration.canStart;
+  const migrationAvailableForCohort =
+    migrationEligible && checkoutConfig.data?.assignedProvider === "stripe";
+  const blocksCheckout = isPro && !migrationEligible;
   const statusUnavailable = isAuthenticated && subscription.isError;
-  const statusUnknown = authLoading || (isAuthenticated && (subscription.isLoading || statusUnavailable));
+  const statusUnknown =
+    authLoading ||
+    checkoutConfig.isLoading ||
+    checkoutConfig.isError ||
+    (isAuthenticated && (subscription.isLoading || statusUnavailable));
   const confirmationPending = confirming || Boolean(stripeSessionId && isAuthenticated);
 
   useEffect(() => {
@@ -92,10 +124,17 @@ export default function PricingPage() {
 
   const checkout = useMutation({
     mutationFn: async (plan: SelectedPlan) => {
-      const response = await apiRequest("/api/stripe/subscription", { method: "POST", body: { plan } });
-      return (await response.json()) as CheckoutBootstrap;
+      const response = await apiRequest("/api/billing/checkout", {
+        method: "POST",
+        body: { plan, confirmWhopMigration: migrationEligible && migrationConfirmed },
+      });
+      return (await response.json()) as CheckoutResponse;
     },
     onSuccess: (data, plan) => {
+      if (data.provider === "whop") {
+        window.location.assign(data.purchaseUrl);
+        return;
+      }
       setBootstrap(data);
       setCheckoutPlan(plan);
       setCheckoutOpen(true);
@@ -113,14 +152,19 @@ export default function PricingPage() {
       );
       return;
     }
-    if (isPro || statusUnknown || confirmationPending) return;
+    if (
+      blocksCheckout ||
+      statusUnknown ||
+      confirmationPending ||
+      (migrationEligible && (!migrationConfirmed || !migrationAvailableForCohort))
+    ) return;
     if (bootstrap) {
       setCheckoutOpen(true);
       setCheckoutDismissed(false);
       return;
     }
     checkout.mutate(selectedPlan);
-  }, [bootstrap, checkout, confirmationPending, isAuthenticated, isPro, navigate, selectedPlan, statusUnknown]);
+  }, [blocksCheckout, bootstrap, checkout, confirmationPending, isAuthenticated, migrationAvailableForCohort, migrationConfirmed, migrationEligible, navigate, selectedPlan, statusUnknown]);
 
   const onCheckoutComplete = useCallback(() => {
     setConfirming(true);
@@ -164,7 +208,22 @@ export default function PricingPage() {
       {confirming && !isPro && (
         <ConfirmationCard delayed={confirmationDelayed} onRetry={retryConfirmation} />
       )}
-      {isPro && <SuccessCard status={subscription.data} />}
+       {isPro && !migrationEligible && <SuccessCard status={subscription.data} />}
+       {migrationEligible && (
+         <div className="alert confirmation" role="status">
+           <div>
+             <strong>Move billing from Whop to Stripe — two separate steps</strong>
+             <span>
+               First, start a new Stripe subscription here. Then cancel Whop yourself
+               in the Whop Hub. LiveSwell cannot transfer your saved card or cancel
+               Whop for you, and both subscriptions may renew until you finish both steps.
+             </span>
+             {!migrationAvailableForCohort && !checkoutConfig.isLoading && (
+               <span>Stripe migration is not enabled for this account yet. Keep managing your current membership in Whop.</span>
+             )}
+           </div>
+         </div>
+       )}
       {statusUnavailable && (
         <div className="alert alert-error" role="alert">
           <div>
@@ -199,19 +258,30 @@ export default function PricingPage() {
           </div>
           <div className="price-line"><strong>{plans[selectedPlan].price}</strong><span> / {plans[selectedPlan].interval}</span></div>
           <p className="plan-copy">{plans[selectedPlan].copy}</p>
-          <button className="button primary" onClick={startCheckout} disabled={statusUnknown || isPro || checkout.isPending || confirmationPending} aria-busy={checkout.isPending || confirmationPending}>
-            {statusUnavailable ? "Plan status unavailable" : statusUnknown ? "Checking your plan…" : isPro ? "Pro is active" : confirmationPending ? "Payment confirmation pending" : checkout.isPending ? "Preparing secure checkout…" : bootstrap ? `Resume ${plans[displayedPlan].price} checkout` : isAuthenticated ? `Continue with ${plans[selectedPlan].price}` : "Sign in to get Pro"}
-            {!statusUnknown && !isPro && !checkout.isPending && !confirmationPending && <ChevronRight size={17} />}
+           {migrationEligible && (
+             <label className="checkout-note" style={{ alignItems: "flex-start", cursor: "pointer" }}>
+               <input
+                 type="checkbox"
+                 checked={migrationConfirmed}
+                 onChange={(event) => setMigrationConfirmed(event.target.checked)}
+                 style={{ marginTop: 2 }}
+               />
+               <span>I understand this starts a separate Stripe subscription and I must cancel Whop myself to avoid two renewals.</span>
+             </label>
+           )}
+           <button className="button primary" onClick={startCheckout} disabled={statusUnknown || blocksCheckout || checkout.isPending || confirmationPending || (migrationEligible && (!migrationConfirmed || !migrationAvailableForCohort))} aria-busy={checkout.isPending || confirmationPending}>
+             {statusUnavailable ? "Plan status unavailable" : statusUnknown ? "Checking your plan…" : blocksCheckout ? "Pro is active" : migrationEligible && !migrationAvailableForCohort ? "Migration not available yet" : migrationEligible && !migrationConfirmed ? "Confirm both migration steps" : confirmationPending ? "Payment confirmation pending" : checkout.isPending ? "Preparing secure checkout…" : bootstrap ? `Resume ${plans[displayedPlan].price} checkout` : migrationEligible ? `Start new Stripe ${selectedPlan} plan` : isAuthenticated ? `Continue with ${plans[selectedPlan].price}` : "Sign in to get Pro"}
+             {!statusUnknown && !blocksCheckout && !checkout.isPending && !confirmationPending && <ChevronRight size={17} />}
           </button>
-          <div className="secure-line"><LockKeyhole size={14} /> Secure payment details handled by Stripe</div>
+           <div className="secure-line"><LockKeyhole size={14} /> Secure payment details handled by {checkoutConfig.data?.assignedProvider === "whop" ? "Whop" : "Stripe"}</div>
           <div className="feature-list">{proFeatures.map((feature) => <div key={feature}><Check size={16} /><span>{feature}</span></div>)}</div>
         </div>
       </section>
 
-      {isPro && subscription.data?.canManageBilling && <div className="manage-row">Already Pro? <Link href="/profile">Manage billing <ChevronRight size={14} /></Link></div>}
+      {isPro && subscription.data?.canManageBilling && <div className="manage-row">Already Pro? <Link href="/account">Manage billing <ChevronRight size={14} /></Link></div>}
 
       <section className="trust-grid">
-        <TrustItem icon={<ShieldCheck />} title="No billing handoff" body="Payment stays inside LiveSwell, with Stripe handling the sensitive parts." />
+        <TrustItem icon={<ShieldCheck />} title="No card copying" body="Your selected billing provider handles payment details directly. LiveSwell never moves or stores full card numbers." />
         <TrustItem icon={<RotateCcw />} title="Change your mind" body="Cancel anytime before renewal. Your access stays clear and predictable." />
         <TrustItem icon={<LockKeyhole />} title="Built for trust" body="Auto-renewal terms and your selected interval are shown before payment." />
       </section>

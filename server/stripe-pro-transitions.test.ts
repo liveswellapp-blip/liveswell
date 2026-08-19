@@ -8,6 +8,10 @@ type CurrentUser = {
   billingProvider: string | null;
   stripeSubscriptionId: string | null;
   whopMembershipId?: string | null;
+  billingMigrationState?: string | null;
+  billingMigrationStartedAt?: Date | null;
+  billingMigrationIntentId?: string | null;
+  billingMigrationIntentExpiresAt?: Date | null;
 };
 
 const state = vi.hoisted(() => ({
@@ -45,8 +49,10 @@ vi.mock("./db", () => ({
                 whereResult.returning = vi.fn(async () => {
                   const targetPaidPro = values.paidPro;
                   if (
-                    typeof targetPaidPro === "boolean" &&
-                    targetPaidPro !== state.current.paidPro
+                    (typeof targetPaidPro === "boolean" &&
+                      targetPaidPro !== state.current.paidPro) ||
+                    (typeof values.billingProvider === "string" &&
+                      values.billingProvider !== state.current.billingProvider)
                   ) {
                     state.current = {
                       ...state.current,
@@ -78,6 +84,7 @@ vi.mock("./db", () => ({
 
 import {
   activateWhopMembership,
+  beginWhopToStripeMigration,
   reconcileStripeSubscription,
   transitionProStatus,
 } from "./pro-transitions";
@@ -89,6 +96,8 @@ const activeInput = {
   status: "active",
   active: true,
   eventId: "evt_1",
+  migrationIntentId: "intent_1",
+  subscriptionCreatedAt: 1_800_000_000,
 };
 
 describe("reconcileStripeSubscription", () => {
@@ -150,6 +159,95 @@ describe("reconcileStripeSubscription", () => {
     }));
   });
 
+  it("lets Stripe take paid ownership only after explicit Whop migration consent", async () => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "whop",
+      stripeSubscriptionId: null,
+      whopMembershipId: "mem_legacy",
+      billingMigrationState: "whop_to_stripe_pending",
+      billingMigrationStartedAt: new Date(1_799_999_900_000),
+      billingMigrationIntentId: "intent_1",
+      billingMigrationIntentExpiresAt: new Date(1_800_000_100_000),
+    };
+
+    await expect(reconcileStripeSubscription(activeInput)).resolves.toEqual({
+      changed: false,
+      ignored: false,
+    });
+    expect(state.updateSets[0]).toEqual(expect.objectContaining({
+      billingProvider: "stripe",
+      stripeSubscriptionId: "sub_current",
+      billingMigrationState: "awaiting_whop_cancellation",
+    }));
+  });
+
+  it("still rejects accidental Stripe takeover of an active Whop entitlement", async () => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "whop",
+      stripeSubscriptionId: null,
+      whopMembershipId: "mem_legacy",
+      billingMigrationState: null,
+    };
+
+    await expect(reconcileStripeSubscription(activeInput)).resolves.toEqual({
+      changed: false,
+      ignored: true,
+    });
+    expect(state.updateSets).toHaveLength(0);
+  });
+
+  it("rejects Stripe takeover when the subscription is not bound to the approved migration intent", async () => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "whop",
+      stripeSubscriptionId: null,
+      whopMembershipId: "mem_legacy",
+      billingMigrationState: "whop_to_stripe_pending",
+      billingMigrationStartedAt: new Date(1_799_999_900_000),
+      billingMigrationIntentId: "approved_intent",
+      billingMigrationIntentExpiresAt: new Date(1_800_000_100_000),
+    };
+
+    await expect(reconcileStripeSubscription({
+      ...activeInput,
+      migrationIntentId: "different_intent",
+    })).resolves.toEqual({ changed: false, ignored: true });
+    expect(state.updateSets).toHaveLength(0);
+  });
+
+  it("rejects a subscription created after the approved migration intent expired", async () => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "whop",
+      stripeSubscriptionId: null,
+      whopMembershipId: "mem_legacy",
+      billingMigrationState: "whop_to_stripe_pending",
+      billingMigrationStartedAt: new Date(1_799_999_900_000),
+      billingMigrationIntentId: "intent_1",
+      billingMigrationIntentExpiresAt: new Date(1_799_999_999_000),
+    };
+
+    await expect(reconcileStripeSubscription(activeInput)).resolves.toEqual({
+      changed: false,
+      ignored: true,
+    });
+    expect(state.updateSets).toHaveLength(0);
+  });
+
   it("keeps access during Stripe's current past-due retry window", async () => {
     state.current = {
       isPro: true,
@@ -167,6 +265,64 @@ describe("reconcileStripeSubscription", () => {
       eventId: "evt_failed",
     })).resolves.toEqual({ changed: false, ignored: false });
     expect(state.insertedEvents).toHaveLength(0);
+  });
+
+  it("restores Whop ownership if migrated Stripe ends before Whop cancellation", async () => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "stripe",
+      stripeSubscriptionId: "sub_current",
+      whopMembershipId: "mem_legacy",
+      billingMigrationState: "awaiting_whop_cancellation",
+    };
+
+    await expect(reconcileStripeSubscription({
+      ...activeInput,
+      active: false,
+      status: "canceled",
+      eventId: "evt_stripe_canceled",
+      verifyWhopActiveAfterLock: vi.fn().mockResolvedValue(true),
+    })).resolves.toEqual({ changed: false, ignored: false });
+    expect(state.updateSets[0]).toEqual(expect.objectContaining({
+      isPro: true,
+      paidPro: true,
+      billingProvider: "whop",
+      billingMigrationState: "whop_to_stripe_pending",
+    }));
+    expect(state.insertedEvents[0]).toEqual(expect.objectContaining({
+      type: "billing_migration_stripe_deactivated",
+    }));
+  });
+
+  it("does not restore Whop after Stripe ends when canonical Whop state is inactive", async () => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "stripe",
+      stripeSubscriptionId: "sub_current",
+      whopMembershipId: "mem_legacy",
+      billingMigrationState: "awaiting_whop_cancellation",
+      billingMigrationIntentId: "intent_1",
+      billingMigrationIntentExpiresAt: new Date(1_800_000_100_000),
+    };
+
+    await expect(reconcileStripeSubscription({
+      ...activeInput,
+      active: false,
+      status: "canceled",
+      verifyWhopActiveAfterLock: vi.fn().mockResolvedValue(false),
+    })).resolves.toEqual({ changed: true, ignored: false });
+    expect(state.updateSets[0]).toEqual(expect.objectContaining({
+      paidPro: false,
+      billingMigrationState: "whop_to_stripe_completed",
+      billingMigrationIntentId: null,
+    }));
+    expect(state.updateSets[0]).not.toHaveProperty("billingProvider", "whop");
   });
 
   it("restores Pro access when the same Stripe subscription resumes", async () => {
@@ -311,6 +467,77 @@ describe("reconcileStripeSubscription", () => {
     expect(state.updateSets[0]).toEqual(expect.objectContaining({
       paidPro: false,
       isPro: false,
+    }));
+  });
+});
+
+describe("Whop to Stripe migration state", () => {
+  beforeEach(() => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "whop",
+      stripeSubscriptionId: null,
+      whopMembershipId: "mem_legacy",
+      billingMigrationState: null,
+    };
+    state.insertedEvents.length = 0;
+    state.updateSets.length = 0;
+    vi.clearAllMocks();
+  });
+
+  it("records explicit consent before any Stripe checkout can take ownership", async () => {
+    const expiresAt = new Date(Date.now() + 60_000);
+    await beginWhopToStripeMigration("user_1", "mem_legacy", "intent_1", expiresAt);
+    expect(state.updateSets[0]).toEqual(expect.objectContaining({
+      billingMigrationState: "whop_to_stripe_pending",
+      billingMigrationStartedAt: expect.any(Date),
+      billingMigrationIntentId: "intent_1",
+      billingMigrationIntentExpiresAt: expiresAt,
+    }));
+    expect(state.insertedEvents[0]).toEqual(expect.objectContaining({
+      type: "billing_migration_started",
+      payload: expect.objectContaining({ from: "whop", to: "stripe" }),
+    }));
+  });
+
+  it("reuses a still-valid pending intent instead of widening abandoned consent", async () => {
+    state.current = {
+      ...state.current,
+      billingMigrationState: "whop_to_stripe_pending",
+      billingMigrationIntentId: "existing_intent",
+      billingMigrationIntentExpiresAt: new Date(Date.now() + 60_000),
+    };
+
+    await expect(beginWhopToStripeMigration(
+      "user_1",
+      "mem_legacy",
+      "replacement_intent",
+      new Date(Date.now() + 120_000),
+    )).resolves.toBe("existing_intent");
+    expect(state.updateSets).toHaveLength(0);
+    expect(state.insertedEvents).toHaveLength(0);
+  });
+
+  it("marks migration complete when Whop later confirms cancellation without revoking Stripe", async () => {
+    state.current = {
+      ...state.current,
+      billingProvider: "stripe",
+      stripeSubscriptionId: "sub_current",
+      billingMigrationState: "awaiting_whop_cancellation",
+    };
+
+    await expect(transitionProStatus("user_1", false, "whop", {
+      expectedWhopMembershipId: "mem_legacy",
+    })).resolves.toEqual({ changed: false });
+    expect(state.updateSets[0]).toEqual(expect.objectContaining({
+      billingMigrationState: "whop_to_stripe_completed",
+    }));
+    expect(state.updateSets[0]).not.toHaveProperty("paidPro", false);
+    expect(state.insertedEvents[0]).toEqual(expect.objectContaining({
+      type: "billing_migration_completed",
     }));
   });
 });

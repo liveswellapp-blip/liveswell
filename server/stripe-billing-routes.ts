@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { getAuth } from "@clerk/express";
 import { z } from "zod";
 import { isAuthenticated } from "./auth";
+import { getCheckoutProvider } from "./billing-cutover";
 import {
   BillingRequestError,
   changeStripePlan,
@@ -32,7 +33,10 @@ export function registerStripeBillingRoutes(app: Express): void {
     "/api/stripe/subscription",
     isAuthenticated,
     async (req: Request, res: Response) => {
-      const parsed = z.object({ plan: z.enum(["monthly", "annual"]) }).safeParse(req.body);
+      const parsed = z.object({
+        plan: z.enum(["monthly", "annual"]),
+        confirmWhopMigration: z.boolean().optional().default(false),
+      }).safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({
           error: "invalid_plan",
@@ -44,7 +48,15 @@ export function registerStripeBillingRoutes(app: Express): void {
       if (!userId) return res.status(401).json({ error: "unauthenticated" });
 
       try {
-        return res.json(await createStripeSubscriptionSession(userId, parsed.data.plan));
+        if (await getCheckoutProvider(userId) !== "stripe") {
+          return res.status(409).json({
+            error: "stripe_checkout_disabled",
+            message: "Stripe checkout is temporarily disabled. Use the current checkout provider.",
+          });
+        }
+        return res.json(await createStripeSubscriptionSession(userId, parsed.data.plan, {
+          confirmWhopMigration: parsed.data.confirmWhopMigration,
+        }));
       } catch (error) {
         return sendBillingError(res, error);
       }

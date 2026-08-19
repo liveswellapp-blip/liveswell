@@ -140,11 +140,13 @@ LiveSwell uses Whop to manage Pro subscriptions. Webhooks from Whop notify the s
 
 ---
 
-## Stripe Billing Foundation
+## Stripe Billing and Whop Migration
 
-LiveSwell is preparing a white-label Stripe subscription experience. Until the
-Stripe cutover is explicitly enabled, **Whop remains the provider for all live
-checkout and legacy paid subscriptions**.
+Stripe is the default provider for new LiveSwell Pro checkout. Whop remains
+fully supported for existing subscriptions and as an operator-controlled
+rollback provider during the migration window. Do not remove Whop credentials,
+webhooks, management links, or reconciliation until the legacy population,
+support queue, and migration anomalies have all reached zero.
 
 ### Current boundary
 
@@ -154,11 +156,14 @@ checkout and legacy paid subscriptions**.
   tables directly.
 - LiveSwell's public `users` table stores only Stripe customer/subscription
   references and the billing provider needed to identify the source of access.
-- Existing Whop members are marked as `whop` and continue to use Whop during
-  the migration. Complimentary and test Pro accounts have no billing provider.
-- New subscriptions use embedded Stripe Checkout. Provider-aware account billing
-  management and the Whop-to-Stripe customer migration remain deferred to the
-  next billing tasks.
+- Existing Whop members remain marked `whop`, keep uninterrupted access, and
+  continue managing the original membership in Whop unless they voluntarily
+  migrate.
+- New subscriptions use the provider-neutral `/api/billing/checkout` route.
+  The server assigns Stripe or Whop according to the cutover configuration;
+  clients never choose the provider.
+- Complimentary and test grants are independent entitlement overlays. Provider
+  webhooks can mutate only the paid entitlement they own.
 
 ### Stripe product catalog
 
@@ -182,24 +187,30 @@ connection's live mode and registers the published runtime domain automatically.
 
 ### Subscription backend API
 
-Stripe is the in-app checkout for new subscriptions; existing Whop webhook and
-subscriber handling remain active during the migration.
+Stripe is the in-app checkout for the enabled acquisition cohort; existing Whop
+webhook and subscriber handling remain active throughout the migration.
 
-- `POST /api/stripe/subscription` requires Clerk authentication and accepts only
-  `{ "plan": "monthly" | "annual" }`. The server resolves and verifies the
+- `POST /api/billing/checkout` requires Clerk authentication and accepts
+  `{ "plan": "monthly" | "annual", "confirmWhopMigration"?: boolean }`. The
+  server chooses the configured provider. Stripe checkout resolves and verifies the
   allowlisted Stripe lookup key, creates/reuses the Stripe customer
   idempotently, blocks duplicate subscriptions/checkouts (including the
   completed-session/webhook-delay window), and returns an embedded Checkout
-  Session ID, client secret, and connector-managed publishable key.
+  Session ID, client secret, and connector-managed publishable key. Whop
+  rollback checkout returns its hosted purchase URL.
+- `POST /api/stripe/subscription` remains for compatibility but obeys the same
+  server-side cohort switch, so callers cannot bypass a Whop rollback.
 - `/pricing` hosts Stripe Embedded Checkout, preserves plan choice through Clerk
   sign-in, never handles raw card fields, and polls the provider-neutral status
   endpoint after checkout until Pro access is confirmed.
 - `GET /api/billing/subscription` returns the provider-neutral billing state:
   `isPro`, `provider`, `plan`, `renewsAt`, `canManageBilling`, and
-  `managementType`. Providers are `stripe`, `whop`, `complimentary`, `test`, or
-  `free`. Provider outages fall back to the locally cached access state.
-- `POST /api/stripe/billing-portal` creates a short-lived Stripe Billing Portal
-  URL only for users whose billing provider is Stripe.
+  `managementType`, plus the voluntary migration state. Providers are `stripe`,
+  `whop`, `complimentary`, `test`, or `free`. Provider outages fall back to the
+  locally cached access state.
+- Stripe members manage cancellation, resumption, monthly/annual changes,
+  payment method, and invoices inside LiveSwell. Whop members receive only the
+  legacy Whop management path.
 - `/api/stripe/webhook` signature-verifies the raw body, synchronizes the Stripe
   model, and reconciles LiveSwell access. Active/trialing subscriptions grant
   Pro; past-due remains Pro during Stripe's payment-retry grace period, while unpaid,
@@ -215,9 +226,53 @@ subscriber handling remain active during the migration.
   user row, so delayed or concurrently processed events cannot restore stale
   access. Whop revocations similarly require the locked membership ID to match.
 
+### Voluntary Whop-to-Stripe state machine
+
+LiveSwell cannot copy a Whop payment method or cancel a Whop membership.
+Migration therefore always requires the member to confirm both separate steps:
+start a new Stripe subscription, then cancel Whop in the Whop Hub.
+
+1. A Whop-paid account begins at no migration state and is eligible for the
+   prompt. Ignoring it changes nothing.
+2. Confirmed Stripe checkout persists `whop_to_stripe_pending` with a
+   server-generated, 24-hour migration intent before opening payment. That
+   intent is copied into both Checkout and subscription metadata. Repeated
+   checkout reuses a still-valid intent rather than widening consent.
+3. Only a verified active Stripe lifecycle event may move paid ownership from
+   Whop to Stripe, and only when its subscription carries the matching intent
+   and was created inside the consent window. It then becomes
+   `awaiting_whop_cancellation`; Stripe controls appear and the Whop-cancellation
+   reminder remains visible.
+4. The matching Whop deactivation marks `whop_to_stripe_completed` without
+   revoking Stripe access. Whop lifecycle events are checked against canonical
+   provider state again after locking the user row, so delayed activations,
+   deactivations, and replays cannot take over or revoke the other provider.
+5. If Stripe ends before Whop cancellation is confirmed, paid ownership returns
+   to the linked Whop membership so a paying member is not dropped to Free.
+6. Complimentary and test access remain independent throughout every step.
+
+### Staged cutover and rollback
+
+The admin dashboard's **Billing Cutover** card is the operational source of
+truth. It shows Stripe-paid, Whop-paid, pending, awaiting-cancellation, and
+completed counts.
+
+- Keep `checkoutProvider=stripe` and set the stable cohort percentage to `0`
+  for test-only preparation, a small value for production observation, then
+  `100` for the full acquisition cutover. Assignment is stable per Clerk user.
+- To roll back an acquisition incident, select `checkoutProvider=whop` and
+  confirm the warning. This changes new checkout only. Existing Stripe
+  subscriptions, webhooks, access, invoices, and management continue unchanged.
+- Restoring Stripe requires selecting it again and choosing the desired cohort.
+- Do not automatically cancel Whop. Keep Whop management and webhook handling
+  live until the transition window and support plan are complete.
+
 **Relevant files:** `server/stripe-billing.ts`,
-`server/stripe-billing-routes.ts`, `server/pro-transitions.ts`,
-`migrations/0011_add_pro_entitlement_sources.sql`
+`server/stripe-billing-routes.ts`, `server/billing-cutover.ts`,
+`server/billing-migration-routes.ts`, `server/pro-transitions.ts`,
+`migrations/0011_add_pro_entitlement_sources.sql`,
+`migrations/0012_add_billing_migration_state.sql`,
+`migrations/0013_bind_billing_migration_intent.sql`
 
 ---
 

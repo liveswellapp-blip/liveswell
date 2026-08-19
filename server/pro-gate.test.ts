@@ -166,7 +166,15 @@ vi.mock("./whopClient", () => ({
       unwrap: vi.fn((_body: string, _opts: any) => mockWebhookEvent),
     },
     checkoutConfigurations: { create: vi.fn() },
-    memberships: { retrieve: vi.fn() },
+    memberships: {
+      retrieve: vi.fn(async () => ({
+        ...mockWebhookEvent?.data,
+        status:
+          mockWebhookEvent?.action === "membership.activated"
+            ? "active"
+            : "canceled",
+      })),
+    },
   }),
 }));
 
@@ -176,6 +184,7 @@ vi.mock("./whopClient", () => ({
 
 import { isAuthenticated } from "./auth";
 import { requirePro, registerWhopRoutes } from "./whop-routes";
+import { getWhopClient } from "./whopClient";
 
 // ---------------------------------------------------------------------------
 // ── Layer 1: Static analysis — production route registration ────────────────
@@ -480,6 +489,68 @@ describe("Whop webhook lifecycle — membership.activated sets isPro=true", () =
     // No DB write should have occurred — the plan is not in the allowlist
     expect(dbInsertValues.length).toBe(0);
   });
+
+  it("fails closed when the canonical membership has no plan", async () => {
+    const client = await getWhopClient();
+    vi.mocked(client.memberships.retrieve).mockResolvedValueOnce({
+      id: "mem_abc123",
+      status: "active",
+      metadata: { clerk_user_id: "user_clerk_abc" },
+    } as any);
+
+    const res = await request(buildWhopApp())
+      .post("/api/whop/webhook")
+      .set("whop-signature", "test-sig")
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(dbInsertValues).toHaveLength(0);
+    expect(dbUpdateSet).toHaveLength(0);
+  });
+
+  it("ignores a delayed activation after the membership is already inactive", async () => {
+    const client = await getWhopClient();
+    vi.mocked(client.memberships.retrieve).mockResolvedValueOnce({
+      id: "mem_abc123",
+      status: "canceled",
+      plan: { id: TEST_PLAN_ID },
+      metadata: { clerk_user_id: "user_clerk_abc" },
+    } as any);
+
+    const res = await request(buildWhopApp())
+      .post("/api/whop/webhook")
+      .set("whop-signature", "test-sig")
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(dbInsertValues).toHaveLength(0);
+    expect(dbUpdateSet).toHaveLength(0);
+  });
+
+  it("does not grant access when Whop turns inactive between precheck and the user-row lock", async () => {
+    const client = await getWhopClient();
+    vi.mocked(client.memberships.retrieve)
+      .mockResolvedValueOnce({
+        id: "mem_abc123",
+        status: "active",
+        plan: { id: TEST_PLAN_ID },
+        metadata: { clerk_user_id: "user_clerk_abc" },
+      } as any)
+      .mockResolvedValueOnce({
+        id: "mem_abc123",
+        status: "canceled",
+        plan: { id: TEST_PLAN_ID },
+        metadata: { clerk_user_id: "user_clerk_abc" },
+      } as any);
+
+    const res = await request(buildWhopApp())
+      .post("/api/whop/webhook")
+      .set("whop-signature", "test-sig")
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(dbUpdateSet).toHaveLength(0);
+  });
 });
 
 describe("Whop webhook lifecycle — membership.deactivated sets isPro=false", () => {
@@ -525,6 +596,46 @@ describe("Whop webhook lifecycle — membership.deactivated sets isPro=false", (
     expect(dbUpdateSet.length).toBeGreaterThan(0);
     const updated = dbUpdateSet[0];
     expect(updated.isPro).toBe(false);
+  });
+
+  it("ignores a delayed deactivation when Whop says the membership is active", async () => {
+    const client = await getWhopClient();
+    vi.mocked(client.memberships.retrieve).mockResolvedValueOnce({
+      id: "mem_abc123",
+      status: "active",
+      plan: { id: TEST_PLAN_ID },
+    } as any);
+
+    const res = await request(buildWhopApp())
+      .post("/api/whop/webhook")
+      .set("whop-signature", "test-sig")
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(dbUpdateSet).toHaveLength(0);
+  });
+
+  it("does not revoke access when Whop reactivates between precheck and the user-row lock", async () => {
+    const client = await getWhopClient();
+    vi.mocked(client.memberships.retrieve)
+      .mockResolvedValueOnce({
+        id: "mem_abc123",
+        status: "canceled",
+        plan: { id: TEST_PLAN_ID },
+      } as any)
+      .mockResolvedValueOnce({
+        id: "mem_abc123",
+        status: "active",
+        plan: { id: TEST_PLAN_ID },
+      } as any);
+
+    const res = await request(buildWhopApp())
+      .post("/api/whop/webhook")
+      .set("whop-signature", "test-sig")
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(dbUpdateSet).toHaveLength(0);
   });
 });
 

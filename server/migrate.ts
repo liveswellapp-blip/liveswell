@@ -195,6 +195,23 @@ export async function runMigrations(): Promise<void> {
       ALTER TABLE IF EXISTS "users"
       ADD COLUMN IF NOT EXISTS "complimentary_pro" boolean NOT NULL DEFAULT false
     `);
+    // Pre-flight: explicit Whop → Stripe migration consent/state (migration 0012).
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "billing_migration_state" varchar(32)
+    `);
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "billing_migration_started_at" timestamp
+    `);
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "billing_migration_intent_id" varchar(64)
+    `);
+    await pool.query(`
+      ALTER TABLE IF EXISTS "users"
+      ADD COLUMN IF NOT EXISTS "billing_migration_intent_expires_at" timestamp
+    `);
     // Pre-flight: canonicalize phone values and enforce uniqueness on
     // verified_phones.phone — but only if the table already exists.
     // On a fresh database migration 0000 hasn't run yet, so the table is

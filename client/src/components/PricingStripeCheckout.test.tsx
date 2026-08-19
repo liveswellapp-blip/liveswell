@@ -60,6 +60,11 @@ type BillingStatus = {
   renewsAt: number | null;
   canManageBilling: boolean;
   managementType: "stripe_in_app" | "whop_hub" | null;
+  migration?: {
+    state: "not_applicable" | "available" | "pending" | "awaiting_whop_cancellation" | "completed";
+    from: "whop" | null;
+    canStart: boolean;
+  };
 };
 
 const freeStatus: BillingStatus = {
@@ -84,7 +89,14 @@ function mockAuth(isAuthenticated: boolean, isLoading = false) {
 
 function renderPricing(
   status: BillingStatus = freeStatus,
-  queryFn: () => Promise<BillingStatus> = async () => status,
+  queryFn: (context?: any) => Promise<any> = async (context) =>
+    context?.queryKey?.[0] === "/api/billing/checkout-config"
+      ? {
+          checkoutProvider: "stripe",
+          assignedProvider: "stripe",
+          stripeRolloutPercent: 100,
+        }
+      : status,
 ) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -103,6 +115,7 @@ function renderPricing(
 function checkoutResponse() {
   return {
     json: async () => ({
+      provider: "stripe",
       checkoutSessionId: "cs_test_1",
       clientSecret: "cs_secret_test_1",
       publishableKey: "pk_test_liveswell",
@@ -161,8 +174,8 @@ describe("LiveSwell Stripe pricing checkout", () => {
     expect(await screen.findByTestId("embedded-checkout")).toBeInTheDocument();
     expect(apiMocks.apiRequest).toHaveBeenCalledTimes(1);
     expect(apiMocks.apiRequest).toHaveBeenCalledWith(
-      "/api/stripe/subscription",
-      { method: "POST", body: { plan: "monthly" } },
+      "/api/billing/checkout",
+      { method: "POST", body: { plan: "monthly", confirmWhopMigration: false } },
     );
     expect(stripeMocks.loadStripe).toHaveBeenCalledWith("pk_test_liveswell");
     expect(String(apiMocks.apiRequest.mock.calls[0][0])).not.toContain("whop");
@@ -220,6 +233,35 @@ describe("LiveSwell Stripe pricing checkout", () => {
     expect(current).toBeDisabled();
     expect(screen.getByText(/pro is active\. go find the window/i)).toBeInTheDocument();
     expect(apiMocks.apiRequest).not.toHaveBeenCalled();
+  });
+
+  it("requires the legacy member to confirm both migration steps before Stripe checkout", async () => {
+    routeMocks.search = "migrate=whop&plan=annual";
+    const user = userEvent.setup();
+    renderPricing({
+      isPro: true,
+      provider: "whop",
+      plan: "annual",
+      renewsAt: 1_800_000_000,
+      canManageBilling: true,
+      managementType: "whop_hub",
+      migration: { state: "available", from: "whop", canStart: true },
+    });
+
+    expect(await screen.findByText(/two separate steps/i)).toBeInTheDocument();
+    const confirmation = screen.getByRole("checkbox", {
+      name: /must cancel Whop myself/i,
+    });
+    expect(screen.getByRole("button", { name: /confirm both migration steps/i })).toBeDisabled();
+
+    await user.click(confirmation);
+    await user.click(screen.getByRole("button", { name: /start new Stripe annual plan/i }));
+
+    expect(apiMocks.apiRequest).toHaveBeenCalledWith("/api/billing/checkout", {
+      method: "POST",
+      body: { plan: "annual", confirmWhopMigration: true },
+    });
+    expect(await screen.findByTestId("embedded-checkout")).toBeInTheDocument();
   });
 
   it("moves from embedded checkout to webhook confirmation without leaving LiveSwell", async () => {

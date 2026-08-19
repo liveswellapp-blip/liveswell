@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getStripePublishableKey: vi.fn(),
   getUncachableStripeClient: vi.fn(),
   getWhopClient: vi.fn(),
+  beginWhopToStripeMigration: vi.fn(),
   reconcileStripeSubscription: vi.fn(),
   transitionProStatus: vi.fn(),
   update: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("./whopClient", () => ({
 }));
 
 vi.mock("./pro-transitions", () => ({
+  beginWhopToStripeMigration: mocks.beginWhopToStripeMigration,
   reconcileStripeSubscription: mocks.reconcileStripeSubscription,
   transitionProStatus: mocks.transitionProStatus,
 }));
@@ -258,6 +260,68 @@ describe("Stripe subscription checkout", () => {
       BillingRequestError,
     );
     expect(mocks.getUncachableStripeClient).not.toHaveBeenCalled();
+  });
+
+  it("requires explicit confirmation before a Whop member can start a separate Stripe subscription", async () => {
+    mockUserRows[0] = {
+      ...mockUserRows[0],
+      isPro: true,
+      paidPro: true,
+      billingProvider: "whop",
+      whopMembershipId: "mem_legacy",
+    };
+
+    await expect(createStripeSubscriptionSession("user_free", "monthly")).rejects.toMatchObject({
+      statusCode: 409,
+      code: "whop_migration_confirmation_required",
+    });
+    expect(mocks.beginWhopToStripeMigration).not.toHaveBeenCalled();
+    expect(mocks.getUncachableStripeClient).not.toHaveBeenCalled();
+  });
+
+  it("persists Whop migration consent before creating confirmed Stripe checkout", async () => {
+    mockUserRows[0] = {
+      ...mockUserRows[0],
+      isPro: true,
+      paidPro: true,
+      billingProvider: "whop",
+      whopMembershipId: "mem_legacy",
+    };
+    mocks.beginWhopToStripeMigration.mockResolvedValue("migration_intent_1");
+    const stripe = {
+      subscriptions: { list: vi.fn().mockResolvedValue({ data: [] }) },
+      prices: { list: vi.fn().mockResolvedValue({ data: [validMonthlyPrice] }) },
+      products: { retrieve: vi.fn().mockResolvedValue(validProduct) },
+      checkout: {
+        sessions: {
+          list: vi.fn().mockResolvedValue({ data: [] }),
+          create: vi.fn().mockResolvedValue({
+            id: "cs_migration",
+            client_secret: "cs_secret_migration",
+          }),
+        },
+      },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue(stripe);
+
+    await expect(createStripeSubscriptionSession("user_free", "monthly", {
+      confirmWhopMigration: true,
+    })).resolves.toMatchObject({ checkoutSessionId: "cs_migration" });
+    expect(mocks.beginWhopToStripeMigration).toHaveBeenCalledWith(
+      "user_free",
+      "mem_legacy",
+      expect.any(String),
+      expect.any(Date),
+    );
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          migration_from: "whop",
+          migration_intent_id: "migration_intent_1",
+        }),
+      }),
+      expect.any(Object),
+    );
   });
 
   it("creates and links a customer with a stable per-user idempotency key", async () => {
@@ -514,8 +578,8 @@ describe("unified billing status", () => {
 
     await expect(getBillingStatus("user_whop_test")).resolves.toMatchObject({
       isPro: true,
-      provider: "whop",
-      canManageBilling: true,
+      provider: "test",
+      canManageBilling: false,
     });
     expect(mocks.transitionProStatus).toHaveBeenCalledWith(
       "user_whop_test",

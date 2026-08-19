@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import express from "express";
 import request from "supertest";
 
@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   getStripeInvoiceDocument: vi.fn(),
   getBillingStatus: vi.fn(),
   setStripeCancellation: vi.fn(),
+  getCheckoutProvider: vi.fn(),
 }));
 
 vi.mock("@clerk/express", () => ({
@@ -47,6 +48,10 @@ vi.mock("./stripe-billing", () => ({
   setStripeCancellation: mocks.setStripeCancellation,
 }));
 
+vi.mock("./billing-cutover", () => ({
+  getCheckoutProvider: mocks.getCheckoutProvider,
+}));
+
 import { registerStripeBillingRoutes } from "./stripe-billing-routes";
 
 function buildApp() {
@@ -57,6 +62,9 @@ function buildApp() {
 }
 
 describe("Stripe billing route contracts", () => {
+  beforeEach(() => {
+    mocks.getCheckoutProvider.mockResolvedValue("stripe");
+  });
   afterEach(() => {
     mockUserId = "user_free";
     vi.clearAllMocks();
@@ -103,6 +111,7 @@ describe("Stripe billing route contracts", () => {
     expect(mocks.createStripeSubscriptionSession).toHaveBeenCalledWith(
       "user_free",
       "annual",
+      { confirmWhopMigration: false },
     );
   });
 

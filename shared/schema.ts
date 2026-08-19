@@ -22,6 +22,12 @@ export const users = pgTable("users", {
   // Paid billing owner: `whop` for legacy accounts or `stripe` for the new flow.
   // Comp/test-only accounts remain null; overlays do not erase a paid owner.
   billingProvider: varchar("billing_provider", { length: 16 }),
+  // Explicit consent/state for a voluntary Whop → Stripe transition.
+  // Null means no migration has been started.
+  billingMigrationState: varchar("billing_migration_state", { length: 32 }),
+  billingMigrationStartedAt: timestamp("billing_migration_started_at"),
+  billingMigrationIntentId: varchar("billing_migration_intent_id", { length: 64 }),
+  billingMigrationIntentExpiresAt: timestamp("billing_migration_intent_expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

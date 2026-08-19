@@ -40,6 +40,11 @@ type BillingStatus = {
   providerState: "live" | "cached" | "not_applicable";
   canManageBilling: boolean;
   managementType: "stripe_in_app" | "whop_hub" | null;
+  migration: {
+    state: "not_applicable" | "available" | "pending" | "awaiting_whop_cancellation" | "completed";
+    from: "whop" | null;
+    canStart: boolean;
+  };
 };
 
 type PaymentSetup = { clientSecret: string; publishableKey: string };
@@ -286,11 +291,32 @@ function BillingWorkspace({
 }) {
   const stripeManaged = status.provider === "stripe" && status.canManageBilling;
   const alternatePlan: Plan = status.plan === "monthly" ? "annual" : "monthly";
+  const migration = status.migration ?? {
+    state: "not_applicable" as const,
+    from: null,
+    canStart: false,
+  };
 
   return (
     <div className="space-y-4">
       {status.providerState === "cached" && (
         <Notice tone="warning">Live billing details are temporarily unavailable. Your saved account access is shown; try again shortly before making changes.</Notice>
+      )}
+      {migration.state === "awaiting_whop_cancellation" && (
+        <Notice tone="warning">
+          <strong>Your Stripe subscription is active.</strong> Whop is separate and may
+          still renew until you cancel it in Whop. LiveSwell cannot cancel it or move
+          its saved card automatically.{" "}
+          <a href="https://whop.com/hub" target="_blank" rel="noopener noreferrer" className="underline font-semibold">
+            Cancel the legacy Whop membership
+          </a>.
+        </Notice>
+      )}
+      {migration.state === "completed" && (
+        <Notice tone="success">
+          Your billing migration is complete. Stripe now manages your paid subscription
+          and Whop no longer controls access.
+        </Notice>
       )}
 
       <section className="rounded-2xl border border-white/10 bg-white/[.04] p-5">
@@ -312,6 +338,21 @@ function BillingWorkspace({
           <h2 className="text-white font-semibold text-sm">Legacy Whop subscription</h2>
           <p className="text-slate-400 text-xs leading-relaxed mt-2">This subscription is still managed through Whop during the transition. Your LiveSwell access remains unchanged.</p>
           <a href="https://whop.com/hub" target="_blank" rel="noopener noreferrer" className="mt-4 flex items-center justify-between rounded-xl border border-violet-300/25 px-4 py-3 text-sm font-semibold text-white"><span>Manage on Whop</span><ExternalLink size={15} className="text-violet-200" /></a>
+          {migration.canStart && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Prefer LiveSwell billing? You can voluntarily start a new Stripe
+                subscription. Your Whop subscription will remain active until you cancel
+                it yourself, so follow both steps to avoid two renewals.
+              </p>
+              <Link
+                href={`/pricing?migrate=whop&plan=${status.plan ?? "annual"}`}
+                className="mt-3 flex items-center justify-between rounded-xl bg-emerald-300 px-4 py-3 text-sm font-bold text-slate-950"
+              >
+                <span>Review migration to Stripe</span><ArrowRight size={15} />
+              </Link>
+            </div>
+          )}
         </section>
       )}
 
