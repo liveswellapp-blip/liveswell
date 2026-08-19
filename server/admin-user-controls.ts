@@ -373,6 +373,64 @@ export function registerAdminUserControls(app: Express, requireAdminAuth: Reques
     }
   });
 
+  // ── Resend welcome email ─────────────────────────────────────────────────
+  // Creates a fresh short-lived Clerk sign-in token and sends the original
+  // account welcome email again. This is intentionally separate from the
+  // password-reset email so admins can help a user who never received the
+  // initial account instructions without changing the email's purpose.
+  app.post("/api/admin/users/:userId/resend-welcome", requireAdminAuth, async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user.email) return res.status(422).json({ message: "This user has no email address on file" });
+
+      if (!userId.startsWith("user_")) {
+        return res.status(422).json({ message: "Welcome email resend is only supported for Clerk-managed accounts" });
+      }
+
+      let signInToken: string;
+      try {
+        const tokenResponse = await clerkClient.signInTokens.createSignInToken({
+          userId,
+          expiresInSeconds: 7 * 24 * 60 * 60, // 7 days
+        });
+        signInToken = tokenResponse.token;
+      } catch (clerkErr: any) {
+        const detail = clerkErr?.errors?.[0]?.longMessage
+          ?? clerkErr?.errors?.[0]?.message
+          ?? "Clerk rejected the request";
+        console.error(`Clerk createSignInToken failed while resending welcome email for ${userId}:`, clerkErr);
+        return res.status(502).json({ message: `Could not generate welcome link: ${detail}` });
+      }
+
+      const APP_BASE_URL = "https://liveswell.io";
+      const welcomeUrl =
+        `${APP_BASE_URL}/sign-in` +
+        `?__clerk_ticket=${signInToken}` +
+        `&redirect_url=${encodeURIComponent("/change-password")}`;
+
+      const sent = await EmailService.sendWelcomeEmail(
+        user.email,
+        user.firstName ?? null,
+        user.lastName ?? null,
+        welcomeUrl,
+      );
+
+      if (!sent) {
+        console.error(`Welcome email resend failed for ${userId} (${user.email})`);
+        return res.status(502).json({ message: "Welcome email delivery failed — please try again." });
+      }
+
+      console.log(`📧 Admin resent welcome email to ${user.email} (${userId})`);
+      res.json({ sent: true });
+    } catch (error) {
+      console.error("Admin resend welcome email error:", error);
+      res.status(500).json({ message: "Failed to resend welcome email" });
+    }
+  });
+
   // ── Admin-triggered password reset ──────────────────────────────────────
   // Creates a short-lived Clerk sign-in token and emails the user a link
   // they can click to sign in and then set a new password in account settings.

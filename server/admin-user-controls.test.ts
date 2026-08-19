@@ -1,6 +1,7 @@
 /**
  * Integration tests for the admin user-management endpoints
- * (server/admin-user-controls.ts): delete, suspend, plan override, profile edit.
+ * (server/admin-user-controls.ts): delete, suspend, plan override, profile edit,
+ * welcome email resend, and password reset.
  *
  * Uses supertest against an Express app with the real handlers; the DB, storage
  * layer, and Clerk client are mocked so no live credentials are required.
@@ -599,6 +600,74 @@ describe("POST /api/admin/users/:userId/reset-password", () => {
 
     // Confirm the plain-text version also carries the correct origin
     expect(body.text).toContain("https://liveswell.io/sign-in");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/admin/users/:userId/resend-welcome
+// ---------------------------------------------------------------------------
+describe("POST /api/admin/users/:userId/resend-welcome", () => {
+  it("404 when the user does not exist", async () => {
+    const res = await request(buildApp()).post("/api/admin/users/user_missing/resend-welcome");
+    expect(res.status).toBe(404);
+    expect(clerkCreateSignInToken).not.toHaveBeenCalled();
+    expect(sendWelcomeEmail).not.toHaveBeenCalled();
+  });
+
+  it("422 when the user has no email address", async () => {
+    mockUser = { id: "user_1", email: null };
+    const res = await request(buildApp()).post("/api/admin/users/user_1/resend-welcome");
+    expect(res.status).toBe(422);
+    expect(res.body.message).toMatch(/no email/i);
+    expect(clerkCreateSignInToken).not.toHaveBeenCalled();
+  });
+
+  it("422 for non-Clerk (legacy) user IDs", async () => {
+    mockUser = { id: "45116786", email: "legacy@b.co" };
+    const res = await request(buildApp()).post("/api/admin/users/45116786/resend-welcome");
+    expect(res.status).toBe(422);
+    expect(res.body.message).toMatch(/clerk/i);
+    expect(clerkCreateSignInToken).not.toHaveBeenCalled();
+  });
+
+  it("502 when Clerk token creation fails", async () => {
+    mockUser = { id: "user_1", email: "a@b.co" };
+    clerkCreateSignInToken.mockRejectedValue(
+      Object.assign(new Error("clerk down"), { errors: [{ longMessage: "service unavailable" }] }),
+    );
+
+    const res = await request(buildApp()).post("/api/admin/users/user_1/resend-welcome");
+    expect(res.status).toBe(502);
+    expect(res.body.message).toMatch(/service unavailable/i);
+    expect(sendWelcomeEmail).not.toHaveBeenCalled();
+  });
+
+  it("502 when welcome email delivery fails", async () => {
+    mockUser = { id: "user_1", email: "a@b.co" };
+    sendWelcomeEmail.mockResolvedValue(false);
+
+    const res = await request(buildApp()).post("/api/admin/users/user_1/resend-welcome");
+    expect(res.status).toBe(502);
+    expect(res.body.message).toMatch(/delivery failed/i);
+  });
+
+  it("returns { sent: true } and sends a fresh seven-day welcome link", async () => {
+    mockUser = { id: "user_1", email: "a@b.co", firstName: "Ada", lastName: "Lovelace" };
+
+    const res = await request(buildApp()).post("/api/admin/users/user_1/resend-welcome");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ sent: true });
+    expect(clerkCreateSignInToken).toHaveBeenCalledWith({
+      userId: "user_1",
+      expiresInSeconds: 7 * 24 * 60 * 60,
+    });
+    expect(sendWelcomeEmail).toHaveBeenCalledWith(
+      "a@b.co",
+      "Ada",
+      "Lovelace",
+      expect.stringContaining("https://liveswell.io/sign-in?__clerk_ticket=tok_test123"),
+    );
   });
 });
 

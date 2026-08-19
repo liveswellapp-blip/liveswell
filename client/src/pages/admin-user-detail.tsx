@@ -246,6 +246,34 @@ export default function AdminUserDetail() {
     },
   });
 
+  // Resend the original welcome email with a fresh sign-in link.
+  const [resendWelcomeStatus, setResendWelcomeStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [resendWelcomeError, setResendWelcomeError] = useState<string | null>(null);
+
+  const resendWelcomeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/resend-welcome`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? 'Request failed');
+      }
+      return res.json() as Promise<{ sent: boolean }>;
+    },
+    onSuccess: () => {
+      setResendWelcomeStatus('sent');
+      setResendWelcomeError(null);
+      toast({ title: 'Welcome email sent', description: `A new welcome email was sent to ${userDetails?.user.email}.` });
+    },
+    onError: (err: Error) => {
+      setResendWelcomeStatus('error');
+      setResendWelcomeError(err.message);
+      toast({ title: 'Failed to resend welcome email', description: err.message, variant: 'destructive' });
+    },
+  });
+
   // Edit profile (name + email)
   const profileMutation = useMutation({
     mutationFn: async () => {
@@ -652,6 +680,45 @@ export default function AdminUserDetail() {
                       : resetPasswordStatus === 'sent'
                         ? 'Email sent'
                         : 'Send password reset email'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Mail className="h-4 w-4" /> Welcome Email
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="text-sm text-muted-foreground max-w-sm">
+                    <p>
+                      Send the account welcome email again with a fresh sign-in link. This is useful if the original email was missed or filtered as spam.
+                    </p>
+                    {resendWelcomeStatus === 'sent' && (
+                      <p className="mt-2 text-green-600 font-medium">
+                        ✓ Welcome email sent to {user.email}
+                      </p>
+                    )}
+                    {resendWelcomeStatus === 'error' && resendWelcomeError && (
+                      <p className="mt-2 text-destructive text-xs">{resendWelcomeError}</p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    disabled={resendWelcomeMutation.isPending}
+                    onClick={() => {
+                      setResendWelcomeStatus('sending');
+                      resendWelcomeMutation.mutate();
+                    }}
+                    data-testid="button-resend-welcome"
+                  >
+                    <Mail className="h-3.5 w-3.5 mr-1.5" />
+                    {resendWelcomeMutation.isPending ? 'Sending…' : 'Resend welcome email'}
                   </Button>
                 </div>
               </CardContent>
