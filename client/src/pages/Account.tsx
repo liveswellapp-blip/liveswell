@@ -9,6 +9,7 @@ import {
   ArrowRight,
   CalendarClock,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   CreditCard,
   Crown,
@@ -208,12 +209,16 @@ export default function AccountPage() {
       <main className="flex-1 w-full max-w-2xl mx-auto px-5 pt-8 pb-14">
         <div className="flex items-end justify-between gap-4 mb-7">
           <div>
-            <p className="text-emerald-300 text-[10px] font-bold tracking-[.18em] uppercase mb-2">LiveSwell account</p>
             <h1 className="text-white font-bold text-2xl tracking-tight">Account &amp; Billing</h1>
           </div>
-          <Link href="/pricing" className="text-emerald-300 text-xs font-semibold inline-flex items-center gap-1">
-            Plans <ChevronRight size={14} />
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/profile" className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-3 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-300/15">
+              <ChevronLeft size={14} /> Profile
+            </Link>
+            <Link href="/pricing" className="text-emerald-300 text-xs font-semibold inline-flex items-center gap-1">
+              Plans <ChevronRight size={14} />
+            </Link>
+          </div>
         </div>
 
         {notice && <Notice tone="success" onDismiss={() => setNotice(null)}>{notice}</Notice>}
