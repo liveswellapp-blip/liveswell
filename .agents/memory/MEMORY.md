@@ -8,3 +8,4 @@
 - [Resend sender domain](resend-sender-domain.md) — branded mail requires the verified LiveSwell domain; direct callers must fail instead of using Resend's shared sender.
 - [Pro entitlement ownership](pro-entitlement-ownership.md) — track paid, complimentary, and test grants independently; billing events may mutate only their own paid source.
 - [Billing provider migration safety](billing-provider-migration-safety.md) — bind transfer consent to a short-lived provider intent and recheck canonical lifecycle state after locking.
+- [Billing operational telemetry](billing-operational-telemetry.md) — persist actionable verified failures; aggregate high-volume outcomes; never write unauthenticated webhook noise.

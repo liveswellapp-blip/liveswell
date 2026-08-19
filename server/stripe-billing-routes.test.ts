@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   getBillingStatus: vi.fn(),
   setStripeCancellation: vi.fn(),
   getCheckoutProvider: vi.fn(),
+  recordBillingOperation: vi.fn(),
+  recordCheckoutOutcome: vi.fn(),
 }));
 
 vi.mock("@clerk/express", () => ({
@@ -51,6 +53,10 @@ vi.mock("./stripe-billing", () => ({
 vi.mock("./billing-cutover", () => ({
   getCheckoutProvider: mocks.getCheckoutProvider,
 }));
+vi.mock("./billing-observability", () => ({
+  recordBillingOperation: mocks.recordBillingOperation,
+  recordCheckoutOutcome: mocks.recordCheckoutOutcome,
+}));
 
 import { registerStripeBillingRoutes } from "./stripe-billing-routes";
 
@@ -64,6 +70,8 @@ function buildApp() {
 describe("Stripe billing route contracts", () => {
   beforeEach(() => {
     mocks.getCheckoutProvider.mockResolvedValue("stripe");
+    mocks.recordBillingOperation.mockResolvedValue(undefined);
+    mocks.recordCheckoutOutcome.mockResolvedValue(undefined);
   });
   afterEach(() => {
     mockUserId = "user_free";
@@ -113,6 +121,7 @@ describe("Stripe billing route contracts", () => {
       "annual",
       { confirmWhopMigration: false },
     );
+    expect(mocks.recordCheckoutOutcome).toHaveBeenCalledWith("stripe", "success");
   });
 
   it("serves the provider-neutral subscription response", async () => {

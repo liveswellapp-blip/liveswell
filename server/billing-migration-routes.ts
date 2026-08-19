@@ -5,6 +5,7 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import { isAuthenticated } from "./auth";
 import {
+  BillingEmergencyOverrideError,
   getBillingCutoverConfig,
   getCheckoutProvider,
   getDefaultCheckoutProvider,
@@ -18,6 +19,13 @@ import {
   createWhopCheckoutForPlan,
   WhopCheckoutError,
 } from "./whop-routes";
+import {
+  getBillingOperationalSnapshot,
+  recordCheckoutOutcome,
+  recordBillingOperation,
+  resolveBillingOperationalFailure,
+} from "./billing-observability";
+import { safeLogger } from "./safe-logging";
 
 const checkoutSchema = z.object({
   plan: z.enum(["monthly", "annual"]),
@@ -38,7 +46,7 @@ export function registerBillingMigrationRoutes(
         defaultProvider: getDefaultCheckoutProvider(),
       });
     } catch (error) {
-      console.error("[billing/cutover] Failed to load checkout config:", error);
+      safeLogger.error("[billing/cutover] Failed to load checkout config", { error });
       return res.status(503).json({ error: "billing_cutover_unavailable" });
     }
   });
@@ -49,28 +57,53 @@ export function registerBillingMigrationRoutes(
     const userId = getAuth(req).userId;
     if (!userId) return res.status(401).json({ error: "unauthenticated" });
 
+    let provider: "stripe" | "whop" = "stripe";
     try {
-      const provider = await getCheckoutProvider(userId);
+      provider = await getCheckoutProvider(userId);
       if (provider === "whop") {
         const result = await createWhopCheckoutForPlan(userId, parsed.data.plan);
+        await recordCheckoutOutcome(provider, "success");
         return res.json({ provider, ...result });
       }
       const result = await createStripeSubscriptionSession(userId, parsed.data.plan, {
         confirmWhopMigration: parsed.data.confirmWhopMigration,
       });
+      await recordCheckoutOutcome(provider, "success");
       return res.json({ provider, ...result });
     } catch (error) {
       if (error instanceof BillingRequestError || error instanceof WhopCheckoutError) {
+        if (error.statusCode >= 500) {
+          await recordBillingOperation({
+            operation: "checkout",
+            status: "failure",
+            provider: error instanceof WhopCheckoutError ? "whop" : "stripe",
+            userId,
+            code: error.code,
+            unexpectedError: true,
+          });
+          await recordCheckoutOutcome(
+            error instanceof WhopCheckoutError ? "whop" : "stripe",
+            "technical_failure",
+          );
+        }
         return res.status(error.statusCode).json({ error: error.code, message: error.message });
       }
-      console.error("[billing/checkout] Failed:", error);
+      await recordBillingOperation({
+        operation: "checkout",
+        status: "failure",
+        provider,
+        userId,
+        code: "billing_checkout_failed",
+        unexpectedError: true,
+      });
+      await recordCheckoutOutcome(provider, "technical_failure");
       return res.status(500).json({ error: "billing_checkout_failed" });
     }
   });
 
   app.get("/api/admin/billing-migration", requireAdminAuth, async (_req, res) => {
     try {
-      const [config, accountRows] = await Promise.all([
+      const [config, accountRows, operational] = await Promise.all([
         getBillingCutoverConfig(),
         db.select({
           id: users.id,
@@ -80,6 +113,7 @@ export function registerBillingMigrationRoutes(
           migrationState: users.billingMigrationState,
           migrationStartedAt: users.billingMigrationStartedAt,
         }).from(users),
+        getBillingOperationalSnapshot(),
       ]);
       const summary = {
         stripePaid: 0,
@@ -99,6 +133,7 @@ export function registerBillingMigrationRoutes(
         ...config,
         defaultProvider: getDefaultCheckoutProvider(),
         summary,
+        operational,
         attentionAccounts: accountRows
           .filter((account) =>
             account.migrationState === "whop_to_stripe_pending" ||
@@ -114,7 +149,7 @@ export function registerBillingMigrationRoutes(
           })),
       });
     } catch (error) {
-      console.error("[admin/billing-migration] Failed to load status:", error);
+      safeLogger.error("[admin/billing-migration] Failed to load status", { error });
       return res.status(500).json({ message: "Failed to load billing migration status" });
     }
   });
@@ -137,8 +172,32 @@ export function registerBillingMigrationRoutes(
       );
       return res.json(await getBillingCutoverConfig());
     } catch (error) {
-      console.error("[admin/billing-migration] Failed to save cutover:", error);
+      if (error instanceof BillingEmergencyOverrideError) {
+        return res.status(409).json({
+          message: "The environment-level Whop override is active. Only Whop at 0% can be persisted until the override is removed.",
+        });
+      }
+      safeLogger.error("[admin/billing-migration] Failed to save cutover", { error });
       return res.status(500).json({ message: "Failed to update billing migration controls" });
+    }
+  });
+
+  app.post("/api/admin/billing-operations/:id/resolve", requireAdminAuth, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "A valid billing operation ID is required" });
+    }
+    try {
+      const resolved = await resolveBillingOperationalFailure(id);
+      return resolved
+        ? res.json({ resolved: true })
+        : res.status(404).json({ message: "Unresolved billing failure not found" });
+    } catch (error) {
+      safeLogger.error("[admin/billing-operations] Failed to resolve billing failure", {
+        operationId: id,
+        error,
+      });
+      return res.status(500).json({ message: "Failed to resolve billing failure" });
     }
   });
 }

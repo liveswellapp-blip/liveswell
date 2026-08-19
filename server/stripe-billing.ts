@@ -14,6 +14,7 @@ import {
   reconcileStripeSubscription,
   transitionProStatus,
 } from "./pro-transitions";
+import { safeLogger } from "./safe-logging";
 
 export type BillingPlan = "monthly" | "annual";
 export type AccessProvider = "stripe" | "whop" | "complimentary" | "test" | "free";
@@ -94,6 +95,8 @@ export class BillingRequestError extends Error {
 
 function getAppOrigin(): string {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+  const deploymentDomain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
+  if (deploymentDomain) return `https://${deploymentDomain}`;
   if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
   throw new BillingRequestError(
     503,
@@ -305,7 +308,7 @@ export async function createStripeSubscriptionSession(
       }
     } catch (error) {
       if (error instanceof BillingRequestError) throw error;
-      console.warn("[stripe/checkout] Could not verify the existing subscription:", error);
+      safeLogger.warn("[stripe/checkout] Could not verify the existing subscription", { error });
       throw new BillingRequestError(
         502,
         "stripe_subscription_unavailable",
@@ -335,7 +338,7 @@ export async function createStripeSubscriptionSession(
     }
   } catch (error) {
     if (error instanceof BillingRequestError) throw error;
-    console.warn("[stripe/checkout] Could not verify customer subscriptions:", error);
+    safeLogger.warn("[stripe/checkout] Could not verify customer subscriptions", { error });
     throw new BillingRequestError(
       502,
       "stripe_subscription_unavailable",
@@ -853,7 +856,7 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
         migration: migrationForUser(user),
       };
     } catch (error) {
-      console.warn("[billing/status] Stripe unavailable; using cached access:", error);
+      safeLogger.warn("[billing/status] Stripe unavailable; using cached access", { error });
       return cached;
     }
   }
@@ -906,7 +909,7 @@ export async function getBillingStatus(userId: string): Promise<BillingStatus> {
         migration: migrationForUser(user, active),
       };
     } catch (error) {
-      console.warn("[billing/status] Whop unavailable; using cached access:", error);
+      safeLogger.warn("[billing/status] Whop unavailable; using cached access", { error });
       return cached;
     }
   }
@@ -952,22 +955,41 @@ async function findUserIdForSubscription(subscription: Stripe.Subscription): Pro
   return user?.id ?? null;
 }
 
+export type StripeBillingEventResult = {
+  status: "success" | "failure" | "ignored";
+  code: string;
+  userId?: string;
+  objectId?: string;
+};
+
 async function reconcileVerifiedSubscription(
   subscription: Stripe.Subscription,
   eventId: string,
   fallbackUserId?: string,
   stripe?: Stripe,
-): Promise<void> {
+): Promise<StripeBillingEventResult> {
   const plan = getStripePlanFromSubscription(subscription);
   if (!plan) {
-    console.warn(`[stripe/webhook] Ignoring subscription ${subscription.id} with an unknown price.`);
-    return;
+    safeLogger.warn("[stripe/webhook] Subscription uses an unknown price", {
+      subscriptionId: subscription.id,
+    });
+    return {
+      status: "failure",
+      code: "unknown_subscription_price",
+      objectId: subscription.id,
+    };
   }
 
   const userId = fallbackUserId ?? await findUserIdForSubscription(subscription);
   if (!userId) {
-    console.warn(`[stripe/webhook] No LiveSwell user found for subscription ${subscription.id}.`);
-    return;
+    safeLogger.warn("[stripe/webhook] No LiveSwell user found for subscription", {
+      subscriptionId: subscription.id,
+    });
+    return {
+      status: "failure",
+      code: "subscription_user_not_found",
+      objectId: subscription.id,
+    };
   }
 
   const customerId =
@@ -1004,31 +1026,38 @@ async function reconcileVerifiedSubscription(
   console.log(
     `[stripe/webhook] ${subscription.id} (${subscription.status}) reconciled: changed=${result.changed}, ignored=${result.ignored}`,
   );
+  return {
+    status: result.ignored ? "failure" : "success",
+    code: result.ignored ? "subscription_reconciliation_ignored" : "subscription_reconciled",
+    userId,
+    objectId: subscription.id,
+  };
 }
 
 /**
  * Applies a signature-verified event to LiveSwell access. stripe-replit-sync
  * persists the raw Stripe model separately before this function is called.
  */
-export async function processStripeBillingEvent(event: Stripe.Event): Promise<void> {
+export async function processStripeBillingEvent(event: Stripe.Event): Promise<StripeBillingEventResult> {
   if (event.type.startsWith("customer.subscription.")) {
     const eventSubscription = event.data.object as Stripe.Subscription;
     const stripe = await getUncachableStripeClient();
     // Always reconcile the provider's current object, not the possibly stale
     // event snapshot. This makes same-subscription event reordering harmless.
     const currentSubscription = await stripe.subscriptions.retrieve(eventSubscription.id);
-    await reconcileVerifiedSubscription(
+    const result = await reconcileVerifiedSubscription(
       currentSubscription,
       event.id,
       eventSubscription.metadata.clerk_user_id || undefined,
       stripe,
     );
-    return;
+    return result.status === "success"
+      ? { ...result, code: "subscription_lifecycle_reconciled" }
+      : result;
   }
 
-  const stripe = await getUncachableStripeClient();
-
   if (event.type === "checkout.session.completed") {
+    const stripe = await getUncachableStripeClient();
     const session = event.data.object as Stripe.Checkout.Session;
     const subscriptionId =
       typeof session.subscription === "string"
@@ -1036,21 +1065,47 @@ export async function processStripeBillingEvent(event: Stripe.Event): Promise<vo
         : session.subscription?.id;
     if (subscriptionId) {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      await reconcileVerifiedSubscription(
+      const result = await reconcileVerifiedSubscription(
         subscription,
         event.id,
         session.metadata?.clerk_user_id ?? session.client_reference_id ?? undefined,
         stripe,
       );
+      return result.status === "success"
+        ? { ...result, code: "checkout_completed_reconciled" }
+        : result;
     }
-    return;
+    return {
+      status: "failure",
+      code: "checkout_subscription_missing",
+      objectId: session.id,
+    };
   }
 
   if (event.type === "invoice.paid" || event.type === "invoice.payment_failed") {
+    const stripe = await getUncachableStripeClient();
     const subscriptionId = subscriptionIdFromInvoice(event.data.object as Stripe.Invoice);
     if (subscriptionId) {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      await reconcileVerifiedSubscription(subscription, event.id, undefined, stripe);
+      const result = await reconcileVerifiedSubscription(subscription, event.id, undefined, stripe);
+      if (result.status !== "success") return result;
+      return {
+        ...result,
+        code:
+          event.type === "invoice.payment_failed"
+            ? "invoice_payment_failed_reconciled"
+            : "invoice_paid_reconciled",
+      };
     }
+    return {
+      status: "failure",
+      code: "invoice_subscription_missing",
+      objectId: (event.data.object as Stripe.Invoice).id,
+    };
   }
+  return {
+    status: "ignored",
+    code: "unsupported_event_type",
+    objectId: event.type,
+  };
 }

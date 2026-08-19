@@ -14,6 +14,10 @@ const mocks = vi.hoisted(() => ({
   getBillingCutoverConfig: vi.fn(),
   getCheckoutProvider: vi.fn(),
   setBillingCutoverConfig: vi.fn(),
+  getBillingOperationalSnapshot: vi.fn(),
+  recordBillingOperation: vi.fn(),
+  recordCheckoutOutcome: vi.fn(),
+  resolveBillingOperationalFailure: vi.fn(),
 }));
 
 vi.mock("@clerk/express", () => ({
@@ -34,10 +38,17 @@ vi.mock("./db", () => ({
 }));
 
 vi.mock("./billing-cutover", () => ({
+  BillingEmergencyOverrideError: class BillingEmergencyOverrideError extends Error {},
   getBillingCutoverConfig: mocks.getBillingCutoverConfig,
   getCheckoutProvider: mocks.getCheckoutProvider,
   getDefaultCheckoutProvider: () => "stripe",
   setBillingCutoverConfig: mocks.setBillingCutoverConfig,
+}));
+vi.mock("./billing-observability", () => ({
+  getBillingOperationalSnapshot: mocks.getBillingOperationalSnapshot,
+  recordBillingOperation: mocks.recordBillingOperation,
+  recordCheckoutOutcome: mocks.recordCheckoutOutcome,
+  resolveBillingOperationalFailure: mocks.resolveBillingOperationalFailure,
 }));
 
 vi.mock("./stripe-billing", () => {
@@ -92,7 +103,19 @@ describe("billing cutover and migration routes", () => {
     mocks.getBillingCutoverConfig.mockResolvedValue({
       checkoutProvider: "stripe",
       stripeRolloutPercent: 100,
+      emergencyOverrideActive: false,
     });
+    mocks.getBillingOperationalSnapshot.mockResolvedValue({
+      status: "healthy",
+      failuresLast24Hours: 0,
+      ignoredLast24Hours: 0,
+      unresolvedFailures: 0,
+      lastSuccessAt: null,
+      recentFailures: [],
+    });
+    mocks.recordBillingOperation.mockResolvedValue(undefined);
+    mocks.recordCheckoutOutcome.mockResolvedValue(undefined);
+    mocks.resolveBillingOperationalFailure.mockResolvedValue(true);
     mocks.getCheckoutProvider.mockResolvedValue("stripe");
     mocks.createStripeSubscriptionSession.mockResolvedValue({
       checkoutSessionId: "cs_1",
@@ -116,6 +139,7 @@ describe("billing cutover and migration routes", () => {
       "annual",
       { confirmWhopMigration: true },
     );
+    expect(mocks.recordCheckoutOutcome).toHaveBeenCalledWith("stripe", "success");
   });
 
   it("routes rollback checkout to Whop", async () => {
@@ -129,6 +153,16 @@ describe("billing cutover and migration routes", () => {
       purchaseUrl: "https://whop.example/checkout",
     });
     expect(mocks.createWhopCheckoutForPlan).toHaveBeenCalledWith("user_1", "monthly");
+    expect(mocks.recordCheckoutOutcome).toHaveBeenCalledWith("whop", "success");
+  });
+
+  it("counts a technical checkout failure without counting expected 4xx rejections", async () => {
+    mocks.createStripeSubscriptionSession.mockRejectedValueOnce(new Error("provider unavailable"));
+    const response = await request(makeApp()).post("/api/billing/checkout").send({
+      plan: "monthly",
+    });
+    expect(response.status).toBe(500);
+    expect(mocks.recordCheckoutOutcome).toHaveBeenCalledWith("stripe", "technical_failure");
   });
 
   it("keeps operator controls behind admin authentication", async () => {
@@ -151,6 +185,12 @@ describe("billing cutover and migration routes", () => {
       migrationPending: 1,
       awaitingWhopCancellation: 1,
     });
+    expect(response.body.operational).toMatchObject({
+      status: expect.stringMatching(/^(healthy|degraded)$/),
+      failuresLast24Hours: expect.any(Number),
+      ignoredLast24Hours: expect.any(Number),
+      recentFailures: expect.any(Array),
+    });
   });
 
   it("requires explicit confirmation for a provider switch", async () => {
@@ -160,5 +200,13 @@ describe("billing cutover and migration routes", () => {
       .send({ checkoutProvider: "whop", stripeRolloutPercent: 0 });
     expect(response.status).toBe(400);
     expect(mocks.setBillingCutoverConfig).not.toHaveBeenCalled();
+  });
+
+  it("lets an authenticated admin explicitly resolve a persisted billing failure", async () => {
+    const response = await request(makeApp())
+      .post("/api/admin/billing-operations/42/resolve")
+      .set("x-admin", "yes");
+    expect(response.status).toBe(200);
+    expect(mocks.resolveBillingOperationalFailure).toHaveBeenCalledWith(42);
   });
 });

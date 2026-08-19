@@ -10,6 +10,9 @@ import { initWeatherCache } from "./weather-service";
 import { runPushHealthCheck, runApnsHealthCheck } from "./push-health-monitor";
 import { runMigrations } from "./migrate";
 import { initializeStripeSync, registerStripeWebhook } from "./stripe-webhook";
+import { safeLogger, sanitizeForLogging } from "./safe-logging";
+import { recordBillingOperation } from "./billing-observability";
+import { getBillingCutoverConfig } from "./billing-cutover";
 
 // In development, swap in the Clerk test secret key so the dev preview works
 // on any domain. clerkMiddleware reads CLERK_SECRET_KEY automatically.
@@ -101,7 +104,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        logLine += ` :: ${JSON.stringify(sanitizeForLogging(capturedJsonResponse))}`;
       }
 
       if (logLine.length > 80) {
@@ -120,7 +123,7 @@ app.use((req, res, next) => {
             statusCode: res.statusCode,
             userAgent: req.get('User-Agent'),
             ip: req.ip,
-            context: capturedJsonResponse
+            context: sanitizeForLogging(capturedJsonResponse)
           });
         });
       }
@@ -174,16 +177,33 @@ app.use((req, res, next) => {
     // intervention.
     await runMigrations();
 
-    // Stripe is intentionally non-fatal while Whop remains the live checkout
-    // provider. A temporary Stripe/connector issue must never take down the
-    // existing subscription flow; a later cutover task can make it required.
+    // Stripe is required only while a production cohort is enabled. The
+    // environment-level Whop override is evaluated by getBillingCutoverConfig,
+    // so operators can recover even when the admin UI cannot start.
     try {
       await initializeStripeSync();
+      await recordBillingOperation({
+        operation: "startup",
+        status: "success",
+        provider: "stripe",
+      });
     } catch (stripeError) {
-      console.error(
-        "[stripe] Billing foundation initialization failed; Whop billing remains available:",
-        stripeError,
-      );
+      await recordBillingOperation({
+        operation: "startup",
+        status: "failure",
+        provider: "stripe",
+        code: "stripe_initialization_failed",
+        unexpectedError: true,
+      });
+      const cutover = await getBillingCutoverConfig();
+      const stripeIsEnabled =
+        cutover.checkoutProvider === "stripe" && cutover.stripeRolloutPercent > 0;
+      if (process.env.NODE_ENV === "production" && stripeIsEnabled) {
+        throw new Error(
+          "Stripe initialization failed while Stripe checkout is enabled. Roll back checkout to Whop before restarting.",
+        );
+      }
+      console.error("[stripe] Initialization failed; new checkout remains on Whop.");
     }
 
     console.log(`Starting server in ${process.env.NODE_ENV || 'development'} mode`);
@@ -210,7 +230,7 @@ app.use((req, res, next) => {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    console.error("Error occurred:", err);
+    safeLogger.error("Error occurred", { error: err });
   });
 
   // importantly only setup vite in development and after
@@ -237,8 +257,7 @@ app.use((req, res, next) => {
     console.log(`API Key configured: ${process.env.OPENWEATHER_API_KEY ? 'Yes' : 'No (using demo data)'}`);
   });
   } catch (error) {
-    console.error('Failed to start server:', error);
-    console.error('Stack trace:', error instanceof Error ? error.stack : 'Unknown error');
+    safeLogger.error("Failed to start server", { error });
     process.exit(1);
   }
 })();

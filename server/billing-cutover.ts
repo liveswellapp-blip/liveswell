@@ -5,12 +5,33 @@ export type CheckoutProvider = "stripe" | "whop";
 const SETTING_KEY = "billing_checkout_provider";
 const ROLLOUT_KEY = "billing_stripe_rollout_percent";
 const DEFAULT_PROVIDER: CheckoutProvider = "stripe";
-const DEFAULT_ROLLOUT_PERCENT = 100;
+// A fresh environment must prove live Stripe readiness before accepting new
+// subscriptions. Operators raise this explicitly after the launch preflight.
+const DEFAULT_ROLLOUT_PERCENT = 0;
+export const BILLING_EMERGENCY_OVERRIDE_ENV = "BILLING_EMERGENCY_CHECKOUT_PROVIDER";
+
+export class BillingEmergencyOverrideError extends Error {
+  constructor() {
+    super(`${BILLING_EMERGENCY_OVERRIDE_ENV}=whop is active; only a matching Whop/0% database rollback can be saved.`);
+  }
+}
+
+export function isWhopEmergencyOverrideActive(): boolean {
+  return process.env[BILLING_EMERGENCY_OVERRIDE_ENV]?.trim().toLowerCase() === "whop";
+}
 
 export async function getBillingCutoverConfig(): Promise<{
   checkoutProvider: CheckoutProvider;
   stripeRolloutPercent: number;
+  emergencyOverrideActive: boolean;
 }> {
+  if (isWhopEmergencyOverrideActive()) {
+    return {
+      checkoutProvider: "whop",
+      stripeRolloutPercent: 0,
+      emergencyOverrideActive: true,
+    };
+  }
   const [configured, rolloutValue] = await Promise.all([
     storage.getAdminSetting(SETTING_KEY),
     storage.getAdminSetting(ROLLOUT_KEY),
@@ -28,7 +49,7 @@ export async function getBillingCutoverConfig(): Promise<{
     parsedRollout <= 100
       ? parsedRollout
       : DEFAULT_ROLLOUT_PERCENT;
-  return { checkoutProvider, stripeRolloutPercent };
+  return { checkoutProvider, stripeRolloutPercent, emergencyOverrideActive: false };
 }
 
 function stableCohort(userId: string): number {
@@ -56,6 +77,12 @@ export async function setBillingCutoverConfig(
   provider: CheckoutProvider,
   stripeRolloutPercent: number,
 ): Promise<void> {
+  if (
+    isWhopEmergencyOverrideActive() &&
+    (provider !== "whop" || stripeRolloutPercent !== 0)
+  ) {
+    throw new BillingEmergencyOverrideError();
+  }
   await Promise.all([
     storage.setAdminSetting(SETTING_KEY, provider),
     storage.setAdminSetting(ROLLOUT_KEY, String(stripeRolloutPercent)),

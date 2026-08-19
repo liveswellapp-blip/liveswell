@@ -138,6 +138,15 @@ describe("reconcileStripeSubscription", () => {
     ]);
   });
 
+  it("treats a duplicate activation webhook as an idempotent replay", async () => {
+    await reconcileStripeSubscription(activeInput);
+    await expect(reconcileStripeSubscription(activeInput)).resolves.toEqual({
+      changed: false,
+      ignored: false,
+    });
+    expect(state.insertedEvents.filter((event) => event.type === "pro_granted")).toHaveLength(1);
+  });
+
   it("adds paid Stripe access alongside a complimentary grant", async () => {
     state.current = {
       isPro: true,
@@ -345,6 +354,35 @@ describe("reconcileStripeSubscription", () => {
       payload: expect.objectContaining({
         source: "stripe",
         status: "active",
+      }),
+    }));
+  });
+
+  it("revokes Stripe-owned paid access after a terminal unpaid status", async () => {
+    state.current = {
+      isPro: true,
+      paidPro: true,
+      complimentaryPro: false,
+      isTestAccount: false,
+      billingProvider: "stripe",
+      stripeSubscriptionId: "sub_current",
+    };
+
+    await expect(reconcileStripeSubscription({
+      ...activeInput,
+      active: false,
+      status: "unpaid",
+      eventId: "evt_unpaid",
+    })).resolves.toEqual({ changed: true, ignored: false });
+    expect(state.updateSets[0]).toEqual(expect.objectContaining({
+      isPro: false,
+      paidPro: false,
+    }));
+    expect(state.insertedEvents[0]).toEqual(expect.objectContaining({
+      type: "pro_revoked",
+      payload: expect.objectContaining({
+        source: "stripe",
+        status: "unpaid",
       }),
     }));
   });

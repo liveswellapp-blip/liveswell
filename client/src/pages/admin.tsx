@@ -79,6 +79,7 @@ interface EmailHealthStatus {
 interface BillingMigrationStatus {
   checkoutProvider: 'stripe' | 'whop';
   stripeRolloutPercent: number;
+  emergencyOverrideActive: boolean;
   defaultProvider: 'stripe' | 'whop';
   summary: {
     stripePaid: number;
@@ -86,6 +87,41 @@ interface BillingMigrationStatus {
     migrationPending: number;
     awaitingWhopCancellation: number;
     migrationCompleted: number;
+  };
+  operational: {
+    status: 'healthy' | 'degraded';
+    failuresLast24Hours: number;
+    ignoredLast24Hours: number;
+    checkoutFailuresLast24Hours: number;
+    webhookFailuresLast24Hours: number;
+    managementFailuresLast24Hours: number;
+    paymentFailuresLast24Hours: number;
+    checkout: {
+      stripe: {
+        attempts: number;
+        successes: number;
+        technicalFailures: number;
+        technicalFailureRate: number | null;
+      };
+      whop: {
+        attempts: number;
+        successes: number;
+        technicalFailures: number;
+        technicalFailureRate: number | null;
+      };
+    };
+    unresolvedFailures: number;
+    lastSuccessAt: string | null;
+    recentFailures: Array<{
+      id: number;
+      operation: string;
+      provider?: 'stripe' | 'whop';
+      userId: string | null;
+      eventId?: string | null;
+      objectId?: string | null;
+      code?: string | null;
+      timestamp: string;
+    }>;
   };
   attentionAccounts: Array<{
     id: string;
@@ -361,6 +397,29 @@ export default function AdminDashboard() {
     },
     onError: (error: Error) => {
       toast({ title: 'Billing cutover failed', description: error.message, variant: 'destructive' });
+    },
+  });
+  const resolveBillingFailure = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/admin/billing-operations/${id}/resolve`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ message: 'Failed to resolve billing failure' }));
+        throw new Error(body.message ?? 'Failed to resolve billing failure');
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/billing-migration'] });
+      toast({
+        title: 'Billing failure resolved',
+        description: 'The failure remains in history and no longer blocks rollout health.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Resolve failed', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -1152,6 +1211,13 @@ export default function AdminDashboard() {
             <p className="text-sm text-muted-foreground">Loading billing migration status…</p>
           ) : (
             <>
+              {billingMigration.emergencyOverrideActive && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
+                  <strong>Environment emergency override active.</strong> New checkout is forced to Whop.
+                  Apply the Whop/0% setting below to persist the rollback, then remove{' '}
+                  <code>BILLING_EMERGENCY_CHECKOUT_PROVIDER=whop</code> from the deployment environment.
+                </div>
+              )}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
                   ['Stripe paid', billingMigration.summary.stripePaid],
@@ -1165,6 +1231,75 @@ export default function AdminDashboard() {
                     <div className="text-xs text-muted-foreground">{label}</div>
                   </div>
                 ))}
+              </div>
+              <div className={`rounded-lg border p-3 ${
+                billingMigration.operational.status === 'degraded'
+                  ? 'border-red-300/60 bg-red-50 dark:bg-red-950/20'
+                  : 'border-green-300/60 bg-green-50 dark:bg-green-950/20'
+              }`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-semibold">
+                      Billing operations: {billingMigration.operational.status}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {billingMigration.operational.failuresLast24Hours} failure(s) and{' '}
+                      {billingMigration.operational.ignoredLast24Hours} ignored event(s) in the last 24 hours.{' '}
+                      {billingMigration.operational.unresolvedFailures} unresolved failure(s) persist across restarts.
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Checkout {billingMigration.operational.checkoutFailuresLast24Hours} · Webhook/reconciliation{' '}
+                      {billingMigration.operational.webhookFailuresLast24Hours} · Management{' '}
+                      {billingMigration.operational.managementFailuresLast24Hours} · Payment declines{' '}
+                      {billingMigration.operational.paymentFailuresLast24Hours}
+                    </div>
+                    <div className="mt-2 rounded border bg-background px-2 py-1.5 text-xs">
+                      <strong>Stripe rollout sample:</strong>{' '}
+                      {billingMigration.operational.checkout.stripe.attempts} completed technical attempt(s),{' '}
+                      {billingMigration.operational.checkout.stripe.technicalFailures} technical failure(s),{' '}
+                      {billingMigration.operational.checkout.stripe.technicalFailureRate === null
+                        ? 'no failure rate yet'
+                        : `${billingMigration.operational.checkout.stripe.technicalFailureRate}% failure rate`}
+                      {' · '}
+                      {billingMigration.operational.checkout.stripe.attempts >= 10 &&
+                      (billingMigration.operational.checkout.stripe.technicalFailureRate ?? 100) < 1
+                        ? 'volume/rate gate passed'
+                        : 'volume/rate gate not yet passed'}
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Last success:{' '}
+                    {billingMigration.operational.lastSuccessAt
+                      ? new Date(billingMigration.operational.lastSuccessAt).toLocaleString()
+                      : 'not observed in the last 24 hours'}
+                  </div>
+                </div>
+                {billingMigration.operational.recentFailures.length > 0 && (
+                  <div className="mt-3 divide-y rounded-md border bg-background">
+                    {billingMigration.operational.recentFailures.slice(0, 5).map((failure, index) => (
+                      <div key={failure.id ?? `${failure.timestamp}-${index}`} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-medium">
+                            {failure.provider ?? 'stripe'} · {failure.operation} · {failure.code ?? 'unknown'}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {new Date(failure.timestamp).toLocaleString()}
+                            {failure.userId ? ` · user ${failure.userId}` : ''}
+                            {failure.eventId ? ` · event ${failure.eventId}` : ''}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={resolveBillingFailure.isPending}
+                          onClick={() => resolveBillingFailure.mutate(failure.id)}
+                        >
+                          Mark resolved
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {billingMigration.attentionAccounts.length > 0 && (
                 <div className="rounded-lg border">
@@ -1204,7 +1339,7 @@ export default function AdminDashboard() {
                     id="billing-provider"
                     value={checkoutProviderDraft}
                     onChange={(event) => setCheckoutProviderDraft(event.target.value as 'stripe' | 'whop')}
-                    disabled={saveBillingCutover.isPending}
+                    disabled={saveBillingCutover.isPending || billingMigration.emergencyOverrideActive}
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                   >
                     <option value="stripe">Stripe</option>
@@ -1221,7 +1356,7 @@ export default function AdminDashboard() {
                     step={5}
                     value={stripeRolloutDraft}
                     onChange={(event) => setStripeRolloutDraft(Number(event.target.value))}
-                    disabled={checkoutProviderDraft === 'whop' || saveBillingCutover.isPending}
+                    disabled={checkoutProviderDraft === 'whop' || saveBillingCutover.isPending || billingMigration.emergencyOverrideActive}
                   />
                   <p className="text-xs text-muted-foreground">
                     Stable account assignment supports test, small cohort, and full rollout.
@@ -1234,7 +1369,11 @@ export default function AdminDashboard() {
                       : `Enable Stripe checkout for ${stripeRolloutDraft}% of accounts? Existing Whop members stay on Whop unless they migrate voluntarily.`;
                     if (window.confirm(warning)) saveBillingCutover.mutate();
                   }}
-                  disabled={saveBillingCutover.isPending}
+                  disabled={
+                    saveBillingCutover.isPending ||
+                    (billingMigration.emergencyOverrideActive &&
+                      (checkoutProviderDraft !== 'whop' || stripeRolloutDraft !== 0))
+                  }
                 >
                   <Save className="h-4 w-4 mr-1" />
                   {saveBillingCutover.isPending ? 'Applying…' : 'Apply cutover'}

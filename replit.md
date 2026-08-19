@@ -180,6 +180,13 @@ The server initializes Stripe's managed webhook at
 startup. The managed connection supplies credentials; do not add Stripe keys
 to source files or request them in chat. Production uses the Stripe
 connection's live mode and registers the published runtime domain automatically.
+Before changing a production cohort, run the explicit read-only launch check:
+`npm run stripe:verify -- --expect-mode=live --origin=https://liveswell.io`.
+The command verifies mode, account readiness, catalog, webhook URL, required
+events, and the exact price/product metadata used by runtime checkout without
+creating Stripe objects. The operational test matrix, support
+responses, rollout gates, rollback drill, dispute reconciliation, and Whop
+sunset criteria are in `STRIPE_LAUNCH_RUNBOOK.md`.
 
 **Relevant files:** `server/stripe-client.ts`, `server/stripe-webhook.ts`,
 `server/stripe-catalog.ts`, `scripts/seed-stripe-products.ts`,
@@ -255,11 +262,26 @@ start a new Stripe subscription, then cancel Whop in the Whop Hub.
 
 The admin dashboard's **Billing Cutover** card is the operational source of
 truth. It shows Stripe-paid, Whop-paid, pending, awaiting-cancellation, and
-completed counts.
+completed counts plus recent checkout, webhook, and management failures. Each
+admin user detail page shows provider, canonical status, renewal/cancellation
+state, safe provider identifiers, migration state, and recent billing
+operations.
 
-- Keep `checkoutProvider=stripe` and set the stable cohort percentage to `0`
-  for test-only preparation, a small value for production observation, then
-  `100` for the full acquisition cutover. Assignment is stable per Clerk user.
+Billing outcomes are durable in `billing_operational_events`; unresolved
+failures keep dashboard health degraded across restarts until an admin
+investigates and explicitly marks them resolved. If Stripe startup prevents the
+dashboard from loading, set `BILLING_EMERGENCY_CHECKOUT_PROVIDER=whop`, restart,
+persist Whop/0% in Billing Cutover, then remove the override. The override
+cannot enable Stripe.
+Checkout rollout gates use bounded hourly aggregates in
+`billing_hourly_metrics`: successful provider handoffs and technical 5xx
+failures form the 24-hour denominator, while expected 4xx rejections are
+excluded. Aggregate rows expire after 90 days.
+
+- A fresh environment defaults to a paused `0%` Stripe cohort. Keep
+  `checkoutProvider=stripe` and the stable cohort percentage at `0` for
+  test-only preparation, then raise through the launch runbook's staged gates
+  before reaching `100%`. Assignment is stable per Clerk user.
 - To roll back an acquisition incident, select `checkoutProvider=whop` and
   confirm the warning. This changes new checkout only. Existing Stripe
   subscriptions, webhooks, access, invoices, and management continue unchanged.
@@ -272,7 +294,9 @@ completed counts.
 `server/billing-migration-routes.ts`, `server/pro-transitions.ts`,
 `migrations/0011_add_pro_entitlement_sources.sql`,
 `migrations/0012_add_billing_migration_state.sql`,
-`migrations/0013_bind_billing_migration_intent.sql`
+`migrations/0013_bind_billing_migration_intent.sql`,
+`migrations/0014_add_billing_operational_events.sql`,
+`migrations/0015_add_billing_hourly_metrics.sql`
 
 ---
 

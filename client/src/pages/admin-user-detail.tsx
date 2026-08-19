@@ -30,9 +30,15 @@ interface UserDetails {
     lastName: string | null;
     profileImageUrl: string | null;
     isPro: boolean;
+    paidPro: boolean;
+    complimentaryPro: boolean;
     isTestAccount: boolean;
     isSuspended: boolean;
+    billingProvider: string | null;
     whopMembershipId: string | null;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    billingMigrationState: string | null;
     createdAt: string;
     updatedAt: string;
   };
@@ -49,6 +55,40 @@ interface UserDetails {
     language: string;
     theme: string;
   } | null;
+  billing: {
+    provider: string | null;
+    paidPro: boolean;
+    complimentaryPro: boolean;
+    isTestAccount: boolean;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    whopMembershipId: string | null;
+    migrationState: string | null;
+    migrationStartedAt: string | null;
+    live: {
+      provider: string;
+      plan: string | null;
+      subscriptionStatus: string | null;
+      accessState: string;
+      renewsAt: number | null;
+      periodEndsAt: number | null;
+      cancelAtPeriodEnd: boolean;
+      providerState: string;
+      migration: { state: string };
+    } | null;
+    error: string | null;
+    recentOperations: Array<{
+      id: number;
+      operation: string;
+      provider: string;
+      status: string;
+      eventId: string | null;
+      objectId: string | null;
+      code: string | null;
+      resolvedAt: string | null;
+      createdAt: string;
+    }>;
+  };
   stats: {
     favoritesCount: number;
     joinDate: string;
@@ -312,7 +352,8 @@ export default function AdminUserDetail() {
   };
 
   const getPlanLabel = (u: UserDetails['user']) => {
-    if (u.whopMembershipId) return { label: 'Pro via Whop', className: 'text-amber-500 font-semibold' };
+    if (u.paidPro && u.billingProvider === 'stripe') return { label: 'Pro via Stripe', className: 'text-amber-500 font-semibold' };
+    if (u.paidPro && u.billingProvider === 'whop') return { label: 'Pro via Whop', className: 'text-amber-500 font-semibold' };
     if (u.isPro && u.isTestAccount) return { label: 'Pro (test)', className: 'text-amber-500 font-semibold' };
     if (u.isPro) return { label: 'Pro (comped)', className: 'text-amber-500 font-semibold' };
     return { label: 'Free', className: 'text-muted-foreground' };
@@ -527,6 +568,93 @@ export default function AdminUserDetail() {
                   </div>
                 </dl>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" /> Billing Diagnostics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Paid provider</dt>
+                    <dd className="mt-0.5 capitalize">{userDetails!.billing.provider ?? 'None'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Provider status</dt>
+                    <dd className="mt-0.5">
+                      {userDetails!.billing.live?.subscriptionStatus ??
+                        userDetails!.billing.live?.accessState ??
+                        'Not applicable'}
+                      {userDetails!.billing.live?.providerState === 'cached' ? ' (cached)' : ''}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Plan</dt>
+                    <dd className="mt-0.5 capitalize">{userDetails!.billing.live?.plan ?? '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Renewal / period end</dt>
+                    <dd className="mt-0.5">
+                      {userDetails!.billing.live?.periodEndsAt
+                        ? new Date(userDetails!.billing.live.periodEndsAt * 1000).toLocaleString()
+                        : '—'}
+                      {userDetails!.billing.live?.cancelAtPeriodEnd ? ' · Cancels then' : ''}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Stripe customer</dt>
+                    <dd className="mt-0.5 font-mono text-xs break-all">
+                      {userDetails!.billing.stripeCustomerId ?? '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Stripe subscription</dt>
+                    <dd className="mt-0.5 font-mono text-xs break-all">
+                      {userDetails!.billing.stripeSubscriptionId ?? '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Whop membership</dt>
+                    <dd className="mt-0.5 font-mono text-xs break-all">
+                      {userDetails!.billing.whopMembershipId ?? '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Migration state</dt>
+                    <dd className="mt-0.5">{userDetails!.billing.migrationState ?? 'Not started'}</dd>
+                  </div>
+                </dl>
+                {userDetails!.billing.error && (
+                  <div className="rounded-md border border-red-300/60 bg-red-50 p-3 text-red-900 dark:bg-red-950/20 dark:text-red-100">
+                    {userDetails!.billing.error}
+                  </div>
+                )}
+                <div>
+                  <div className="font-medium mb-2">Recent billing operations</div>
+                  {userDetails!.billing.recentOperations.length === 0 ? (
+                    <p className="text-muted-foreground">No billing operations recorded for this user.</p>
+                  ) : (
+                    <div className="divide-y rounded-md border">
+                      {userDetails!.billing.recentOperations.slice(0, 8).map((operation, index) => (
+                        <div key={`${operation.createdAt}-${index}`} className="px-3 py-2 text-xs">
+                          <div className="font-medium">
+                            {operation.provider} · {operation.operation}
+                            {operation.code ? ` · ${operation.code}` : ''}
+                            {operation.resolvedAt ? ' · resolved' : ''}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {new Date(operation.createdAt).toLocaleString()}
+                            {operation.eventId ? ` · event ${operation.eventId}` : ''}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

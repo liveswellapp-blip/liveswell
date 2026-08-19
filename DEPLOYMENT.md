@@ -17,10 +17,17 @@ This guide outlines the fixes applied to resolve the deployment failures and ens
 - `OPENWEATHER_API_KEY`: OpenWeatherMap API key for real weather data
 - `SESSION_SECRET`: Secret key for session management (minimum 32 characters recommended)
 - `NODE_ENV`: Should be set to "production" for deployment
+- Replit Stripe connection: live-mode account used by the published deployment
+- `DATABASE_URL`: Required for application data and Stripe synchronization
+- `REPLIT_DOMAINS`: Supplied by Replit; used to register the managed webhook
 
 ### Optional
 - `PORT`: Server port (defaults to 5000)
-- `DATABASE_URL`: PostgreSQL connection string (if using database storage)
+- `APP_URL`: Explicit HTTPS public origin. When omitted, the first
+  `REPLIT_DOMAINS` value is used for production checkout and billing returns.
+- `BILLING_EMERGENCY_CHECKOUT_PROVIDER`: Emergency-only override. Set exactly
+  `whop` when Stripe initialization prevents startup, persist Whop/0% in the
+  admin dashboard, then remove the override. Never set it to enable Stripe.
 
 ## Deployment Process
 
@@ -103,6 +110,14 @@ After deployment, verify:
 2. **API Status**: Look for API key configuration status
 3. **Static Files**: Ensure frontend loads correctly
 4. **Weather Data**: Verify real vs demo data based on API key configuration
+5. **Stripe launch:** Follow `STRIPE_LAUNCH_RUNBOOK.md` and run the read-only
+   live-mode verifier before enabling any production cohort:
+   `npm run stripe:verify -- --expect-mode=live --origin=https://liveswell.io`
+6. **Stripe startup:** Confirm migrations, managed webhook registration, and
+   backfill all succeed. When Stripe checkout is enabled, startup fails closed
+   rather than serving a broken checkout.
+7. **Rollback drill:** At 0%, rehearse the environment-level Whop override in
+   `STRIPE_LAUNCH_RUNBOOK.md` before increasing the cohort.
 
 ## Troubleshooting
 

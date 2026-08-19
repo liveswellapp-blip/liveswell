@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, jsonb, index, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, varchar, jsonb, index, unique, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
@@ -251,6 +251,36 @@ export const userEvents = pgTable("user_events", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   index("IDX_user_events_user_id_created_at").on(table.userId, table.createdAt),
+]);
+
+export const billingOperationalEvents = pgTable("billing_operational_events", {
+  id: serial("id").primaryKey(),
+  provider: varchar("provider", { length: 16 }).notNull(),
+  operation: varchar("operation", { length: 64 }).notNull(),
+  status: varchar("status", { length: 16 }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  eventId: varchar("event_id", { length: 128 }),
+  objectId: varchar("object_id", { length: 128 }),
+  code: varchar("code", { length: 128 }),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by", { length: 128 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("IDX_billing_ops_created_at").on(table.createdAt),
+  index("IDX_billing_ops_user_created_at").on(table.userId, table.createdAt),
+  index("IDX_billing_ops_status_resolved").on(table.status, table.resolvedAt),
+]);
+
+export const billingHourlyMetrics = pgTable("billing_hourly_metrics", {
+  bucket: timestamp("bucket").notNull(),
+  provider: varchar("provider", { length: 16 }).notNull(),
+  checkoutAttempts: integer("checkout_attempts").notNull().default(0),
+  checkoutSuccesses: integer("checkout_successes").notNull().default(0),
+  checkoutTechnicalFailures: integer("checkout_technical_failures").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.bucket, table.provider] }),
+  index("IDX_billing_hourly_metrics_bucket").on(table.bucket),
 ]);
 
 export const upsertUserSchema = createInsertSchema(users).omit({

@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { StripeSync } from "stripe-replit-sync";
+import { safeLogger } from "./safe-logging";
 
 type StripeCredentials = {
   secretKey: string;
@@ -121,6 +122,6 @@ export async function getStripeSync(): Promise<StripeSync> {
     stripeWebhookSecret: credentials.webhookSecret ?? "",
     // Subscription data should never be overwritten by an older webhook payload.
     revalidateObjectsViaStripeApi: ["subscription", "invoice", "payment_intent"],
-    logger: console,
+    logger: safeLogger,
   });
 }

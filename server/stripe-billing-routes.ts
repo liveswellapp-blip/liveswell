@@ -14,17 +14,45 @@ import {
   getBillingStatus,
   setStripeCancellation,
 } from "./stripe-billing";
+import { recordBillingOperation, recordCheckoutOutcome } from "./billing-observability";
+import { safeLogger } from "./safe-logging";
 
 const requestIdSchema = z.string().uuid();
 
-function sendBillingError(res: Response, error: unknown): Response {
+async function sendBillingError(
+  res: Response,
+  error: unknown,
+  context: { operation: string; userId: string },
+): Promise<Response> {
   if (error instanceof BillingRequestError) {
+    if (error.statusCode >= 500) {
+      await recordBillingOperation({
+        ...context,
+        status: "failure",
+        provider: "stripe",
+        code: error.code,
+        unexpectedError: true,
+      });
+      if (context.operation === "checkout") {
+        await recordCheckoutOutcome("stripe", "technical_failure");
+      }
+    }
     return res.status(error.statusCode).json({
       error: error.code,
       message: error.message,
     });
   }
-  console.error("[stripe/billing] Unhandled billing error:", error);
+  safeLogger.error("[stripe/billing] Unhandled billing error", context);
+  await recordBillingOperation({
+    ...context,
+    status: "failure",
+    provider: "stripe",
+    code: "billing_request_failed",
+    unexpectedError: true,
+  });
+  if (context.operation === "checkout") {
+    await recordCheckoutOutcome("stripe", "technical_failure");
+  }
   return res.status(500).json({ error: "billing_request_failed" });
 }
 
@@ -54,11 +82,13 @@ export function registerStripeBillingRoutes(app: Express): void {
             message: "Stripe checkout is temporarily disabled. Use the current checkout provider.",
           });
         }
-        return res.json(await createStripeSubscriptionSession(userId, parsed.data.plan, {
+        const result = await createStripeSubscriptionSession(userId, parsed.data.plan, {
           confirmWhopMigration: parsed.data.confirmWhopMigration,
-        }));
+        });
+        await recordCheckoutOutcome("stripe", "success");
+        return res.json(result);
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "checkout", userId });
       }
     },
   );
@@ -75,7 +105,7 @@ export function registerStripeBillingRoutes(app: Express): void {
         await setStripeCancellation(userId, true, parsed.data.requestId);
         return res.json({ ok: true });
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "cancel", userId });
       }
     },
   );
@@ -92,7 +122,7 @@ export function registerStripeBillingRoutes(app: Express): void {
         await setStripeCancellation(userId, false, parsed.data.requestId);
         return res.json({ ok: true });
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "resume", userId });
       }
     },
   );
@@ -112,7 +142,7 @@ export function registerStripeBillingRoutes(app: Express): void {
         await changeStripePlan(userId, parsed.data.plan, parsed.data.requestId);
         return res.json({ ok: true });
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "plan_change", userId });
       }
     },
   );
@@ -126,9 +156,10 @@ export function registerStripeBillingRoutes(app: Express): void {
       const userId = getAuth(req).userId;
       if (!userId) return res.status(401).json({ error: "unauthenticated" });
       try {
-        return res.json(await createStripePaymentMethodSetup(userId, parsed.data.requestId));
+        const result = await createStripePaymentMethodSetup(userId, parsed.data.requestId);
+        return res.json(result);
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "payment_method_setup", userId });
       }
     },
   );
@@ -145,7 +176,7 @@ export function registerStripeBillingRoutes(app: Express): void {
         await completeStripePaymentMethodSetup(userId, parsed.data.setupIntentId);
         return res.json({ ok: true });
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "payment_method_complete", userId });
       }
     },
   );
@@ -162,7 +193,7 @@ export function registerStripeBillingRoutes(app: Express): void {
         const { url } = await getStripeInvoiceDocument(userId, parsed.data);
         return res.redirect(303, url);
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "invoice_document", userId });
       }
     },
   );
@@ -177,7 +208,7 @@ export function registerStripeBillingRoutes(app: Express): void {
       try {
         return res.json(await getBillingStatus(userId));
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "status", userId });
       }
     },
   );
@@ -190,9 +221,10 @@ export function registerStripeBillingRoutes(app: Express): void {
       if (!userId) return res.status(401).json({ error: "unauthenticated" });
 
       try {
-        return res.json(await createStripeBillingPortalSession(userId));
+        const result = await createStripeBillingPortalSession(userId);
+        return res.json(result);
       } catch (error) {
-        return sendBillingError(res, error);
+        return await sendBillingError(res, error, { operation: "billing_portal", userId });
       }
     },
   );

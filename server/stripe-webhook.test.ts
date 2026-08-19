@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   processWebhook: vi.fn(),
   runStripeMigrations: vi.fn(),
   syncBackfill: vi.fn(),
+  recordBillingOperation: vi.fn(),
 }));
 
 vi.mock("stripe-replit-sync", () => ({
@@ -24,6 +25,9 @@ vi.mock("./stripe-client", () => ({
 vi.mock("./stripe-billing", () => ({
   processStripeBillingEvent: mocks.processStripeBillingEvent,
 }));
+vi.mock("./billing-observability", () => ({
+  recordBillingOperation: mocks.recordBillingOperation,
+}));
 
 import { initializeStripeSync, registerStripeWebhook } from "./stripe-webhook";
 
@@ -33,7 +37,12 @@ describe("initializeStripeSync", () => {
     vi.stubEnv("REPLIT_DOMAINS", "app.example.test,secondary.example.test");
     mocks.findOrCreateManagedWebhook.mockResolvedValue({});
     mocks.constructStripeWebhookEvent.mockResolvedValue({ id: "evt_verified" });
-    mocks.processStripeBillingEvent.mockResolvedValue(undefined);
+    mocks.processStripeBillingEvent.mockResolvedValue({
+      status: "success",
+      code: "subscription_reconciled",
+      objectId: "sub_1",
+    });
+    mocks.recordBillingOperation.mockResolvedValue(undefined);
     mocks.processWebhook.mockResolvedValue(undefined);
     mocks.syncBackfill.mockResolvedValue({});
     mocks.getStripeSync.mockResolvedValue({
@@ -53,7 +62,10 @@ describe("initializeStripeSync", () => {
 
     expect(mocks.runStripeMigrations).toHaveBeenCalledWith({
       databaseUrl: "postgres://stripe-foundation-test",
-      logger: console,
+      logger: expect.objectContaining({
+        log: expect.any(Function),
+        error: expect.any(Function),
+      }),
     });
     expect(mocks.findOrCreateManagedWebhook).toHaveBeenCalledWith(
       "https://app.example.test/api/stripe/webhook",
@@ -65,7 +77,12 @@ describe("initializeStripeSync", () => {
 describe("POST /api/stripe/webhook", () => {
   beforeEach(() => {
     mocks.constructStripeWebhookEvent.mockResolvedValue({ id: "evt_verified" });
-    mocks.processStripeBillingEvent.mockResolvedValue(undefined);
+    mocks.processStripeBillingEvent.mockResolvedValue({
+      status: "success",
+      code: "subscription_reconciled",
+      objectId: "sub_1",
+    });
+    mocks.recordBillingOperation.mockResolvedValue(undefined);
     mocks.processWebhook.mockResolvedValue(undefined);
     mocks.getStripeSync.mockResolvedValue({ processWebhook: mocks.processWebhook });
   });
@@ -113,6 +130,24 @@ describe("POST /api/stripe/webhook", () => {
     expect(response.status).toBe(400);
     expect(mocks.processWebhook).not.toHaveBeenCalled();
     expect(mocks.processStripeBillingEvent).not.toHaveBeenCalled();
+    expect(mocks.recordBillingOperation).not.toHaveBeenCalled();
+  });
+
+  it("does not persist verified Stripe events that are irrelevant to billing lifecycle", async () => {
+    mocks.processStripeBillingEvent.mockResolvedValue({
+      status: "ignored",
+      code: "unsupported_event_type",
+      objectId: "product.updated",
+    });
+
+    const response = await request(buildApp())
+      .post("/api/stripe/webhook")
+      .set("stripe-signature", "valid-signature")
+      .set("content-type", "application/json")
+      .send({ id: "evt_irrelevant", type: "product.updated" });
+
+    expect(response.status).toBe(200);
+    expect(mocks.recordBillingOperation).not.toHaveBeenCalled();
   });
 
   it("returns 500 for a verified event when access processing fails so Stripe retries it", async () => {

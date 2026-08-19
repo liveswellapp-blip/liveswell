@@ -4,7 +4,7 @@ import { runSurfAgent } from "./surf-agent";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, like } from "drizzle-orm";
 import { users, userAlerts } from "@shared/schema";
 import { insertLocationSchema, insertSurfConditionsSchema, insertFavoriteSchema, insertUserSchema, updateUserProfileSchema } from "@shared/schema";
 import { z } from "zod";
@@ -25,6 +25,8 @@ import {
 import { adminLogin, adminLogout, adminStatus, requireAdminAuth } from "./admin-auth";
 import { registerAdminUserControls } from "./admin-user-controls";
 import { registerBillingMigrationRoutes } from "./billing-migration-routes";
+import { getBillingStatus } from "./stripe-billing";
+import { getUserBillingOperations } from "./billing-observability";
 import { assembleUserAuditEvents, paginateAuditEvents } from "./user-audit";
 import { SMSService, PhoneConflictError } from "./sms-service";
 import { EmailService } from "./email-service";
@@ -809,15 +811,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get user's favorites and profile
-      const [favorites, profile] = await Promise.all([
+      const [favorites, profile, billingResult, billingEvents] = await Promise.all([
         storage.getUserFavorites(userId),
-        storage.getUserProfile(userId)
+        storage.getUserProfile(userId),
+        getBillingStatus(userId)
+          .then((status) => ({ status, error: null }))
+          .catch(() => ({ status: null, error: "Live provider status is temporarily unavailable." })),
+        getUserBillingOperations(userId),
       ]);
       
       res.json({
         user,
         favorites,
         profile,
+        billing: {
+          provider: user.billingProvider,
+          paidPro: user.paidPro,
+          complimentaryPro: user.complimentaryPro,
+          isTestAccount: user.isTestAccount,
+          stripeCustomerId: user.stripeCustomerId,
+          stripeSubscriptionId: user.stripeSubscriptionId,
+          whopMembershipId: user.whopMembershipId,
+          migrationState: user.billingMigrationState,
+          migrationStartedAt: user.billingMigrationStartedAt,
+          live: billingResult.status
+            ? {
+                provider: billingResult.status.provider,
+                plan: billingResult.status.plan,
+                subscriptionStatus: billingResult.status.subscriptionStatus,
+                accessState: billingResult.status.accessState,
+                renewsAt: billingResult.status.renewsAt,
+                periodEndsAt: billingResult.status.periodEndsAt,
+                cancelAtPeriodEnd: billingResult.status.cancelAtPeriodEnd,
+                providerState: billingResult.status.providerState,
+                migration: billingResult.status.migration,
+              }
+            : null,
+          error: billingResult.error,
+          recentOperations: billingEvents,
+        },
         stats: {
           favoritesCount: favorites.length,
           joinDate: user.createdAt,

@@ -819,4 +819,113 @@ describe("Stripe lifecycle event routing", () => {
       }),
     );
   });
+
+  it("confirms a completed checkout only by retrieving and reconciling the Stripe subscription", async () => {
+    const subscription = {
+      id: "sub_checkout",
+      status: "active",
+      customer: "cus_checkout",
+      created: 1_800_000_000,
+      metadata: { clerk_user_id: "user_checkout" },
+      items: { data: [{ price: { lookup_key: "liveswell_pro_monthly_v1" } }] },
+    };
+    const retrieve = vi.fn().mockResolvedValue(subscription);
+    mocks.getUncachableStripeClient.mockResolvedValue({
+      subscriptions: { retrieve },
+    });
+    mocks.reconcileStripeSubscription.mockResolvedValue({ changed: true, ignored: false });
+
+    await processStripeBillingEvent({
+      id: "evt_checkout",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_completed",
+          subscription: "sub_checkout",
+          metadata: { clerk_user_id: "user_checkout" },
+          client_reference_id: "user_checkout",
+        },
+      },
+    } as any);
+
+    expect(retrieve).toHaveBeenCalledWith("sub_checkout");
+    expect(mocks.reconcileStripeSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_checkout",
+        subscriptionId: "sub_checkout",
+        status: "active",
+        active: true,
+        eventId: "evt_checkout",
+      }),
+    );
+  });
+
+  it.each([
+    ["invoice.paid", "active", true],
+    ["invoice.payment_failed", "past_due", true],
+  ])("routes %s through canonical subscription reconciliation", async (eventType, status, active) => {
+    const subscription = {
+      id: "sub_invoice",
+      status,
+      customer: "cus_invoice",
+      created: 1_800_000_000,
+      metadata: { clerk_user_id: "user_invoice" },
+      items: { data: [{ price: { lookup_key: "liveswell_pro_annual_v1" } }] },
+    };
+    const retrieve = vi.fn().mockResolvedValue(subscription);
+    mocks.getUncachableStripeClient.mockResolvedValue({
+      subscriptions: { retrieve },
+    });
+    mocks.reconcileStripeSubscription.mockResolvedValue({ changed: false, ignored: false });
+
+    await processStripeBillingEvent({
+      id: `evt_${eventType}`,
+      type: eventType,
+      data: {
+        object: {
+          id: "in_renewal",
+          parent: {
+            subscription_details: {
+              subscription: "sub_invoice",
+            },
+          },
+        },
+      },
+    } as any);
+
+    expect(retrieve).toHaveBeenCalledWith("sub_invoice");
+    expect(mocks.reconcileStripeSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subscriptionId: "sub_invoice",
+        status,
+        active,
+        eventId: `evt_${eventType}`,
+      }),
+    );
+  });
+
+  it("returns an actionable failure when a verified subscription uses an unknown price", async () => {
+    const subscription = {
+      id: "sub_unknown_price",
+      status: "active",
+      customer: "cus_unknown",
+      created: 1_800_000_000,
+      metadata: { clerk_user_id: "user_unknown" },
+      items: { data: [{ price: { lookup_key: "unexpected_price" } }] },
+    };
+    mocks.getUncachableStripeClient.mockResolvedValue({
+      subscriptions: { retrieve: vi.fn().mockResolvedValue(subscription) },
+    });
+
+    await expect(processStripeBillingEvent({
+      id: "evt_unknown_price",
+      type: "customer.subscription.updated",
+      data: { object: subscription },
+    } as any)).resolves.toEqual({
+      status: "failure",
+      code: "unknown_subscription_price",
+      objectId: "sub_unknown_price",
+    });
+    expect(mocks.reconcileStripeSubscription).not.toHaveBeenCalled();
+  });
 });

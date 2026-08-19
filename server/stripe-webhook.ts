@@ -2,6 +2,8 @@ import express, { type Express, type Request, type Response } from "express";
 import { runMigrations as runStripeMigrations } from "stripe-replit-sync";
 import { constructStripeWebhookEvent, getStripeSync } from "./stripe-client";
 import { processStripeBillingEvent } from "./stripe-billing";
+import { recordBillingOperation } from "./billing-observability";
+import { safeLogger } from "./safe-logging";
 
 const STRIPE_WEBHOOK_PATH = "/api/stripe/webhook";
 
@@ -27,17 +29,39 @@ export function registerStripeWebhook(app: Express): void {
       try {
         event = await constructStripeWebhookEvent(req.body, signature);
       } catch (error) {
-        console.warn("[stripe/webhook] Signature verification failed:", error);
+        safeLogger.warn("[stripe/webhook] Signature verification failed");
         return res.status(400).json({ error: "Invalid Stripe webhook signature" });
       }
 
       try {
         const stripeSync = await getStripeSync();
         await stripeSync.processWebhook(req.body, signature);
-        await processStripeBillingEvent(event);
+        const result = await processStripeBillingEvent(event);
+        // Ignore valid but irrelevant Stripe object events without growing the
+        // operational audit table. Only billing lifecycle outcomes are durable.
+        if (result.status !== "ignored") {
+          await recordBillingOperation({
+            operation: "webhook",
+            status: result.status,
+            provider: "stripe",
+            userId: result.userId,
+            eventId: event.id,
+            objectId: result.objectId ?? event.type,
+            code: result.code,
+            unexpectedError: result.status === "failure",
+          });
+        }
         return res.status(200).json({ received: true });
       } catch (error) {
-        console.error("[stripe/webhook] Verified event processing failed:", error);
+        await recordBillingOperation({
+          operation: "webhook",
+          status: "failure",
+          provider: "stripe",
+          eventId: event.id,
+          objectId: event.type,
+          code: "verified_event_processing_failed",
+          unexpectedError: true,
+        });
         return res.status(500).json({ error: "Stripe webhook processing failed" });
       }
     },
@@ -61,7 +85,7 @@ export async function initializeStripeSync(): Promise<void> {
     throw new Error("REPLIT_DOMAINS is required to configure the managed Stripe webhook.");
   }
 
-  await runStripeMigrations({ databaseUrl, logger: console });
+  await runStripeMigrations({ databaseUrl, logger: safeLogger });
 
   const stripeSync = await getStripeSync();
   const webhookUrl = `https://${domain}${STRIPE_WEBHOOK_PATH}`;
