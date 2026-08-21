@@ -146,9 +146,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                     <span className={`text-sm font-bold ${today ? "text-emerald-400" : "text-slate-200"}`}>
                       {day.date}
                     </span>
-                    <span className="w-7 h-7 rounded-full flex items-center justify-center text-base bg-white/[0.05] border border-white/[0.06]" aria-label={`Weather: ${day.conditions}`}>
-                      {day.icon}
-                    </span>
                   </div>
 
                   <div className="px-4 pt-3 pb-3">
