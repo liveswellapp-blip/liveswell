@@ -34,7 +34,7 @@ export default function Profile() {
 
   const ITEMS = [
     { icon: CreditCard,  label: "Account & Billing", value: "",           color: "#a78bfa", href: "/account" },
-    { icon: Bell,        label: "Notifications", value: "Manage alerts", color: "#fbbf24", href: "/notifications" },
+    { icon: Bell,        label: "Notifications", value: "",              color: "#fbbf24", href: "/notifications" },
     { icon: Settings,    label: "Preferences",   value: "",              color: "#94a3b8", href: "/settings" },
     { icon: Shield,      label: "Privacy",        value: "",              color: "#38bdf8", href: "/privacy" },
     { icon: HelpCircle,  label: "Help & Support", value: "",              color: "#34d399", href: "/support" },
