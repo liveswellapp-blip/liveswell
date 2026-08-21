@@ -194,23 +194,12 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                       <div id={`forecast-details-${i}`} className="px-3 pb-3 border-t border-white/[0.06]">
                         <div className="grid grid-cols-2 gap-2 py-3">
                           <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
-                            <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Conditions</p>
-                            <p className="mt-1 text-[12px] font-medium text-slate-200">{day.conditions}</p>
-                          </div>
-                          <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
                             <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Wind</p>
                             <p className="mt-1 text-[12px] font-medium text-slate-200">{day.windSpeed} {day.windDirection}</p>
                           </div>
                           <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
                             <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Swell</p>
                             <p className="mt-1 text-[12px] font-medium text-slate-200">{day.waveHeight} · {day.wavePeriod}</p>
-                          </div>
-                          <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
-                            <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Weather</p>
-                            <p className="mt-1 text-[12px] font-medium text-slate-200 flex items-center gap-1.5">
-                              <span aria-hidden="true">{day.icon}</span>
-                              <span>{day.conditions}</span>
-                            </p>
                           </div>
                         </div>
 
