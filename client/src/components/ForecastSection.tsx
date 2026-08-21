@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Location, ForecastDay } from "@/types/weather";
 import TideChart from "./TideChart";
 import { useRef, useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Sunrise, Sunset, Waves, Wind } from "lucide-react";
 
 interface ForecastSectionProps {
   location: Location;
@@ -12,6 +12,7 @@ interface ForecastSectionProps {
 export default function ForecastSection({ location }: ForecastSectionProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const { data: forecast = [], isLoading, error } = useQuery<ForecastDay[]>({
     queryKey: [`/api/locations/${location.id}/forecast`],
@@ -95,86 +96,174 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex-shrink-0 rounded-2xl overflow-hidden snap-start"
-                style={{ minWidth: "100%", background: "linear-gradient(160deg, #030912 0%, #091a35 100%)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <div className="px-4 pt-4 pb-3 border-b border-white/5 flex justify-between">
+                style={{
+                  width: "min(320px, calc(100vw - 2rem))",
+                  background: "linear-gradient(160deg, #030912 0%, #091a35 100%)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}>
+                <div className="px-4 pt-4 pb-3 border-b border-white/5 flex items-center justify-between">
                   <Skeleton className="h-4 w-16 bg-white/10" />
+                  <Skeleton className="h-7 w-7 rounded-full bg-white/10" />
                 </div>
-                <div className="px-4 pt-4 pb-3 flex gap-4">
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-3 w-10 bg-white/10" />
-                    <Skeleton className="h-8 w-20 bg-white/10" />
-                    <Skeleton className="h-3 w-12 bg-white/10" />
-                  </div>
-                  <div className="w-px bg-white/5" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-3 w-10 bg-white/10" />
-                    <Skeleton className="h-8 w-20 bg-white/10" />
-                    <Skeleton className="h-3 w-12 bg-white/10" />
+                <div className="px-4 pt-3 pb-4">
+                  <Skeleton className="h-3 w-24 bg-white/10 mb-3" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-10 bg-white/10" />
+                      <Skeleton className="h-7 w-20 bg-white/10" />
+                      <Skeleton className="h-3 w-12 bg-white/10" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-10 bg-white/10" />
+                      <Skeleton className="h-7 w-20 bg-white/10" />
+                      <Skeleton className="h-3 w-12 bg-white/10" />
+                    </div>
                   </div>
                 </div>
-                <div className="px-3 pb-3 mt-2">
-                  <Skeleton className="h-[120px] w-full rounded-xl bg-white/5" />
+                <div className="px-4 py-3 border-t border-white/5">
+                  <Skeleton className="h-9 w-full rounded-xl bg-white/5" />
                 </div>
               </div>
             ))
           ) : forecast.length > 0 ? (
             forecast.map((day, i) => {
               const today = isToday(day);
+              const isExpanded = expandedIndex === i;
               return (
                 <div
                   key={i}
                   className="flex-shrink-0 rounded-2xl overflow-hidden flex flex-col snap-start"
                   style={{
-                    minWidth: "100%",
+                    width: "min(320px, calc(100vw - 2rem))",
                     background: "linear-gradient(160deg, #030912 0%, #091a35 100%)",
                     border: today
-                      ? "1px solid rgba(255,255,255,0.18)"
+                      ? "1px solid rgba(52,211,153,0.38)"
                       : "1px solid rgba(255,255,255,0.08)",
                   }}
                 >
                   {/* Day header */}
-                  <div className="px-4 pt-4 pb-3 border-b border-white/5">
-                    <span className={`text-sm font-bold ${today ? "text-emerald-400" : "text-slate-300"}`}>
+                  <div className="px-4 pt-3 pb-2.5 border-b border-white/5 flex items-center justify-between">
+                    <span className={`text-sm font-bold ${today ? "text-emerald-400" : "text-slate-200"}`}>
                       {day.date}
                     </span>
+                    <span className="w-7 h-7 rounded-full flex items-center justify-center text-base bg-white/[0.05] border border-white/[0.06]" aria-label={`Weather: ${day.conditions}`}>
+                      {day.icon}
+                    </span>
                   </div>
-                  {/* Wave + wind — side by side */}
-                  <div className="px-4 pt-4 pb-3 flex gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold mb-1">Wave</p>
-                      <p className="text-emerald-400 font-black mb-1 text-[26px] leading-none">{day.waveHeight}</p>
-                      <p className="text-[13px] font-semibold text-[#64748b]">{day.wavePeriod}</p>
-                    </div>
-                    <div className="w-px bg-white/5 self-stretch" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold mb-1">Wind</p>
-                      <p className="text-cyan-400 font-bold mb-1 text-[26px] leading-none">{day.windSpeed}</p>
-                      <p className="text-slate-400 text-[13px]">{day.windDirection}</p>
+
+                  <div className="px-4 pt-3 pb-3">
+                    <p className="text-[11px] font-medium text-slate-400 truncate mb-3">{day.conditions}</p>
+
+                    {/* Wave + wind summary */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+                          <Waves size={12} aria-hidden="true" />
+                          <span className="text-[10px] uppercase tracking-wider font-semibold">Wave</span>
+                        </div>
+                        <p className="text-emerald-400 font-black text-[23px] leading-none truncate">{day.waveHeight}</p>
+                        <p className="text-[12px] font-semibold text-slate-500 mt-1 truncate">{day.wavePeriod}</p>
+                      </div>
+                      <div className="min-w-0 border-l border-white/[0.06] pl-3">
+                        <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+                          <Wind size={12} aria-hidden="true" />
+                          <span className="text-[10px] uppercase tracking-wider font-semibold">Wind</span>
+                        </div>
+                        <p className="text-cyan-400 font-bold text-[23px] leading-none truncate">{day.windSpeed}</p>
+                        <p className="text-[12px] text-slate-400 mt-1 truncate">{day.windDirection}</p>
+                      </div>
                     </div>
                   </div>
-                  {/* Compact tide chart */}
-                  <div className="px-3 pb-2 mt-auto">
-                    {day.tides && day.tides.length > 0 && (
-                      <TideChart tides={day.tides} date={day.date} location={location} sunrise={day.sunrise} sunset={day.sunset} />
+
+                  <div className="border-t border-white/[0.06]">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedIndex(isExpanded ? null : i)}
+                      className="w-full px-4 py-3 flex items-center justify-between text-left transition-colors hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-400"
+                      aria-expanded={isExpanded}
+                      aria-controls={`forecast-details-${i}`}
+                    >
+                      <span className="text-[11px] font-semibold text-emerald-300">
+                        {isExpanded ? "Hide details" : "More details"}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp size={15} className="text-emerald-300" aria-hidden="true" />
+                      ) : (
+                        <ChevronDown size={15} className="text-emerald-300" aria-hidden="true" />
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div id={`forecast-details-${i}`} className="px-3 pb-3 border-t border-white/[0.06]">
+                        <div className="grid grid-cols-2 gap-2 py-3">
+                          <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
+                            <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Conditions</p>
+                            <p className="mt-1 text-[12px] font-medium text-slate-200">{day.conditions}</p>
+                          </div>
+                          <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
+                            <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Wind</p>
+                            <p className="mt-1 text-[12px] font-medium text-slate-200">{day.windSpeed} {day.windDirection}</p>
+                          </div>
+                          <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
+                            <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Swell</p>
+                            <p className="mt-1 text-[12px] font-medium text-slate-200">{day.waveHeight} · {day.wavePeriod}</p>
+                          </div>
+                          <div className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5">
+                            <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Weather</p>
+                            <p className="mt-1 text-[12px] font-medium text-slate-200 flex items-center gap-1.5">
+                              <span aria-hidden="true">{day.icon}</span>
+                              <span>{day.conditions}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {(day.sunrise || day.sunset) && (
+                          <div className="grid grid-cols-2 gap-2 mb-3">
+                            <div className="rounded-xl bg-amber-400/[0.06] border border-amber-300/[0.10] px-3 py-2.5">
+                              <div className="flex items-center gap-1.5 text-amber-300/80">
+                                <Sunrise size={13} aria-hidden="true" />
+                                <span className="text-[9px] uppercase tracking-wider font-semibold">Sunrise</span>
+                              </div>
+                              <p className="mt-1 text-[12px] font-medium text-slate-200">{day.sunrise ?? "Unavailable"}</p>
+                            </div>
+                            <div className="rounded-xl bg-orange-400/[0.06] border border-orange-300/[0.10] px-3 py-2.5">
+                              <div className="flex items-center gap-1.5 text-orange-300/80">
+                                <Sunset size={13} aria-hidden="true" />
+                                <span className="text-[9px] uppercase tracking-wider font-semibold">Sunset</span>
+                              </div>
+                              <p className="mt-1 text-[12px] font-medium text-slate-200">{day.sunset ?? "Unavailable"}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {day.tides && day.tides.length > 0 && (
+                          <div className="space-y-2.5">
+                            <p className="px-1 text-[10px] uppercase tracking-wider font-semibold text-slate-500">Tides</p>
+                            <TideChart tides={day.tides} date={day.date} location={location} sunrise={day.sunrise} sunset={day.sunset} />
+                            <div className="grid grid-cols-2 gap-2">
+                              {day.tides.map((tide, tideIndex) => {
+                                const isHighTide = tide.type === "high";
+                                return (
+                                  <div key={`${tide.type}-${tide.time}-${tideIndex}`} className="rounded-lg bg-white/[0.035] border border-white/[0.05] px-2.5 py-2">
+                                    <p className={`text-[9px] uppercase tracking-wider font-semibold ${isHighTide ? "text-emerald-300" : "text-sky-300"}`}>
+                                      {isHighTide ? "High tide" : "Low tide"}
+                                    </p>
+                                    <p className="mt-0.5 text-[11px] text-slate-200">{tide.time}</p>
+                                    <p className="text-[10px] text-slate-500">{tide.height.toFixed(1)} ft</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        {(!day.tides || day.tides.length === 0) && (
+                          <p className="rounded-xl bg-white/[0.035] border border-white/[0.05] px-3 py-2.5 text-[11px] text-slate-500">
+                            Tide details are unavailable for this day.
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {/* Sunrise / Sunset */}
-                  {(day.sunrise || day.sunset) && (
-                    <div className="px-4 pb-3 pt-1 flex items-center justify-between border-t border-white/[0.06] mt-1">
-                      {day.sunrise && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Sunrise</span>
-                          <span className="text-[11px] text-slate-400">{day.sunrise}</span>
-                        </div>
-                      )}
-                      {day.sunset && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Sunset</span>
-                          <span className="text-[11px] text-slate-400">{day.sunset}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               );
             })
