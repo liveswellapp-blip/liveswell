@@ -149,8 +149,6 @@ export default function ForecastSection({ location }: ForecastSectionProps) {
                   </div>
 
                   <div className="px-4 pt-3 pb-3">
-                    <p className="text-[11px] font-medium text-slate-400 truncate mb-3">{day.conditions}</p>
-
                     {/* Wave + wind summary */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="min-w-0">
