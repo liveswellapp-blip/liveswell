@@ -19,6 +19,7 @@ import Monitoring from "@/pages/monitoring";
 import Landing from "@/pages/landing";
 import ClerkSignIn from "@/pages/ClerkSignIn";
 import ClerkSignUp from "@/pages/ClerkSignUp";
+import SsoCallback from "@/pages/SsoCallback";
 import AdminDashboard from "@/pages/admin";
 import AdminUserDetail from "@/pages/admin-user-detail";
 import NotificationSettings from "@/pages/NotificationSettings";
@@ -81,10 +82,15 @@ function Router() {
     <>
       <Switch>
         {/* Clerk auth pages */}
-        {/* Clerk owns nested route segments such as /sign-in/factor-one,
-            /sign-in/factor-two, and /sign-in/sso-callback. The optional
-            wildcard keeps those steps inside the branded auth page instead
-            of falling through to the public landing page. */}
+        {/* Clerk returns from OAuth at the component path plus /sso-callback.
+            These routes must precede the wildcard auth routes so
+            AuthenticateWithRedirectCallback completes the session handshake. */}
+        <Route path="/sso-callback" component={SsoCallback} />
+        <Route path="/sign-in/sso-callback" component={SsoCallback} />
+        <Route path="/sign-up/sso-callback" component={SsoCallback} />
+
+        {/* The wildcard preserves other Clerk-owned subroutes such as
+            /sign-in/factor-one and /sign-in/factor-two. */}
         <Route path="/sign-in/*?" component={ClerkSignIn} />
         <Route path="/sign-up/*?" component={ClerkSignUp} />
         {/* Keep /login as alias so old links still work */}
