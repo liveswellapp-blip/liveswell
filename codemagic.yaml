@@ -19,24 +19,19 @@ workflows:
       - name: Install npm dependencies
         script: |
           export NODE_ENV=development
-          npm install --include=dev --legacy-peer-deps --no-audit --no-fund
-          echo "--- Repair pass (npm install is idempotent; this fixes any partial state left by a crashed first run) ---"
-          npm install --include=dev --legacy-peer-deps --no-audit --no-fund
-
-          check_deps_ok() {
-            [ -f node_modules/.bin/vite ] && [ -f node_modules/@vitejs/plugin-react/dist/index.cjs ]
-          }
-
-          if ! check_deps_ok; then
-            echo "Detected a corrupted install, doing a clean reinstall..."
-            rm -rf node_modules
-            npm install --include=dev --legacy-peer-deps --no-audit --no-fund
-            npm install --include=dev --legacy-peer-deps --no-audit --no-fund
-          fi
+          # npm itself crashes reproducibly on this machine/dependency tree
+          # ("Exit handler never called!" — a known npm CLI bug) on every
+          # attempt, leaving node_modules incomplete. Use pnpm instead, which
+          # avoids npm's resolver entirely. --shamefully-hoist keeps a flat
+          # node_modules layout like npm so nothing else in the pipeline needs
+          # to change.
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm install --no-frozen-lockfile --shamefully-hoist
 
           echo "--- Verifying key build dependencies ---"
-          ls -la node_modules/.bin/vite || echo "VITE BINARY STILL MISSING"
-          ls -la node_modules/@vitejs/plugin-react/dist/index.cjs || echo "PLUGIN-REACT STILL MISSING"
+          ls -la node_modules/.bin/vite || echo "VITE BINARY MISSING"
+          ls -la node_modules/@vitejs/plugin-react/dist/index.cjs || echo "PLUGIN-REACT MISSING"
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App && pod install
