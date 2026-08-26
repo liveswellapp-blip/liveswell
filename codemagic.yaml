@@ -19,11 +19,21 @@ workflows:
       - name: Install npm dependencies
         script: |
           export NODE_ENV=development
-          npm install -g npm@latest
-          npm --version
           npm install --include=dev --legacy-peer-deps --no-audit --no-fund
+
+          if [ ! -f node_modules/.bin/vite ]; then
+            echo "vite bin missing after install, running npm rebuild to relink bins..."
+            npm rebuild
+          fi
+
+          if [ ! -f node_modules/.bin/vite ]; then
+            echo "vite bin still missing, retrying a clean install..."
+            rm -rf node_modules
+            npm install --include=dev --legacy-peer-deps --no-audit --no-fund
+          fi
+
           echo "--- Verifying vite installed ---"
-          ls -la node_modules/.bin/vite || echo "VITE BINARY MISSING"
+          ls -la node_modules/.bin/vite || echo "VITE BINARY STILL MISSING"
           npm ls vite --depth=0 || true
       - name: Install CocoaPods dependencies
         script: |
