@@ -17,7 +17,9 @@ workflows:
       cocoapods: default
     scripts:
       - name: Install npm dependencies
-        script: npm install --include=dev
+        script: |
+          export NODE_ENV=development
+          npm install --include=dev
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App && pod install
