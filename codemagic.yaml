@@ -25,8 +25,14 @@ workflows:
           # avoids npm's resolver entirely. --shamefully-hoist keeps a flat
           # node_modules layout like npm so nothing else in the pipeline needs
           # to change.
+          #
+          # The build machine's own home directory has an unrelated
+          # package.json pinning yarn as its packageManager. Corepack walks
+          # up from cwd looking for that field and, without our own pin,
+          # finds the machine's yarn pin first and silently refuses to run
+          # pnpm. Pinning "packageManager" in our own package.json makes
+          # corepack resolve pnpm locally instead of walking further up.
           corepack enable
-          corepack prepare pnpm@latest --activate
           # --config.node-linker=hoisted avoids pnpm's symlinked .pnpm store,
           # producing a flat node_modules like npm. CocoaPods' Ruby
           # require_relative into node_modules/@capacitor/ios needs a real

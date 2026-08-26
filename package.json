@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "packageManager": "pnpm@10.26.1",
   "overrides": {
     "vite": "$vite"
   },
