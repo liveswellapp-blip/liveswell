@@ -8,6 +8,12 @@ workflows:
       # Integrations > Developer Portal (currently named "liveswell").
       app_store_connect: liveswell
     environment:
+      # "ios_signing" group holds the CERTIFICATE_PRIVATE_KEY secret used to
+      # create the Apple Distribution certificate (see Fetch signing files
+      # step below). Add it in Codemagic Team settings > Environment
+      # variables, marked Secret, then create/attach this group to the app.
+      groups:
+        - ios_signing
       vars:
         XCODE_WORKSPACE: "App.xcworkspace"
         XCODE_SCHEME: "App"
