@@ -19,7 +19,10 @@ workflows:
       - name: Install npm dependencies
         script: |
           export NODE_ENV=development
-          npm install --include=dev
+          npm install --include=dev --legacy-peer-deps
+          echo "--- Verifying vite installed ---"
+          ls -la node_modules/.bin/vite || echo "VITE BINARY MISSING"
+          npm ls vite --depth=0 || true
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App && pod install
