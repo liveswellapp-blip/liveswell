@@ -27,7 +27,11 @@ workflows:
           # to change.
           corepack enable
           corepack prepare pnpm@latest --activate
-          pnpm install --no-frozen-lockfile --shamefully-hoist
+          # --config.node-linker=hoisted avoids pnpm's symlinked .pnpm store,
+          # producing a flat node_modules like npm. CocoaPods' Ruby
+          # require_relative into node_modules/@capacitor/ios needs a real
+          # directory, not a symlink into the store.
+          pnpm install --no-frozen-lockfile --shamefully-hoist --config.node-linker=hoisted
 
           echo "--- Verifying key build dependencies ---"
           ls -la node_modules/.bin/vite || echo "VITE BINARY MISSING"
