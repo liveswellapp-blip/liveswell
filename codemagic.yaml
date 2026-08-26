@@ -20,21 +20,23 @@ workflows:
         script: |
           export NODE_ENV=development
           npm install --include=dev --legacy-peer-deps --no-audit --no-fund
+          echo "--- Repair pass (npm install is idempotent; this fixes any partial state left by a crashed first run) ---"
+          npm install --include=dev --legacy-peer-deps --no-audit --no-fund
 
-          if [ ! -f node_modules/.bin/vite ]; then
-            echo "vite bin missing after install, running npm rebuild to relink bins..."
-            npm rebuild
-          fi
+          check_deps_ok() {
+            [ -f node_modules/.bin/vite ] && [ -f node_modules/@vitejs/plugin-react/dist/index.cjs ]
+          }
 
-          if [ ! -f node_modules/.bin/vite ]; then
-            echo "vite bin still missing, retrying a clean install..."
+          if ! check_deps_ok; then
+            echo "Detected a corrupted install, doing a clean reinstall..."
             rm -rf node_modules
+            npm install --include=dev --legacy-peer-deps --no-audit --no-fund
             npm install --include=dev --legacy-peer-deps --no-audit --no-fund
           fi
 
-          echo "--- Verifying vite installed ---"
+          echo "--- Verifying key build dependencies ---"
           ls -la node_modules/.bin/vite || echo "VITE BINARY STILL MISSING"
-          npm ls vite --depth=0 || true
+          ls -la node_modules/@vitejs/plugin-react/dist/index.cjs || echo "PLUGIN-REACT STILL MISSING"
       - name: Install CocoaPods dependencies
         script: |
           cd ios/App && pod install
