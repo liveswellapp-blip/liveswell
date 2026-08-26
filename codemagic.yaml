@@ -4,9 +4,9 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      # Must match the name you give the App Store Connect API key when you
-      # connect it under Codemagic Team settings > Integrations > Developer Portal.
-      app_store_connect: codemagic
+      # Must match the name of the API key under Codemagic Team settings >
+      # Integrations > Developer Portal (currently named "liveswell").
+      app_store_connect: liveswell
     environment:
       vars:
         XCODE_WORKSPACE: "App.xcworkspace"
