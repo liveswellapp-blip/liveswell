@@ -18,6 +18,12 @@ workflows:
         XCODE_WORKSPACE: "App.xcworkspace"
         XCODE_SCHEME: "App"
         BUNDLE_ID: "com.liveswell.app"
+        # altool's internal bundle-ID -> Apple ID lookup (via --list-providers)
+        # fails with "Cannot determine the Apple ID from Bundle ID" even with
+        # a fully signed Paid Apps Agreement and a valid API key. Passing the
+        # app's numeric Apple ID (App Store Connect > App Information >
+        # Apple ID) directly short-circuits that lookup.
+        APP_STORE_CONNECT_ALTOOL_ADDITIONAL_ARGUMENTS: "--apple-id 6797639480"
       node: 20
       xcode: latest
       cocoapods: default
