@@ -11,3 +11,4 @@
 - [Billing provider migration safety](billing-provider-migration-safety.md) — bind transfer consent to a short-lived provider intent and recheck canonical lifecycle state after locking.
 - [Billing operational telemetry](billing-operational-telemetry.md) — persist actionable verified failures; aggregate high-volume outcomes; never write unauthenticated webhook noise.
 - [Stripe checkout return confirmation](stripe-checkout-return-confirmation.md) — verify completed embedded Checkout returns against Stripe and matching Clerk metadata so webhook delays never strand access activation.
+- [Codemagic iOS TestFlight quirks](codemagic-ios-testflight-quirks.md) — pnpm/corepack Mac CI setup, altool "Cannot determine Apple ID" fix, bundle ID mismatch (error 90055) handling.
